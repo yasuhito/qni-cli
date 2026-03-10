@@ -4,7 +4,7 @@
 
 `qni-cli` は、量子回路を表す JSON ファイルをコマンドラインから安全に更新し、内容を確認するためのツールとする。
 
-MVP では、単一量子ビットゲート `H` / `X` / `Y` / `Z` / `S` / `T` と、2 つの target qubit を持つ `SWAP` を任意の `step` と `qubit` に追加する `add` コマンド、状態ベクトルを表示する `run` コマンドを対象にする。`X` に `--control` を付けた制御付き追加も対象に含む。
+MVP では、単一量子ビットゲート `H` / `X` / `Y` / `Z` / `S` / `T` / `P(angle)` / `Rx(angle)` / `Ry(angle)` / `Rz(angle)` と、2 つの target qubit を持つ `SWAP` を任意の `step` と `qubit` に追加する `add` コマンド、状態ベクトルを表示する `run` コマンドを対象にする。単一量子ビットゲートには `--control` を付けた制御付き追加も含む。
 
 ## 実装言語
 
@@ -42,6 +42,10 @@ MVP は、以下のトップレベル構造を前提にする。
 - `"Z"`: Pauli-Z ゲート。
 - `"S"`: Phase-S ゲート。
 - `"T"`: Phase-T ゲート。
+- `"P(<angle>)"`: `../qni` に合わせた parameterized Phase ゲート。例: `"P(π/3)"`。
+- `"Rx(<angle>)"`: `../qni` に合わせた X 軸回転ゲート。例: `"Rx(π/2)"`。
+- `"Ry(<angle>)"`: `../qni` に合わせた Y 軸回転ゲート。例: `"Ry(π/2)"`。
+- `"Rz(<angle>)"`: `../qni` に合わせた Z 軸回転ゲート。例: `"Rz(π/2)"`。
 - `"Swap"`: SWAP ゲート。必ず同じ step に 2 個 1 組で置く。
 - `"•"`: control 記号。control 付きゲートの control qubit を表す。
 - それ以外の文字列や値は将来の拡張用として読み込み時に許容してよいが、MVP の `add` コマンドは `1` かどうかだけを見て空き判定する。
@@ -96,7 +100,15 @@ qni add <gate> --step <step> --qubit <qubit>
 ```
 
 ```bash
-qni add X --control <control> --step <step> --qubit <qubit>
+qni add <gate> --control <control> --step <step> --qubit <qubit>
+```
+
+```bash
+qni add <angled_gate> --angle <angle> --step <step> --qubit <qubit>
+```
+
+```bash
+qni add <angled_gate> --angle <angle> --control <control> --step <step> --qubit <qubit>
 ```
 
 ```bash
@@ -105,10 +117,12 @@ qni add SWAP --step <step> --qubit <qubit0>,<qubit1>
 
 ### 引数
 
-- `<gate>`: 追加するゲート種別。MVP では `H` と `X` と `Y` と `Z` と `S` と `T` と `SWAP` を許可。
+- `<gate>`: 追加するゲート種別。MVP では `H` と `X` と `Y` と `Z` と `S` と `T` と `P` と `Rx` と `Ry` と `Rz` と `SWAP` を許可。
 - `--step <step>`: 配置先のステップ番号。0-based 整数。
 - `--qubit <qubit>`: 配置先の量子ビット番号。0-based 整数。`SWAP` の場合は `0,1` のようにカンマ区切りで 2 つ指定する。
 - `--control <control>`: 制御量子ビット番号。カンマ区切りで複数指定できる。`X` と組み合わせた場合は CNOT / 多重制御 X を表す。
+- `<angled_gate>`: `P`, `Rx`, `Ry`, `Rz` のいずれか。
+- `--angle <angle>`: `P`, `Rx`, `Ry`, `Rz` に必須の角度。`π/3`, `pi/3`, `3*pi/4`, `0.5` のような値を受け付け、保存時は `P(π/3)`, `Rx(π/2)` のような canonical form に正規化する。
 
 ### `run` コマンド名
 
@@ -140,10 +154,10 @@ qni run
 6. 回路が既存ファイル由来の場合、`qubit` が現在の `qubits` 以上なら、不足分の qubit を `1` で埋めて自動拡張する。
 7. `step` が既存の `cols` 長を超える場合、不足分の列を `1` で埋めて自動拡張する。
 8. 指定された target セルがすべて `1` であることを確認する。
-9. 単一量子ビットゲートなら対象セル 1 個を更新し、`SWAP` なら対象セル 2 個を `"Swap"` に更新する。
+9. 単一量子ビットゲートなら対象セル 1 個を更新する。`P`, `Rx`, `Ry`, `Rz` の場合はそれぞれ `"P(<angle>)"`, `"Rx(<angle>)"`, `"Ry(<angle>)"`, `"Rz(<angle>)"` に正規化して保存する。`SWAP` なら対象セル 2 個を `"Swap"` に更新する。
 10. `./circuit.json` を更新後 JSON で上書きする。
 
-`qni add X --control ...` は、control に指定した qubit のセルがすべて `1` であることも確認し、同じ列に `"•"` を配置してから target 側の `"X"` を置く。
+`qni add <gate> --control ...` は、control に指定した qubit のセルがすべて `1` であることも確認し、同じ列に `"•"` を配置してから target 側に対象ゲートを置く。`P`, `Rx`, `Ry`, `Rz` の場合は target 側に角度付きの canonical form を置く。
 
 `qni add SWAP --qubit 0,1 ...` は、2 つの target qubit が互いに異なり、対象セルがどちらも `1` であることを確認してから、同じ列に `"Swap"` を 2 個配置する。
 
@@ -292,6 +306,32 @@ qni run
 0.0,1.0i
 ```
 
+### `view` 成功時
+
+- 終了コード: `0`
+- 標準出力に回路を 1 qubit 1 行のアスキーアートで表示する
+- 表示上のゲート記号は 5 文字幅の 1 行セルで表示する
+- `H` は `H`
+- `X` は `⊕` を使う。表示環境の都合で `⊕` が使えない場合だけ `+` にフォールバックしてよい
+- `Y` は `Y`
+- `Z` は `Z`
+- `S` は `S`
+- `T` は `T`
+- `P(<angle>)` は角度を省略して `P`
+- `Rx(<angle>)` は `Rx`
+- `Ry(<angle>)` は `Ry`
+- `Rz(<angle>)` は `Rz`
+- `"Swap"` は `X`
+- `"•"` は `•`
+- 1 文字ラベルは `--H--` のように表示し、2 文字ラベルは `--Rz-` のように 1 文字目を中央寄せする
+
+例:
+
+```text
+q0: --•--
+q1: --Rz-
+```
+
 ### 入力エラー・検証エラー
 
 - 終了コード: `2`
@@ -366,7 +406,41 @@ qni add H --step 3 --qubit 1
 }
 ```
 
-### 例 3: `circuit.json` がない状態で新規作成して追加
+### 例 3: `circuit.json` がない状態で Phase ゲートを追加
+
+```bash
+qni add P --angle π/3 --step 0 --qubit 0
+```
+
+更新後:
+
+```json
+{
+  "qubits": 1,
+  "cols": [
+    ["P(π/3)"]
+  ]
+}
+```
+
+### 例 4: `circuit.json` がない状態で Rx ゲートを追加
+
+```bash
+qni add Rx --angle π/2 --step 0 --qubit 0
+```
+
+更新後:
+
+```json
+{
+  "qubits": 1,
+  "cols": [
+    ["Rx(π/2)"]
+  ]
+}
+```
+
+### 例 5: `circuit.json` がない状態で新規作成して追加
 
 ```bash
 qni add H --step 0 --qubit 0
@@ -387,9 +461,8 @@ qni add H --step 0 --qubit 0
 
 MVP では以下は扱わない。
 
-- `H` / `X` / `Y` / `Z` / `S` / `T` 以外のゲート追加
-- `X` 以外の制御付きゲート追加コマンド
-- `Swap` などの複数量子ビットゲート
+- `H` / `X` / `Y` / `Z` / `S` / `T` / `P(angle)` / `Rx(angle)` / `Ry(angle)` / `Rz(angle)` / `Swap` 以外のゲート追加
+- `SWAP` 以外の複数量子ビットゲート
 - 既存ゲートの上書き
 - 更新対象 JSON ファイルの切り替え
 - ステップ挿入による右シフト
@@ -397,7 +470,6 @@ MVP では以下は扱わない。
 
 ## 今後の拡張余地
 
-- `Rx(theta)` などへの対応
 - `set`, `remove`, `move` コマンド
 - `--file <path>` による対象ファイル切り替え
 - `--stdout` や `--dry-run` による非破壊出力

@@ -6,6 +6,29 @@ module Qni
     # Raised when raw step data cannot be converted into a Step.
     class Error < StandardError; end
 
+    # Maps serialized gate values to the single-character symbols used by qni view.
+    class ViewSymbol
+      ANGLED_GATE_PATTERN = /\A(?<symbol>[A-Za-z]+)\(.+\)\z/
+      PAULI_X = '⊕'
+      SWAP = 'Swap'
+
+      def initialize(slot)
+        @slot = slot
+      end
+
+      def to_s
+        return nil if slot == 1
+        return PAULI_X if slot == 'X'
+        return 'X' if slot == SWAP
+
+        slot.to_s.sub(ANGLED_GATE_PATTERN, '\k<symbol>')
+      end
+
+      private
+
+      attr_reader :slot
+    end
+
     def self.empty(qubits)
       new(Array.new(qubits, 1))
     end
@@ -41,10 +64,10 @@ module Qni
     end
 
     def render_slot(qubit)
-      slot = fetch(qubit)
-      return '-----' if slot == 1
+      symbol = ViewSymbol.new(fetch(qubit)).to_s
+      return '-----' unless symbol
 
-      "--#{slot}--"
+      "--#{symbol}#{'-' * [0, 3 - symbol.length].max}"
     end
 
     def drop_left(count)

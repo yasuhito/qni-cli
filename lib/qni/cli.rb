@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'thor'
+require_relative 'angled_gates'
 require_relative 'circuit_file'
 require_relative 'cli/add_command'
 require_relative 'cli/add_help'
@@ -13,6 +14,10 @@ module Qni
   class CLI < Thor
     SUPPORTED_GATES = {
       'H' => 'H',
+      'P' => PhaseGate::COMMAND_SYMBOL,
+      'RX' => RxGate::COMMAND_SYMBOL,
+      'RY' => RyGate::COMMAND_SYMBOL,
+      'RZ' => RzGate::COMMAND_SYMBOL,
       'S' => 'S',
       'SWAP' => SwapGate::SYMBOL,
       'T' => 'T',
@@ -50,6 +55,7 @@ module Qni
     method_option :step, type: :numeric, required: true, desc: '0-based step index'
     method_option :qubit, type: :string, required: true, desc: '0-based qubit index'
     method_option :control, type: :string, desc: 'comma-separated control qubit indices'
+    method_option :angle, type: :string, desc: 'phase angle for P, such as π/3 or pi/3'
     def add(gate)
       AddCommand.new(
         circuit_file: CircuitFile.new(File.expand_path('circuit.json', Dir.pwd)),

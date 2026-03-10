@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative '../angled_gates'
 require_relative '../swap_gate'
 
 module Qni
@@ -13,10 +14,11 @@ module Qni
       end
 
       def execute
+        validate_angle_usage
         return add_swap_gate if swap_gate?
         return add_controlled_gate if add_options.controlled?
 
-        circuit_file.add_gate(gate:, step: add_options.step, qubit: add_options.qubit)
+        circuit_file.add_gate(gate: serialized_gate, step: add_options.step, qubit: add_options.qubit)
       end
 
       private
@@ -33,7 +35,7 @@ module Qni
         circuit_file.add_controlled_gate(
           step: add_options.step,
           controlled_gate: Circuit::ControlledGate.new(
-            gate:,
+            gate: serialized_gate,
             controls: add_options.controls,
             target: add_options.qubit
           )
@@ -42,6 +44,16 @@ module Qni
 
       def swap_gate?
         gate == SwapGate::SYMBOL
+      end
+
+      def serialized_gate
+        @serialized_gate ||= add_options.serialized_gate(gate)
+      end
+
+      def validate_angle_usage
+        return unless add_options.angle_given? && !AngledGates.fetch(gate)
+
+        raise Thor::Error, 'angle is only supported for P, Rx, Ry, and Rz'
       end
     end
   end

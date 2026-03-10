@@ -1,15 +1,31 @@
 # frozen_string_literal: true
 
+require_relative '../angled_gates'
+require_relative '../angle_expression'
+
 module Qni
   class CLI < Thor
     # Parses and validates qni add command options.
     class AddCommandOptions
+      def angle_given?
+        !options['angle'].to_s.empty?
+      end
+
       def initialize(options)
         @options = options
       end
 
       def controlled?
         !control_value.to_s.empty?
+      end
+
+      def serialized_gate(gate)
+        gate_class = AngledGates.fetch(gate)
+        return gate unless gate_class
+
+        gate_class.serialized(angle_value(gate))
+      rescue AngleExpression::Error => e
+        raise Thor::Error, e.message
       end
 
       def controls
@@ -41,6 +57,13 @@ module Qni
       private
 
       attr_reader :options
+
+      def angle_value(gate)
+        value = options['angle'].to_s
+        raise Thor::Error, "angle is required for #{gate}" if value.empty?
+
+        value
+      end
 
       def control_value
         options['control']

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'angle_expression'
+require_relative 'angled_gates'
 require_relative 'circuit'
 require_relative 'h_gate'
 require_relative 'swap_gate'
@@ -57,8 +59,17 @@ module Qni
     end
 
     def gate_class_for(gate)
-      GATE_CLASSES.fetch(gate)
-    rescue KeyError
+      return GATE_CLASSES.fetch(gate) if GATE_CLASSES.key?(gate)
+
+      phase_gate_for(gate)
+    rescue AngleExpression::Error => e
+      raise Error, e.message
+    end
+
+    def phase_gate_for(gate)
+      parsed_gate = AngledGates.parse(gate)
+      return parsed_gate if parsed_gate
+
       raise Error, "unsupported gate for run: #{gate.inspect}"
     end
   end

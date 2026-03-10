@@ -22,7 +22,7 @@
     もし "qni view" を実行
     ならば 標準出力:
       """
-      q0: --X--
+      q0: --⊕--
       """
 
   シナリオ: qni view は Y ゲートを表示
@@ -57,13 +57,45 @@
       q0: --T--
       """
 
+  シナリオ: qni view は Phase ゲートを表示
+    前提 "qni add P --angle π/3 --qubit 0 --step 0" を実行
+    もし "qni view" を実行
+    ならば 標準出力:
+      """
+      q0: --P--
+      """
+
+  シナリオ: qni view は Rx ゲートを表示
+    前提 "qni add Rx --angle π/2 --qubit 0 --step 0" を実行
+    もし "qni view" を実行
+    ならば 標準出力:
+      """
+      q0: --Rx-
+      """
+
+  シナリオ: qni view は Ry ゲートを表示
+    前提 "qni add Ry --angle π/2 --qubit 0 --step 0" を実行
+    もし "qni view" を実行
+    ならば 標準出力:
+      """
+      q0: --Ry-
+      """
+
+  シナリオ: qni view は Rz ゲートを表示
+    前提 "qni add Rz --angle π/2 --qubit 0 --step 0" を実行
+    もし "qni view" を実行
+    ならば 標準出力:
+      """
+      q0: --Rz-
+      """
+
   シナリオ: qni view は SWAP ゲートを表示
     前提 "qni add SWAP --qubit 0,1 --step 0" を実行
     もし "qni view" を実行
     ならば 標準出力:
       """
-      q0: --Swap--
-      q1: --Swap--
+      q0: --X--
+      q1: --X--
       """
 
   シナリオ: qni view は CNOT ゲートを表示
@@ -72,7 +104,16 @@
     ならば 標準出力:
       """
       q0: --•--
-      q1: --X--
+      q1: --⊕--
+      """
+
+  シナリオ: qni view は control 付き Rz ゲートを表示
+    前提 "qni add Rz --angle π/2 --control 0 --qubit 1 --step 0" を実行
+    もし "qni view" を実行
+    ならば 標準出力:
+      """
+      q0: --•--
+      q1: --Rz-
       """
 
   シナリオ: 同じ step の 2 qubit に H がある回路を表示
