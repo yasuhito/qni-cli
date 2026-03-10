@@ -1,9 +1,13 @@
 # frozen_string_literal: true
 
 require_relative 'step'
+require_relative 'circuit/slot_position'
+require_relative 'circuit/step_width_validator'
 
 module Qni
+  # Mutable circuit model backed by qubit count and column-oriented steps.
   class Circuit
+    # Raised when circuit data is invalid or a requested mutation cannot be applied.
     class Error < StandardError; end
 
     def self.empty(step:, qubit:)
@@ -13,15 +17,15 @@ module Qni
     end
 
     def self.from_h(data)
-      qubits = data['qubits']
-      cols = data['cols']
-
-      validate_qubits!(qubits)
-      validate_cols!(cols, qubits)
-
-      new(qubits:, steps: cols.map { |col| Step.from_a(col) })
+      qubits = validated_qubits(data.fetch('qubits'))
+      steps = validated_steps(data.fetch('cols'), qubits)
+      new(qubits:, steps:)
     rescue Step::Error => e
       raise Error, e.message
+    end
+
+    def self.build_steps(cols)
+      cols.map { |col| Step.from_a(col) }
     end
 
     def self.validate_qubits!(qubits)
@@ -30,16 +34,23 @@ module Qni
       raise Error, 'qubits must be a positive integer'
     end
 
-    def self.validate_cols!(cols, qubits)
-      raise Error, 'cols must be an array' unless cols.is_a?(Array)
-      return if cols.all? { |col| col.is_a?(Array) && col.length == qubits }
+    def self.validate_cols(cols, qubits)
+      StepWidthValidator.new(qubits).validate_raw_cols(cols)
+      cols
+    end
 
-      raise Error, 'each column in cols must have exactly qubits entries'
+    def self.validated_qubits(qubits)
+      validate_qubits!(qubits)
+      qubits
+    end
+
+    def self.validated_steps(cols, qubits)
+      build_steps(validate_cols(cols, qubits))
     end
 
     def initialize(qubits:, steps:)
       self.class.validate_qubits!(qubits)
-      validate_steps!(steps, qubits)
+      StepWidthValidator.new(qubits).validate_steps(steps)
 
       @qubits = qubits
       @steps = steps.dup
@@ -47,14 +58,11 @@ module Qni
 
     attr_reader :qubits
 
-    def add_gate!(gate:, step:, qubit:)
-      expand_qubits_to(qubit)
-      expand_to(step)
-      ensure_slot_available!(step, qubit)
-
-      @steps.fetch(step).place_gate!(qubit, gate)
-      trim_leading_empty_steps!
-      trim_leading_empty_qubits!
+    def add_gate(gate:, step:, qubit:)
+      position = SlotPosition.new(step:, qubit:)
+      prepare_slot(position)
+      @steps.fetch(position.step).place_gate(position.qubit, gate)
+      normalize_layout
     end
 
     def render_ascii
@@ -70,11 +78,15 @@ module Qni
 
     private
 
-    def validate_steps!(steps, qubits)
-      raise Error, 'cols must be an array' unless steps.is_a?(Array)
-      return if steps.all? { |step| step.is_a?(Step) && step.width == qubits }
+    def prepare_slot(position)
+      expand_qubits_to(position.qubit)
+      expand_to(position.step)
+      ensure_slot_available(position)
+    end
 
-      raise Error, 'each column in cols must have exactly qubits entries'
+    def normalize_layout
+      trim_leading_empty_steps
+      trim_leading_empty_qubits
     end
 
     def expand_to(step)
@@ -85,26 +97,28 @@ module Qni
       return if qubit < qubits
 
       count = qubit - qubits + 1
-      @steps.each { |step| step.extend_right!(count) }
+      @steps.each { |step| step.extend_right(count) }
       @qubits += count
     end
 
-    def ensure_slot_available!(step, qubit)
+    def ensure_slot_available(position)
+      step = position.step
+      qubit = position.qubit
       slot = @steps.fetch(step).fetch(qubit)
       return if slot == 1
 
       raise Error, "target slot is occupied: cols[#{step}][#{qubit}] = #{slot.inspect}"
     end
 
-    def trim_leading_empty_steps!
+    def trim_leading_empty_steps
       @steps.shift while @steps.length > 1 && @steps.first.empty?
     end
 
-    def trim_leading_empty_qubits!
+    def trim_leading_empty_qubits
       count = leading_empty_qubits_count
       return if count.zero?
 
-      @steps.each { |step| step.drop_left!(count) }
+      @steps.each { |step| step.drop_left(count) }
       @qubits -= count
     end
 
@@ -119,13 +133,7 @@ module Qni
     end
 
     def render_qubit_line(qubit)
-      "q#{qubit}: #{@steps.map { |step| render_slot(step.fetch(qubit)) }.join}"
-    end
-
-    def render_slot(slot)
-      return '-----' if slot == 1
-
-      "--#{slot}--"
+      "q#{qubit}: #{@steps.map { |step| step.render_slot(qubit) }.join}"
     end
   end
 end

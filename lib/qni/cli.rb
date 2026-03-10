@@ -5,6 +5,7 @@ require_relative 'circuit_file'
 require_relative 'simulator'
 
 module Qni
+  # Thor-based command-line interface for qni subcommands.
   class CLI < Thor
     def self.exit_on_failure?
       true
@@ -20,7 +21,11 @@ module Qni
     method_option :step, type: :numeric, required: true, desc: '0-based step index'
     method_option :qubit, type: :numeric, required: true, desc: '0-based qubit index'
     def add(gate)
-      perform_add(normalize_gate(gate), fetch_index(:step), fetch_index(:qubit))
+      CircuitFile.new(File.expand_path('circuit.json', Dir.pwd)).add_gate(
+        gate: normalize_gate(gate),
+        step: fetch_index(:step),
+        qubit: fetch_index(:qubit)
+      )
     rescue CircuitFile::Error => e
       raise Thor::Error, e.message
     end
@@ -42,10 +47,6 @@ module Qni
     end
 
     no_commands do
-      def perform_add(gate, step, qubit)
-        CircuitFile.new(File.expand_path('circuit.json', Dir.pwd)).add_gate!(gate:, step:, qubit:)
-      end
-
       def normalize_gate(gate)
         normalized_gate = gate.to_s.upcase
         return normalized_gate if normalized_gate == 'H'

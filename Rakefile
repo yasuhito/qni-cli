@@ -3,6 +3,7 @@
 require 'cucumber/rake/task'
 require 'flay_task'
 require 'flog_task'
+require 'reek/rake/task'
 require 'rubocop/rake_task'
 
 desc 'Run RuboCop'
@@ -21,7 +22,13 @@ FlayTask.new(:flay, 20, %w[lib bin]) do |task|
   task.verbose = false
 end
 
+Reek::Rake::Task.new(:reek) do |task|
+  task.config_file = '.reek.yml'
+  task.source_files = FileList['lib/**/*.rb', 'bin/*']
+  task.reek_opts = '--no-progress'
+end
+
 desc 'Run all checks'
-task check: %i[rubocop flog flay cucumber]
+task check: %i[rubocop flog flay reek cucumber]
 
 task default: :check

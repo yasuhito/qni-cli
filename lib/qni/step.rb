@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 module Qni
+  # Single column in a circuit, storing one slot per qubit.
   class Step
+    # Raised when raw step data cannot be converted into a Step.
     class Error < StandardError; end
 
     def self.empty(qubits)
@@ -26,7 +28,7 @@ module Qni
       @slots.fetch(qubit)
     end
 
-    def place_gate!(qubit, gate)
+    def place_gate(qubit, gate)
       @slots[qubit] = gate
     end
 
@@ -38,11 +40,18 @@ module Qni
       fetch(qubit) == 1
     end
 
-    def drop_left!(count)
+    def render_slot(qubit)
+      slot = fetch(qubit)
+      return '-----' if slot == 1
+
+      "--#{slot}--"
+    end
+
+    def drop_left(count)
       @slots.shift(count)
     end
 
-    def extend_right!(count)
+    def extend_right(count)
       @slots.concat(Array.new(count, 1))
     end
 

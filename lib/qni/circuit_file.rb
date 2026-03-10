@@ -4,17 +4,19 @@ require 'json'
 require_relative 'circuit'
 
 module Qni
+  # Loads and saves circuit.json while translating file errors into domain errors.
   class CircuitFile
+    # Raised when circuit file contents cannot be loaded or persisted safely.
     class Error < StandardError; end
 
     def initialize(path)
       @path = path
     end
 
-    def add_gate!(gate:, step:, qubit:)
+    def add_gate(gate:, step:, qubit:)
       with_domain_errors do
         circuit = load_or_initialize(step:, qubit:)
-        circuit.add_gate!(gate:, step:, qubit:)
+        circuit.add_gate(gate:, step:, qubit:)
         write(circuit)
       end
     end

@@ -4,7 +4,9 @@ require_relative 'h_gate'
 require_relative 'state_vector'
 
 module Qni
+  # Executes a circuit and produces a rendered state vector.
   class Simulator
+    # Raised when simulation encounters unsupported circuit content.
     class Error < StandardError; end
 
     GATE_CLASSES = {
