@@ -29,6 +29,16 @@ end
   MESSAGE
 end
 
+ならば('標準出力は空') do
+  next if @stdout.empty?
+
+  raise <<~MESSAGE
+    expected stdout to be empty
+    actual stdout:
+    #{@stdout}
+  MESSAGE
+end
+
 ならば('{string} の内容:') do |path, doc_string|
   actual_path = File.join(@scenario_dir, path)
   raise "expected file to exist: #{path}" unless File.exist?(actual_path)

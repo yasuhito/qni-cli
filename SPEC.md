@@ -143,13 +143,7 @@ qni add H --step <step> --qubit <qubit>
 ### 成功時
 
 - 終了コード: `0`
-- 標準出力に 1 行の要約を出す
-
-例:
-
-```text
-updated ./circuit.json: cols[4][1] = "H"
-```
+- 標準出力は空とする
 
 ### 入力エラー・検証エラー
 

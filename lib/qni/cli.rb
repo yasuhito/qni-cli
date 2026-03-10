@@ -19,7 +19,6 @@ module Qni
     no_commands do
       def perform_add(gate, step, qubit)
         CircuitFile.new(File.expand_path('circuit.json', Dir.pwd)).add_gate!(gate:, step:, qubit:)
-        puts %(updated ./circuit.json: cols[#{step}][#{qubit}] = "#{gate}")
       end
 
       def normalize_gate(gate)

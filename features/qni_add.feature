@@ -7,3 +7,7 @@
   シナリオ: qni add コマンドは成功
     もし "qni add H --step 0 --qubit 0" を実行
     ならば コマンドは成功
+
+  シナリオ: qni add H の標準出力は空
+    もし "qni add H --step 0 --qubit 0" を実行
+    ならば 標準出力は空
