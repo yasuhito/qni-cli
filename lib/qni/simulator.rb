@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
+require_relative 'circuit'
 require_relative 'h_gate'
+require_relative 'simulator/step_operation'
 require_relative 'state_vector'
 require_relative 'x_gate'
 require_relative 'y_gate'
@@ -50,15 +52,7 @@ module Qni
     end
 
     def apply_col(state_vector, col)
-      col.each_with_index.reduce(state_vector) do |current, (gate, qubit)|
-        apply_gate(current, gate, qubit)
-      end
-    end
-
-    def apply_gate(state_vector, gate, qubit)
-      return state_vector if gate == 1
-
-      state_vector.apply_single_qubit_gate(qubit, gate_class_for(gate))
+      StepOperation.new(col:, gate_class_for: method(:gate_class_for)).apply(state_vector)
     end
 
     def gate_class_for(gate)

@@ -1,7 +1,10 @@
 # frozen_string_literal: true
 
-require_relative 'step'
+require_relative 'circuit/controlled_gate'
+require_relative 'circuit/layout_normalizer'
 require_relative 'circuit/slot_position'
+require_relative 'circuit/symbol_placement'
+require_relative 'step'
 require_relative 'circuit/step_width_validator'
 
 module Qni
@@ -9,6 +12,7 @@ module Qni
   class Circuit
     # Raised when circuit data is invalid or a requested mutation cannot be applied.
     class Error < StandardError; end
+    CONTROL_SYMBOL = '•'
 
     def self.empty(step:, qubit:)
       qubits = qubit + 1
@@ -59,10 +63,11 @@ module Qni
     attr_reader :qubits
 
     def add_gate(gate:, step:, qubit:)
-      position = SlotPosition.new(step:, qubit:)
-      prepare_slot(position)
-      @steps.fetch(position.step).place_gate(position.qubit, gate)
-      normalize_layout
+      add_placement(SymbolPlacement.new(step:, symbols: { qubit => gate }))
+    end
+
+    def add_controlled_gate(step:, controlled_gate:)
+      add_placement(SymbolPlacement.new(step:, symbols: controlled_gate.symbols))
     end
 
     def render_ascii
@@ -78,15 +83,16 @@ module Qni
 
     private
 
-    def prepare_slot(position)
-      expand_qubits_to(position.qubit)
-      expand_to(position.step)
-      ensure_slot_available(position)
+    def add_placement(placement)
+      prepare_slots(placement)
+      placement.place_on(@steps)
+      @qubits = LayoutNormalizer.new(steps: @steps, qubits:).normalize
     end
 
-    def normalize_layout
-      trim_leading_empty_steps
-      trim_leading_empty_qubits
+    def prepare_slots(placement)
+      expand_qubits_to(placement.max_qubit)
+      expand_to(placement.step)
+      placement.ensure_available_in(@steps)
     end
 
     def expand_to(step)
@@ -99,37 +105,6 @@ module Qni
       count = qubit - qubits + 1
       @steps.each { |step| step.extend_right(count) }
       @qubits += count
-    end
-
-    def ensure_slot_available(position)
-      step = position.step
-      qubit = position.qubit
-      slot = @steps.fetch(step).fetch(qubit)
-      return if slot == 1
-
-      raise Error, "target slot is occupied: cols[#{step}][#{qubit}] = #{slot.inspect}"
-    end
-
-    def trim_leading_empty_steps
-      @steps.shift while @steps.length > 1 && @steps.first.empty?
-    end
-
-    def trim_leading_empty_qubits
-      count = leading_empty_qubits_count
-      return if count.zero?
-
-      @steps.each { |step| step.drop_left(count) }
-      @qubits -= count
-    end
-
-    def leading_empty_qubits_count
-      count = 0
-      count += 1 while removable_leading_qubit?(count)
-      count
-    end
-
-    def removable_leading_qubit?(qubit)
-      qubit < qubits - 1 && @steps.all? { |step| step.empty_at?(qubit) }
     end
 
     def render_qubit_line(qubit)

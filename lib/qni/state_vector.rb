@@ -97,6 +97,36 @@ module Qni
       end
     end
 
+    # Applies a single-qubit gate only when all control qubits are set to 1.
+    class ControlledSingleQubitGateLayout < SingleQubitGateLayout
+      def initialize(qubits:, qubit:, controls:, gate_class:)
+        super(qubits:, qubit:, gate_class:)
+        @controls = controls
+        @qubits = qubits
+      end
+
+      def apply_block(result, block, block_index)
+        each_transformed_pair(block, block_index) do |zero_index, transformed|
+          next unless controls_active?(zero_index)
+
+          result[zero_index] = transformed.fetch(0)
+          result[zero_index + stride] = transformed.fetch(1)
+        end
+      end
+
+      private
+
+      attr_reader :controls, :qubits
+
+      def controls_active?(zero_index)
+        controls.all? { |control| zero_index.anybits?(bit_mask(control)) }
+      end
+
+      def bit_mask(control)
+        1 << (qubits - control - 1)
+      end
+    end
+
     def self.zero(qubits)
       amplitudes = Array.new(1 << qubits, 0.0)
       amplitudes[0] = 1.0
@@ -113,14 +143,11 @@ module Qni
     end
 
     def apply_single_qubit_gate(qubit, gate_class)
-      gate_layout = gate_layout_for(qubit, gate_class)
-      result = amplitudes.dup
+      apply_gate_layout(SingleQubitGateLayout.new(qubits:, qubit:, gate_class:))
+    end
 
-      amplitudes.each_slice(gate_layout.block_size).with_index do |block, block_index|
-        gate_layout.apply_block(result, block, block_index)
-      end
-
-      self.class.new(qubits:, amplitudes: result)
+    def apply_controlled_single_qubit_gate(controls, qubit, gate_class)
+      apply_gate_layout(ControlledSingleQubitGateLayout.new(qubits:, qubit:, controls:, gate_class:))
     end
 
     def to_csv
@@ -131,8 +158,14 @@ module Qni
 
     attr_reader :amplitudes, :qubits
 
-    def gate_layout_for(qubit, gate_class)
-      SingleQubitGateLayout.new(qubits:, qubit:, gate_class:)
+    def apply_gate_layout(gate_layout)
+      result = amplitudes.dup
+
+      amplitudes.each_slice(gate_layout.block_size).with_index do |block, block_index|
+        gate_layout.apply_block(result, block, block_index)
+      end
+
+      self.class.new(qubits:, amplitudes: result)
     end
   end
 end

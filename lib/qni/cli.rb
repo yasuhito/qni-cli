@@ -2,6 +2,8 @@
 
 require 'thor'
 require_relative 'circuit_file'
+require_relative 'cli/add_command'
+require_relative 'cli/add_command_options'
 require_relative 'simulator'
 
 module Qni
@@ -21,13 +23,14 @@ module Qni
 
     desc 'add GATE', 'Add a gate to the circuit'
     method_option :step, type: :numeric, required: true, desc: '0-based step index'
-    method_option :qubit, type: :numeric, required: true, desc: '0-based qubit index'
+    method_option :qubit, type: :numeric, desc: '0-based qubit index'
+    method_option :control, type: :string, desc: 'comma-separated control qubit indices'
     def add(gate)
-      CircuitFile.new(File.expand_path('circuit.json', Dir.pwd)).add_gate(
+      AddCommand.new(
+        circuit_file: CircuitFile.new(File.expand_path('circuit.json', Dir.pwd)),
         gate: normalize_gate(gate),
-        step: fetch_index(:step),
-        qubit: fetch_index(:qubit)
-      )
+        add_options: AddCommandOptions.new(options)
+      ).execute
     rescue CircuitFile::Error => e
       raise Thor::Error, e.message
     end
@@ -54,13 +57,6 @@ module Qni
         return normalized_gate if SUPPORTED_GATES.include?(normalized_gate)
 
         raise Thor::Error, "unsupported gate: #{gate}"
-      end
-
-      def fetch_index(name)
-        value = Integer(options.fetch(name.to_s))
-        return value unless value.negative?
-
-        raise Thor::Error, "#{name} must be >= 0"
       end
     end
   end

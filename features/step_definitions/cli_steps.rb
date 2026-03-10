@@ -11,6 +11,36 @@ require 'json'
   File.write(actual_path, "#{JSON.pretty_generate(actual)}\n")
 end
 
+前提('空の 2 qubit 回路がある') do
+  actual_path = File.join(@scenario_dir, 'circuit.json')
+  actual = {
+    'qubits' => 2,
+    'cols' => [[1, 1]]
+  }
+  File.write(actual_path, "#{JSON.pretty_generate(actual)}\n")
+end
+
+前提('2 qubit の初期状態が {string} である') do |state|
+  actual_path = File.join(@scenario_dir, 'circuit.json')
+  col = case state
+        when '|00>'
+          [1, 1]
+        when '|01>'
+          [1, 'X']
+        when '|10>'
+          ['X', 1]
+        when '|11>'
+          %w[X X]
+        else
+          raise "unsupported 2-qubit initial state: #{state}"
+        end
+  actual = {
+    'qubits' => 2,
+    'cols' => [col]
+  }
+  File.write(actual_path, "#{JSON.pretty_generate(actual)}\n")
+end
+
 もし('{string} を実行') do |command|
   argv = Shellwords.split(command)
   raise "command must start with qni: #{command}" unless argv.first == 'qni'

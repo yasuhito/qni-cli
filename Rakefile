@@ -14,7 +14,7 @@ end
 desc 'Run Cucumber features'
 Cucumber::Rake::Task.new(:cucumber)
 
-FlogTask.new(:flog, 20, %w[lib bin], :max_method) do |task|
+FlogTask.new(:flog, 20, %w[lib bin], :max_method, true) do |task|
   task.verbose = false
 end
 

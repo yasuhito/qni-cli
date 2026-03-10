@@ -15,8 +15,16 @@ module Qni
 
     def add_gate(gate:, step:, qubit:)
       with_domain_errors do
-        circuit = load_or_initialize(step:, qubit:)
+        circuit = load_or_initialize(step:, max_qubit: qubit)
         circuit.add_gate(gate:, step:, qubit:)
+        write(circuit)
+      end
+    end
+
+    def add_controlled_gate(step:, controlled_gate:)
+      with_domain_errors do
+        circuit = load_or_initialize(step:, max_qubit: controlled_gate.symbols.keys.max)
+        circuit.add_controlled_gate(step:, controlled_gate:)
         write(circuit)
       end
     end
@@ -33,8 +41,8 @@ module Qni
 
     attr_reader :path
 
-    def load_or_initialize(step:, qubit:)
-      return Circuit.empty(step:, qubit:) unless File.exist?(path)
+    def load_or_initialize(step:, max_qubit:)
+      return Circuit.empty(step:, qubit: max_qubit) unless File.exist?(path)
 
       load
     end

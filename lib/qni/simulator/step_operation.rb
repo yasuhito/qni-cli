@@ -1,0 +1,76 @@
+# frozen_string_literal: true
+
+module Qni
+  class Simulator
+    # Describes and applies one serialized circuit column to a state vector.
+    class StepOperation
+      CONTROL_SYMBOL = Circuit::CONTROL_SYMBOL
+
+      def initialize(col:, gate_class_for:)
+        @col = col
+        @gate_class_for = gate_class_for
+      end
+
+      def apply(state_vector)
+        return apply_controlled(state_vector) if controlled?
+
+        apply_uncontrolled(state_vector)
+      end
+
+      private
+
+      attr_reader :col, :gate_class_for
+
+      def apply_controlled(state_vector)
+        state_vector.apply_controlled_single_qubit_gate(
+          control_qubits,
+          target_qubit,
+          gate_class
+        )
+      end
+
+      def apply_uncontrolled(state_vector)
+        col.each_with_index.reduce(state_vector) do |current, (gate, qubit)|
+          apply_gate(current, gate, qubit)
+        end
+      end
+
+      def apply_gate(state_vector, gate, qubit)
+        return state_vector if gate == 1
+
+        state_vector.apply_single_qubit_gate(qubit, gate_class_for.call(gate))
+      end
+
+      def controlled?
+        col.include?(CONTROL_SYMBOL)
+      end
+
+      def control_qubits
+        @control_qubits ||= col.each_index.select { |qubit| col.fetch(qubit) == CONTROL_SYMBOL }
+      end
+
+      def gate_class
+        gate_class_for.call(target_gate)
+      end
+
+      def target_gate
+        target.fetch(0)
+      end
+
+      def target_qubit
+        target.fetch(1)
+      end
+
+      def target
+        @target ||= begin
+          targets = col.each_with_index.filter_map do |gate, qubit|
+            [gate, qubit] unless [1, CONTROL_SYMBOL].include?(gate)
+          end
+          raise Error, "unsupported controlled step: #{col.inspect}" unless targets.one?
+
+          targets.first
+        end
+      end
+    end
+  end
+end

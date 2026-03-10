@@ -13,7 +13,7 @@
       """
     かつ 標準出力に次を含む:
       """
-      qni add GATE --qubit=N --step=N
+      qni add GATE --step=N
       """
     かつ 標準出力に次を含む:
       """

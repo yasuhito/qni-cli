@@ -57,6 +57,15 @@
       q0: --T--
       """
 
+  シナリオ: qni view は CNOT ゲートを表示
+    前提 "qni add X --control 0 --qubit 1 --step 0" を実行
+    もし "qni view" を実行
+    ならば 標準出力:
+      """
+      q0: --•--
+      q1: --X--
+      """
+
   シナリオ: 同じ step の 2 qubit に H がある回路を表示
     前提 "qni add H --qubit 0 --step 0" を実行
     かつ "qni add H --qubit 1 --step 0" を実行
