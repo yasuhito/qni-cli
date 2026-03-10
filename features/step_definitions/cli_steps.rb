@@ -91,7 +91,7 @@ end
 end
 
 ならば('標準出力:') do |doc_string|
-  actual = @stdout.delete_suffix("\n")
+  actual = @stdout.sub(/\n+\z/, '')
   next if actual == doc_string
 
   raise <<~MESSAGE

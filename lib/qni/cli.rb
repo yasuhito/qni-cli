@@ -15,8 +15,13 @@ module Qni
       true
     end
 
+    def self.start(given_args = ARGV, config = {})
+      super(normalize_help_request(given_args), config)
+    end
+
     def self.printable_commands(...)
       super.reject { |item| item.first.start_with?('qni tree') }
+           .map { |usage, description| [summarize_usage(usage), description] }
     end
 
     package_name 'qni'
@@ -57,6 +62,26 @@ module Qni
         return normalized_gate if SUPPORTED_GATES.include?(normalized_gate)
 
         raise Thor::Error, "unsupported gate: #{gate}"
+      end
+    end
+
+    class << self
+      private
+
+      def normalize_help_request(given_args)
+        return %w[help add] if add_help_request?(given_args)
+
+        given_args
+      end
+
+      def add_help_request?(given_args)
+        [%w[add], %w[add --help], %w[add -h]].include?(given_args)
+      end
+
+      def summarize_usage(usage)
+        return 'qni add' if usage.start_with?('qni add ')
+
+        usage
       end
     end
   end

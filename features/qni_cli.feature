@@ -7,23 +7,43 @@
   シナリオ: qni はコマンド一覧を表示
     もし "qni" を実行
     ならば コマンドは成功
-    かつ 標準出力に次を含む:
+    かつ 標準出力:
       """
       qni commands:
+        qni add             # Add a gate to the circuit
+        qni help [COMMAND]  # Describe available commands or one specific command
+        qni run             # Show the state vector of the circuit
+        qni view            # Render the circuit as ASCII art
       """
-    かつ 標準出力に次を含む:
+
+  シナリオ: qni add は add コマンドの使い方を表示
+    もし "qni add" を実行
+    ならば コマンドは成功
+    かつ 標準出力:
       """
-      qni add GATE --step=N
+      Usage:
+        qni add GATE --step=N
+
+      Options:
+        --step=N             # 0-based step index
+        [--qubit=N]          # 0-based qubit index
+        [--control=CONTROL]  # comma-separated control qubit indices
+
+      Add a gate to the circuit
       """
-    かつ 標準出力に次を含む:
+
+  シナリオ: qni add --help は add コマンドの使い方を表示
+    もし "qni add --help" を実行
+    ならば コマンドは成功
+    かつ 標準出力:
       """
-      qni help [COMMAND]
-      """
-    かつ 標準出力に次を含む:
-      """
-      qni view
-      """
-    かつ 標準出力に次を含まない:
-      """
-      qni tree
+      Usage:
+        qni add GATE --step=N
+
+      Options:
+        --step=N             # 0-based step index
+        [--qubit=N]          # 0-based qubit index
+        [--control=CONTROL]  # comma-separated control qubit indices
+
+      Add a gate to the circuit
       """
