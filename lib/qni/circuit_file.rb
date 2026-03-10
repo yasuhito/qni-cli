@@ -19,6 +19,14 @@ module Qni
       end
     end
 
+    def load
+      with_domain_errors do
+        raise Error, 'circuit.json does not exist' unless File.exist?(path)
+
+        Circuit.from_h(JSON.parse(File.read(path)))
+      end
+    end
+
     private
 
     attr_reader :path
@@ -26,7 +34,7 @@ module Qni
     def load_or_initialize(step:, qubit:)
       return Circuit.empty(step:, qubit:) unless File.exist?(path)
 
-      Circuit.from_h(JSON.parse(File.read(path)))
+      load
     end
 
     def write(circuit)

@@ -55,6 +55,10 @@ module Qni
       @steps.fetch(step).place_gate!(qubit, gate)
     end
 
+    def render_ascii
+      (0...qubits).map { |qubit| render_qubit_line(qubit) }.join("\n")
+    end
+
     def to_h
       {
         'qubits' => qubits,
@@ -86,6 +90,16 @@ module Qni
       return if slot == 1
 
       raise Error, "target slot is occupied: cols[#{step}][#{qubit}] = #{slot.inspect}"
+    end
+
+    def render_qubit_line(qubit)
+      "q#{qubit}: #{@steps.map { |step| render_slot(step.fetch(qubit)) }.join}"
+    end
+
+    def render_slot(slot)
+      return '-----' if slot == 1
+
+      "--#{slot}--"
     end
   end
 end

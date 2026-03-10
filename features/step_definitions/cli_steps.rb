@@ -51,6 +51,19 @@ end
   MESSAGE
 end
 
+ならば('標準出力:') do |doc_string|
+  actual = @stdout.delete_suffix("\n")
+  next if actual == doc_string
+
+  raise <<~MESSAGE
+    expected stdout to match
+    expected:
+    #{doc_string}
+    actual:
+    #{actual}
+  MESSAGE
+end
+
 ならば('{string} の内容:') do |path, doc_string|
   actual_path = File.join(@scenario_dir, path)
   raise "expected file to exist: #{path}" unless File.exist?(actual_path)

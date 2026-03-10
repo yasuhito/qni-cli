@@ -20,6 +20,13 @@ module Qni
       raise Thor::Error, e.message
     end
 
+    desc 'view', 'Render the circuit as ASCII art'
+    def view
+      puts CircuitFile.new(File.expand_path('circuit.json', Dir.pwd)).load.render_ascii
+    rescue CircuitFile::Error => e
+      raise Thor::Error, e.message
+    end
+
     no_commands do
       def perform_add(gate, step, qubit)
         CircuitFile.new(File.expand_path('circuit.json', Dir.pwd)).add_gate!(gate:, step:, qubit:)
