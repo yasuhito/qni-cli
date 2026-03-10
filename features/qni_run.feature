@@ -5,12 +5,12 @@
   qni run を実行したい
 
   シナリオ: qni run コマンドは成功
-    前提 "qni add H --step 0 --qubit 0" を実行
+    前提 "qni add H --qubit 0 --step 0" を実行
     もし "qni run" を実行
     ならば コマンドは成功
 
   シナリオ: qni run は状態ベクトルを標準出力に表示
-    前提 "qni add H --step 0 --qubit 0" を実行
+    前提 "qni add H --qubit 0 --step 0" を実行
     もし "qni run" を実行
     ならば 標準出力:
       """
