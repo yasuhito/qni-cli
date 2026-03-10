@@ -4,6 +4,7 @@ require_relative 'circuit/controlled_gate'
 require_relative 'circuit/layout_normalizer'
 require_relative 'circuit/slot_position'
 require_relative 'circuit/symbol_placement'
+require_relative 'swap_gate'
 require_relative 'step'
 require_relative 'circuit/step_width_validator'
 
@@ -68,6 +69,10 @@ module Qni
 
     def add_controlled_gate(step:, controlled_gate:)
       add_placement(SymbolPlacement.new(step:, symbols: controlled_gate.symbols))
+    end
+
+    def add_swap_gate(step:, targets:)
+      add_placement(SymbolPlacement.new(step:, symbols: targets.to_h { |target| [target, SwapGate::SYMBOL] }))
     end
 
     def render_ascii

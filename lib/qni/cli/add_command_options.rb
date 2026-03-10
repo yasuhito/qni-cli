@@ -20,7 +20,18 @@ module Qni
       end
 
       def qubit
-        fetch_required_index(:qubit)
+        targets = fetch_required_indices(:qubit)
+        raise Thor::Error, 'qubit must contain exactly 1 index' unless targets.one?
+
+        targets.first
+      end
+
+      def swap_targets
+        targets = fetch_required_indices(:qubit)
+        raise Thor::Error, 'SWAP requires exactly 2 target qubits' unless targets.length == 2
+        raise Thor::Error, 'SWAP target qubits must be different' unless targets.uniq == targets
+
+        targets
       end
 
       def step
@@ -40,6 +51,13 @@ module Qni
         raise Thor::Error, "#{name} is required" if value.to_s.empty?
 
         parse_non_negative_integer(value, name)
+      end
+
+      def fetch_required_indices(name)
+        value = options[name.to_s]
+        raise Thor::Error, "#{name} is required" if value.to_s.empty?
+
+        value.split(',').map { |entry| parse_non_negative_integer(entry, name) }
       end
 
       def parse_non_negative_integer(value, name)

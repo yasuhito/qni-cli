@@ -29,6 +29,14 @@ module Qni
       end
     end
 
+    def add_swap_gate(step:, targets:)
+      with_domain_errors do
+        circuit = load_or_initialize(step:, max_qubit: targets.max)
+        circuit.add_swap_gate(step:, targets:)
+        write(circuit)
+      end
+    end
+
     def load
       with_domain_errors do
         raise Error, 'circuit.json does not exist' unless File.exist?(path)

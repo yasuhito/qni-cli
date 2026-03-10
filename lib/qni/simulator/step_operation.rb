@@ -5,6 +5,7 @@ module Qni
     # Describes and applies one serialized circuit column to a state vector.
     class StepOperation
       CONTROL_SYMBOL = Circuit::CONTROL_SYMBOL
+      SWAP_SYMBOL = SwapGate::SYMBOL
 
       def initialize(col:, gate_class_for:)
         @col = col
@@ -12,6 +13,7 @@ module Qni
       end
 
       def apply(state_vector)
+        return apply_swap(state_vector) if swap?
         return apply_controlled(state_vector) if controlled?
 
         apply_uncontrolled(state_vector)
@@ -20,6 +22,12 @@ module Qni
       private
 
       attr_reader :col, :gate_class_for
+
+      def apply_swap(state_vector)
+        raise Error, "unsupported swap step: #{col.inspect}" unless valid_swap_step?
+
+        state_vector.apply_swap(*swap_qubits)
+      end
 
       def apply_controlled(state_vector)
         state_vector.apply_controlled_single_qubit_gate(
@@ -39,6 +47,10 @@ module Qni
         return state_vector if gate == 1
 
         state_vector.apply_single_qubit_gate(qubit, gate_class_for.call(gate))
+      end
+
+      def swap?
+        col.include?(SWAP_SYMBOL)
       end
 
       def controlled?
@@ -70,6 +82,14 @@ module Qni
 
           targets.first
         end
+      end
+
+      def swap_qubits
+        @swap_qubits ||= col.each_index.select { |qubit| col.fetch(qubit) == SWAP_SYMBOL }
+      end
+
+      def valid_swap_step?
+        swap_qubits.length == 2 && col.all? { |slot| [1, SWAP_SYMBOL].include?(slot) }
       end
     end
   end

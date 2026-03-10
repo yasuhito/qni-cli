@@ -127,6 +127,24 @@ module Qni
       end
     end
 
+    # Reorders amplitudes to swap two qubits.
+    class SwapLayout
+      def initialize(qubits:, first_qubit:, second_qubit:)
+        @first_mask = 1 << (qubits - first_qubit - 1)
+        @second_mask = 1 << (qubits - second_qubit - 1)
+      end
+
+      def destination_index(index)
+        return index if index.anybits?(first_mask) == index.anybits?(second_mask)
+
+        index ^ first_mask ^ second_mask
+      end
+
+      private
+
+      attr_reader :first_mask, :second_mask
+    end
+
     def self.zero(qubits)
       amplitudes = Array.new(1 << qubits, 0.0)
       amplitudes[0] = 1.0
@@ -150,6 +168,10 @@ module Qni
       apply_gate_layout(ControlledSingleQubitGateLayout.new(qubits:, qubit:, controls:, gate_class:))
     end
 
+    def apply_swap(first_qubit, second_qubit)
+      apply_swap_layout(SwapLayout.new(qubits:, first_qubit:, second_qubit:))
+    end
+
     def to_csv
       amplitudes.map { |amplitude| self.class.format_amplitude(amplitude) }.join(',')
     end
@@ -163,6 +185,16 @@ module Qni
 
       amplitudes.each_slice(gate_layout.block_size).with_index do |block, block_index|
         gate_layout.apply_block(result, block, block_index)
+      end
+
+      self.class.new(qubits:, amplitudes: result)
+    end
+
+    def apply_swap_layout(layout)
+      result = Array.new(amplitudes.length)
+
+      amplitudes.each_with_index do |amplitude, index|
+        result[layout.destination_index(index)] = amplitude
       end
 
       self.class.new(qubits:, amplitudes: result)

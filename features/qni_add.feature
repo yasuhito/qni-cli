@@ -20,6 +20,10 @@
     もし "qni add X --control 0 --qubit 1 --step 0" を実行
     ならば 標準出力は空
 
+  シナリオ: qni add SWAP コマンドは成功
+    もし "qni add SWAP --qubit 0,1 --step 0" を実行
+    ならば コマンドは成功
+
   シナリオ: すでに H があるスロットへの qni add は失敗
     前提 "qni add H --qubit 0 --step 0" を実行
     もし "qni add H --qubit 0 --step 0" を実行

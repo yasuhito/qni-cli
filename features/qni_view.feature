@@ -57,6 +57,15 @@
       q0: --T--
       """
 
+  シナリオ: qni view は SWAP ゲートを表示
+    前提 "qni add SWAP --qubit 0,1 --step 0" を実行
+    もし "qni view" を実行
+    ならば 標準出力:
+      """
+      q0: --Swap--
+      q1: --Swap--
+      """
+
   シナリオ: qni view は CNOT ゲートを表示
     前提 "qni add X --control 0 --qubit 1 --step 0" を実行
     もし "qni view" を実行

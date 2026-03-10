@@ -2,6 +2,7 @@
 
 require_relative 'circuit'
 require_relative 'h_gate'
+require_relative 'swap_gate'
 require_relative 'simulator/step_operation'
 require_relative 'state_vector'
 require_relative 'x_gate'
