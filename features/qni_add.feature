@@ -40,3 +40,16 @@
         ]
       }
       """
+
+  シナリオ: 既存回路に新しい qubit を追加できる
+    前提 "qni add H --qubit 0 --step 0" を実行
+    もし "qni add H --qubit 1 --step 0" を実行
+    ならば "circuit.json" の内容:
+      """
+      {
+        "qubits": 2,
+        "cols": [
+          ["H", "H"]
+        ]
+      }
+      """

@@ -42,6 +42,10 @@ module Qni
       @slots.shift(count)
     end
 
+    def extend_right!(count)
+      @slots.concat(Array.new(count, 1))
+    end
+
     def to_a
       @slots.dup
     end

@@ -48,7 +48,7 @@ module Qni
     attr_reader :qubits
 
     def add_gate!(gate:, step:, qubit:)
-      validate_qubit!(qubit)
+      expand_qubits_to(qubit)
       expand_to(step)
       ensure_slot_available!(step, qubit)
 
@@ -77,14 +77,16 @@ module Qni
       raise Error, 'each column in cols must have exactly qubits entries'
     end
 
-    def validate_qubit!(qubit)
-      return if qubit < qubits
-
-      raise Error, 'qubit is out of range for this circuit'
-    end
-
     def expand_to(step)
       @steps << Step.empty(qubits) until @steps.length > step
+    end
+
+    def expand_qubits_to(qubit)
+      return if qubit < qubits
+
+      count = qubit - qubits + 1
+      @steps.each { |step| step.extend_right!(count) }
+      @qubits += count
     end
 
     def ensure_slot_available!(step, qubit)
