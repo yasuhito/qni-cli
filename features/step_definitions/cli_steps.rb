@@ -64,6 +64,30 @@ end
   MESSAGE
 end
 
+ならば('標準出力に次を含む:') do |doc_string|
+  next if @stdout.include?(doc_string)
+
+  raise <<~MESSAGE
+    expected stdout to include
+    expected:
+    #{doc_string}
+    actual:
+    #{@stdout}
+  MESSAGE
+end
+
+ならば('標準出力に次を含まない:') do |doc_string|
+  next unless @stdout.include?(doc_string)
+
+  raise <<~MESSAGE
+    expected stdout not to include
+    unexpected:
+    #{doc_string}
+    actual:
+    #{@stdout}
+  MESSAGE
+end
+
 ならば('標準エラー:') do |doc_string|
   actual = @stderr.delete_suffix("\n")
   next if actual == doc_string

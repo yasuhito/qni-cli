@@ -9,6 +9,10 @@ module Qni
       true
     end
 
+    def self.printable_commands(...)
+      super.reject { |item| item.first.start_with?('qni tree') }
+    end
+
     package_name 'qni'
 
     desc 'add GATE', 'Add a gate to the circuit'
