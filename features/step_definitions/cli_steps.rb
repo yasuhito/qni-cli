@@ -2,9 +2,12 @@
 
 require 'json'
 
-前提('{string} を次で作成:') do |path, doc_string|
-  actual_path = File.join(@scenario_dir, path)
-  actual = JSON.parse(doc_string)
+前提('空の 1 qubit 回路がある') do
+  actual_path = File.join(@scenario_dir, 'circuit.json')
+  actual = {
+    'qubits' => 1,
+    'cols' => [[1]]
+  }
   File.write(actual_path, "#{JSON.pretty_generate(actual)}\n")
 end
 
