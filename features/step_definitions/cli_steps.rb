@@ -2,6 +2,12 @@
 
 require 'json'
 
+前提('{string} を次で作成:') do |path, doc_string|
+  actual_path = File.join(@scenario_dir, path)
+  actual = JSON.parse(doc_string)
+  File.write(actual_path, "#{JSON.pretty_generate(actual)}\n")
+end
+
 もし('{string} を実行') do |command|
   argv = Shellwords.split(command)
   raise "command must start with qni: #{command}" unless argv.first == 'qni'
