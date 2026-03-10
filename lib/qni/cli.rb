@@ -7,6 +7,8 @@ require_relative 'simulator'
 module Qni
   # Thor-based command-line interface for qni subcommands.
   class CLI < Thor
+    SUPPORTED_GATES = %w[H X].freeze
+
     def self.exit_on_failure?
       true
     end
@@ -49,7 +51,7 @@ module Qni
     no_commands do
       def normalize_gate(gate)
         normalized_gate = gate.to_s.upcase
-        return normalized_gate if normalized_gate == 'H'
+        return normalized_gate if SUPPORTED_GATES.include?(normalized_gate)
 
         raise Thor::Error, "unsupported gate: #{gate}"
       end
