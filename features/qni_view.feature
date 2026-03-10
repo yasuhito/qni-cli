@@ -16,3 +16,11 @@
       """
       q0: --H--
       """
+
+  シナリオ: 回路 json がないとき qni view はエラーメッセージを出して失敗
+    もし "qni view" を実行
+    ならば コマンドは失敗
+    かつ 標準エラー:
+      """
+      circuit.json does not exist
+      """

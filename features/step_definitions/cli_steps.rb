@@ -64,6 +64,19 @@ end
   MESSAGE
 end
 
+ならば('標準エラー:') do |doc_string|
+  actual = @stderr.delete_suffix("\n")
+  next if actual == doc_string
+
+  raise <<~MESSAGE
+    expected stderr to match
+    expected:
+    #{doc_string}
+    actual:
+    #{actual}
+  MESSAGE
+end
+
 ならば('{string} の内容:') do |path, doc_string|
   actual_path = File.join(@scenario_dir, path)
   raise "expected file to exist: #{path}" unless File.exist?(actual_path)
