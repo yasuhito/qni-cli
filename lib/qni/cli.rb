@@ -7,7 +7,7 @@ require_relative 'simulator'
 module Qni
   # Thor-based command-line interface for qni subcommands.
   class CLI < Thor
-    SUPPORTED_GATES = %w[H X Y Z].freeze
+    SUPPORTED_GATES = %w[H X Y Z S].freeze
 
     def self.exit_on_failure?
       true

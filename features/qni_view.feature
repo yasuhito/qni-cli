@@ -41,6 +41,14 @@
       q0: --Z--
       """
 
+  シナリオ: qni view は S ゲートを表示
+    前提 "qni add S --qubit 0 --step 0" を実行
+    もし "qni view" を実行
+    ならば 標準出力:
+      """
+      q0: --S--
+      """
+
   シナリオ: 同じ step の 2 qubit に H がある回路を表示
     前提 "qni add H --qubit 0 --step 0" を実行
     かつ "qni add H --qubit 1 --step 0" を実行
