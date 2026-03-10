@@ -8,6 +8,9 @@ require_relative 'cli/add_help'
 require_relative 'cli/add_command_options'
 require_relative 'simulator'
 require_relative 'swap_gate'
+require_relative 'sqrt_x_gate'
+require_relative 's_dagger_gate'
+require_relative 't_dagger_gate'
 
 module Qni
   # Thor-based command-line interface for qni subcommands.
@@ -19,11 +22,15 @@ module Qni
       'RY' => RyGate::COMMAND_SYMBOL,
       'RZ' => RzGate::COMMAND_SYMBOL,
       'S' => 'S',
+      'S†' => SDaggerGate::SYMBOL,
       'SWAP' => SwapGate::SYMBOL,
       'T' => 'T',
+      'T†' => TDaggerGate::SYMBOL,
       'X' => 'X',
+      'X^½' => SqrtXGate::SYMBOL,
       'Y' => 'Y',
-      'Z' => 'Z'
+      'Z' => 'Z',
+      '√X' => SqrtXGate::SYMBOL
     }.freeze
 
     def self.exit_on_failure?

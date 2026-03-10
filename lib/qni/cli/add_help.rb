@@ -16,7 +16,7 @@ module Qni
           Add a gate to ./circuit.json.
           If ./circuit.json does not exist, qni creates the smallest circuit that can hold the gate.
           step and qubit are 0-based indices.
-          Supported gates: H, X, Y, Z, S, T, P, Rx, Ry, Rz, SWAP.
+          Supported gates: H, X, Y, Z, S, S†, T, T†, √X, P, Rx, Ry, Rz, SWAP.
           With --control, GATE is placed on --qubit and "•" is placed on each control qubit.
           CNOT is written as qni add X --control 0 --qubit 1 --step 0.
           ANGLED_GATE can be P, Rx, Ry, or Rz and is saved as GATE(angle).
@@ -33,6 +33,8 @@ module Qni
           qni add X --qubit 1 --step 3
           qni add X --control 0 --qubit 1 --step 0
           qni add H --control 0 --qubit 2 --step 4
+          qni add √X --qubit 0 --step 1
+          qni add S† --qubit 1 --step 2
           qni add P --angle π/3 --qubit 0 --step 1
           qni add Rx --angle π/2 --qubit 0 --step 2
           qni add Rz --angle pi/4 --control 0 --qubit 1 --step 3

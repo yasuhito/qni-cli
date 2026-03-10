@@ -4,14 +4,17 @@ require_relative 'angle_expression'
 require_relative 'angled_gates'
 require_relative 'circuit'
 require_relative 'h_gate'
+require_relative 's_dagger_gate'
 require_relative 'swap_gate'
 require_relative 'simulator/step_operation'
+require_relative 'sqrt_x_gate'
 require_relative 'state_vector'
 require_relative 'x_gate'
 require_relative 'y_gate'
 require_relative 'z_gate'
 require_relative 's_gate'
 require_relative 't_gate'
+require_relative 't_dagger_gate'
 
 module Qni
   # Executes a circuit and produces a rendered state vector.
@@ -22,8 +25,11 @@ module Qni
     GATE_CLASSES = {
       HGate::SYMBOL => HGate,
       SGate::SYMBOL => SGate,
+      SDaggerGate::SYMBOL => SDaggerGate,
       TGate::SYMBOL => TGate,
+      TDaggerGate::SYMBOL => TDaggerGate,
       XGate::SYMBOL => XGate,
+      SqrtXGate::SYMBOL => SqrtXGate,
       YGate::SYMBOL => YGate,
       ZGate::SYMBOL => ZGate
     }.freeze

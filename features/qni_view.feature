@@ -49,12 +49,36 @@
       q0: --S--
       """
 
+  シナリオ: qni view は S† ゲートを表示
+    前提 "qni add S† --qubit 0 --step 0" を実行
+    もし "qni view" を実行
+    ならば 標準出力:
+      """
+      q0: --S†-
+      """
+
   シナリオ: qni view は T ゲートを表示
     前提 "qni add T --qubit 0 --step 0" を実行
     もし "qni view" を実行
     ならば 標準出力:
       """
       q0: --T--
+      """
+
+  シナリオ: qni view は T† ゲートを表示
+    前提 "qni add T† --qubit 0 --step 0" を実行
+    もし "qni view" を実行
+    ならば 標準出力:
+      """
+      q0: --T†-
+      """
+
+  シナリオ: qni view は √X ゲートを表示
+    前提 "qni add √X --qubit 0 --step 0" を実行
+    もし "qni view" を実行
+    ならば 標準出力:
+      """
+      q0: -√X--
       """
 
   シナリオ: qni view は Phase ゲートを表示
@@ -105,6 +129,15 @@
       """
       q0: --•--
       q1: --⊕--
+      """
+
+  シナリオ: qni view は control 付き √X ゲートを表示
+    前提 "qni add √X --control 0 --qubit 1 --step 0" を実行
+    もし "qni view" を実行
+    ならば 標準出力:
+      """
+      q0: --•--
+      q1: -√X--
       """
 
   シナリオ: qni view は control 付き Rz ゲートを表示
