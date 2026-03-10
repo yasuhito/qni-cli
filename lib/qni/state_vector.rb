@@ -3,6 +3,70 @@
 module Qni
   # Holds amplitudes for the current circuit state and renders them for CLI output.
   class StateVector
+    # Formats real and complex amplitudes for CLI output.
+    class AmplitudeFormatter
+      EPSILON = Float::EPSILON
+
+      def initialize(amplitude)
+        @amplitude = amplitude
+      end
+
+      def format
+        return normalized_value.to_s unless amplitude.is_a?(Complex)
+
+        format_complex
+      end
+
+      private
+
+      attr_reader :amplitude
+
+      def format_complex
+        return formatted_real if purely_real?
+        return "#{formatted_imaginary}i" if purely_imaginary?
+
+        "#{formatted_real}#{imaginary_prefix}#{formatted_imaginary}i"
+      end
+
+      def normalized_value
+        amplitude.abs < EPSILON ? 0.0 : amplitude
+      end
+
+      def purely_real?
+        imaginary.zero?
+      end
+
+      def purely_imaginary?
+        real.zero?
+      end
+
+      def formatted_real
+        real.to_s
+      end
+
+      def formatted_imaginary
+        imaginary.to_s
+      end
+
+      def imaginary_prefix
+        imaginary.positive? ? '+' : ''
+      end
+
+      def real
+        @real ||= begin
+          value = amplitude.real
+          value.abs < EPSILON ? 0.0 : value
+        end
+      end
+
+      def imaginary
+        @imaginary ||= begin
+          value = amplitude.imag
+          value.abs < EPSILON ? 0.0 : value
+        end
+      end
+    end
+
     # Encapsulates how a single-qubit gate maps amplitude pairs within a state vector.
     class SingleQubitGateLayout
       def initialize(qubits:, qubit:, gate_class:)
@@ -40,8 +104,7 @@ module Qni
     end
 
     def self.format_amplitude(amplitude)
-      normalized = amplitude.abs < Float::EPSILON ? 0.0 : amplitude
-      normalized.to_s
+      AmplitudeFormatter.new(amplitude).format
     end
 
     def initialize(qubits:, amplitudes:)

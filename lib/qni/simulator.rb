@@ -3,6 +3,7 @@
 require_relative 'h_gate'
 require_relative 'state_vector'
 require_relative 'x_gate'
+require_relative 'y_gate'
 
 module Qni
   # Executes a circuit and produces a rendered state vector.
@@ -12,7 +13,8 @@ module Qni
 
     GATE_CLASSES = {
       HGate::SYMBOL => HGate,
-      XGate::SYMBOL => XGate
+      XGate::SYMBOL => XGate,
+      YGate::SYMBOL => YGate
     }.freeze
 
     def initialize(circuit)
