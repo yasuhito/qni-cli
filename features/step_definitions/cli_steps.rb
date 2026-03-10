@@ -29,6 +29,18 @@ end
   MESSAGE
 end
 
+ならば('コマンドは失敗') do
+  next unless @status.success?
+
+  raise <<~MESSAGE
+    expected command to fail, but it succeeded
+    stdout:
+    #{@stdout}
+    stderr:
+    #{@stderr}
+  MESSAGE
+end
+
 ならば('標準出力は空') do
   next if @stdout.empty?
 

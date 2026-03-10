@@ -5,6 +5,10 @@ require_relative 'circuit_file'
 
 module Qni
   class CLI < Thor
+    def self.exit_on_failure?
+      true
+    end
+
     package_name 'qni'
 
     desc 'add GATE', 'Add a gate to the circuit'

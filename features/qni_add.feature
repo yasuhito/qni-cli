@@ -11,3 +11,8 @@
   シナリオ: qni add H の標準出力は空
     もし "qni add H --step 0 --qubit 0" を実行
     ならば 標準出力は空
+
+  シナリオ: すでに H があるスロットへの qni add は失敗
+    前提 "qni add H --step 0 --qubit 0" を実行
+    かつ "qni add H --step 0 --qubit 0" を実行
+    ならば コマンドは失敗
