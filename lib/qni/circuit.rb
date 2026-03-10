@@ -53,6 +53,8 @@ module Qni
       ensure_slot_available!(step, qubit)
 
       @steps.fetch(step).place_gate!(qubit, gate)
+      trim_leading_empty_steps!
+      trim_leading_empty_qubits!
     end
 
     def render_ascii
@@ -90,6 +92,28 @@ module Qni
       return if slot == 1
 
       raise Error, "target slot is occupied: cols[#{step}][#{qubit}] = #{slot.inspect}"
+    end
+
+    def trim_leading_empty_steps!
+      @steps.shift while @steps.length > 1 && @steps.first.empty?
+    end
+
+    def trim_leading_empty_qubits!
+      count = leading_empty_qubits_count
+      return if count.zero?
+
+      @steps.each { |step| step.drop_left!(count) }
+      @qubits -= count
+    end
+
+    def leading_empty_qubits_count
+      count = 0
+      count += 1 while removable_leading_qubit?(count)
+      count
+    end
+
+    def removable_leading_qubit?(qubit)
+      qubit < qubits - 1 && @steps.all? { |step| step.empty_at?(qubit) }
     end
 
     def render_qubit_line(qubit)

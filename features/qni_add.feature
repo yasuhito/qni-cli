@@ -16,3 +16,27 @@
     前提 "qni add H --step 0 --qubit 0" を実行
     もし "qni add H --step 0 --qubit 0" を実行
     ならば コマンドは失敗
+
+  シナリオ: 空の先頭ステップは自動的に削除される
+    もし "qni add H --step 1 --qubit 0" を実行
+    ならば "circuit.json" の内容:
+      """
+      {
+        "qubits": 1,
+        "cols": [
+          ["H"]
+        ]
+      }
+      """
+
+  シナリオ: 空の先頭 qubit は自動的に削除される
+    もし "qni add H --step 0 --qubit 1" を実行
+    ならば "circuit.json" の内容:
+      """
+      {
+        "qubits": 1,
+        "cols": [
+          ["H"]
+        ]
+      }
+      """

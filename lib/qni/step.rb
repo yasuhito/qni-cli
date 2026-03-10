@@ -30,6 +30,18 @@ module Qni
       @slots[qubit] = gate
     end
 
+    def empty?
+      @slots.all?(1)
+    end
+
+    def empty_at?(qubit)
+      fetch(qubit) == 1
+    end
+
+    def drop_left!(count)
+      @slots.shift(count)
+    end
+
     def to_a
       @slots.dup
     end
