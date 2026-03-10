@@ -2,6 +2,7 @@
 
 require 'thor'
 require_relative 'circuit_file'
+require_relative 'simulator'
 
 module Qni
   class CLI < Thor
@@ -28,6 +29,15 @@ module Qni
     def view
       puts CircuitFile.new(File.expand_path('circuit.json', Dir.pwd)).load.render_ascii
     rescue CircuitFile::Error => e
+      raise Thor::Error, e.message
+    end
+
+    map 'run' => :simulate
+    desc 'run', 'Show the state vector of the circuit'
+    def simulate
+      circuit = CircuitFile.new(File.expand_path('circuit.json', Dir.pwd)).load
+      puts Simulator.new(circuit).render_state_vector
+    rescue CircuitFile::Error, Simulator::Error => e
       raise Thor::Error, e.message
     end
 
