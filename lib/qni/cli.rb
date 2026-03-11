@@ -6,6 +6,9 @@ require_relative 'circuit_file'
 require_relative 'cli/add_command'
 require_relative 'cli/add_help'
 require_relative 'cli/add_command_options'
+require_relative 'cli/clear_help'
+require_relative 'cli/expect_help'
+require_relative 'cli/routing'
 require_relative 'simulator'
 require_relative 'swap_gate'
 require_relative 'sqrt_x_gate'
@@ -38,20 +41,30 @@ module Qni
     end
 
     def self.start(given_args = ARGV, config = {})
-      return $stdout.puts(AddHelp::TEXT) if add_help_request?(given_args)
+      if (help_text = requested_help_text(given_args))
+        return $stdout.puts(help_text)
+      end
 
-      if help_request?(given_args)
-        warn(help_unavailable_message)
+      if CliRouting.help_request?(given_args)
+        warn(CliRouting.help_unavailable_message)
         exit(1)
       end
 
       super
     end
 
+    def self.requested_help_text(given_args)
+      return AddHelp::TEXT if CliRouting.add_help_request?(given_args)
+      return ClearHelp::TEXT if CliRouting.clear_help_request?(given_args)
+      return ExpectHelp::TEXT if CliRouting.expect_help_request?(given_args)
+
+      nil
+    end
+
     def self.printable_commands(...)
       super.reject { |item| item.first.start_with?('qni tree') }
            .filter_map do |usage, description|
-             summarized_usage = summarize_usage(usage)
+             summarized_usage = CliRouting.summarize_usage(usage)
              [summarized_usage, description] if summarized_usage
            end
     end
@@ -80,11 +93,26 @@ module Qni
       raise Thor::Error, e.message
     end
 
+    desc 'clear', 'Delete the current circuit file'
+    def clear
+      CircuitFile.new(File.expand_path('circuit.json', Dir.pwd)).clear
+    rescue CircuitFile::Error => e
+      raise Thor::Error, e.message
+    end
+
     map 'run' => :simulate
     desc 'run', 'Show the state vector of the circuit'
     def simulate
       circuit = CircuitFile.new(File.expand_path('circuit.json', Dir.pwd)).load
       puts Simulator.new(circuit).render_state_vector
+    rescue CircuitFile::Error, Simulator::Error => e
+      raise Thor::Error, e.message
+    end
+
+    desc 'expect PAULI_STRING [PAULI_STRING...]', 'Show expectation values of Pauli strings'
+    def expect(*pauli_strings)
+      circuit = CircuitFile.new(File.expand_path('circuit.json', Dir.pwd)).load
+      puts Simulator.new(circuit).render_expectation_values(pauli_strings.map(&:upcase))
     rescue CircuitFile::Error, Simulator::Error => e
       raise Thor::Error, e.message
     end
@@ -95,29 +123,6 @@ module Qni
         return SUPPORTED_GATES.fetch(normalized_gate) if SUPPORTED_GATES.key?(normalized_gate)
 
         raise Thor::Error, "unsupported gate: #{gate}"
-      end
-    end
-
-    class << self
-      private
-
-      def add_help_request?(given_args)
-        [%w[add], %w[add --help], %w[add -h]].include?(given_args)
-      end
-
-      def help_request?(given_args)
-        given_args.first == 'help'
-      end
-
-      def help_unavailable_message
-        'qni help is not available; use qni or qni COMMAND --help'
-      end
-
-      def summarize_usage(usage)
-        return nil if usage.start_with?('qni help')
-        return 'qni add' if usage.start_with?('qni add ')
-
-        usage
       end
     end
   end

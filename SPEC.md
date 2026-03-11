@@ -2,9 +2,9 @@
 
 ## 目的
 
-`qni-cli` は、量子回路を表す JSON ファイルをコマンドラインから安全に更新し、内容を確認するためのツールとする。
+`qni-cli` は、量子回路を表す JSON ファイルをコマンドラインから安全に更新し、内容を確認し、シミュレーション結果を読むためのツールとする。
 
-MVP では、単一量子ビットゲート `H` / `X` / `Y` / `Z` / `S` / `S†` / `T` / `T†` / `√X` / `P(angle)` / `Rx(angle)` / `Ry(angle)` / `Rz(angle)` と、2 つの target qubit を持つ `SWAP` を任意の `step` と `qubit` に追加する `add` コマンド、状態ベクトルを表示する `run` コマンドを対象にする。単一量子ビットゲートには `--control` を付けた制御付き追加も含む。
+MVP では、単一量子ビットゲート `H` / `X` / `Y` / `Z` / `S` / `S†` / `T` / `T†` / `√X` / `P(angle)` / `Rx(angle)` / `Ry(angle)` / `Rz(angle)` と、2 つの target qubit を持つ `SWAP` を任意の `step` と `qubit` に追加する `add` コマンド、状態ベクトルを表示する `run` コマンド、Pauli 文字列の期待値を表示する `expect` コマンド、現在の回路ファイルを削除する `clear` コマンドを対象にする。単一量子ビットゲートには `--control` を付けた制御付き追加も含む。
 
 ## 実装言語
 
@@ -118,6 +118,14 @@ qni add <angled_gate> --angle <angle> --control <control> --step <step> --qubit 
 qni add SWAP --step <step> --qubit <qubit0>,<qubit1>
 ```
 
+```bash
+qni expect <pauli_string> [<pauli_string> ...]
+```
+
+```bash
+qni clear
+```
+
 ### 引数
 
 - `<gate>`: 追加するゲート種別。MVP では `H` と `X` と `Y` と `Z` と `S` と `S†` と `T` と `T†` と `√X` と `P` と `Rx` と `Ry` と `Rz` と `SWAP` を許可する。`√X` は保存時に `"X^½"` に正規化する。
@@ -126,6 +134,7 @@ qni add SWAP --step <step> --qubit <qubit0>,<qubit1>
 - `--control <control>`: 制御量子ビット番号。カンマ区切りで複数指定できる。`X` と組み合わせた場合は CNOT / 多重制御 X を表す。
 - `<angled_gate>`: `P`, `Rx`, `Ry`, `Rz` のいずれか。
 - `--angle <angle>`: `P`, `Rx`, `Ry`, `Rz` に必須の角度。`π/3`, `pi/3`, `3*pi/4`, `0.5` のような値を受け付け、保存時は `P(π/3)`, `Rx(π/2)` のような canonical form に正規化する。
+- `<pauli_string>`: `I`, `X`, `Y`, `Z` だけで構成された観測量文字列。長さは回路の `qubits` と一致必須。例: `Z`, `ZZ`, `XIX`, `ZZI`。
 
 ### `run` コマンド名
 
@@ -133,9 +142,22 @@ qni add SWAP --step <step> --qubit <qubit0>,<qubit1>
 qni run
 ```
 
+### `expect` コマンド名
+
+```bash
+qni expect <pauli_string> [<pauli_string> ...]
+```
+
+### `clear` コマンド名
+
+```bash
+qni clear
+```
+
 ### 対象ファイル
 
 - MVP の `add` コマンドは、カレントディレクトリの `./circuit.json` を固定で読み書きする。
+- `clear` コマンドもカレントディレクトリの `./circuit.json` を削除対象にする。
 - 更新対象ファイルを引数で切り替える機能は、MVP では持たない。
 - 将来、`--file` のような明示オプションを追加する余地はあるが、初期実装では不要とする。
 - `./circuit.json` が存在しない場合、`add` コマンドはファイルを自動作成してから更新する。
@@ -309,6 +331,30 @@ qni run
 0.0,1.0i
 ```
 
+### `expect` 成功時
+
+- 終了コード: `0`
+- 標準出力に期待値を 1 行 1 観測量で表示する
+- 出力形式は `PAULI_STRING=value`
+- `value` は `run` と同じ数値書式を使う
+- `expect` は `run` と同じ状態ベクトルシミュレーション結果の上で期待値を計算する
+- 各 Pauli 文字列は `I`, `X`, `Y`, `Z` だけを使う
+- 各 Pauli 文字列の長さは回路の `qubits` と一致必須
+
+例:
+
+```text
+ZZ=1.0
+XX=1.0
+```
+
+### `clear` 成功時
+
+- 終了コード: `0`
+- 標準出力は空とする
+- `./circuit.json` が存在する場合は削除する
+- `./circuit.json` が存在しない場合も成功とする
+
 ### `view` 成功時
 
 - 終了コード: `0`
@@ -481,6 +527,27 @@ qni add H --step 0 --qubit 0
 }
 ```
 
+### 例 7: Bell 状態の期待値を読む
+
+```bash
+qni add H --step 0 --qubit 0
+qni add X --control 0 --step 1 --qubit 1
+qni expect ZZ XX
+```
+
+出力:
+
+```text
+ZZ=1.0
+XX=1.0
+```
+
+### 例 8: 回路を削除して作り直す
+
+```bash
+qni clear
+```
+
 ## 非目標
 
 MVP では以下は扱わない。
@@ -491,6 +558,7 @@ MVP では以下は扱わない。
 - 更新対象 JSON ファイルの切り替え
 - ステップ挿入による右シフト
 - 複数箇所を 1 コマンドで同時更新する機能
+- 測定ショットや確率分布のサンプリング
 
 ## 今後の拡張余地
 

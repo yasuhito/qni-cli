@@ -10,9 +10,11 @@
     かつ 標準出力:
       """
       qni commands:
-        qni add   # Add a gate to the circuit
-        qni run   # Show the state vector of the circuit
-        qni view  # Render the circuit as ASCII art
+        qni add     # Add a gate to the circuit
+        qni clear   # Delete the current circuit file
+        qni expect  # Show expectation values of Pauli strings
+        qni run     # Show the state vector of the circuit
+        qni view    # Render the circuit as ASCII art
       """
 
   シナリオ: qni add は add コマンドの使い方を表示
@@ -95,6 +97,65 @@
         qni add Rx --angle π/2 --qubit 0 --step 2
         qni add Rz --angle pi/4 --control 0 --qubit 1 --step 3
         qni add SWAP --qubit 0,1 --step 0
+      """
+
+  シナリオ: qni expect は expect コマンドの使い方を表示
+    もし "qni expect" を実行
+    ならば コマンドは成功
+    かつ 標準出力:
+      """
+      Usage:
+        qni expect PAULI_STRING [PAULI_STRING...]
+
+      Overview:
+        Calculate expectation values from ./circuit.json.
+        qni simulates the whole circuit and evaluates each Pauli string on the resulting state.
+        Each PAULI_STRING must use only I, X, Y, and Z.
+        The length of each PAULI_STRING must match the circuit qubit count.
+        Output is one line per observable in the form PAULI_STRING=value.
+
+      Examples:
+        qni expect Z
+        qni expect ZZ XX
+        qni expect ZZI IZZ XXX
+      """
+
+  シナリオ: qni expect --help は expect コマンドの使い方を表示
+    もし "qni expect --help" を実行
+    ならば コマンドは成功
+    かつ 標準出力:
+      """
+      Usage:
+        qni expect PAULI_STRING [PAULI_STRING...]
+
+      Overview:
+        Calculate expectation values from ./circuit.json.
+        qni simulates the whole circuit and evaluates each Pauli string on the resulting state.
+        Each PAULI_STRING must use only I, X, Y, and Z.
+        The length of each PAULI_STRING must match the circuit qubit count.
+        Output is one line per observable in the form PAULI_STRING=value.
+
+      Examples:
+        qni expect Z
+        qni expect ZZ XX
+        qni expect ZZI IZZ XXX
+      """
+
+  シナリオ: qni clear --help は clear コマンドの使い方を表示
+    もし "qni clear --help" を実行
+    ならば コマンドは成功
+    かつ 標準出力:
+      """
+      Usage:
+        qni clear
+
+      Overview:
+        Delete ./circuit.json.
+        If ./circuit.json does not exist, qni clear still succeeds.
+        Standard output is empty on success.
+
+      Examples:
+        qni clear
       """
 
   シナリオ: qni help は使えない

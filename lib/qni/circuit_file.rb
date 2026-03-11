@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'fileutils'
 require 'json'
 require_relative 'circuit'
 
@@ -42,6 +43,12 @@ module Qni
         raise Error, 'circuit.json does not exist' unless File.exist?(path)
 
         Circuit.from_h(JSON.parse(File.read(path)))
+      end
+    end
+
+    def clear
+      with_domain_errors do
+        FileUtils.rm_f(path)
       end
     end
 

@@ -156,3 +156,12 @@ end
     #{JSON.pretty_generate(actual)}
   MESSAGE
 end
+
+ならば('{string} は存在しない') do |path|
+  actual_path = File.join(@scenario_dir, path)
+  next unless File.exist?(actual_path)
+
+  raise <<~MESSAGE
+    expected file not to exist: #{path}
+  MESSAGE
+end
