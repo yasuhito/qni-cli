@@ -16,10 +16,16 @@ module Qni
     def render
       raise Simulator::Error, ONE_QUBIT_ONLY_MESSAGE unless one_qubit?
 
-      stdout, stderr, status = Open3.capture3(*command, stdin_data: JSON.generate(circuit_hash))
-      raise Simulator::Error, render_error_message(stderr, status) unless status.success?
+      helper_commands.each do |command|
+        stdout, stderr, status = Open3.capture3(*command, stdin_data: JSON.generate(circuit_hash))
+        return stdout.strip if status.success?
 
-      stdout.strip
+        next if retryable_with_next_command?(stderr, command)
+
+        raise Simulator::Error, render_error_message(stderr, status)
+      end
+
+      raise Simulator::Error, 'symbolic run requires Python with SymPy or uv'
     rescue Errno::ENOENT => e
       raise Simulator::Error, e.message
     end
@@ -32,12 +38,21 @@ module Qni
       circuit_hash.fetch('qubits') == 1
     end
 
-    def command
-      ['python3', helper_path]
+    def helper_commands
+      [
+        ['python3', helper_path],
+        ['uv', 'run', '--quiet', '--with', 'sympy', 'python3', helper_path]
+      ]
     end
 
     def helper_path
       File.expand_path(HELPER_RELATIVE_PATH, __dir__)
+    end
+
+    def retryable_with_next_command?(stderr, command)
+      return false unless command.first == 'python3'
+
+      stderr.to_s.include?("No module named 'sympy'")
     end
 
     def render_error_message(stderr, status)
