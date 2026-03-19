@@ -15,3 +15,15 @@
         ]
       }
       """
+
+  シナリオ: Ry ゲートは変数 angle をそのまま保存できる
+    もし "qni add Ry --angle theta --qubit 0 --step 0" を実行
+    ならば "circuit.json" の内容:
+      """
+      {
+        "qubits": 1,
+        "cols": [
+          ["Ry(theta)"]
+        ]
+      }
+      """

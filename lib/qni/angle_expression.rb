@@ -6,30 +6,99 @@ module Qni
     # Raised when a gate angle cannot be parsed.
     class Error < StandardError; end
 
+    # Represents a concrete multiple of π with optional sign and denominator.
+    class PiTerm
+      PATTERN = %r{
+        \A
+        (?<sign>[+-]?)
+        (?:(?<coefficient>\d+(?:\.\d+)?)(?:\*)?)?
+        (?:π|pi)
+        (?:(?:/|_)(?<denominator>\d+(?:\.\d+)?))?
+        \z
+      }x
+
+      def self.parse(value)
+        match = PATTERN.match(value)
+        return unless match
+
+        new(match.named_captures.compact.transform_keys(&:to_sym))
+      end
+
+      def initialize(parts)
+        @parts = parts
+      end
+
+      def radians
+        sign * coefficient * Math::PI / denominator
+      end
+
+      def to_s
+        "#{sign_prefix}#{coefficient_prefix}π#{denominator_suffix}"
+      end
+
+      private
+
+      attr_reader :parts
+
+      def sign
+        parts.fetch(:sign) == '-' ? -1.0 : 1.0
+      end
+
+      def sign_prefix
+        parts.fetch(:sign) == '-' ? '-' : ''
+      end
+
+      def coefficient
+        coefficient_text.to_f
+      end
+
+      def coefficient_prefix
+        coefficient_text == '1' ? '' : coefficient_text
+      end
+
+      def coefficient_text
+        parts.fetch(:coefficient, '1')
+      end
+
+      def denominator
+        denominator_text.to_f
+      end
+
+      def denominator_suffix
+        return '' if denominator_text == '1'
+
+        "/#{denominator_text}"
+      end
+
+      def denominator_text
+        parts.fetch(:denominator, '1')
+      end
+    end
+
+    IDENTIFIER_PATTERN = /\A[a-zA-Z_][a-zA-Z0-9_]*\z/
     NUMERIC_PATTERN = /\A[+-]?\d+(?:\.\d+)?\z/
-    PI_PATTERN = %r{
-      \A
-      (?<sign>[+-]?)
-      (?:(?<coefficient>\d+(?:\.\d+)?)(?:\*)?)?
-      (?:π|pi)
-      (?:(?:/|_)(?<denominator>\d+(?:\.\d+)?))?
-      \z
-    }x
 
     def initialize(raw_value)
       @raw_value = raw_value
     end
 
-    def radians
+    def radians(variables = {})
       return normalized.to_f if numeric?
+      return resolved_variable(variables).radians if variable?
+      return pi_term.radians if pi_term
 
-      sign * coefficient * Math::PI / denominator
+      raise Error, "invalid angle: #{normalized}"
     end
 
     def to_s
-      return normalized if numeric?
+      return normalized if numeric? || variable?
+      return pi_term.to_s if pi_term
 
-      "#{sign_prefix}#{coefficient_prefix}π#{denominator_suffix}"
+      raise Error, "invalid angle: #{normalized}"
+    end
+
+    def concrete?
+      numeric? || !!pi_term
     end
 
     private
@@ -49,47 +118,24 @@ module Qni
       normalized.match?(NUMERIC_PATTERN)
     end
 
-    def sign
-      parts.fetch(:sign) == '-' ? -1.0 : 1.0
+    def variable?
+      normalized.match?(IDENTIFIER_PATTERN)
     end
 
-    def sign_prefix
-      parts.fetch(:sign) == '-' ? '-' : ''
+    def pi_term
+      PiTerm.parse(normalized)
     end
 
-    def coefficient
-      coefficient_text.to_f
+    def resolved_variable(variables)
+      resolved_value = variables.fetch(normalized) { raise Error, "unresolved angle variable: #{normalized}" }
+      concrete_variable(resolved_value)
     end
 
-    def coefficient_prefix
-      coefficient_text == '1' ? '' : coefficient_text
-    end
+    def concrete_variable(resolved_value)
+      angle = self.class.new(resolved_value)
+      raise Error, "variable value must be concrete: #{normalized}" unless angle.concrete?
 
-    def coefficient_text
-      parts.fetch(:coefficient, '1')
-    end
-
-    def denominator
-      denominator_text.to_f
-    end
-
-    def denominator_suffix
-      return '' if denominator_text == '1'
-
-      "/#{denominator_text}"
-    end
-
-    def denominator_text
-      parts.fetch(:denominator, '1')
-    end
-
-    def parts
-      @parts ||= begin
-        match = PI_PATTERN.match(normalized)
-        raise Error, "invalid angle: #{normalized}" unless match
-
-        match.named_captures.compact.transform_keys(&:to_sym)
-      end
+      angle
     end
   end
 end

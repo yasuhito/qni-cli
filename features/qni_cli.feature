@@ -10,11 +10,12 @@
     かつ 標準出力:
       """
       qni commands:
-        qni add     # Add a gate to the circuit
-        qni clear   # Delete the current circuit file
-        qni expect  # Show expectation values of Pauli strings
-        qni run     # Show the state vector of the circuit
-        qni view    # Render the circuit as ASCII art
+        qni add       # Add a gate to the circuit
+        qni clear     # Delete the current circuit file
+        qni expect    # Show expectation values of Pauli strings
+        qni run       # Show the state vector of the circuit
+        qni variable  # Manage symbolic angle variables
+        qni view      # Render the circuit as ASCII art
       """
 
   シナリオ: qni add は add コマンドの使い方を表示
@@ -156,6 +157,58 @@
 
       Examples:
         qni clear
+      """
+
+  シナリオ: qni variable は variable コマンドの使い方を表示
+    もし "qni variable" を実行
+    ならば コマンドは成功
+    かつ 標準出力:
+      """
+      Usage:
+        qni variable set NAME ANGLE
+        qni variable list
+        qni variable unset NAME
+        qni variable clear
+
+      Overview:
+        Manage symbolic angle variables in ./circuit.json.
+        NAME must be an ASCII identifier such as theta.
+        ANGLE must be concrete, such as π/4, pi/3, or 0.5.
+        qni variable set requires ./circuit.json to already exist.
+        qni add Ry --angle theta --qubit 0 --step 0 stores Ry(theta).
+        qni run and qni expect resolve symbolic angles through these variables.
+
+      Examples:
+        qni variable set theta π/4
+        qni variable list
+        qni variable unset theta
+        qni variable clear
+      """
+
+  シナリオ: qni variable --help は variable コマンドの使い方を表示
+    もし "qni variable --help" を実行
+    ならば コマンドは成功
+    かつ 標準出力:
+      """
+      Usage:
+        qni variable set NAME ANGLE
+        qni variable list
+        qni variable unset NAME
+        qni variable clear
+
+      Overview:
+        Manage symbolic angle variables in ./circuit.json.
+        NAME must be an ASCII identifier such as theta.
+        ANGLE must be concrete, such as π/4, pi/3, or 0.5.
+        qni variable set requires ./circuit.json to already exist.
+        qni add Ry --angle theta --qubit 0 --step 0 stores Ry(theta).
+        qni run and qni expect resolve symbolic angles through these variables.
+
+      Examples:
+        qni variable set theta π/4
+        qni variable list
+        qni variable unset theta
+        qni variable clear
       """
 
   シナリオ: qni help は使えない

@@ -113,6 +113,24 @@
       0.7071067811865476,0.7071067811865475
       """
 
+  シナリオ: qni run は変数 angle を解決して Ry ゲートの状態ベクトルを表示
+    前提 "qni add Ry --angle theta --qubit 0 --step 0" を実行
+    かつ "qni variable set theta π/2" を実行
+    もし "qni run" を実行
+    ならば 標準出力:
+      """
+      0.7071067811865476,0.7071067811865475
+      """
+
+  シナリオ: qni run は未束縛の変数 angle があると失敗
+    前提 "qni add Ry --angle theta --qubit 0 --step 0" を実行
+    もし "qni run" を実行
+    ならば コマンドは失敗
+    かつ 標準エラー:
+      """
+      unresolved angle variable: theta
+      """
+
   シナリオ: qni run は Rz ゲートの状態ベクトルを標準出力に表示
     前提 "qni add Rz --angle π/2 --qubit 0 --step 0" を実行
     もし "qni run" を実行

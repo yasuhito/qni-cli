@@ -42,6 +42,16 @@ module Qni
       state_vector.to_csv
     end
 
+    def render_expectation_values(pauli_strings)
+      current_state_vector = state_vector
+
+      pauli_strings.map do |pauli_string|
+        "#{pauli_string}=#{StateVector.format_amplitude(current_state_vector.expectation(pauli_string))}"
+      end.join("\n")
+    rescue PauliString::Error => e
+      raise Error, e.message
+    end
+
     private
 
     attr_reader :data
@@ -50,6 +60,8 @@ module Qni
       cols.reduce(StateVector.zero(qubits)) do |current_state_vector, col|
         apply_col(current_state_vector, col)
       end
+    rescue AngleExpression::Error => e
+      raise Error, e.message
     end
 
     def qubits
@@ -73,10 +85,14 @@ module Qni
     end
 
     def phase_gate_for(gate)
-      parsed_gate = AngledGates.parse(gate)
+      parsed_gate = AngledGates.parse(gate, variables:)
       return parsed_gate if parsed_gate
 
       raise Error, "unsupported gate for run: #{gate.inspect}"
+    end
+
+    def variables
+      data.fetch('variables', {})
     end
   end
 end

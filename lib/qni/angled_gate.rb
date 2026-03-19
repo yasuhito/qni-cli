@@ -9,11 +9,11 @@ module Qni
       const_get(:COMMAND_SYMBOL)
     end
 
-    def self.parse(serialized_gate)
+    def self.parse(serialized_gate, variables: {})
       match = serialized_pattern.match(serialized_gate.to_s)
       return nil unless match
 
-      new(match[1])
+      new(match[1], variables:)
     end
 
     def self.serialized(angle)
@@ -24,8 +24,9 @@ module Qni
       @serialized_pattern ||= /\A#{Regexp.escape(command_symbol)}\((.+)\)\z/
     end
 
-    def initialize(angle)
+    def initialize(angle, variables: {})
       @angle = AngleExpression.new(angle)
+      @variables = variables
     end
 
     def serialized
@@ -34,6 +35,6 @@ module Qni
 
     private
 
-    attr_reader :angle
+    attr_reader :angle, :variables
   end
 end

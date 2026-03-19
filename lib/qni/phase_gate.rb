@@ -17,7 +17,7 @@ module Qni
 
     def phase_factor
       @phase_factor ||= begin
-        radians = angle.radians
+        radians = angle.radians(variables)
         Complex(Math.cos(radians), Math.sin(radians))
       end
     end

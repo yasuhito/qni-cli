@@ -4,7 +4,7 @@
 
 `qni-cli` は、量子回路を表す JSON ファイルをコマンドラインから安全に更新し、内容を確認し、シミュレーション結果を読むためのツールとする。
 
-MVP では、単一量子ビットゲート `H` / `X` / `Y` / `Z` / `S` / `S†` / `T` / `T†` / `√X` / `P(angle)` / `Rx(angle)` / `Ry(angle)` / `Rz(angle)` と、2 つの target qubit を持つ `SWAP` を任意の `step` と `qubit` に追加する `add` コマンド、状態ベクトルを表示する `run` コマンド、Pauli 文字列の期待値を表示する `expect` コマンド、現在の回路ファイルを削除する `clear` コマンドを対象にする。単一量子ビットゲートには `--control` を付けた制御付き追加も含む。
+MVP では、単一量子ビットゲート `H` / `X` / `Y` / `Z` / `S` / `S†` / `T` / `T†` / `√X` / `P(angle)` / `Rx(angle)` / `Ry(angle)` / `Rz(angle)` と、2 つの target qubit を持つ `SWAP` を任意の `step` と `qubit` に追加する `add` コマンド、角度変数を管理する `variable` コマンド、状態ベクトルを表示する `run` コマンド、Pauli 文字列の期待値を表示する `expect` コマンド、現在の回路ファイルを削除する `clear` コマンドを対象にする。単一量子ビットゲートには `--control` を付けた制御付き追加も含む。
 
 ## 実装言語
 
@@ -24,7 +24,10 @@ MVP は、以下のトップレベル構造を前提にする。
     ["H", 1, 1],
     [1, 1, 1],
     [1, "H", 1]
-  ]
+  ],
+  "variables": {
+    "theta": "π/4"
+  }
 }
 ```
 
@@ -32,6 +35,7 @@ MVP は、以下のトップレベル構造を前提にする。
 
 - `qubits`: 回路全体の量子ビット数。正の整数。
 - `cols`: ステップごとの列配列。各要素は長さ `qubits` の配列。
+- `variables`: 角度変数の連想配列。省略可。キーは ASCII 識別子、値は具体的な角度。
 
 ### セル値の扱い
 
@@ -45,10 +49,10 @@ MVP は、以下のトップレベル構造を前提にする。
 - `"T"`: Phase-T ゲート。
 - `"T†"`: T dagger ゲート。
 - `"X^½"`: `../qni` の JSON API に合わせた √X ゲートの保存表現。CLI 入力と `view` 表示では `√X` を使う。
-- `"P(<angle>)"`: `../qni` に合わせた parameterized Phase ゲート。例: `"P(π/3)"`。
-- `"Rx(<angle>)"`: `../qni` に合わせた X 軸回転ゲート。例: `"Rx(π/2)"`。
-- `"Ry(<angle>)"`: `../qni` に合わせた Y 軸回転ゲート。例: `"Ry(π/2)"`。
-- `"Rz(<angle>)"`: `../qni` に合わせた Z 軸回転ゲート。例: `"Rz(π/2)"`。
+- `"P(<angle>)"`: `../qni` に合わせた parameterized Phase ゲート。例: `"P(π/3)"`, `"P(theta)"`。
+- `"Rx(<angle>)"`: `../qni` に合わせた X 軸回転ゲート。例: `"Rx(π/2)"`, `"Rx(theta)"`。
+- `"Ry(<angle>)"`: `../qni` に合わせた Y 軸回転ゲート。例: `"Ry(π/2)"`, `"Ry(theta)"`。
+- `"Rz(<angle>)"`: `../qni` に合わせた Z 軸回転ゲート。例: `"Rz(π/2)"`, `"Rz(theta)"`。
 - `"Swap"`: SWAP ゲート。必ず同じ step に 2 個 1 組で置く。
 - `"•"`: control 記号。control 付きゲートの control qubit を表す。
 - それ以外の文字列や値は将来の拡張用として読み込み時に許容してよいが、MVP の `add` コマンドは `1` かどうかだけを見て空き判定する。
@@ -91,8 +95,9 @@ MVP は、以下のトップレベル構造を前提にする。
 
 ### MVP での編集対象
 
-- `add` コマンドが編集するのはトップレベルの `cols` のみ。
-- MVP の JSON 構造は `qubits` と `cols` だけを対象とする。
+- `add` コマンドが編集するのはトップレベルの `cols` である。
+- `variable` コマンドが編集するのはトップレベルの `variables` である。
+- `run` と `expect` は `cols` と `variables` の両方を読む。
 
 ## コマンド仕様
 
@@ -126,6 +131,22 @@ qni expect <pauli_string> [<pauli_string> ...]
 qni clear
 ```
 
+```bash
+qni variable set <name> <angle>
+```
+
+```bash
+qni variable list
+```
+
+```bash
+qni variable unset <name>
+```
+
+```bash
+qni variable clear
+```
+
 ### 引数
 
 - `<gate>`: 追加するゲート種別。MVP では `H` と `X` と `Y` と `Z` と `S` と `S†` と `T` と `T†` と `√X` と `P` と `Rx` と `Ry` と `Rz` と `SWAP` を許可する。`√X` は保存時に `"X^½"` に正規化する。
@@ -133,8 +154,10 @@ qni clear
 - `--qubit <qubit>`: 配置先の量子ビット番号。0-based 整数。`SWAP` の場合は `0,1` のようにカンマ区切りで 2 つ指定する。
 - `--control <control>`: 制御量子ビット番号。カンマ区切りで複数指定できる。`X` と組み合わせた場合は CNOT / 多重制御 X を表す。
 - `<angled_gate>`: `P`, `Rx`, `Ry`, `Rz` のいずれか。
-- `--angle <angle>`: `P`, `Rx`, `Ry`, `Rz` に必須の角度。`π/3`, `pi/3`, `3*pi/4`, `0.5` のような値を受け付け、保存時は `P(π/3)`, `Rx(π/2)` のような canonical form に正規化する。
+- `--angle <angle>`: `P`, `Rx`, `Ry`, `Rz` に必須の角度。`π/3`, `pi/3`, `3*pi/4`, `0.5` のような具体角度か、`theta` のような ASCII 識別子を受け付ける。具体角度は保存時に `P(π/3)`, `Rx(π/2)` のような canonical form に正規化し、変数は `Ry(theta)` のようにそのまま保存する。
 - `<pauli_string>`: `I`, `X`, `Y`, `Z` だけで構成された観測量文字列。長さは回路の `qubits` と一致必須。例: `Z`, `ZZ`, `XIX`, `ZZI`。
+- `<name>`: ASCII 識別子。例: `theta`, `phi_1`。
+- `qni variable set` の `<angle>`: 具体角度のみ。`π/4`, `pi/3`, `0.5` を受け付ける。変数参照の入れ子は許可しない。
 
 ### `run` コマンド名
 
@@ -154,13 +177,25 @@ qni expect <pauli_string> [<pauli_string> ...]
 qni clear
 ```
 
+### `variable` コマンド名
+
+```bash
+qni variable set <name> <angle>
+qni variable list
+qni variable unset <name>
+qni variable clear
+```
+
 ### 対象ファイル
 
 - MVP の `add` コマンドは、カレントディレクトリの `./circuit.json` を固定で読み書きする。
 - `clear` コマンドもカレントディレクトリの `./circuit.json` を削除対象にする。
+- `variable` コマンドもカレントディレクトリの `./circuit.json` を対象にする。
 - 更新対象ファイルを引数で切り替える機能は、MVP では持たない。
 - 将来、`--file` のような明示オプションを追加する余地はあるが、初期実装では不要とする。
 - `./circuit.json` が存在しない場合、`add` コマンドはファイルを自動作成してから更新する。
+- `qni variable set` は `./circuit.json` が存在するときだけ成功する。
+- `qni variable list`, `qni variable unset`, `qni variable clear` は `./circuit.json` がなくても失敗しない。
 
 ### インデックス規約
 
@@ -185,6 +220,8 @@ qni clear
 `qni add <gate> --control ...` は、control に指定した qubit のセルがすべて `1` であることも確認し、同じ列に `"•"` を配置してから target 側に対象ゲートを置く。`P`, `Rx`, `Ry`, `Rz` の場合は target 側に角度付きの canonical form を置く。
 
 `qni add SWAP --qubit 0,1 ...` は、2 つの target qubit が互いに異なり、対象セルがどちらも `1` であることを確認してから、同じ列に `"Swap"` を 2 個配置する。
+
+`qni variable set <name> <angle>` は、既存の `./circuit.json` を読み込み、`variables.<name>` に具体角度を保存する。`qni variable unset <name>` はそのキーを削除し、`qni variable clear` は `variables` を空にする。削除後に空になった `variables` は JSON から省略してよい。
 
 ## 新規ファイル作成ルール
 
@@ -348,6 +385,20 @@ ZZ=1.0
 XX=1.0
 ```
 
+### `variable list` 成功時
+
+- 終了コード: `0`
+- 標準出力に `NAME=ANGLE` を 1 行 1 変数で表示する
+- 変数名の辞書順で表示する
+- 変数が 1 つもない場合、標準出力は空とする
+
+例:
+
+```text
+phi=π/2
+theta=π/4
+```
+
 ### `clear` 成功時
 
 - 終了コード: `0`
@@ -389,11 +440,16 @@ q1: -√X--
 
 - 終了コード: `2`
 - 標準エラーに原因を出す
+- `run` と `expect` は、`Ry(theta)` のような変数付き角度がある場合、`variables.theta` が未設定なら失敗する
 
 例:
 
 ```text
 target slot is occupied: cols[1][0] = "X"
+```
+
+```text
+unresolved angle variable: theta
 ```
 
 ### 想定外エラー
@@ -546,6 +602,16 @@ XX=1.0
 
 ```bash
 qni clear
+```
+
+### 例 9: 角度変数 `theta` を使って回路を再利用する
+
+```bash
+qni add H --step 0 --qubit 0
+qni add X --control 0 --step 1 --qubit 1
+qni add Ry --angle theta --step 2 --qubit 0
+qni variable set theta π/4
+qni expect ZZ ZX XZ XX
 ```
 
 ## 非目標

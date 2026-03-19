@@ -19,9 +19,9 @@ module Qni
       by_symbol[command_symbol]
     end
 
-    def self.parse(serialized_gate)
+    def self.parse(serialized_gate, variables: {})
       CLASSES.each do |gate_class|
-        parsed_gate = gate_class.parse(serialized_gate)
+        parsed_gate = gate_class.parse(serialized_gate, variables:)
         return parsed_gate if parsed_gate
       end
 

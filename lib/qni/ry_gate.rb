@@ -21,7 +21,7 @@ module Qni
     end
 
     def half_angle
-      @half_angle ||= angle.radians / 2
+      @half_angle ||= angle.radians(variables) / 2
     end
 
     def sine

@@ -1,11 +1,22 @@
 # frozen_string_literal: true
 
+require_relative 'pauli_string'
+
 module Qni
   # Holds amplitudes for the current circuit state and renders them for CLI output.
   class StateVector
     # Formats real and complex amplitudes for CLI output.
     class AmplitudeFormatter
       EPSILON = Float::EPSILON
+
+      def self.normalize_scalar(value)
+        return 0.0 if value.abs < EPSILON
+
+        nearest_integer = value.round
+        return nearest_integer.to_f if (value - nearest_integer).abs <= EPSILON
+
+        value
+      end
 
       def initialize(amplitude)
         @amplitude = amplitude
@@ -29,7 +40,7 @@ module Qni
       end
 
       def normalized_value
-        amplitude.abs < EPSILON ? 0.0 : amplitude
+        self.class.normalize_scalar(amplitude)
       end
 
       def purely_real?
@@ -53,17 +64,11 @@ module Qni
       end
 
       def real
-        @real ||= begin
-          value = amplitude.real
-          value.abs < EPSILON ? 0.0 : value
-        end
+        @real ||= self.class.normalize_scalar(amplitude.real)
       end
 
       def imaginary
-        @imaginary ||= begin
-          value = amplitude.imag
-          value.abs < EPSILON ? 0.0 : value
-        end
+        @imaginary ||= self.class.normalize_scalar(amplitude.imag)
       end
     end
 
@@ -176,9 +181,21 @@ module Qni
       amplitudes.map { |amplitude| self.class.format_amplitude(amplitude) }.join(',')
     end
 
+    def expectation(pauli_string)
+      observable = PauliString.new(pauli_string, qubits)
+
+      amplitudes.each_with_index.reduce(0.0) do |sum, (amplitude, index)|
+        sum + expectation_contribution(observable, amplitude, index)
+      end
+    end
+
     private
 
     attr_reader :amplitudes, :qubits
+
+    def expectation_contribution(observable, amplitude, index)
+      observable.mapped_state(index).contribution_from(amplitude, amplitudes)
+    end
 
     def apply_gate_layout(gate_layout)
       result = amplitudes.dup

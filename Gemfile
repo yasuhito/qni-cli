@@ -3,6 +3,7 @@
 source 'https://rubygems.org'
 
 gem 'cucumber'
+gem 'erb'
 gem 'flay', require: false
 gem 'flog', require: false
 gem 'logger'

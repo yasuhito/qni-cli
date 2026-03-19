@@ -17,8 +17,21 @@ module Qni
       [%w[clear --help], %w[clear -h]].include?(given_args)
     end
 
+    def variable_help_request?(given_args)
+      [%w[variable], %w[variable --help], %w[variable -h]].include?(given_args)
+    end
+
     def help_request?(given_args)
       given_args.first == 'help'
+    end
+
+    def help_text_for(given_args, cli_class:)
+      return cli_class::AddHelp::TEXT if add_help_request?(given_args)
+      return cli_class::ClearHelp::TEXT if clear_help_request?(given_args)
+      return cli_class::ExpectHelp::TEXT if expect_help_request?(given_args)
+      return cli_class::VariableHelp::TEXT if variable_help_request?(given_args)
+
+      nil
     end
 
     def help_unavailable_message
@@ -29,6 +42,7 @@ module Qni
       return nil if usage.start_with?('qni help')
       return 'qni add' if usage.start_with?('qni add ')
       return 'qni expect' if usage.start_with?('qni expect ')
+      return 'qni variable' if usage.start_with?('qni variable ')
 
       usage
     end

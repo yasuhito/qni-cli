@@ -6,9 +6,12 @@ require_relative 'circuit_file'
 require_relative 'cli/add_command'
 require_relative 'cli/add_help'
 require_relative 'cli/add_command_options'
+require_relative 'cli/bootstrap'
 require_relative 'cli/clear_help'
 require_relative 'cli/expect_help'
 require_relative 'cli/routing'
+require_relative 'cli/variable_command'
+require_relative 'cli/variable_help'
 require_relative 'simulator'
 require_relative 'swap_gate'
 require_relative 'sqrt_x_gate'
@@ -18,6 +21,8 @@ require_relative 't_dagger_gate'
 module Qni
   # Thor-based command-line interface for qni subcommands.
   class CLI < Thor
+    extend CliBootstrap
+
     SUPPORTED_GATES = {
       'H' => 'H',
       'P' => PhaseGate::COMMAND_SYMBOL,
@@ -40,35 +45,6 @@ module Qni
       true
     end
 
-    def self.start(given_args = ARGV, config = {})
-      if (help_text = requested_help_text(given_args))
-        return $stdout.puts(help_text)
-      end
-
-      if CliRouting.help_request?(given_args)
-        warn(CliRouting.help_unavailable_message)
-        exit(1)
-      end
-
-      super
-    end
-
-    def self.requested_help_text(given_args)
-      return AddHelp::TEXT if CliRouting.add_help_request?(given_args)
-      return ClearHelp::TEXT if CliRouting.clear_help_request?(given_args)
-      return ExpectHelp::TEXT if CliRouting.expect_help_request?(given_args)
-
-      nil
-    end
-
-    def self.printable_commands(...)
-      super.reject { |item| item.first.start_with?('qni tree') }
-           .filter_map do |usage, description|
-             summarized_usage = CliRouting.summarize_usage(usage)
-             [summarized_usage, description] if summarized_usage
-           end
-    end
-
     package_name 'qni'
 
     desc 'add GATE --qubit=N --step=N', 'Add a gate to the circuit'
@@ -78,7 +54,7 @@ module Qni
     method_option :angle, type: :string, desc: 'phase angle for P, such as π/3 or pi/3'
     def add(gate)
       AddCommand.new(
-        circuit_file: CircuitFile.new(File.expand_path('circuit.json', Dir.pwd)),
+        circuit_file: current_circuit_file,
         gate: normalize_gate(gate),
         add_options: AddCommandOptions.new(options)
       ).execute
@@ -88,14 +64,14 @@ module Qni
 
     desc 'view', 'Render the circuit as ASCII art'
     def view
-      puts CircuitFile.new(File.expand_path('circuit.json', Dir.pwd)).load.render_ascii
+      puts current_circuit_file.load.render_ascii
     rescue CircuitFile::Error => e
       raise Thor::Error, e.message
     end
 
     desc 'clear', 'Delete the current circuit file'
     def clear
-      CircuitFile.new(File.expand_path('circuit.json', Dir.pwd)).clear
+      current_circuit_file.clear
     rescue CircuitFile::Error => e
       raise Thor::Error, e.message
     end
@@ -103,7 +79,7 @@ module Qni
     map 'run' => :simulate
     desc 'run', 'Show the state vector of the circuit'
     def simulate
-      circuit = CircuitFile.new(File.expand_path('circuit.json', Dir.pwd)).load
+      circuit = current_circuit_file.load
       puts Simulator.new(circuit).render_state_vector
     rescue CircuitFile::Error, Simulator::Error => e
       raise Thor::Error, e.message
@@ -111,13 +87,27 @@ module Qni
 
     desc 'expect PAULI_STRING [PAULI_STRING...]', 'Show expectation values of Pauli strings'
     def expect(*pauli_strings)
-      circuit = CircuitFile.new(File.expand_path('circuit.json', Dir.pwd)).load
+      circuit = current_circuit_file.load
       puts Simulator.new(circuit).render_expectation_values(pauli_strings.map(&:upcase))
     rescue CircuitFile::Error, Simulator::Error => e
       raise Thor::Error, e.message
     end
 
+    desc 'variable SUBCOMMAND ...', 'Manage symbolic angle variables'
+    def variable(subcommand = nil, *)
+      output = VariableCommand.new(circuit_file: current_circuit_file).execute(subcommand, *)
+      return if output.to_s.empty?
+
+      puts output
+    rescue CircuitFile::Error => e
+      raise Thor::Error, e.message
+    end
+
     no_commands do
+      def current_circuit_file
+        @current_circuit_file ||= CircuitFile.new(File.expand_path('circuit.json', Dir.pwd))
+      end
+
       def normalize_gate(gate)
         normalized_gate = gate.to_s.upcase
         return SUPPORTED_GATES.fetch(normalized_gate) if SUPPORTED_GATES.key?(normalized_gate)

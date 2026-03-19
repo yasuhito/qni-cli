@@ -7,6 +7,7 @@ require_relative 'circuit/symbol_placement'
 require_relative 'swap_gate'
 require_relative 'step'
 require_relative 'circuit/step_width_validator'
+require_relative 'circuit/variable_store'
 
 module Qni
   # Mutable circuit model backed by qubit count and column-oriented steps.
@@ -18,19 +19,23 @@ module Qni
     def self.empty(step:, qubit:)
       qubits = qubit + 1
       steps = Array.new(step + 1) { Step.empty(qubits) }
-      new(qubits:, steps:)
+      new(qubits:, steps:, variables: VariableStore.empty)
     end
 
     def self.from_h(data)
-      qubits = validated_qubits(data.fetch('qubits'))
-      steps = validated_steps(data.fetch('cols'), qubits)
-      new(qubits:, steps:)
+      new(**attributes_from(data))
     rescue Step::Error => e
       raise Error, e.message
     end
 
-    def self.build_steps(cols)
-      cols.map { |col| Step.from_a(col) }
+    def self.attributes_from(data)
+      qubits = validated_qubits(data.fetch('qubits'))
+
+      {
+        qubits:,
+        steps: validated_steps(data.fetch('cols'), qubits),
+        variables: VariableStore.build(data.fetch('variables', {}))
+      }
     end
 
     def self.validate_qubits!(qubits)
@@ -50,15 +55,16 @@ module Qni
     end
 
     def self.validated_steps(cols, qubits)
-      build_steps(validate_cols(cols, qubits))
+      validate_cols(cols, qubits).map { |col| Step.from_a(col) }
     end
 
-    def initialize(qubits:, steps:)
+    def initialize(qubits:, steps:, variables: VariableStore.empty)
       self.class.validate_qubits!(qubits)
       StepWidthValidator.new(qubits).validate_steps(steps)
 
       @qubits = qubits
       @steps = steps.dup
+      @variables = variables
     end
 
     attr_reader :qubits
@@ -75,15 +81,33 @@ module Qni
       add_placement(SymbolPlacement.new(step:, symbols: targets.to_h { |target| [target, SwapGate::SYMBOL] }))
     end
 
+    def set_variable(name:, value:)
+      @variables.set(name:, value:)
+    end
+
+    def unset_variable(name:)
+      @variables.delete(name)
+    end
+
+    def clear_variables
+      @variables.clear
+    end
+
     def render_ascii
       (0...qubits).map { |qubit| render_qubit_line(qubit) }.join("\n")
     end
 
+    def variables
+      @variables.to_h
+    end
+
     def to_h
-      {
+      result = {
         'qubits' => qubits,
         'cols' => @steps.map(&:to_a)
       }
+      result['variables'] = variables unless @variables.empty?
+      result
     end
 
     private

@@ -14,7 +14,7 @@ module Qni
     private
 
     def half_angle
-      @half_angle ||= angle.radians / 2
+      @half_angle ||= angle.radians(variables) / 2
     end
 
     def negative_phase
