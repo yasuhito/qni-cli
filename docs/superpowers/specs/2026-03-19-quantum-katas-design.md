@@ -1,220 +1,220 @@
-# Quantum Katas Validation Design
+# Quantum Katas 検証設計
 
-## Summary
+## 概要
 
-Use the archived `QuantumKatas` repository as a read-only source of exercises and expected behavior, and use those exercises to harden `qni-cli` into a practical tool.
+アーカイブ済みの `QuantumKatas` リポジトリを、課題と期待される振る舞いの読み取り専用ソースとして使い、その課題群を通じて `qni-cli` を実務で使える道具に鍛える。
 
-The workflow is:
+進め方は次のとおり。
 
-1. Pick the first numbered task from the first kata.
-2. Express the task's solution as `qni-cli` commands.
-3. Reproduce the original task's intent as `qni-cli`-side tests without using Q#.
-4. If the task cannot be expressed naturally or verified rigorously enough, add the missing `qni-cli` capability.
-5. Keep the reproduced task as a regression test.
+1. 最初の Kata の最初の番号付き Task を選ぶ。
+2. その Task の解法を `qni-cli` のコマンド列として表現する。
+3. 元の Task テストの意図を、Q# を使わずに `qni-cli` 側のテストとして再現する。
+4. Task を自然に表現できない、または十分に厳密に検証できない場合は、不足している `qni-cli` の機能を追加する。
+5. 再現した Task を回帰テストとして残す。
 
-The primary goal is not kata completion by itself. The primary goal is to use the katas as a disciplined stream of realistic requirements that improve `qni-cli`.
+主目的は Kata を消化すること自体ではない。主目的は、Kata を現実的な要件の連続入力として使い、`qni-cli` を改善することである。
 
-## Context
+## 背景
 
-- Repository under development: `qni-cli`
-- External read-only source: `../oss/QuantumKatas`
-- `QuantumKatas` is archived and should be treated as a fixed input, not as an actively evolving dependency.
-- `qni-cli` development is feature-driven.
-  New behavior must be specified in `features/*.feature` before implementation.
+- 開発対象リポジトリ: `qni-cli`
+- 外部の読み取り専用参照先: `../oss/QuantumKatas`
+- `QuantumKatas` はアーカイブ済みであり、追従対象ではなく固定入力として扱う。
+- `qni-cli` は feature 駆動で開発する。
+  新しい振る舞いは、実装前に必ず `features/*.feature` で定義する。
 
-## Goals
+## 目標
 
-- Validate, task by task, whether `qni-cli` can express solutions to Quantum Katas problems.
-- Reproduce the intent of the original kata tests on the `qni-cli` side without using Q#.
-- Add missing `qni-cli` functionality only when real kata-driven gaps are found.
-- Accumulate kata-derived regression coverage that protects practical workflows.
+- Quantum Katas の各 Task を、`qni-cli` で表現できるか順に検証する。
+- 元の Kata テストの意図を、Q# を使わず `qni-cli` 側で再現する。
+- 実際に Kata が要求した不足に対してのみ、`qni-cli` の機能を追加する。
+- Kata 由来の回帰テストを蓄積し、実務的なワークフローを保護する。
 
-## Non-Goals
+## 非目標
 
-- Running the original Q# test harness.
-- Keeping compatibility with Q# or reviving Q#-specific tooling.
-- Solving all katas up front before building validation infrastructure.
-- Adding heavy symbolic or external simulator dependencies before a concrete gap justifies them.
+- 元の Q# テストハーネスを動かすこと。
+- Q# 互換性を維持すること、または Q# 専用ツール群を復活させること。
+- 検証基盤を作る前に、すべての Kata を先に解くこと。
+- 具体的な必要性が出る前に、重いシンボリック処理系や外部シミュレータ依存を導入すること。
 
-## Source of Truth
+## 参照元
 
-- Task descriptions come from `../oss/QuantumKatas/<Kata>/Tasks.qs`.
-- Original validation intent comes from `../oss/QuantumKatas/<Kata>/Tests.qs`.
-- `qni-cli` behavior remains specified by this repository's feature files.
+- Task の説明は `../oss/QuantumKatas/<Kata>/Tasks.qs` を参照する。
+- 元テストの意図は `../oss/QuantumKatas/<Kata>/Tests.qs` を参照する。
+- `qni-cli` の振る舞い自体の仕様は、このリポジトリ内の feature ファイルを正とする。
 
-When there is a difference between a kata's original implementation language and the desired `qni-cli` workflow, preserve the task's behavioral intent rather than its Q# surface syntax.
+Kata の元実装言語と、`qni-cli` で実現したいワークフローに差がある場合は、Q# の表面構文ではなく Task の振る舞い上の意図を保存する。
 
-## Validation Strategy
+## 検証戦略
 
-Validation is split into two layers.
+検証は 2 層に分ける。
 
-### Layer 1: CLI Expression Tests
+### 第 1 層: CLI 表現テスト
 
-These tests answer: "Can this task be expressed naturally with `qni-cli`?"
+この層は「その Task を `qni-cli` で自然に表現できるか」を検証する。
 
-- Add kata-oriented feature files under `features/`.
-- Each scenario specifies:
-  - task identifier such as `Task 1.1`
-  - input state preparation
-  - the `qni` command sequence used to express the solution
-  - the expected observable result
-- These scenarios protect the user-facing workflow of the CLI.
+- Kata 向けの feature ファイルを `features/` 配下に追加する。
+- 各シナリオには次を含める。
+  - `Task 1.1` のような Task 識別子
+  - 入力状態の準備方法
+  - 解法を表現する `qni` コマンド列
+  - 観測可能な期待結果
+- これらのシナリオは、CLI のユーザ向けワークフローを保護する。
 
-### Layer 2: Behavioral Equivalence Tests
+### 第 2 層: 振る舞い等価性テスト
 
-These tests answer: "Does the `qni-cli` expression reproduce the kata's intended quantum behavior?"
+この層は「`qni-cli` で表現した解法が、元の Kata の意図した量子操作と等価か」を検証する。
 
-- Start with the lightest sufficient approach.
-- Prefer `qni run` and `qni expect` outputs when they are enough.
-- Add helper test code when a single state-vector snapshot is not rigorous enough.
-- Introduce external tooling such as Python or Qiskit only when simpler verification is insufficient.
-- Introduce symbolic math support only when concrete tasks require symbolic comparison that numeric checks cannot cover well.
+- 常に最も軽い十分条件から始める。
+- `qni run` と `qni expect` の出力だけで足りるなら、それを優先する。
+- 単一の状態ベクトル比較では弱い場合にのみ、補助テストコードを追加する。
+- Python や Qiskit のような外部ツールは、より単純な検証で足りない場合に限って導入する。
+- シンボリック演算ライブラリは、数値比較だけでは扱いにくい具体的な Task が出た時点で導入する。
 
-This keeps the default path simple while still allowing deeper verification for harder tasks.
+これにより、標準経路は単純に保ちつつ、難しい Task ではより強い検証に拡張できる。
 
-## Verification Levels
+## 検証レベル
 
-Each task should use the smallest verification level that is technically sufficient.
+各 Task には、技術的に十分な最小の検証レベルを適用する。
 
-### Level A: Direct output comparison
+### Level A: 直接出力比較
 
-Use `qni run` or `qni expect` when:
+次の場合は `qni run` または `qni expect` を使う。
 
-- one or a few representative input states are enough
-- the task does not hinge on subtle phase distinctions
-- a direct final-state comparison is strong enough
+- 代表的な 1 つまたは少数の入力状態で十分な場合
+- Task が微妙な位相差に依存しない場合
+- 最終状態の直接比較で十分に強い場合
 
-### Level B: Parameter or input sweep
+### Level B: パラメータまたは入力の走査
 
-Use helper tests around `qni-cli` when:
+次の場合は `qni-cli` を呼び出す補助テストを使う。
 
-- the task depends on a parameter such as an angle
-- the task must hold across multiple input states
-- one example would be too weak to catch incorrect implementations
+- 角度のようなパラメータに依存する場合
+- 複数の入力状態で成立することを確認すべき場合
+- 1 つの例だけでは誤実装を取りこぼす場合
 
-### Level C: Relative-phase or stronger equivalence checks
+### Level C: 相対位相またはより強い等価性確認
 
-Use stronger helper verification when:
+次の場合は、より強い補助検証を使う。
 
-- the original kata test uses controlled application to expose global phase issues
-- simple final-state comparison can miss a wrong but observationally similar implementation
-- the practical correctness bar requires more than one snapshot
+- 元の Kata テストが、制御付き適用によってグローバル位相の問題を露出させている場合
+- 単純な最終状態比較では、誤ったが見かけ上似ている実装を見逃す場合
+- 実務上の正しさの基準として、1 回のスナップショット以上が必要な場合
 
-## Kata Execution Order
+## Kata の実行順
 
-Run the katas incrementally, starting from the earliest numbered tasks in the earliest kata.
+Kata は、最も早い Kata の最も若い番号付き Task から段階的に進める。
 
-The first implementation cycle targets `BasicGates`, starting with:
+最初の実装サイクルは `BasicGates` を対象とし、次から始める。
 
 - `Task 1.1`
 - `Task 1.2`
 - `Task 1.3`
 
-These tasks are a good first slice because they map cleanly onto the current gate set and can likely be verified with direct state-vector checks.
+これらは、現在のゲート集合に素直に対応し、直接的な状態ベクトル比較でも検証しやすいため、最初の切り出しとして適している。
 
-After that:
+その後は次の順で広げる。
 
-- extend to `Task 1.4` and `Task 1.6` with angle sweeps
-- handle `Task 1.7` with stronger phase-sensitive verification
-- continue into Bell-state tasks and Part II
-- add CLI features only when the next task exposes a real gap
+- `Task 1.4` と `Task 1.6` に対して角度走査を追加する
+- `Task 1.7` に対して位相に敏感な強い検証を追加する
+- Bell 状態の Task 群と Part II に進む
+- 次の Task が実際に不足を露出した時点でのみ CLI 機能を追加する
 
-## First Implementation Slice
+## 最初の実装スライス
 
-The first slice should produce one kata-oriented regression path end to end.
+最初のスライスでは、Kata 由来の回帰パスを 1 本 end-to-end で成立させる。
 
-### Step 1: Add kata feature coverage
+### Step 1: Kata feature を追加する
 
-Add a new feature file for the first kata, likely:
+最初の Kata 用に新しい feature ファイルを追加する。候補は次のとおり。
 
 - `features/katas_basic_gates.feature`
 
-Initial scenarios cover `Task 1.1` through `Task 1.3`.
+最初のシナリオ群は `Task 1.1` から `Task 1.3` を対象にする。
 
-Each scenario should specify:
+各シナリオには次を含める。
 
-- how the starting state is prepared
-- which `qni add ...` commands represent the solution
-- which `qni run` or `qni expect` output demonstrates correctness
+- 初期状態の準備方法
+- 解法を表す `qni add ...` コマンド列
+- 正しさを示す `qni run` または `qni expect` の期待出力
 
-### Step 2: Add any missing test step definitions
+### Step 2: 必要なテスト step 定義を追加する
 
-Extend Cucumber support only as needed for kata-style scenarios.
+Kata 形式のシナリオに必要な最小限の範囲でのみ、Cucumber の support を拡張する。
 
-Examples:
+例:
 
-- state preparation helpers for named basis and superposition states
-- numeric comparison helpers for state vectors
-- repeated command execution helpers for task scripts
+- 基底状態や重ね合わせ状態を準備するための step
+- 状態ベクトルの数値比較を行う step
+- Task スクリプト向けに複数コマンドを実行する step
 
-### Step 3: Run against the current CLI
+### Step 3: まず現行 CLI のまま試す
 
-Try the initial task set without changing `qni-cli` behavior first.
+まずは `qni-cli` の振る舞いを変えずに、最初の Task 群を通す。
 
-If the tasks pass with the existing CLI, keep the implementation unchanged and just retain the new regression coverage.
+既存 CLI のままで Task が通るなら、実装は変えずに回帰テストだけを追加して残す。
 
-### Step 4: Add missing capabilities only when blocked
+### Step 4: 詰まった時だけ機能を追加する
 
-If a task cannot be represented or verified well enough:
+Task を十分に表現または検証できない場合は、次の順で進める。
 
-- add a feature that describes the missing behavior
-- implement the minimum necessary capability
-- rerun the kata-derived scenarios
+- 不足している振る舞いを feature として追加する
+- 必要最小限の機能を実装する
+- Kata 由来のシナリオを再実行する
 
-## Capability-Gap Decision Rule
+## 不足分類ルール
 
-Classify a failure before changing the product.
+変更前に、失敗を分類する。
 
-### Product gap
+### プロダクト不足
 
-Treat it as a `qni-cli` feature gap if:
+次の場合は `qni-cli` 自体の機能不足として扱う。
 
-- the task cannot be expressed naturally as CLI commands
-- the circuit model lacks an operation needed by the task
-- the current interface makes realistic task expression too awkward or error-prone
+- Task を自然な CLI コマンド列として表現できない
+- 回路モデルに、その Task に必要な操作が存在しない
+- 現在のインターフェースでは、現実的な Task 表現が不自然または誤りやすい
 
-### Verification gap
+### 検証不足
 
-Treat it as a validation gap if:
+次の場合は検証基盤の不足として扱う。
 
-- the task can be expressed, but correctness cannot be established confidently enough
-- stronger comparisons or broader sweeps are needed
-- the missing piece belongs in tests rather than in the CLI surface area
+- Task 自体は表現できるが、十分な確信を持って正しさを示せない
+- より強い比較や、より広い走査が必要
+- 足りないものが CLI 表面ではなくテスト側に属する
 
-### No gap
+### 不足なし
 
-If the task is already expressible and verifiable, add only the regression coverage.
+Task をすでに表現でき、十分に検証もできるなら、回帰テストだけを追加する。
 
-## Dependency Policy
+## 依存追加ポリシー
 
-Default to existing `qni-cli` outputs and lightweight local test code.
+既存の `qni-cli` 出力と、軽量なローカル補助テストコードを基本とする。
 
-Dependency escalation order:
+依存の段階的拡張順は次のとおり。
 
 1. `qni run`
 2. `qni expect`
-3. Lightweight helper test code in this repository
-4. Python-based helpers if necessary
-5. Qiskit or symbolic libraries only when a specific task justifies them
+3. このリポジトリ内の軽量な補助テストコード
+4. 必要であれば Python ベースの補助コード
+5. 特定 Task が正当化する場合に限り Qiskit やシンボリック演算ライブラリ
 
-This order prevents premature infrastructure growth.
+この順序により、基盤の肥大化を防ぐ。
 
-## Repository Integration Rules
+## リポジトリ統合ルール
 
-- Do not edit `../oss/QuantumKatas`; treat it as read-only reference data.
-- New `qni-cli` behavior must start with a new or updated `features/*.feature` file.
-- Kata-derived coverage should live in this repository and run as part of this repository's test workflow.
-- Existing unrelated worktree changes must not be reverted as part of kata integration.
+- `../oss/QuantumKatas` は編集せず、読み取り専用の参照データとして扱う。
+- `qni-cli` の新しい振る舞いは、必ず新規または更新された `features/*.feature` から始める。
+- Kata 由来のテストはこのリポジトリ内に置き、このリポジトリのテストフローで実行できるようにする。
+- Kata 統合作業の一環として、既存の無関係な作業ツリー変更を巻き戻してはならない。
 
-## Success Criteria
+## 成功条件
 
-The approach is working if:
+次の状態になれば、このアプローチは機能しているとみなせる。
 
-- each accepted kata task becomes a stable regression case in `qni-cli`
-- new CLI capabilities are added only in response to demonstrated task pressure
-- harder tasks increase validation strength only when needed
-- the resulting CLI becomes more useful for realistic circuit-authoring and verification work
+- 採用した各 Kata Task が `qni-cli` の安定した回帰ケースになる
+- 新しい CLI 機能が、実際に Task で露出した圧力に対してのみ追加される
+- 難しい Task でのみ、必要に応じて検証強度が上がる
+- 結果として CLI が、現実的な回路記述と検証により有用になる
 
-## Immediate Next Step
+## 直近の次ステップ
 
-Create the first kata-oriented feature file for `BasicGates` `Task 1.1` through `Task 1.3`, then evaluate whether the current CLI and existing step definitions are already sufficient.
+`BasicGates` の `Task 1.1` から `Task 1.3` に対する最初の Kata feature ファイルを追加し、現行 CLI と既存 step 定義だけで十分かどうかを確認する。
