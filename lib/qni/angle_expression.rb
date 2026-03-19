@@ -1,6 +1,89 @@
 # frozen_string_literal: true
 
 module Qni
+  # Internal representations for normalized angle expressions.
+  module AngleTerm
+    # Numeric literal angle.
+    class NumericLiteral
+      def initialize(value, text)
+        @value = value
+        @text = text
+      end
+
+      def radians(_variables = {})
+        value
+      end
+
+      def to_s
+        text
+      end
+
+      def concrete?
+        true
+      end
+
+      private
+
+      attr_reader :value, :text
+    end
+
+    # Variable-backed angle reference.
+    class VariableReference
+      def initialize(name, expression_class, error_class)
+        @name = name
+        @expression_class = expression_class
+        @error_class = error_class
+      end
+
+      def radians(variables = {})
+        resolved_value = variables.fetch(name) do
+          raise error_class, "unresolved angle variable: #{name}"
+        end
+        angle = expression_class.new(resolved_value)
+        raise error_class, "variable value must be concrete: #{name}" unless angle.concrete?
+
+        angle.radians
+      end
+
+      def to_s
+        name
+      end
+
+      def concrete?
+        false
+      end
+
+      private
+
+      attr_reader :name, :expression_class, :error_class
+    end
+
+    # Product of a scalar and another angle expression.
+    class Product
+      def initialize(coefficient, coefficient_text, inner)
+        @coefficient = coefficient
+        @coefficient_text = coefficient_text
+        @inner = inner
+      end
+
+      def radians(variables = {})
+        coefficient * inner.radians(variables)
+      end
+
+      def to_s
+        "#{coefficient_text}*#{inner}"
+      end
+
+      def concrete?
+        inner.concrete?
+      end
+
+      private
+
+      attr_reader :coefficient, :coefficient_text, :inner
+    end
+  end
+
   # Parses and normalizes angle expressions such as π/2, 3*pi/4, and 0.5.
   class AngleExpression
     # Raised when a gate angle cannot be parsed.
@@ -28,12 +111,16 @@ module Qni
         @parts = parts
       end
 
-      def radians
+      def radians(_variables = {})
         sign * coefficient * Math::PI / denominator
       end
 
       def to_s
         "#{sign_prefix}#{coefficient_prefix}π#{denominator_suffix}"
+      end
+
+      def concrete?
+        true
       end
 
       private
@@ -79,31 +166,26 @@ module Qni
     NUMERIC_PATTERN = /\A[+-]?\d+(?:\.\d+)?\z/
     MULTIPLIED_PATTERN = /\A(?<coefficient>[+-]?\d+(?:\.\d+)?)\*(?<term>.+)\z/
 
+    def self.numeric_expression(value)
+      return unless value.match?(NUMERIC_PATTERN)
+
+      AngleTerm::NumericLiteral.new(value.to_f, value)
+    end
+
     def initialize(raw_value)
       @raw_value = raw_value
     end
 
     def radians(variables = {})
-      return normalized.to_f if numeric?
-      return multiplied_radians(variables) if multiplied_term
-      return resolved_variable(variables).radians if variable?
-      return pi_term.radians if pi_term
-
-      raise Error, "invalid angle: #{normalized}"
+      parsed_expression_or_error.radians(variables)
     end
 
     def to_s
-      return normalized if numeric? || variable?
-      return multiplied_to_s if multiplied_term
-      return pi_term.to_s if pi_term
-
-      raise Error, "invalid angle: #{normalized}"
+      parsed_expression_or_error.to_s
     end
 
     def concrete?
-      return multiplied_inner.concrete? if multiplied_term
-
-      numeric? || !!pi_term
+      parsed_expression&.concrete? || false
     end
 
     private
@@ -119,52 +201,38 @@ module Qni
       end
     end
 
-    def numeric?
-      normalized.match?(NUMERIC_PATTERN)
+    def parsed_expression
+      @parsed_expression ||= parsed_expression_for(normalized)
     end
 
-    def variable?
-      normalized.match?(IDENTIFIER_PATTERN)
+    def parsed_expression_or_error
+      parsed_expression || raise_invalid_angle
     end
 
-    def pi_term
-      PiTerm.parse(normalized)
+    def parsed_expression_for(value)
+      self.class.numeric_expression(value) ||
+        variable_expression(value) ||
+        PiTerm.parse(value) ||
+        product_expression(value)
     end
 
-    def multiplied_term
-      @multiplied_term ||= MULTIPLIED_PATTERN.match(normalized)
+    def variable_expression(value)
+      return unless value.match?(IDENTIFIER_PATTERN)
+
+      AngleTerm::VariableReference.new(value, self.class, Error)
     end
 
-    def multiplied_coefficient
-      multiplied_term[:coefficient].to_f
+    def product_expression(value)
+      match = MULTIPLIED_PATTERN.match(value)
+      return unless match
+
+      coefficient_text = match[:coefficient]
+      inner_expression = self.class.new(match[:term])
+      AngleTerm::Product.new(coefficient_text.to_f, coefficient_text, inner_expression)
     end
 
-    def multiplied_coefficient_text
-      multiplied_term[:coefficient]
-    end
-
-    def multiplied_inner
-      @multiplied_inner ||= self.class.new(multiplied_term[:term])
-    end
-
-    def multiplied_radians(variables)
-      multiplied_coefficient * multiplied_inner.radians(variables)
-    end
-
-    def multiplied_to_s
-      "#{multiplied_coefficient_text}*#{multiplied_inner}"
-    end
-
-    def resolved_variable(variables)
-      resolved_value = variables.fetch(normalized) { raise Error, "unresolved angle variable: #{normalized}" }
-      concrete_variable(resolved_value)
-    end
-
-    def concrete_variable(resolved_value)
-      angle = self.class.new(resolved_value)
-      raise Error, "variable value must be concrete: #{normalized}" unless angle.concrete?
-
-      angle
+    def raise_invalid_angle
+      raise Error, "invalid angle: #{normalized}"
     end
   end
 end

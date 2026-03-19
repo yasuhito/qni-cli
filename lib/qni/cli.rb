@@ -80,9 +80,7 @@ module Qni
     desc 'run', 'Show the state vector of the circuit'
     method_option :symbolic, type: :boolean, default: false, desc: 'Show a 1-qubit symbolic state expression'
     def simulate
-      circuit = current_circuit_file.load
-      simulator = Simulator.new(circuit)
-      puts options[:symbolic] ? simulator.render_symbolic_state_vector : simulator.render_state_vector
+      puts rendered_state_vector
     rescue CircuitFile::Error, Simulator::Error => e
       raise Thor::Error, e.message
     end
@@ -115,6 +113,13 @@ module Qni
         return SUPPORTED_GATES.fetch(normalized_gate) if SUPPORTED_GATES.key?(normalized_gate)
 
         raise Thor::Error, "unsupported gate: #{gate}"
+      end
+
+      def rendered_state_vector
+        simulator = Simulator.new(current_circuit_file.load)
+        return simulator.render_symbolic_state_vector if options[:symbolic]
+
+        simulator.render_state_vector
       end
     end
   end

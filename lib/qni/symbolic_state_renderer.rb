@@ -16,16 +16,7 @@ module Qni
     def render
       raise Simulator::Error, ONE_QUBIT_ONLY_MESSAGE unless one_qubit?
 
-      helper_commands.each do |command|
-        stdout, stderr, status = Open3.capture3(*command, stdin_data: JSON.generate(circuit_hash))
-        return stdout.strip if status.success?
-
-        next if retryable_with_next_command?(stderr, command)
-
-        raise Simulator::Error, render_error_message(stderr, status)
-      end
-
-      raise Simulator::Error, 'symbolic run requires Python with SymPy or uv'
+      render_with_helpers || raise(Simulator::Error, 'symbolic run requires Python with SymPy or uv')
     rescue Errno::ENOENT => e
       raise Simulator::Error, e.message
     end
@@ -49,17 +40,43 @@ module Qni
       File.expand_path(HELPER_RELATIVE_PATH, __dir__)
     end
 
-    def retryable_with_next_command?(stderr, command)
-      return false unless command.first == 'python3'
+    def render_with_helpers
+      helper_commands.each do |command|
+        output = render_with_helper(command)
+        return output if output
+      end
 
-      stderr.to_s.include?("No module named 'sympy'")
+      nil
     end
 
-    def render_error_message(stderr, status)
-      message = stderr.to_s.strip
-      return message unless message.empty?
+    def render_with_helper(command)
+      stdout, stderr, status = run_helper(command)
+      return stdout if status.success?
 
-      "symbolic renderer failed with exit status #{status.exitstatus}"
+      helper_class = self.class
+      return nil if helper_class.retryable_with_next_command?(stderr, command)
+
+      raise Simulator::Error, helper_class.render_error_message(stderr, status)
+    end
+
+    def run_helper(command)
+      stdout, stderr, status = Open3.capture3(*command, stdin_data: JSON.generate(circuit_hash))
+      [stdout.strip, stderr, status]
+    end
+
+    class << self
+      def retryable_with_next_command?(stderr, command)
+        return false unless command.first == 'python3'
+
+        stderr.to_s.include?("No module named 'sympy'")
+      end
+
+      def render_error_message(stderr, status)
+        message = stderr.to_s.strip
+        return message unless message.empty?
+
+        "symbolic renderer failed with exit status #{status.exitstatus}"
+      end
     end
   end
 end
