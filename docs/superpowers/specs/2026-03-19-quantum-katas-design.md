@@ -44,6 +44,33 @@
 
 Kata の元実装言語と、`qni-cli` で実現したいワークフローに差がある場合は、Q# の表面構文ではなく Task の振る舞い上の意図を保存する。
 
+## Kata Feature の分割方針
+
+Kata 由来の feature は、Kata 単位の 1 ファイルにまとめ続けるのではなく、Task 名ごとの file に分割する。
+
+ディレクトリ構成は次のようにする。
+
+- `features/katas/<kata_name>/`
+
+ファイル名は Task 番号ではなく Task 名を使う。
+
+例:
+
+- `features/katas/basic_gates/state_flip.feature`
+- `features/katas/basic_gates/basis_change.feature`
+
+理由は次のとおり。
+
+- file 名だけで内容が分かる
+- Task ごとの進捗と未完了が見やすい
+- 将来の追加時に diff が小さくなる
+- Task 番号が将来変わっても意味が残る
+
+Task 番号は file 名ではなく feature 本文に保持する。
+たとえば `機能:` や冒頭説明で `Task 1.1 StateFlip` のように明示する。
+
+既存の `BasicGates` では、少なくとも `Task 1.1` と `Task 1.2` を別 file に分割し、その後の Task も最初からこの方針で追加する。
+
 ## 今回の対象
 
 今回の設計対象は `BasicGates Task 1.1` のみとする。
