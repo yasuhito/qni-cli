@@ -4,7 +4,7 @@
 
 **Goal:** `Task 1.2` と `Task 1.4` の kata feature を Quantum Katas のテストハーネス構成に揃え、`DumpDiffOnOneQubit` 相当と `AssertOperationsEqualReferenced` 相当の両方が feature から読める状態にする。
 
-**Architecture:** product code は変更せず、`features/katas/basic_gates/basis_change.feature` と `features/katas/basic_gates/amplitude_change.feature` だけを修正する。`Task 1.2` には非自明入力状態の数値シナリオを 1 本追加し、`Task 1.4` には全角度走査を表す `Scenario Outline` を追加して、既存の controlled 検証と symbolic 補助を残したまま Katas テストに近い形へ寄せる。
+**Architecture:** `Task 1.2` には非自明入力状態の数値シナリオを 1 本追加する。`Task 1.4` は「1 本の dump 相当の数値シナリオ」と「全角度の controlled 走査」に分け直し、必要なら `features/step_definitions/cli_steps.rb` に近似比較 step を追加して、人間に読める feature の形で Katas テスト構成へ寄せる。
 
 **Tech Stack:** Cucumber, Gherkin, qni-cli
 
@@ -15,7 +15,9 @@
 - Modify: `features/katas/basic_gates/basis_change.feature`
   - `Task 1.2` に `0.6|0> + 0.8|1>` 入力の数値シナリオを追加する。
 - Modify: `features/katas/basic_gates/amplitude_change.feature`
-  - 代表角度 4 本の例表を、Katas の `0 .. 36` 走査に対応する全角度例表へ置き換える。
+  - 代表角度 4 本の数値表を、Katas に近い「dump 相当 1 本 + controlled 全角度走査」へ置き換える。
+- Modify: `features/step_definitions/cli_steps.rb`
+  - `Task 1.4` の controlled 全角度走査を人間に読める形で書くため、必要なら期待値の近似比較 step を追加する。
 - Verify: `features/katas/basic_gates/state_flip.feature`
   - `Task 1.1` が引き続き Katas 再現型の基準として通ることを確認する。
 - Verify: `features/katas/basic_gates/sign_flip.feature`
@@ -65,44 +67,54 @@ git add features/katas/basic_gates/basis_change.feature
 git commit -m "test: align Task 1.2 with kata harness"
 ```
 
-## Task 2: `Task 1.4` を全角度走査に揃える
+## Task 2: `Task 1.4` を読みやすい Katas 再現型へ揃える
 
 **Files:**
 - Modify: `features/katas/basic_gates/amplitude_change.feature`
+- Modify: `features/step_definitions/cli_steps.rb`
 
-- [ ] **Step 1: 37 角度分の期待値を生成する**
+- [ ] **Step 1: failing feature を Katas に近い形へ書き換える**
 
-一時的にローカルで期待値表を生成する。生成物はコミットしない。
+`features/katas/basic_gates/amplitude_change.feature` を次の方針で更新する。
+
+- 数値シナリオは 1 本にする
+  - 入力は Katas の `DumpDiffOnOneQubit` に合わせて `0.6|0> + 0.8|1>`
+  - 角度は `dumpAlpha = π/3`
+  - `Ry(2*alpha)` 適用後の数値出力を固定する
+- controlled 検証は `Scenario Outline` にする
+  - `alpha = 0 .. 36` を例表で持つ
+  - 各行は `qni variable set alpha <alpha>` と `qni expect ZI` を実行する
+  - 期待は exact な `"ZI=1.0"` 比較ではなく、近似比較 step で `1.0 ± 1e-12` を確認する
+- symbolic シナリオは残す
+
+- [ ] **Step 2: 近似比較 step を先に書いて red を確認する**
+
+`features/step_definitions/cli_steps.rb` に、次のような step を追加する前提で、まず feature を実行して undefined step または失敗を確認する。
+
+```gherkin
+ならば 期待値 "ZI" は 1.0 ± 1e-12
+```
 
 Run:
 
 ```bash
-python3 - <<'PY'
-import math
-for i in range(37):
-    alpha = 2 * math.pi * i / 36
-    ry_angle = 2 * alpha
-    a0 = math.cos(alpha)
-    a1 = math.sin(alpha)
-    print(f"| {i:2d} | {ry_angle!r} | {a0!r},{a1!r} |")
-PY
+BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/share/gem/ruby/3.4.0/bin/bundle exec cucumber features/katas/basic_gates/amplitude_change.feature
 ```
 
 Expected:
 
-- `i = 0 .. 36` の 37 行が出る
-- `ry_angle` と `state_vector` を例表へ転記できる
+- 新しい近似比較 step が未定義か、追加したシナリオが失敗する
+- [ ] **Step 3: 近似比較 step を最小実装する**
 
-- [ ] **Step 2: `Scenario Outline` の例表を全角度走査へ置き換える**
+`features/step_definitions/cli_steps.rb` に、期待値名・期待値・許容誤差を受け取り、`@stdout` から該当行を取り出して数値比較する step を追加する。
 
-`features/katas/basic_gates/amplitude_change.feature` の数値シナリオを次の方針で更新する。
+実装要件:
 
-- シナリオ名は維持する
-- 例表列名を `double_alpha` から `ry_angle` に変更する
-- 例表を `i = 0 .. 36` の 37 行へ広げる
-- 既存の controlled 検証シナリオと symbolic シナリオは残す
+- 行形式は `ZI=0.9999999999999996` のような既存 `qni expect` 出力を前提にする
+- 指定した observable 名の行がなければ失敗する
+- `|actual - expected| <= tolerance` を満たせば成功する
 
-- [ ] **Step 3: `Task 1.4` feature を実行して green を確認する**
+- [ ] **Step 4: `Task 1.4` feature を実行して green を確認する**
 
 Run:
 
@@ -113,12 +125,12 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/sha
 Expected:
 
 - PASS
-- `Task 1.4` の数値走査、controlled 検証、symbolic 補助が共存して green
+- `Task 1.4` の dump 相当、controlled 全角度走査、symbolic 補助が共存して green
 
-- [ ] **Step 4: `Task 1.4` の補正をコミットする**
+- [ ] **Step 5: `Task 1.4` の補正をコミットする**
 
 ```bash
-git add features/katas/basic_gates/amplitude_change.feature
+git add features/katas/basic_gates/amplitude_change.feature features/step_definitions/cli_steps.rb
 git commit -m "test: align Task 1.4 with kata harness"
 ```
 
@@ -156,18 +168,18 @@ Expected:
 Check:
 
 - product code を変更していない
-- 変更が `basis_change.feature` と `amplitude_change.feature` に限られている
+- 変更が `basis_change.feature`、`amplitude_change.feature`、必要なら `features/step_definitions/cli_steps.rb` に限られている
 - `Task 1.2` と `Task 1.4` の feature が、Katas テストコードの意図を feature から読める形になっている
 
 - [ ] **Step 3: 最終確認コミットを作る**
 
 ```bash
-git add features/katas/basic_gates/basis_change.feature features/katas/basic_gates/amplitude_change.feature
+git add features/katas/basic_gates/basis_change.feature features/katas/basic_gates/amplitude_change.feature features/step_definitions/cli_steps.rb
 git commit -m "test: align kata regression coverage"
 ```
 
 ## Notes
 
 - 今回の目的は新機能追加ではなく、既存 feature の再現度を Quantum Katas のテストハーネスに揃えること。
-- `Task 1.4` の 37 行例表は長くなるが、「Katas の `0 .. 36` 走査が見えること」を優先して feature 側へ展開する。
+- `Task 1.4` は「1 本の dump 相当」と「全角度の controlled 走査」に分けることで、人間向けの可読性と Katas 相当の網羅性を両立する。
 - `Task 1.5` はこの補正が済んでから、最初から同じ基準で追加する。
