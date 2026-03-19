@@ -1,5 +1,4 @@
-# language: ja
-機能: Quantum Katas BasicGates Task 1.4 AmplitudeChange
+Feature: Quantum Katas BasicGates Task 1.4 AmplitudeChange
   Task 1.4 AmplitudeChange: |0⟩ を cos(alpha)|0⟩ + sin(alpha)|1⟩ に変える
   入力:
   角度 alpha
@@ -8,27 +7,27 @@
   |0⟩ を cos(alpha)|0⟩ + sin(alpha)|1⟩ に変え、
   |1⟩ を -sin(alpha)|0⟩ + cos(alpha)|1⟩ に変える
 
-  シナリオ: Task 1.4 は dumpAlpha = π/3 で非自明状態を変換する
-    前提 1 qubit の初期状態が "0.6|0> + 0.8|1>" である
-    かつ "qni add Ry --angle 2π/3 --qubit 0 --step 1" を実行
-    もし "qni run" を実行
-    ならば 標準出力:
+  Scenario: Task 1.4 は dumpAlpha = π/3 で非自明状態を変換する
+    Given 1 qubit の初期状態が "0.6|0> + 0.8|1>" である
+    And "qni add Ry --angle 2π/3 --qubit 0 --step 1" を実行
+    When "qni run" を実行
+    Then 標準出力:
       """
       -0.3928203230275509,0.9196152422706633
       """
 
-  シナリオアウトライン: Task 1.4 の controlled 検証回路は alpha を走査して control qubit を |0> に戻す
-    前提 空の 2 qubit 回路がある
-    かつ "qni add H --qubit 0 --step 0" を実行
-    かつ "qni add Ry --angle 1.8545904360032246 --qubit 1 --step 1" を実行
-    かつ "qni add Ry --angle 2*alpha --control 0 --qubit 1 --step 2" を実行
-    かつ "qni variable set alpha <alpha>" を実行
-    かつ "qni add Ry --angle -2*alpha --control 0 --qubit 1 --step 3" を実行
-    かつ "qni add H --qubit 0 --step 4" を実行
-    もし "qni expect ZI" を実行
-    ならば 期待値 "ZI" は 1.0 ± 1e-12
+  Scenario Outline: Task 1.4 の controlled 検証回路は alpha を走査して control qubit を |0> に戻す
+    Given 空の 2 qubit 回路がある
+    And "qni add H --qubit 0 --step 0" を実行
+    And "qni add Ry --angle 1.8545904360032246 --qubit 1 --step 1" を実行
+    And "qni add Ry --angle 2*alpha --control 0 --qubit 1 --step 2" を実行
+    And "qni variable set alpha <alpha>" を実行
+    And "qni add Ry --angle -2*alpha --control 0 --qubit 1 --step 3" を実行
+    And "qni add H --qubit 0 --step 4" を実行
+    When "qni expect ZI" を実行
+    Then 期待値 "ZI" は 1.0 ± 1e-12
 
-    例:
+    Examples:
       | alpha  |
       | 0      |
       | π/18   |
@@ -68,10 +67,10 @@
       | 35π/18 |
       | 2π     |
 
-  シナリオ: Task 1.4 は symbolic 表示で一般式を示す
-    前提 "qni add Ry --angle 2*alpha --qubit 0 --step 0" を実行
-    もし "qni run --symbolic" を実行
-    ならば 標準出力:
+  Scenario: Task 1.4 は symbolic 表示で一般式を示す
+    Given "qni add Ry --angle 2*alpha --qubit 0 --step 0" を実行
+    When "qni run --symbolic" を実行
+    Then 標準出力:
       """
       cos(alpha)|0> + sin(alpha)|1>
       """

@@ -1,12 +1,11 @@
-# language: ja
-機能: Phase ゲートを追加
+Feature: Phase ゲートを追加
   qni-cli のユーザとして
   コマンドラインから量子回路を組み立てるために
   指定した step と qubit に Phase ゲートを追加したい
 
-  シナリオ: Phase ゲート追加で circuit.json を作成
-    もし "qni add P --angle π/3 --qubit 0 --step 0" を実行
-    ならば "circuit.json" の内容:
+  Scenario: Phase ゲート追加で circuit.json を作成
+    When "qni add P --angle π/3 --qubit 0 --step 0" を実行
+    Then "circuit.json" の内容:
       """
       {
         "qubits": 1,
@@ -16,10 +15,10 @@
       }
       """
 
-  シナリオ: Phase ゲートは angle がないと追加できない
-    もし "qni add P --qubit 0 --step 0" を実行
-    ならば コマンドは失敗
-    かつ 標準エラー:
+  Scenario: Phase ゲートは angle がないと追加できない
+    When "qni add P --qubit 0 --step 0" を実行
+    Then コマンドは失敗
+    And 標準エラー:
       """
       angle is required for P
       """

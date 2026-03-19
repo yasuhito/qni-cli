@@ -1,37 +1,36 @@
-# language: ja
-機能: qni add コマンド
+Feature: qni add コマンド
   qni-cli のユーザとして
   コマンドラインから量子回路を更新するために
   qni add コマンドを実行したい
 
-  シナリオ: qni add コマンドは成功
-    もし "qni add H --qubit 0 --step 0" を実行
-    ならば コマンドは成功
+  Scenario: qni add コマンドは成功
+    When "qni add H --qubit 0 --step 0" を実行
+    Then コマンドは成功
 
-  シナリオ: qni add H の標準出力は空
-    もし "qni add H --qubit 0 --step 0" を実行
-    ならば 標準出力は空
+  Scenario: qni add H の標準出力は空
+    When "qni add H --qubit 0 --step 0" を実行
+    Then 標準出力は空
 
-  シナリオ: qni add X with control コマンドは成功
-    もし "qni add X --control 0 --qubit 1 --step 0" を実行
-    ならば コマンドは成功
+  Scenario: qni add X with control コマンドは成功
+    When "qni add X --control 0 --qubit 1 --step 0" を実行
+    Then コマンドは成功
 
-  シナリオ: qni add X with control の標準出力は空
-    もし "qni add X --control 0 --qubit 1 --step 0" を実行
-    ならば 標準出力は空
+  Scenario: qni add X with control の標準出力は空
+    When "qni add X --control 0 --qubit 1 --step 0" を実行
+    Then 標準出力は空
 
-  シナリオ: qni add SWAP コマンドは成功
-    もし "qni add SWAP --qubit 0,1 --step 0" を実行
-    ならば コマンドは成功
+  Scenario: qni add SWAP コマンドは成功
+    When "qni add SWAP --qubit 0,1 --step 0" を実行
+    Then コマンドは成功
 
-  シナリオ: すでに H があるスロットへの qni add は失敗
-    前提 "qni add H --qubit 0 --step 0" を実行
-    もし "qni add H --qubit 0 --step 0" を実行
-    ならば コマンドは失敗
+  Scenario: すでに H があるスロットへの qni add は失敗
+    Given "qni add H --qubit 0 --step 0" を実行
+    When "qni add H --qubit 0 --step 0" を実行
+    Then コマンドは失敗
 
-  シナリオ: 空の先頭ステップは自動的に削除される
-    もし "qni add H --qubit 0 --step 1" を実行
-    ならば "circuit.json" の内容:
+  Scenario: 空の先頭ステップは自動的に削除される
+    When "qni add H --qubit 0 --step 1" を実行
+    Then "circuit.json" の内容:
       """
       {
         "qubits": 1,
@@ -41,9 +40,9 @@
       }
       """
 
-  シナリオ: 空の先頭 qubit は自動的に削除される
-    もし "qni add H --qubit 1 --step 0" を実行
-    ならば "circuit.json" の内容:
+  Scenario: 空の先頭 qubit は自動的に削除される
+    When "qni add H --qubit 1 --step 0" を実行
+    Then "circuit.json" の内容:
       """
       {
         "qubits": 1,
@@ -53,10 +52,10 @@
       }
       """
 
-  シナリオ: 既存回路に新しい qubit を追加できる
-    前提 "qni add H --qubit 0 --step 0" を実行
-    もし "qni add H --qubit 1 --step 0" を実行
-    ならば "circuit.json" の内容:
+  Scenario: 既存回路に新しい qubit を追加できる
+    Given "qni add H --qubit 0 --step 0" を実行
+    When "qni add H --qubit 1 --step 0" を実行
+    Then "circuit.json" の内容:
       """
       {
         "qubits": 2,

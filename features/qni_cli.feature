@@ -1,13 +1,12 @@
-# language: ja
-機能: qni CLI
+Feature: qni CLI
   qni-cli のユーザとして
   利用できるコマンドを知るために
   qni だけ実行してヘルプを見たい
 
-  シナリオ: qni はコマンド一覧を表示
-    もし "qni" を実行
-    ならば コマンドは成功
-    かつ 標準出力:
+  Scenario: qni はコマンド一覧を表示
+    When "qni" を実行
+    Then コマンドは成功
+    And 標準出力:
       """
       qni commands:
         qni add       # Add a gate to the circuit
@@ -18,10 +17,10 @@
         qni view      # Render the circuit as ASCII art
       """
 
-  シナリオ: qni add は add コマンドの使い方を表示
-    もし "qni add" を実行
-    ならば コマンドは成功
-    かつ 標準出力:
+  Scenario: qni add は add コマンドの使い方を表示
+    When "qni add" を実行
+    Then コマンドは成功
+    And 標準出力:
       """
       Usage:
         qni add GATE --qubit=N --step=N
@@ -59,10 +58,10 @@
         qni add SWAP --qubit 0,1 --step 0
       """
 
-  シナリオ: qni add --help は add コマンドの使い方を表示
-    もし "qni add --help" を実行
-    ならば コマンドは成功
-    かつ 標準出力:
+  Scenario: qni add --help は add コマンドの使い方を表示
+    When "qni add --help" を実行
+    Then コマンドは成功
+    And 標準出力:
       """
       Usage:
         qni add GATE --qubit=N --step=N
@@ -100,10 +99,10 @@
         qni add SWAP --qubit 0,1 --step 0
       """
 
-  シナリオ: qni expect は expect コマンドの使い方を表示
-    もし "qni expect" を実行
-    ならば コマンドは成功
-    かつ 標準出力:
+  Scenario: qni expect は expect コマンドの使い方を表示
+    When "qni expect" を実行
+    Then コマンドは成功
+    And 標準出力:
       """
       Usage:
         qni expect PAULI_STRING [PAULI_STRING...]
@@ -121,10 +120,10 @@
         qni expect ZZI IZZ XXX
       """
 
-  シナリオ: qni expect --help は expect コマンドの使い方を表示
-    もし "qni expect --help" を実行
-    ならば コマンドは成功
-    かつ 標準出力:
+  Scenario: qni expect --help は expect コマンドの使い方を表示
+    When "qni expect --help" を実行
+    Then コマンドは成功
+    And 標準出力:
       """
       Usage:
         qni expect PAULI_STRING [PAULI_STRING...]
@@ -142,10 +141,10 @@
         qni expect ZZI IZZ XXX
       """
 
-  シナリオ: qni clear --help は clear コマンドの使い方を表示
-    もし "qni clear --help" を実行
-    ならば コマンドは成功
-    かつ 標準出力:
+  Scenario: qni clear --help は clear コマンドの使い方を表示
+    When "qni clear --help" を実行
+    Then コマンドは成功
+    And 標準出力:
       """
       Usage:
         qni clear
@@ -159,10 +158,10 @@
         qni clear
       """
 
-  シナリオ: qni variable は variable コマンドの使い方を表示
-    もし "qni variable" を実行
-    ならば コマンドは成功
-    かつ 標準出力:
+  Scenario: qni variable は variable コマンドの使い方を表示
+    When "qni variable" を実行
+    Then コマンドは成功
+    And 標準出力:
       """
       Usage:
         qni variable set NAME ANGLE
@@ -185,10 +184,10 @@
         qni variable clear
       """
 
-  シナリオ: qni variable --help は variable コマンドの使い方を表示
-    もし "qni variable --help" を実行
-    ならば コマンドは成功
-    かつ 標準出力:
+  Scenario: qni variable --help は variable コマンドの使い方を表示
+    When "qni variable --help" を実行
+    Then コマンドは成功
+    And 標準出力:
       """
       Usage:
         qni variable set NAME ANGLE
@@ -211,10 +210,10 @@
         qni variable clear
       """
 
-  シナリオ: qni help は使えない
-    もし "qni help add" を実行
-    ならば コマンドは失敗
-    かつ 標準エラー:
+  Scenario: qni help は使えない
+    When "qni help add" を実行
+    Then コマンドは失敗
+    And 標準エラー:
       """
       qni help is not available; use qni or qni COMMAND --help
       """
