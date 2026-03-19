@@ -61,3 +61,13 @@
       ZX=-1.0
       XZ=1.0
       """
+
+  シナリオ: qni expect は負の単純な角度式と変数を解決して期待値を表示
+    前提 "qni add Ry --angle -2*alpha --qubit 0 --step 0" を実行
+    かつ "qni variable set alpha π/4" を実行
+    もし "qni expect X Z" を実行
+    ならば 標準出力:
+      """
+      X=-1.0
+      Z=0.0
+      """

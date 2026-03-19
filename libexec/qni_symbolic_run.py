@@ -6,13 +6,14 @@ import re
 import sys
 from dataclasses import dataclass
 
-from sympy import I, Matrix, Symbol, cos, exp, pi, simplify, sin, sqrt
+from sympy import Float, I, Integer, Matrix, Symbol, cos, exp, pi, simplify, sin, sqrt
 
 ONE_QUBIT_ONLY_MESSAGE = "symbolic run currently supports only 1-qubit circuits"
 EPSILON = sys.float_info.epsilon
 ANGLED_GATE_PATTERN = re.compile(r"\A(?P<gate>P|Rx|Ry|Rz)\((?P<angle>.+)\)\Z")
 IDENTIFIER_PATTERN = re.compile(r"\A[a-zA-Z_][a-zA-Z0-9_]*\Z")
 NUMERIC_PATTERN = re.compile(r"\A[+-]?\d+(?:\.\d+)?\Z")
+MULTIPLIED_PATTERN = re.compile(r"\A(?P<coefficient>[+-]?\d+(?:\.\d+)?)\*(?P<term>.+)\Z")
 PI_PATTERN = re.compile(
     r"\A(?P<sign>[+-]?)(?:(?P<coefficient>\d+(?:\.\d+)?)(?:\*)?)?(?:π|pi)(?:(?:/|_)(?P<denominator>\d+(?:\.\d+)?))?\Z"
 )
@@ -52,6 +53,11 @@ def format_numeric_amplitude(amplitude: complex | float) -> str:
     return str(normalize_scalar(float(amplitude)))
 
 
+def symbolic_scalar(value: str):
+    number = float(value)
+    return Integer(int(number)) if number.is_integer() else Float(number)
+
+
 def parse_pi_term(value: str) -> tuple[object, float] | None:
     match = PI_PATTERN.match(value)
     if not match:
@@ -80,6 +86,15 @@ def parse_angle(raw_value: str, variables: dict[str, str]) -> ParsedAngle:
 
     if IDENTIFIER_PATTERN.match(resolved):
         return ParsedAngle(symbolic=Symbol(resolved), concrete=None, unresolved=True)
+
+    multiplied = MULTIPLIED_PATTERN.match(resolved)
+    if multiplied:
+        coefficient = float(multiplied.group("coefficient"))
+        symbolic_coefficient = symbolic_scalar(multiplied.group("coefficient"))
+        term = parse_angle(multiplied.group("term"), variables)
+        symbolic = symbolic_coefficient * term.symbolic
+        concrete = None if term.concrete is None else coefficient * term.concrete
+        return ParsedAngle(symbolic=symbolic, concrete=concrete, unresolved=term.unresolved)
 
     raise ValueError(f"invalid angle: {resolved}")
 

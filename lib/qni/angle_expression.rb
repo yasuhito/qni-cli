@@ -77,6 +77,7 @@ module Qni
 
     IDENTIFIER_PATTERN = /\A[a-zA-Z_][a-zA-Z0-9_]*\z/
     NUMERIC_PATTERN = /\A[+-]?\d+(?:\.\d+)?\z/
+    MULTIPLIED_PATTERN = /\A(?<coefficient>[+-]?\d+(?:\.\d+)?)\*(?<term>.+)\z/
 
     def initialize(raw_value)
       @raw_value = raw_value
@@ -84,6 +85,7 @@ module Qni
 
     def radians(variables = {})
       return normalized.to_f if numeric?
+      return multiplied_radians(variables) if multiplied_term
       return resolved_variable(variables).radians if variable?
       return pi_term.radians if pi_term
 
@@ -92,12 +94,15 @@ module Qni
 
     def to_s
       return normalized if numeric? || variable?
+      return multiplied_to_s if multiplied_term
       return pi_term.to_s if pi_term
 
       raise Error, "invalid angle: #{normalized}"
     end
 
     def concrete?
+      return multiplied_inner.concrete? if multiplied_term
+
       numeric? || !!pi_term
     end
 
@@ -124,6 +129,30 @@ module Qni
 
     def pi_term
       PiTerm.parse(normalized)
+    end
+
+    def multiplied_term
+      @multiplied_term ||= MULTIPLIED_PATTERN.match(normalized)
+    end
+
+    def multiplied_coefficient
+      multiplied_term[:coefficient].to_f
+    end
+
+    def multiplied_coefficient_text
+      multiplied_term[:coefficient]
+    end
+
+    def multiplied_inner
+      @multiplied_inner ||= self.class.new(multiplied_term[:term])
+    end
+
+    def multiplied_radians(variables)
+      multiplied_coefficient * multiplied_inner.radians(variables)
+    end
+
+    def multiplied_to_s
+      "#{multiplied_coefficient_text}*#{multiplied_inner}"
     end
 
     def resolved_variable(variables)

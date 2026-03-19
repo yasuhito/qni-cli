@@ -131,6 +131,24 @@
       unresolved angle variable: theta
       """
 
+  シナリオ: qni run は単純な角度式と変数を解決して Ry ゲートの状態ベクトルを表示
+    前提 "qni add Ry --angle 2*alpha --qubit 0 --step 0" を実行
+    かつ "qni variable set alpha π/4" を実行
+    もし "qni run" を実行
+    ならば 標準出力:
+      """
+      0.7071067811865476,0.7071067811865475
+      """
+
+  シナリオ: qni run は負の単純な角度式と変数を解決して Ry ゲートの状態ベクトルを表示
+    前提 "qni add Ry --angle -2*alpha --qubit 0 --step 0" を実行
+    かつ "qni variable set alpha π/4" を実行
+    もし "qni run" を実行
+    ならば 標準出力:
+      """
+      0.7071067811865476,-0.7071067811865475
+      """
+
   シナリオ: qni run は Rz ゲートの状態ベクトルを標準出力に表示
     前提 "qni add Rz --angle π/2 --qubit 0 --step 0" を実行
     もし "qni run" を実行
@@ -350,6 +368,14 @@
     ならば 標準出力:
       """
       cos(theta/2)|0> + sin(theta/2)|1>
+      """
+
+  シナリオ: qni run --symbolic は単純な角度式を簡約して表示
+    前提 "qni add Ry --angle 2*alpha --qubit 0 --step 0" を実行
+    もし "qni run --symbolic" を実行
+    ならば 標準出力:
+      """
+      cos(alpha)|0> + sin(alpha)|1>
       """
 
   シナリオ: qni run --symbolic は 2 qubit 回路では失敗
