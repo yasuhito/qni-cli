@@ -1,8 +1,13 @@
 # language: ja
 機能: Quantum Katas BasicGates
-  qni-cli のユーザとして
-  Quantum Katas の Task 1.1 を回帰テストに残すために
-  StateFlip を qni-cli で再現したい
+  Task 1.1 StateFlip: |0⟩ を |1⟩ に、|1⟩ を |0⟩ に反転する
+  入力:
+  1 量子ビットの状態 |ψ⟩ = α|0⟩ + β|1⟩
+  目標:
+  状態を α|1⟩ + β|0⟩ に変える
+  具体例:
+  |0⟩ を |1⟩ に変える
+  |1⟩ を |0⟩ に変える
 
   シナリオ: Task 1.1 は |0> を |1> に反転する
     前提 空の 1 qubit 回路がある
