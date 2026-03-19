@@ -11,6 +11,23 @@ require 'json'
   File.write(actual_path, "#{JSON.pretty_generate(actual)}\n")
 end
 
+前提('1 qubit の初期状態が {string} である') do |state|
+  actual_path = File.join(@scenario_dir, 'circuit.json')
+  col = case state
+        when '|0>'
+          [1]
+        when '|1>'
+          ['X']
+        else
+          raise "unsupported 1-qubit initial state: #{state}"
+        end
+  actual = {
+    'qubits' => 1,
+    'cols' => [col]
+  }
+  File.write(actual_path, "#{JSON.pretty_generate(actual)}\n")
+end
+
 前提('空の 2 qubit 回路がある') do
   actual_path = File.join(@scenario_dir, 'circuit.json')
   actual = {
