@@ -27,3 +27,15 @@
         ]
       }
       """
+
+  シナリオ: Ry ゲートは単純な角度式をそのまま保存できる
+    もし "qni add Ry --angle 2*alpha --qubit 0 --step 0" を実行
+    ならば "circuit.json" の内容:
+      """
+      {
+        "qubits": 1,
+        "cols": [
+          ["Ry(2*alpha)"]
+        ]
+      }
+      """
