@@ -9,6 +9,7 @@ require_relative 'swap_gate'
 require_relative 'simulator/step_operation'
 require_relative 'sqrt_x_gate'
 require_relative 'state_vector'
+require_relative 'symbolic_state_renderer'
 require_relative 'x_gate'
 require_relative 'y_gate'
 require_relative 'z_gate'
@@ -40,6 +41,10 @@ module Qni
 
     def render_state_vector
       state_vector.to_csv
+    end
+
+    def render_symbolic_state_vector
+      SymbolicStateRenderer.new(data).render
     end
 
     def render_expectation_values(pauli_strings)
