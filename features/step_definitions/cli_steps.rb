@@ -159,6 +159,24 @@ end
   MESSAGE
 end
 
+ならば('期待値 {string} は {float} ± 1e-{int}') do |observable, expected, exponent|
+  tolerance = 10.0**(-exponent)
+  actual_line = @stdout.lines.find { |line| line.start_with?("#{observable}=") }
+  raise "expected observable to be present in stdout: #{observable}" unless actual_line
+
+  actual = actual_line.delete_suffix("\n").split('=', 2).last.to_f
+  next if (actual - expected).abs <= tolerance
+
+  raise <<~MESSAGE
+    expected observable #{observable} to be within tolerance
+    expected: #{expected}
+    tolerance: #{tolerance}
+    actual: #{actual}
+    stdout:
+    #{@stdout}
+  MESSAGE
+end
+
 ならば('{string} の内容:') do |path, doc_string|
   actual_path = File.join(@scenario_dir, path)
   raise "expected file to exist: #{path}" unless File.exist?(actual_path)
