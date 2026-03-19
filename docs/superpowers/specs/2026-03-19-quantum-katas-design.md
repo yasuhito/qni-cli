@@ -133,10 +133,35 @@ Task 1.1 の内容は次のように要約できる。
 `Task 1.1` の今後の強化順は次のとおりとする。
 
 1. 非自明な振幅ケースを feature に追加する
-2. controlled 等価性を補助検証として追加する
+2. controlled 等価性を、既存 CLI で書ける検証回路として追加する
 3. `qni run` のシンボリック表示オプションは、その後に別 feature として検討する
 
 この順番にする理由は、1 と 2 が correctness の強化であり、3 は可観測性と UX の改善だからである。
+
+## Task 1.1 の controlled 検証方針
+
+`Task 1.1` の 2 段目では、新しい検証専用コマンドは追加しない。
+代わりに、Kata の確認フェーズに相当する検証回路そのものを、既存の `qni-cli` コマンドで記述できるかを確認する。
+
+基本方針は次のとおり。
+
+- control qubit を `H` で重ね合わせにする
+- target qubit を `Ry(2 * arccos(0.6))` で `0.6|0⟩ + 0.8|1⟩` にする
+- candidate の controlled-`X` を適用する
+- reference の adjoint に相当する controlled-`X` を適用する
+- control qubit に再び `H` をかける
+- 最後に `qni expect` を使い、control 側が `|0⟩` に戻ることを確認する
+
+`Task 1.1` では `X` が self-adjoint なので、reference の adjoint は同じ controlled-`X` で表現できる。
+そのため、まずは既存の `qni add ... --control` と `qni expect` の範囲で controlled 検証回路を組める可能性が高い。
+
+この段階で重要なのは、
+
+- 解答回路を `qni-cli` で書けること
+- 検証回路も `qni-cli` で書けること
+- 新しいコマンド追加は、本当に表現できない不足が出た場合に限ること
+
+という 3 点である。
 
 ## 最初の実装スライス
 
@@ -164,6 +189,7 @@ Task 1.1 の内容は次のように要約できる。
 次の強化シナリオ候補は次のとおり。
 
 - `0.6|0⟩ + 0.8|1⟩` から開始し、`qni add X --qubit 0 --step 1` の後に `qni run` で `0.8|0⟩ + 0.6|1⟩` に対応する数値出力になること
+- control qubit を含む 2 qubit 回路で、candidate の controlled-`X` のあとに reference の controlled-`X` を重ね、最後に `qni expect` で control 側が `|0⟩` に戻ること
 
 ### Step 2: 必要なテスト step 定義を追加する
 
@@ -177,6 +203,9 @@ Kata 形式のシナリオに必要な最小限の範囲でのみ、Cucumber の
 
 非自明な振幅ケースでは、まず汎用パーサは作らず、Kata に必要な最小限の状態準備 step を test support に追加する。
 たとえば `1 qubit の初期状態が "0.6|0> + 0.8|1>" である` のような専用 step を想定する。
+
+controlled 検証では、必要なら 2 qubit の専用状態準備 step も同じ方針で追加する。
+ただし、まずは既存の `空の 2 qubit 回路がある` と `qni add H` / `qni add Ry` / `qni add X --control ...` / `qni expect` の組み合わせだけで書けるかを優先して確認する。
 
 ### Step 3: まず現行 CLI のまま試す
 
@@ -248,4 +277,4 @@ Kata 形式のシナリオに必要な最小限の範囲でのみ、Cucumber の
 
 ## 直近の次ステップ
 
-`BasicGates` の `Task 1.1` に対する Kata feature を、基底状態の 2 例だけでなく `0.6|0⟩ + 0.8|1⟩` の非自明ケースまで広げ、現行 `qni run` の数値出力だけで十分に検証できるかを確認する。
+`BasicGates` の `Task 1.1` に対して、candidate の controlled-`X` と reference の controlled-`X` を重ねた検証回路を `qni-cli` で記述し、`qni expect` で control 側が `|0⟩` に戻ることを確認する feature を追加する。
