@@ -36,6 +36,15 @@
       0.8,0.6
       """
 
+  シナリオ: Task 1.1 は symbolic 表示で一般式の反転を示す
+    前提 "qni add Ry --angle theta --qubit 0 --step 0" を実行
+    かつ "qni add X --qubit 0 --step 1" を実行
+    もし "qni run --symbolic" を実行
+    ならば 標準出力:
+      """
+      sin(theta/2)|0> + cos(theta/2)|1>
+      """
+
   シナリオ: Task 1.1 の controlled 検証回路は control qubit を |0> に戻す
     前提 空の 2 qubit 回路がある
     かつ "qni add H --qubit 0 --step 0" を実行
