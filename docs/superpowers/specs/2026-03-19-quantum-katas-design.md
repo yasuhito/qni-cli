@@ -325,6 +325,82 @@ symbolic 説明シナリオでは、`qni run --symbolic` を使って `SignFlip`
 この task では、現時点の見立てとして新機能追加は必須ではない。
 まずは既存の `Z`、controlled-`Z`、`qni run --symbolic`、`qni expect` で feature を先に書き、本当に不足が出た場合だけ追加提案を行う。
 
+## Task 1.4 の検証方針
+
+`Task 1.4 AmplitudeChange` は、`Task 1.1` から `Task 1.3` までと同じ 3 段構成を維持しつつ、最初の「角度付きかつ self-adjoint でない task」として扱う。
+
+- 数値シナリオ
+- controlled 検証シナリオ
+- symbolic 説明シナリオ
+
+`Task 1.4` の内容は次のように要約できる。
+
+- 入力:
+  - 角度 `alpha`
+  - 1 量子ビットの状態 `β|0⟩ + γ|1⟩`
+- 目標:
+  - `|0⟩ -> cos(alpha)|0⟩ + sin(alpha)|1⟩`
+  - `|1⟩ -> -sin(alpha)|0⟩ + cos(alpha)|1⟩`
+  - 重ね合わせ状態でも基底ベクトルへの作用に従って変換する
+- 解法意図: `Ry(2 * alpha)`
+
+新しい kata feature は次の path に置く。
+
+- `features/katas/basic_gates/amplitude_change.feature`
+
+数値シナリオでは、代表角度を絞った `Scenario Outline` を使う。
+最初の代表値は次の 4 つとする。
+
+- `alpha = 0`
+- `alpha = π/6`
+- `alpha = π/4`
+- `alpha = π/2`
+
+これにより、
+
+- 退化ケース
+- Kata の dump 用角度に近い非自明ケース
+- 対称なケース
+- 極端なケース
+
+を軽量に押さえられる。
+
+ただし、Quantum Katas 側の [T104_AmplitudeChange](/home/yasuhito/Work/oss/QuantumKatas/BasicGates/Tests.qs) は `0 .. 36` の角度走査で controlled 等価性を確認している。
+そのため、`Task 1.4` では「単一角度の確認」だけで完了扱いにしない。
+
+controlled 検証では、Kata の dump 用角度 `dumpAlpha = 2π * 6 / 36 = π/3` を代表角度として使う。
+ここでは `Task 1.1` から `Task 1.3` と違い、candidate のあとに同じ回路をもう一度つなぐことはできない。
+`AmplitudeChange` は self-adjoint ではないため、検証には逆操作が必要になる。
+
+したがって controlled 検証回路では、少なくとも次を表現できる必要がある。
+
+- candidate: `Ry(2 * alpha)`
+- reference の adjoint: `Ry(-2 * alpha)`
+
+この task で最初に現れる不足候補は、`qni-cli` が次のような角度式を受け付けられるかどうかである。
+
+- `2*alpha`
+- `-2*alpha`
+
+もし現在の `AngleExpression` がこの種の式を扱えない場合、それは `Task 1.4` を通すための正当なプロダクト不足として扱う。
+その場合でも、先に feature を書いて赤を確認し、不足が実在することを確かめてから機能追加を提案する。
+
+symbolic 説明シナリオでは、`qni run --symbolic` を使って `AmplitudeChange(alpha)` が一般式としてどう作用するかを直接読めるようにする。
+
+例:
+
+- `qni add Ry --angle 2*alpha --qubit 0 --step 0`
+- `qni run --symbolic`
+- 期待する式は `cos(alpha)|0> + sin(alpha)|1>` に近い形
+
+この task では、`qni variable set alpha ...` と angle expression の組み合わせも検証対象に含める。
+つまり `alpha` を変数として保持しつつ、
+
+- 数値 `run` / `expect` では concrete value に解決できること
+- symbolic `run` では未束縛のままでも式を表示できること
+
+の両方を確認する。
+
 ## シンボリック実装方針
 
 シンボリック表示では、Ruby 本体に重い記号計算器を直接組み込まず、Python helper を subprocess として呼び出す。
