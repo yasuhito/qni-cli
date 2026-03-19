@@ -18,6 +18,8 @@ end
           [1]
         when '|1>'
           ['X']
+        when '0.6|0> + 0.8|1>'
+          ['Ry(1.8545904360032246)']
         else
           raise "unsupported 1-qubit initial state: #{state}"
         end
