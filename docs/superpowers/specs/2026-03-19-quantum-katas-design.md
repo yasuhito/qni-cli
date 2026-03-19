@@ -199,6 +199,18 @@ Task 1.1 の内容は次のように要約できる。
 - `qni run` は `unresolved angle variable: theta` で失敗
 - `qni run --symbolic` は `cos(theta/2)|0> + sin(theta/2)|1>` を返す
 
+`Task 1.1` に対しては、この表示を kata feature にも 1 本だけ取り込む。
+目的は correctness の強化ではなく、問題文の一般式 `α|0⟩ + β|1⟩ -> α|1⟩ + β|0⟩` を `qni-cli` だけで直接読めるようにすることである。
+
+追加するシナリオは次の性質を持つ。
+
+- `features/katas/basic_gates.feature` に置く
+- `qni add Ry --angle theta --qubit 0 --step 0` で一般状態を作る
+- `qni add X --qubit 0 --step 1` を適用する
+- `qni run --symbolic` により `sin(theta/2)|0> + cos(theta/2)|1>` を期待する
+
+この symbolic シナリオは説明用の回帰ケースであり、既存の数値シナリオと controlled 検証シナリオは残す。
+
 ## シンボリック実装方針
 
 シンボリック表示では、Ruby 本体に重い記号計算器を直接組み込まず、Python helper を subprocess として呼び出す。
