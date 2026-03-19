@@ -163,6 +163,89 @@ Task 1.1 の内容は次のように要約できる。
 
 という 3 点である。
 
+## Task 1.1 のシンボリック表示方針
+
+`Task 1.1` の 3 段目では、`qni run` に読みやすい別表示を追加する。
+既定の CSV 数値出力は変えず、明示オプションでのみシンボリック表示を有効にする。
+
+最初のスコープは次のとおり。
+
+- コマンドは `qni run --symbolic`
+- 対象は最初は 1 qubit 回路のみ
+- 既定の `qni run` は従来どおり数値 CSV を返す
+- `qni run --symbolic` は `α|0> + β|1>` の形で状態を返す
+
+具体例:
+
+- `|0⟩` は `1.0|0>`
+- `X|0⟩` は `1.0|1>`
+- `H|0⟩` は `0.7071067811865475|0> + 0.7071067811865475|1>`
+- `Ry(theta)|0⟩` は `cos(theta/2)|0> + sin(theta/2)|1>`
+
+出力の基本ルールは次のとおり。
+
+- 0 係数の項は省略する
+- 項の順序は `|0>`, `|1>` とする
+- 後続項は ` + ` または ` - ` で結合する
+- 数値係数は既存 formatter に近い文字列を使う
+- 記号係数は SymPy の自然な文字列表現を許容する
+
+このオプションは、未束縛の角度変数があるときの可観測性改善も目的に含む。
+そのため、数値 `qni run` は未束縛変数で従来どおり失敗させる一方、`qni run --symbolic` は変数を残したまま成功できるようにする。
+
+例:
+
+- `qni add Ry --angle theta --qubit 0 --step 0`
+- `qni run` は `unresolved angle variable: theta` で失敗
+- `qni run --symbolic` は `cos(theta/2)|0> + sin(theta/2)|1>` を返す
+
+## シンボリック実装方針
+
+シンボリック表示では、Ruby 本体に重い記号計算器を直接組み込まず、Python helper を subprocess として呼び出す。
+
+理由は次のとおり。
+
+- Ruby 側の既存 simulator は数値状態ベクトル用として維持したい
+- SymPy は記号式、複素数、三角関数、簡約に十分強い
+- Ruby と Python の境界を subprocess にすると、依存と責務を明確に分離できる
+- Ruby-Python bridge を常駐させるより、運用が単純で壊れにくい
+
+責務分担は次のとおり。
+
+### Ruby 側
+
+- `qni run --symbolic` オプションの受理
+- `circuit.json` の読み込み
+- Python helper への JSON 入力の受け渡し
+- helper の stdout をそのまま CLI 出力に使う
+- helper 失敗時のエラーメッセージ整形
+
+### Python 側
+
+- 1 qubit 回路のシンボリック状態ベクトル計算
+- `H`, `X`, `Y`, `Z`, `S`, `S†`, `T`, `T†`, `√X`, `P`, `Rx`, `Ry`, `Rz` の symbolic 表現
+- 束縛済み / 未束縛の角度変数を SymPy 式として扱う
+- `α|0> + β|1>` 形式の文字列表現生成
+
+配置場所は、補助スクリプトではなく本体機能の一部として `libexec/` を想定する。
+
+## シンボリック表示の不足分類
+
+`qni run --symbolic` の追加で失敗した場合は、次のように扱う。
+
+### プロダクト不足
+
+- `run` が `--symbolic` オプションを受け取れない
+- 1 qubit 回路でも symbolic 表示ができない
+- 束縛済み / 未束縛の角度変数を state expression に変換できない
+
+### スコープ外として明示的に失敗
+
+- 2 qubit 以上の回路
+- symbolic helper が未導入、または実行環境に Python / SymPy がない場合
+
+最初のエラーメッセージは利用者が原因をすぐ判断できることを優先し、たとえば `symbolic run currently supports only 1-qubit circuits` のように具体的にする。
+
 ## 最初の実装スライス
 
 最初のスライスでは、`Task 1.1` だけについて Kata 由来の回帰パスを 1 本 end-to-end で成立させる。
