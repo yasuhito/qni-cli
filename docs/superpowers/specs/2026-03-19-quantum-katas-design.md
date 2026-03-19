@@ -137,7 +137,7 @@ Task 1.1 の内容は次のように要約できる。
 
 最初の Kata 用に新しい feature ファイルを追加する。候補は次のとおり。
 
-- `features/katas_basic_gates.feature`
+- `features/katas/basic_gates.feature`
 
 最初のシナリオ群は `Task 1.1` のみを対象にする。
 

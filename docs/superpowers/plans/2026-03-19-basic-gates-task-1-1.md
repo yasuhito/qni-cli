@@ -12,7 +12,7 @@
 
 ## File Structure
 
-- Create: `features/katas_basic_gates.feature`
+- Create: `features/katas/basic_gates.feature`
   - `BasicGates Task 1.1` の回帰シナリオを持つ。
 - Modify: `features/step_definitions/cli_steps.rb`
   - 1 qubit の `|1⟩` 初期状態を準備する step を追加する。
@@ -24,12 +24,12 @@
 ### Task 1: Add the kata regression feature
 
 **Files:**
-- Create: `features/katas_basic_gates.feature`
-- Test: `features/katas_basic_gates.feature`
+- Create: `features/katas/basic_gates.feature`
+- Test: `features/katas/basic_gates.feature`
 
 - [ ] **Step 1: Write the failing feature scenarios**
 
-`features/katas_basic_gates.feature` に日本語 feature を追加し、少なくとも次の 2 シナリオを書く。
+`features/katas/basic_gates.feature` に日本語 feature を追加し、少なくとも次の 2 シナリオを書く。
 
 ```gherkin
 # language: ja
@@ -58,7 +58,7 @@
 Run:
 
 ```bash
-bundle exec cucumber features/katas_basic_gates.feature
+bundle exec cucumber features/katas/basic_gates.feature
 ```
 
 Expected:
@@ -69,7 +69,7 @@ Expected:
 - [ ] **Step 3: Commit the failing test**
 
 ```bash
-git add features/katas_basic_gates.feature
+git add features/katas/basic_gates.feature
 git commit -m "test: add BasicGates Task 1.1 regression scenarios"
 ```
 
@@ -77,14 +77,14 @@ git commit -m "test: add BasicGates Task 1.1 regression scenarios"
 
 **Files:**
 - Modify: `features/step_definitions/cli_steps.rb`
-- Test: `features/katas_basic_gates.feature`
+- Test: `features/katas/basic_gates.feature`
 
 - [ ] **Step 1: Run the focused failure again**
 
 Run:
 
 ```bash
-bundle exec cucumber features/katas_basic_gates.feature:12
+bundle exec cucumber features/katas/basic_gates.feature:12
 ```
 
 Expected:
@@ -119,7 +119,7 @@ end
 Run:
 
 ```bash
-bundle exec cucumber features/katas_basic_gates.feature
+bundle exec cucumber features/katas/basic_gates.feature
 ```
 
 Expected:
@@ -130,7 +130,7 @@ Expected:
 - [ ] **Step 4: Commit the support change**
 
 ```bash
-git add features/step_definitions/cli_steps.rb features/katas_basic_gates.feature
+git add features/step_definitions/cli_steps.rb features/katas/basic_gates.feature
 git commit -m "test: support BasicGates Task 1.1 state preparation"
 ```
 
@@ -139,7 +139,7 @@ git commit -m "test: support BasicGates Task 1.1 state preparation"
 **Files:**
 - Verify: `features/add_x_gate.feature`
 - Verify: `features/qni_run.feature`
-- Verify: `features/katas_basic_gates.feature`
+- Verify: `features/katas/basic_gates.feature`
 
 - [ ] **Step 1: Run the existing X-gate feature**
 
@@ -170,7 +170,7 @@ Expected:
 Run:
 
 ```bash
-bundle exec cucumber features/katas_basic_gates.feature
+bundle exec cucumber features/katas/basic_gates.feature
 ```
 
 Expected:
@@ -181,7 +181,7 @@ Expected:
 
 Check:
 
-- `features/katas_basic_gates.feature` が green である
+- `features/katas/basic_gates.feature` が green である
 - `features/add_x_gate.feature` が green である
 - `features/qni_run.feature` が green である
 - `lib/` 配下に変更が不要である
@@ -194,7 +194,7 @@ If all are true:
 - [ ] **Step 5: Commit the verification result**
 
 ```bash
-git add features/katas_basic_gates.feature features/step_definitions/cli_steps.rb
+git add features/katas/basic_gates.feature features/step_definitions/cli_steps.rb
 git commit -m "test: verify BasicGates Task 1.1 with existing qni-cli"
 ```
 
