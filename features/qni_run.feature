@@ -327,3 +327,36 @@
       """
       0.0,0.7071067811865476+0.7071067811865475i
       """
+
+  シナリオ: qni run --symbolic は H ゲートの状態を ket 形式で表示
+    前提 "qni add H --qubit 0 --step 0" を実行
+    もし "qni run --symbolic" を実行
+    ならば 標準出力:
+      """
+      0.7071067811865475|0> + 0.7071067811865475|1>
+      """
+
+  シナリオ: qni run --symbolic は Y ゲートの純虚数係数を表示
+    前提 "qni add Y --qubit 0 --step 0" を実行
+    もし "qni run --symbolic" を実行
+    ならば 標準出力:
+      """
+      1.0i|1>
+      """
+
+  シナリオ: qni run --symbolic は未束縛の角度変数を記号のまま表示
+    前提 "qni add Ry --angle theta --qubit 0 --step 0" を実行
+    もし "qni run --symbolic" を実行
+    ならば 標準出力:
+      """
+      cos(theta/2)|0> + sin(theta/2)|1>
+      """
+
+  シナリオ: qni run --symbolic は 2 qubit 回路では失敗
+    前提 空の 2 qubit 回路がある
+    もし "qni run --symbolic" を実行
+    ならば コマンドは失敗
+    かつ 標準エラー:
+      """
+      symbolic run currently supports only 1-qubit circuits
+      """
