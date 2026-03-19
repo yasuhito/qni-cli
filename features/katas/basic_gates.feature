@@ -35,3 +35,16 @@
       """
       0.8,0.6
       """
+
+  シナリオ: Task 1.1 の controlled 検証回路は control qubit を |0> に戻す
+    前提 空の 2 qubit 回路がある
+    かつ "qni add H --qubit 0 --step 0" を実行
+    かつ "qni add Ry --angle 1.8545904360032246 --qubit 1 --step 1" を実行
+    かつ "qni add X --control 0 --qubit 1 --step 2" を実行
+    かつ "qni add X --control 0 --qubit 1 --step 3" を実行
+    かつ "qni add H --qubit 0 --step 4" を実行
+    もし "qni expect ZI" を実行
+    ならば 標準出力:
+      """
+      ZI=1.0
+      """
