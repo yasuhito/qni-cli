@@ -260,6 +260,11 @@ Task 1.1 の内容は次のように要約できる。
 - `|0⟩` から開始し、`qni add H --qubit 0 --step 0` の後に `qni run` で `|+⟩` に対応する数値出力になること
 - `|1⟩` から開始し、`qni add H --qubit 0 --step 1` の後に `qni run` で `|-⟩` に対応する数値出力になること
 
+加えて、Quantum Katas 側の `DumpDiffOnOneQubit` に対応する一般状態の数値シナリオも持つ。
+入力状態は `Ry(2 * ArcCos(0.6))|0⟩ = 0.6|0⟩ + 0.8|1⟩` とし、`H` 適用後の数値出力を固定する。
+これにより、`Task 1.2` も `Task 1.1` および `Task 1.3` と同様に、
+Katas の「非自明な入力状態で差分を表示する」確認フェーズを feature 上で再現する。
+
 controlled 検証では、`Task 1.1` と同じ検証回路パターンを使う。
 
 - control qubit を `H` で重ね合わせにする
@@ -348,25 +353,18 @@ symbolic 説明シナリオでは、`qni run --symbolic` を使って `SignFlip`
 
 - `features/katas/basic_gates/amplitude_change.feature`
 
-数値シナリオでは、代表角度を絞った `Scenario Outline` を使う。
-最初の代表値は次の 4 つとする。
+数値シナリオでは、Quantum Katas 側の [T104_AmplitudeChange](/home/yasuhito/Work/oss/QuantumKatas/BasicGates/Tests.qs) に合わせて
+`0 .. 36` の角度走査を `Scenario Outline` で再現する。
 
-- `alpha = 0`
-- `alpha = π/6`
-- `alpha = π/4`
-- `alpha = π/2`
+- `i = 0 .. 36`
+- `alpha = 2π * i / 36`
+- `Ry` に渡す角度は `2 * alpha`
 
-これにより、
+feature 上では、`Task 1.4` の問題文と `qni add Ry` の実装都合を混同しにくくするため、
+例テーブルの列名は `double_alpha` ではなく `ry_angle` などの実装角を示す名前にする。
 
-- 退化ケース
-- Kata の dump 用角度に近い非自明ケース
-- 対称なケース
-- 極端なケース
-
-を軽量に押さえられる。
-
-ただし、Quantum Katas 側の [T104_AmplitudeChange](/home/yasuhito/Work/oss/QuantumKatas/BasicGates/Tests.qs) は `0 .. 36` の角度走査で controlled 等価性を確認している。
-そのため、`Task 1.4` では「単一角度の確認」だけで完了扱いにしない。
+この数値シナリオ群は、Katas の controlled 等価性ループそのものではないが、
+`alpha` の全走査に対応する回帰として feature 上に見える形で保持する。
 
 controlled 検証では、Kata の dump 用角度 `dumpAlpha = 2π * 6 / 36 = π/3` を代表角度として使う。
 ここでは `Task 1.1` から `Task 1.3` と違い、candidate のあとに同じ回路をもう一度つなぐことはできない。
