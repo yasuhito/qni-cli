@@ -211,6 +211,42 @@ Task 1.1 の内容は次のように要約できる。
 
 この symbolic シナリオは説明用の回帰ケースであり、既存の数値シナリオと controlled 検証シナリオは残す。
 
+## Task 1.2 の検証方針
+
+`Task 1.2 BasisChange` は `Task 1.1` に続く次の対象とし、同じ 3 段構成で進める。
+
+- 数値シナリオ
+- controlled 検証シナリオ
+- symbolic 説明シナリオ
+
+`Task 1.2` の内容は次のように要約できる。
+
+- 入力: 1 量子ビットの状態 `α|0⟩ + β|1⟩`
+- 目標:
+  - `|0⟩ -> |+⟩ = (|0⟩ + |1⟩) / sqrt(2)`
+  - `|1⟩ -> |-⟩ = (|0⟩ - |1⟩) / sqrt(2)`
+  - 重ね合わせ状態でも基底ベクトルへの作用に従って変換する
+- 解法意図: Hadamard gate
+
+数値シナリオでは、少なくとも次の 2 つを固定する。
+
+- `|0⟩` から開始し、`qni add H --qubit 0 --step 0` の後に `qni run` で `|+⟩` に対応する数値出力になること
+- `|1⟩` から開始し、`qni add H --qubit 0 --step 1` の後に `qni run` で `|-⟩` に対応する数値出力になること
+
+controlled 検証では、`Task 1.1` と同じ検証回路パターンを使う。
+
+- control qubit を `H` で重ね合わせにする
+- target qubit を `Ry(2 * arccos(0.6))` で非自明状態にする
+- candidate の controlled-`H` を適用する
+- reference の adjoint に相当する controlled-`H` を適用する
+- control qubit に再び `H` をかける
+- `qni expect ZI` により control 側が `|0⟩` に戻ることを確認する
+
+`H` は self-adjoint なので、reference の adjoint も同じ controlled-`H` で表現できる。
+
+symbolic 説明シナリオでは、`qni run --symbolic` を使って `BasisChange` が一般状態にも線形に作用することを見せる。
+ここで期待するのは `Task 1.1` のような単純な係数の入れ替えではなく、`H * Ry(theta)|0⟩` に対応する式そのものを `qni-cli` だけで読めることだ。
+
 ## シンボリック実装方針
 
 シンボリック表示では、Ruby 本体に重い記号計算器を直接組み込まず、Python helper を subprocess として呼び出す。
