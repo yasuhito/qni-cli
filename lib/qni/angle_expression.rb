@@ -247,10 +247,12 @@ module Qni
       match = SIGNED_IDENTIFIER_PATTERN.match(value)
       return unless match
 
-      inner_expression = AngleTerm::VariableReference.new(match[:identifier], self.class, Error)
       sign_text = match[:sign]
-      sign = sign_text == '-' ? -1.0 : 1.0
-      AngleTerm::Signed.new(sign, sign_text, inner_expression)
+      AngleTerm::Signed.new(
+        { '+' => 1.0, '-' => -1.0 }.fetch(sign_text),
+        sign_text,
+        AngleTerm::VariableReference.new(match[:identifier], self.class, Error)
+      )
     end
 
     def variable_expression(value)
