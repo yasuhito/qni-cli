@@ -15,6 +15,18 @@ Feature: Phase ゲートを追加
       }
       """
 
+  Scenario: Phase ゲート追加で負の変数 angle を保存できる
+    When "qni add P --angle=-alpha --qubit 0 --step 0" を実行
+    Then "circuit.json" の内容:
+      """
+      {
+        "qubits": 1,
+        "cols": [
+          ["P(-alpha)"]
+        ]
+      }
+      """
+
   Scenario: Phase ゲートは angle がないと追加できない
     When "qni add P --qubit 0 --step 0" を実行
     Then コマンドは失敗

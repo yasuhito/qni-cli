@@ -130,6 +130,16 @@ Feature: qni run コマンド
       unresolved angle variable: theta
       """
 
+  Scenario: qni run は負の変数 angle を解決して Phase ゲートの状態ベクトルを表示
+    Given "qni add X --qubit 0 --step 0" を実行
+    And "qni add P --angle=-alpha --qubit 0 --step 1" を実行
+    And "qni variable set alpha π/3" を実行
+    When "qni run" を実行
+    Then 標準出力:
+      """
+      0.0,0.5000000000000001-0.8660254037844386i
+      """
+
   Scenario: qni run は単純な角度式と変数を解決して Ry ゲートの状態ベクトルを表示
     Given "qni add Ry --angle 2*alpha --qubit 0 --step 0" を実行
     And "qni variable set alpha π/4" を実行

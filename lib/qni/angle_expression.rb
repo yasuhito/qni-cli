@@ -82,6 +82,31 @@ module Qni
 
       attr_reader :coefficient, :coefficient_text, :inner
     end
+
+    # Signed wrapper around another angle expression.
+    class Signed
+      def initialize(sign, sign_text, inner)
+        @sign = sign
+        @sign_text = sign_text
+        @inner = inner
+      end
+
+      def radians(variables = {})
+        sign * inner.radians(variables)
+      end
+
+      def to_s
+        sign_text == '+' ? inner.to_s : "#{sign_text}#{inner}"
+      end
+
+      def concrete?
+        inner.concrete?
+      end
+
+      private
+
+      attr_reader :sign, :sign_text, :inner
+    end
   end
 
   # Parses and normalizes angle expressions such as π/2, 3*pi/4, and 0.5.
@@ -165,6 +190,7 @@ module Qni
     IDENTIFIER_PATTERN = /\A[a-zA-Z_][a-zA-Z0-9_]*\z/
     NUMERIC_PATTERN = /\A[+-]?\d+(?:\.\d+)?\z/
     MULTIPLIED_PATTERN = /\A(?<coefficient>[+-]?\d+(?:\.\d+)?)\*(?<term>.+)\z/
+    SIGNED_IDENTIFIER_PATTERN = /\A(?<sign>[+-])(?<identifier>[a-zA-Z_][a-zA-Z0-9_]*)\z/
 
     def self.numeric_expression(value)
       return unless value.match?(NUMERIC_PATTERN)
@@ -211,9 +237,20 @@ module Qni
 
     def parsed_expression_for(value)
       self.class.numeric_expression(value) ||
+        signed_variable_expression(value) ||
         variable_expression(value) ||
         PiTerm.parse(value) ||
         product_expression(value)
+    end
+
+    def signed_variable_expression(value)
+      match = SIGNED_IDENTIFIER_PATTERN.match(value)
+      return unless match
+
+      inner_expression = AngleTerm::VariableReference.new(match[:identifier], self.class, Error)
+      sign_text = match[:sign]
+      sign = sign_text == '-' ? -1.0 : 1.0
+      AngleTerm::Signed.new(sign, sign_text, inner_expression)
     end
 
     def variable_expression(value)

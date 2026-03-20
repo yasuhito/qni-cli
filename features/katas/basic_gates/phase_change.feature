@@ -21,7 +21,7 @@ Feature: Quantum Katas BasicGates Task 1.6 PhaseChange
     And "qni add Ry --angle 1.8545904360032246 --qubit 1 --step 1" を実行
     And "qni add P --angle alpha --control 0 --qubit 1 --step 2" を実行
     And "qni variable set alpha <alpha>" を実行
-    And "qni add P --angle -alpha --control 0 --qubit 1 --step 3" を実行
+    And "qni add P --angle=-alpha --control 0 --qubit 1 --step 3" を実行
     And "qni add H --qubit 0 --step 4" を実行
     When "qni expect ZI" を実行
     Then 期待値 "ZI" は 1.0 ± 1e-12
@@ -65,3 +65,12 @@ Feature: Quantum Katas BasicGates Task 1.6 PhaseChange
       | 34π/18 |
       | 35π/18 |
       | 2π     |
+
+  Scenario: Task 1.6 は symbolic 表示で一般式を示す
+    Given 1 qubit の初期状態が "0.6|0> + 0.8|1>" である
+    And "qni add P --angle alpha --qubit 0 --step 1" を実行
+    When "qni run --symbolic" を実行
+    Then 標準出力:
+      """
+      0.600000000000000|0> + 0.8*exp(I*alpha)|1>
+      """

@@ -12,6 +12,7 @@ ONE_QUBIT_ONLY_MESSAGE = "symbolic run currently supports only 1-qubit circuits"
 EPSILON = sys.float_info.epsilon
 ANGLED_GATE_PATTERN = re.compile(r"\A(?P<gate>P|Rx|Ry|Rz)\((?P<angle>.+)\)\Z")
 IDENTIFIER_PATTERN = re.compile(r"\A[a-zA-Z_][a-zA-Z0-9_]*\Z")
+SIGNED_IDENTIFIER_PATTERN = re.compile(r"\A(?P<sign>[+-])(?P<identifier>[a-zA-Z_][a-zA-Z0-9_]*)\Z")
 NUMERIC_PATTERN = re.compile(r"\A[+-]?\d+(?:\.\d+)?\Z")
 MULTIPLIED_PATTERN = re.compile(r"\A(?P<coefficient>[+-]?\d+(?:\.\d+)?)\*(?P<term>.+)\Z")
 PI_PATTERN = re.compile(
@@ -73,6 +74,16 @@ def parse_pi_term(value: str) -> tuple[object, float] | None:
 
 def parse_angle(raw_value: str, variables: dict[str, str]) -> ParsedAngle:
     normalized = str(raw_value).replace(" ", "")
+
+    signed_identifier = SIGNED_IDENTIFIER_PATTERN.match(normalized)
+    if signed_identifier:
+        sign = -1.0 if signed_identifier.group("sign") == "-" else 1.0
+        resolved_identifier = signed_identifier.group("identifier")
+        resolved_term = parse_angle(resolved_identifier, variables)
+        symbolic = sign * resolved_term.symbolic
+        concrete = None if resolved_term.concrete is None else sign * resolved_term.concrete
+        return ParsedAngle(symbolic=symbolic, concrete=concrete, unresolved=resolved_term.unresolved)
+
     resolved = variables.get(normalized, normalized)
 
     if NUMERIC_PATTERN.match(resolved):
