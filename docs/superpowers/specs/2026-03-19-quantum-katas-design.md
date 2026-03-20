@@ -681,3 +681,11 @@ controlled 検証では、必要なら 2 qubit の専用状態準備 step も同
 ## 直近の次ステップ
 
 `BasicGates` の `Task 1.1` に対して、candidate の controlled-`X` と reference の controlled-`X` を重ねた検証回路を `qni-cli` で記述し、`qni expect` で control 側が `|0⟩` に戻ることを確認する feature を追加する。
+
+## BasicGates Task 1.7: GlobalPhaseChange
+
+`Task 1.7` は `β|0⟩ + γ|1⟩ -> -β|0⟩ - γ|1⟩` を要求するが、これは standalone な 1 qubit に対しては観測できないグローバル位相である。したがって、`Task 1.4` から `1.6` のような `DumpDiffOnOneQubit` 相当の数値シナリオを主役にはせず、Quantum Katas と同じく controlled 検証を feature の中心に置く。
+
+`qni-cli` 側ではまず既存ゲートのみで表現できるかを試す。解法候補は `Rz(2π)` で、単一 qubit 上では `-I` を与えるため、グローバル位相 `-1` と観測上等価である。検証回路は Katas の `StatePrepForControlled` と同じ準備を使い、control qubit に `H`、target qubit に `Ry(1.8545904360032246)` を適用して `0.6|0> + 0.8|1>` を作ったうえで、candidate の controlled-`Rz(2π)` と inverse の controlled-`Rz(-2π)` を並べ、最後に control qubit へ `H` をかけて `qni expect ZI` で `|0>` に戻ることを確認する。
+
+補助として `qni run --symbolic` で単一 qubit に `Rz(2π)` を適用した出力も確認する。ただし `Task 1.7` における symbolic は本質的検証ではなく、説明用の補助である。期待出力は先に決め打ちせず、feature を先に追加して実際の symbolic 出力を確認し、そのうえで固定する。もし出力が読みにくすぎる場合のみ、symbolic の式簡約改善を別の最小変更として扱う。
