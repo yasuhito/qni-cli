@@ -2,7 +2,7 @@
 
 require 'json'
 
-前提('空の 1 qubit 回路がある') do
+Given('空の 1 qubit 回路がある') do
   actual_path = File.join(@scenario_dir, 'circuit.json')
   actual = {
     'qubits' => 1,
@@ -11,7 +11,7 @@ require 'json'
   File.write(actual_path, "#{JSON.pretty_generate(actual)}\n")
 end
 
-前提('1 qubit の初期状態が {string} である') do |state|
+Given('1 qubit の初期状態が {string} である') do |state|
   actual_path = File.join(@scenario_dir, 'circuit.json')
   col = case state
         when '|0>'
@@ -30,7 +30,7 @@ end
   File.write(actual_path, "#{JSON.pretty_generate(actual)}\n")
 end
 
-前提('空の 2 qubit 回路がある') do
+Given('空の 2 qubit 回路がある') do
   actual_path = File.join(@scenario_dir, 'circuit.json')
   actual = {
     'qubits' => 2,
@@ -39,7 +39,7 @@ end
   File.write(actual_path, "#{JSON.pretty_generate(actual)}\n")
 end
 
-前提('2 qubit の初期状態が {string} である') do |state|
+Given('2 qubit の初期状態が {string} である') do |state|
   actual_path = File.join(@scenario_dir, 'circuit.json')
   col = case state
         when '|00>'
@@ -60,7 +60,7 @@ end
   File.write(actual_path, "#{JSON.pretty_generate(actual)}\n")
 end
 
-もし('{string} を実行') do |command|
+When('{string} を実行') do |command|
   argv = Shellwords.split(command)
   raise "command must start with qni: #{command}" unless argv.first == 'qni'
 
@@ -74,7 +74,7 @@ end
   )
 end
 
-ならば('コマンドは成功') do
+Then('コマンドは成功') do
   next if @status.success?
 
   raise <<~MESSAGE
@@ -87,7 +87,7 @@ end
   MESSAGE
 end
 
-ならば('コマンドは失敗') do
+Then('コマンドは失敗') do
   next unless @status.success?
 
   raise <<~MESSAGE
@@ -99,7 +99,7 @@ end
   MESSAGE
 end
 
-ならば('標準出力は空') do
+Then('標準出力は空') do
   next if @stdout.empty?
 
   raise <<~MESSAGE
@@ -109,7 +109,7 @@ end
   MESSAGE
 end
 
-ならば('標準出力:') do |doc_string|
+Then('標準出力:') do |doc_string|
   actual = @stdout.sub(/\n+\z/, '')
   next if actual == doc_string
 
@@ -122,7 +122,7 @@ end
   MESSAGE
 end
 
-ならば('標準出力に次を含む:') do |doc_string|
+Then('標準出力に次を含む:') do |doc_string|
   next if @stdout.include?(doc_string)
 
   raise <<~MESSAGE
@@ -134,7 +134,7 @@ end
   MESSAGE
 end
 
-ならば('標準出力に次を含まない:') do |doc_string|
+Then('標準出力に次を含まない:') do |doc_string|
   next unless @stdout.include?(doc_string)
 
   raise <<~MESSAGE
@@ -146,7 +146,7 @@ end
   MESSAGE
 end
 
-ならば('標準エラー:') do |doc_string|
+Then('標準エラー:') do |doc_string|
   actual = @stderr.delete_suffix("\n")
   next if actual == doc_string
 
@@ -159,7 +159,7 @@ end
   MESSAGE
 end
 
-ならば('期待値 {string} は {float} ± 1e-{int}') do |observable, expected, exponent|
+Then('期待値 {string} は {float} ± 1e-{int}') do |observable, expected, exponent|
   tolerance = 10.0**(-exponent)
   actual_line = @stdout.lines.find { |line| line.start_with?("#{observable}=") }
   raise "expected observable to be present in stdout: #{observable}" unless actual_line
@@ -177,7 +177,7 @@ end
   MESSAGE
 end
 
-ならば('{string} の内容:') do |path, doc_string|
+Then('{string} の内容:') do |path, doc_string|
   actual_path = File.join(@scenario_dir, path)
   raise "expected file to exist: #{path}" unless File.exist?(actual_path)
 
@@ -194,7 +194,7 @@ end
   MESSAGE
 end
 
-ならば('{string} は存在しない') do |path|
+Then('{string} は存在しない') do |path|
   actual_path = File.join(@scenario_dir, path)
   next unless File.exist?(actual_path)
 
