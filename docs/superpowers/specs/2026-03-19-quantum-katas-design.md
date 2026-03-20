@@ -689,3 +689,13 @@ controlled 検証では、必要なら 2 qubit の専用状態準備 step も同
 `qni-cli` 側ではまず既存ゲートのみで表現できるかを試す。解法候補は `Rz(2π)` で、単一 qubit 上では `-I` を与えるため、グローバル位相 `-1` と観測上等価である。検証回路は Katas の `StatePrepForControlled` と同じ準備を使い、control qubit に `H`、target qubit に `Ry(1.8545904360032246)` を適用して `0.6|0> + 0.8|1>` を作ったうえで、candidate の controlled-`Rz(2π)` と inverse の controlled-`Rz(-2π)` を並べ、最後に control qubit へ `H` をかけて `qni expect ZI` で `|0>` に戻ることを確認する。
 
 補助として `qni run --symbolic` で単一 qubit に `Rz(2π)` を適用した出力も確認する。ただし `Task 1.7` における symbolic は本質的検証ではなく、説明用の補助である。期待出力は先に決め打ちせず、feature を先に追加して実際の symbolic 出力を確認し、そのうえで固定する。もし出力が読みにくすぎる場合のみ、symbolic の式簡約改善を別の最小変更として扱う。
+
+## BasicGates Task 1.8: BellStateChange1
+
+`Task 1.8` は入力として 2 qubit の Bell 状態 `|Φ⁺⟩ = (|00⟩ + |11⟩) / sqrt(2)` を受け取り、`|Φ⁻⟩ = (|00⟩ - |11⟩) / sqrt(2)` へ変換する。Quantum Katas 側では `DumpDiff` 相当の 2 qubit 状態確認と、3 qubit の controlled 検証 `VerifyBellStateConversion` を併用しているため、`qni-cli` 側もそれに合わせる。
+
+人間向けのシナリオでは、`H` と controlled-`X` を使って `|Φ⁺⟩` を feature 上で明示的に準備し、その後 `Z` を一方の qubit に適用して `|Φ⁻⟩` になることを `qni run` と `qni run --symbolic` の両方で確認する。これにより、Bell 状態の準備と変換が `qni-cli` だけで書けることを可視化する。
+
+この task から、`qni run --symbolic` の 2 qubit 対応を正式にスコープへ入れる。拡張は最初は 2 qubit 限定とし、Python/SymPy helper に長さ 4 の状態ベクトルを持たせ、出力を `a|00> + b|01> + c|10> + d|11>` の形にする。対象 gate は Bell 系 task に必要なものに絞り、少なくとも単一 qubit gate `H`, `X`, `Y`, `Z`, `S`, `S†`, `T`, `T†`, `√X`, `P`, `Rx`, `Ry`, `Rz` と、2 qubit の controlled-`X`, controlled-`Z` を扱えるようにする。
+
+機械向けの検証では、Quantum Katas の `VerifyBellStateConversion` を `qni-cli` で再現する。control 用に 1 qubit、Bell 状態用に 2 qubit の合計 3 qubit 回路を作り、control を `H` で重ね合わせたうえで、controlled 版の Bell state 準備、candidate operation、target Bell state の adjoint 準備を順に適用し、最後に control へ `H` をかけて `qni expect` または全状態確認で `|000⟩` に戻ることを確かめる。まずは既存の controlled 指定と 2 qubit symbolic 拡張だけで足りるかを確認し、不足があればその時点で最小の product 修正を行う。
