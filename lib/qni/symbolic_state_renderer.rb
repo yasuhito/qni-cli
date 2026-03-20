@@ -4,9 +4,9 @@ require 'json'
 require 'open3'
 
 module Qni
-  # Invokes the Python symbolic helper for 1-qubit state rendering.
+  # Invokes the Python symbolic helper for small symbolic state rendering.
   class SymbolicStateRenderer
-    ONE_QUBIT_ONLY_MESSAGE = 'symbolic run currently supports only 1-qubit circuits'
+    SUPPORTED_QUBIT_MESSAGE = 'symbolic run currently supports only 1-qubit and 2-qubit circuits'
     HELPER_RELATIVE_PATH = '../../libexec/qni_symbolic_run.py'
 
     def initialize(circuit_hash)
@@ -14,7 +14,7 @@ module Qni
     end
 
     def render
-      raise Simulator::Error, ONE_QUBIT_ONLY_MESSAGE unless one_qubit?
+      raise Simulator::Error, SUPPORTED_QUBIT_MESSAGE unless supported_qubit_count?
 
       render_with_helpers || raise(Simulator::Error, 'symbolic run requires Python with SymPy or uv')
     rescue Errno::ENOENT => e
@@ -25,8 +25,8 @@ module Qni
 
     attr_reader :circuit_hash
 
-    def one_qubit?
-      circuit_hash.fetch('qubits') == 1
+    def supported_qubit_count?
+      [1, 2].include?(circuit_hash.fetch('qubits'))
     end
 
     def helper_commands

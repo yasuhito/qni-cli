@@ -8,7 +8,7 @@ from dataclasses import dataclass
 
 from sympy import Float, I, Integer, Matrix, Symbol, cos, exp, pi, simplify, sin, sqrt
 
-ONE_QUBIT_ONLY_MESSAGE = "symbolic run currently supports only 1-qubit circuits"
+SUPPORTED_QUBIT_MESSAGE = "symbolic run currently supports only 1-qubit and 2-qubit circuits"
 EPSILON = sys.float_info.epsilon
 ANGLED_GATE_PATTERN = re.compile(r"\A(?P<gate>P|Rx|Ry|Rz)\((?P<angle>.+)\)\Z")
 IDENTIFIER_PATTERN = re.compile(r"\A[a-zA-Z_][a-zA-Z0-9_]*\Z")
@@ -253,12 +253,100 @@ def join_terms(terms):
     return rendered
 
 
+def basis_label(basis: int, qubits: int) -> str:
+    return format(basis, f"0{qubits}b")
+
+
+def tensor_product(left, right):
+    rows = []
+    for left_row in range(left.rows):
+        for right_row in range(right.rows):
+            row = []
+            for left_col in range(left.cols):
+                for right_col in range(right.cols):
+                    row.append(left[left_row, left_col] * right[right_row, right_col])
+            rows.append(row)
+    return Matrix(rows)
+
+
+def identity_matrix(size: int) -> Matrix:
+    return Matrix.eye(size)
+
+
+def controlled_x_matrix():
+    return Matrix(
+        [
+            [1, 0, 0, 0],
+            [0, 1, 0, 0],
+            [0, 0, 0, 1],
+            [0, 0, 1, 0],
+        ]
+    )
+
+
+def controlled_z_matrix():
+    return Matrix(
+        [
+            [1, 0, 0, 0],
+            [0, 1, 0, 0],
+            [0, 0, 1, 0],
+            [0, 0, 0, -1],
+        ]
+    )
+
+
+def single_qubit_gate_matrix(gate, variables):
+    gate_matrix = symbolic_gate(gate, variables)
+    if gate_matrix.shape != (2, 2):
+        raise ValueError(f"unsupported gate for symbolic run: {gate!r}")
+    return gate_matrix
+
+
+def two_qubit_gate_matrix(col, variables):
+    left_gate, right_gate = col
+
+    if left_gate == 1 and right_gate == 1:
+        return identity_matrix(4)
+
+    if left_gate == 1:
+        return tensor_product(identity_matrix(2), single_qubit_gate_matrix(right_gate, variables))
+
+    if right_gate == 1:
+        return tensor_product(single_qubit_gate_matrix(left_gate, variables), identity_matrix(2))
+
+    if left_gate in ("●", "•") and right_gate == "X":
+        return controlled_x_matrix()
+
+    if left_gate in ("●", "•") and right_gate == "Z":
+        return controlled_z_matrix()
+
+    raise ValueError(f"unsupported 2-qubit symbolic gate column: {col!r}")
+
+
+def render_symbolic_state_for_qubits(state, qubits: int):
+    terms = []
+    for basis, amplitude in enumerate(state):
+        simplified = simplify(amplitude)
+        if simplified == 0:
+            continue
+        terms.append(f"{simplified}|{basis_label(basis, qubits)}>")
+
+    return join_terms(terms)
+
+
 def run(circuit):
-    if circuit.get("qubits") != 1:
-        raise ValueError(ONE_QUBIT_ONLY_MESSAGE)
+    qubits = circuit.get("qubits")
+    if qubits not in (1, 2):
+        raise ValueError(SUPPORTED_QUBIT_MESSAGE)
 
     cols = circuit.get("cols", [])
     variables = circuit.get("variables", {})
+
+    if qubits == 2:
+        symbolic_state = Matrix([1, 0, 0, 0])
+        for col in cols:
+            symbolic_state = two_qubit_gate_matrix(col, variables) * symbolic_state
+        return render_symbolic_state_for_qubits(symbolic_state, 2)
 
     numeric_state = [1.0, 0.0]
     requires_symbolic = False

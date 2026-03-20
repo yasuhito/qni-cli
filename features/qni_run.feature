@@ -238,6 +238,17 @@ Feature: qni run コマンド
       0.0,0.0,1.0,0.0
       """
 
+  Scenario: qni run --symbolic は Bell 状態の |Φ⁻⟩ を表示
+    Given 空の 2 qubit 回路がある
+    And "qni add H --qubit 0 --step 0" を実行
+    And "qni add X --control 0 --qubit 1 --step 1" を実行
+    And "qni add Z --qubit 0 --step 2" を実行
+    When "qni run --symbolic" を実行
+    Then 標準出力:
+      """
+      0.707106781186547|00> - 0.707106781186547|11>
+      """
+
   Scenario: qni run は |1> に H ゲートを適用した状態ベクトルを標準出力に表示
     Given "qni add X --qubit 0 --step 0" を実行
     And "qni add H --qubit 0 --step 1" を実行
@@ -387,11 +398,19 @@ Feature: qni run コマンド
       cos(alpha)|0> + sin(alpha)|1>
       """
 
-  Scenario: qni run --symbolic は 2 qubit 回路では失敗
+  Scenario: qni run --symbolic は 2 qubit の空回路を ket 形式で表示
     Given 空の 2 qubit 回路がある
+    When "qni run --symbolic" を実行
+    Then 標準出力:
+      """
+      1|00>
+      """
+
+  Scenario: qni run --symbolic は 3 qubit 回路では失敗
+    Given 空の 3 qubit 回路がある
     When "qni run --symbolic" を実行
     Then コマンドは失敗
     And 標準エラー:
       """
-      symbolic run currently supports only 1-qubit circuits
+      symbolic run currently supports only 1-qubit and 2-qubit circuits
       """

@@ -39,6 +39,15 @@ Given('空の 2 qubit 回路がある') do
   File.write(actual_path, "#{JSON.pretty_generate(actual)}\n")
 end
 
+Given('空の 3 qubit 回路がある') do
+  actual_path = File.join(@scenario_dir, 'circuit.json')
+  actual = {
+    'qubits' => 3,
+    'cols' => [[1, 1, 1]]
+  }
+  File.write(actual_path, "#{JSON.pretty_generate(actual)}\n")
+end
+
 Given('2 qubit の初期状態が {string} である') do |state|
   actual_path = File.join(@scenario_dir, 'circuit.json')
   col = case state
@@ -64,8 +73,11 @@ When('{string} を実行') do |command|
   argv = Shellwords.split(command)
   raise "command must start with qni: #{command}" unless argv.first == 'qni'
 
+  bundler_env = { 'BUNDLE_GEMFILE' => File.join(PROJECT_ROOT, 'Gemfile') }
+  bundler_env['BUNDLE_PATH'] = ENV.fetch('BUNDLE_PATH') if ENV.key?('BUNDLE_PATH')
+
   @stdout, @stderr, @status = Open3.capture3(
-    { 'BUNDLE_GEMFILE' => File.join(PROJECT_ROOT, 'Gemfile') },
+    bundler_env,
     'bundle',
     'exec',
     QNI_BIN,
