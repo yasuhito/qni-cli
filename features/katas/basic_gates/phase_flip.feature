@@ -33,5 +33,5 @@ Feature: Quantum Katas BasicGates Task 1.5 PhaseFlip
     When "qni run --symbolic" を実行
     Then 標準出力:
       """
-      0.6|0> + 0.8*I|1>
+      0.6|0> + 0.8i|1>
       """
