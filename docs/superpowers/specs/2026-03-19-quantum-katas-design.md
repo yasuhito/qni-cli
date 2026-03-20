@@ -399,6 +399,62 @@ symbolic 説明シナリオでは、`qni run --symbolic` を使って `Amplitude
 
 の両方を確認する。
 
+## Task 1.5 の検証方針
+
+`Task 1.5 PhaseFlip` は、`Task 1.2` から `Task 1.4` と同様に、Quantum Katas のテスト構造を再現することを優先して進める。
+
+- `DumpDiffOnOneQubit` 相当の人間向けシナリオ
+- controlled 版の等価性検証シナリオ
+- `qni run --symbolic` による補助説明シナリオ
+
+`Task 1.5` の内容は次のように要約できる。
+
+- 入力: 1 量子ビットの状態 `α|0⟩ + β|1⟩`
+- 目標: `α|0⟩ + iβ|1⟩`
+- 解法意図: `S` gate
+
+新しい kata feature は次の path に置く。
+
+- `features/katas/basic_gates/phase_flip.feature`
+
+人間向けの `DumpDiffOnOneQubit` 相当シナリオでは、Quantum Katas 側の単純な基底状態ではなく、既存 task と同じ非自明入力 `0.6|0⟩ + 0.8|1⟩` を使う。
+
+- 入力状態は `Ry(2 * ArcCos(0.6))|0⟩ = 0.6|0⟩ + 0.8|1⟩`
+- `qni add S --qubit 0 --step ...` を適用する
+- `qni run` により `0.6|0⟩ + 0.8i|1⟩` に対応する出力を確認する
+
+これにより、`PhaseFlip` が `|1⟩` 成分にだけ複素位相 `i` を導入することを、人間が読める 1 本のシナリオとして固定する。
+
+controlled 検証では、Katas の `AssertOperationsEqualReferenced` に対応する回路を既存 CLI コマンドだけで記述する。
+
+- control qubit を `H` で重ね合わせにする
+- target qubit を `Ry(2 * arccos(0.6))` で非自明状態にする
+- candidate の controlled-`S` を適用する
+- reference の adjoint に相当する controlled-`S†` を適用する
+- control qubit に再び `H` をかける
+- `qni expect ZI` により control 側が `|0⟩` に戻ることを確認する
+
+ここで重要なのは、`S` は self-adjoint ではないという点である。
+そのため `Task 1.1` から `Task 1.3` のように同じ gate を 2 回並べるのではなく、
+
+- candidate: `S`
+- inverse/reference 側: `S†`
+
+という組み合わせを取る必要がある。
+
+symbolic 説明シナリオは Katas の本体検証ではなく補助として扱う。
+目的は、`PhaseFlip` の作用を `qni-cli` だけで一発で読めるようにすることだ。
+
+最初のスコープでは、少なくとも次のようなシナリオを持てば十分である。
+
+- `Given 1 qubit の初期状態が "0.6|0> + 0.8|1>" である`
+- `And "qni add S --qubit 0 --step 1" を実行`
+- `When "qni run --symbolic" を実行`
+- `Then 標準出力:` で `0.6|0> + 0.8i|1>` に相当する式を確認する
+
+この task では、まず既存の `S`、`S†`、controlled 指定、`qni run --symbolic`、`qni expect` で通るかを先に試す。
+feature を先に書いたうえで、不足が実在すると確認できた場合だけ、機能追加を提案する。
+
 ## シンボリック実装方針
 
 シンボリック表示では、Ruby 本体に重い記号計算器を直接組み込まず、Python helper を subprocess として呼び出す。
