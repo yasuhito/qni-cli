@@ -9,6 +9,7 @@ module Qni
   class SymbolicStateRenderer
     SUPPORTED_QUBIT_MESSAGE = 'symbolic run currently supports only 1-qubit and 2-qubit circuits'
     HELPER_RELATIVE_PATH = '../../libexec/qni_symbolic_run.py'
+    HELPER_ENV = { 'UV_CACHE_DIR' => File.join(Dir.tmpdir, 'qni-cli-uv-cache') }.freeze
 
     def initialize(circuit_hash)
       @circuit_hash = circuit_hash
@@ -62,15 +63,11 @@ module Qni
 
     def run_helper(command)
       stdout, stderr, status = Open3.capture3(
-        helper_env,
+        HELPER_ENV,
         *command,
         stdin_data: JSON.generate(circuit_hash)
       )
       [stdout.strip, stderr, status]
-    end
-
-    def helper_env
-      { 'UV_CACHE_DIR' => File.join(Dir.tmpdir, 'qni-cli-uv-cache') }
     end
 
     class << self
