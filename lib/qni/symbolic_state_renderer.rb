@@ -2,6 +2,7 @@
 
 require 'json'
 require 'open3'
+require 'tmpdir'
 
 module Qni
   # Invokes the Python symbolic helper for small symbolic state rendering.
@@ -60,8 +61,16 @@ module Qni
     end
 
     def run_helper(command)
-      stdout, stderr, status = Open3.capture3(*command, stdin_data: JSON.generate(circuit_hash))
+      stdout, stderr, status = Open3.capture3(
+        helper_env,
+        *command,
+        stdin_data: JSON.generate(circuit_hash)
+      )
       [stdout.strip, stderr, status]
+    end
+
+    def helper_env
+      { 'UV_CACHE_DIR' => File.join(Dir.tmpdir, 'qni-cli-uv-cache') }
     end
 
     class << self
