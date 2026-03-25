@@ -747,3 +747,17 @@ controlled 検証では、必要なら 2 qubit の専用状態準備 step も同
 `qni-cli` 側では、`Task 1.8` で追加した 2 qubit symbolic をそのまま活用する。人間向けシナリオでは `|Φ⁺⟩` を `H` と controlled-`X` で準備し、その後 `X` を一方の qubit に適用して `|Ψ⁺⟩` へ変換する。数値出力と symbolic 出力の両方を固定し、`0.707106781186547|01> + 0.707106781186547|10>` の形で読めることを確認する。
 
 機械向けの controlled 検証では、start state `0`、target state `2` の `VerifyBellStateConversion` を feature に直書きで再現する。Bell 状態準備、candidate operation `X(qs[0])`、target Bell 状態 `|Ψ⁺⟩` の adjoint 準備を control 付きで順に適用し、最後に `|000⟩` へ戻ることを確認する。ここでは新機能追加を前提とせず、`Task 1.8` で整えた 2 qubit symbolic と既存の controlled gate 表現だけで完結することを目標にする。
+
+## BasicGates Task 1.10: BellStateChange3
+
+`Task 1.10` は入力として Bell 状態 `|Φ⁺⟩ = (|00⟩ + |11⟩) / sqrt(2)` を受け取り、`|Ψ⁻⟩ = (|01⟩ - |10⟩) / sqrt(2)` へ変換する。Quantum Katas 側では `DumpDiff` 相当の 2 qubit 状態確認に加え、`VerifyBellStateConversion(testOp, 0, 3)` による 3 qubit の controlled 検証を行っている。`Task 1.8` と `Task 1.9` と同じ検証の型を保ちつつ、target Bell state だけを `|Ψ⁻⟩` に差し替える。
+
+`qni-cli` 側の人間向けシナリオでは、`H` と controlled-`X` で `|Φ⁺⟩` を準備し、その後 **最初の Bell qubit `qs[0]`** に `X`、続けて `Z` を適用して `|Ψ⁻⟩` を作る。数値出力は `0.0,0.7071067811865475,-0.7071067811865475,0.0` を期待し、symbolic 出力は `0.707106781186547|01> - 0.707106781186547|10>` を期待する。ここでは `Y` を使わない。Quantum Katas の参照実装どおり `qs[0]` への `X` と `Z` の組み合わせを正とし、`Y` や `qs[1]` 側への置き換えが持ち込むグローバル位相差を避ける。
+
+機械向けの controlled 検証では、`VerifyBellStateConversion` の start state `0`、target state `3` を feature に直書きで再現する。control 用の 1 qubit と Bell 状態用の 2 qubit の合計 3 qubit 回路を作り、control を `H` で重ね合わせたうえで、次を順に適用する。
+
+- controlled `StatePrep_BellState(_, 0)` に相当する Bell 状態準備
+- candidate operation として controlled `X(qs[0])`、controlled `Z(qs[0])`
+- `Adjoint StatePrep_BellState(_, 3)` に相当する target Bell state `|Ψ⁻⟩` の逆準備
+
+ここで `Adjoint StatePrep_BellState(_, 3)` の実体は、state `3` の準備 `H(qs[0]); CNOT(qs[0], qs[1]); Z(qs[1]); X(qs[1])` を逆順にした `X(qs[1]); Z(qs[1]); CNOT(qs[0], qs[1]); H(qs[0])` である。さらに `VerifyBellStateConversion` ではこれ全体に outer control が乗るため、feature で厳密に再現するには controlled `H/X/Z` に加えて、outer control 付きの `CNOT`、すなわち `CCNOT` 相当の表現力が必要になる可能性がある。したがって `Task 1.10` では、新機能追加なしを前提とせず、まず feature を先に書いて multi-controlled `X` が本当に不足しているかを確認する。
