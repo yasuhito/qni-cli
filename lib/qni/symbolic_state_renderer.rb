@@ -8,7 +8,9 @@ module Qni
   # Invokes the Python symbolic helper for small symbolic state rendering.
   class SymbolicStateRenderer
     SUPPORTED_QUBIT_MESSAGE = 'symbolic run currently supports only 1-qubit and 2-qubit circuits'
+    SETUP_MESSAGE = 'symbolic run requires SymPy runtime; run scripts/setup_symbolic_python.sh'
     HELPER_RELATIVE_PATH = '../../libexec/qni_symbolic_run.py'
+    REPO_RUNTIME_RELATIVE_PATH = '../../.python-symbolic/bin/python'
     HELPER_ENV = { 'UV_CACHE_DIR' => File.join(Dir.tmpdir, 'qni-cli-uv-cache') }.freeze
 
     def initialize(circuit_hash)
@@ -18,9 +20,7 @@ module Qni
     def render
       raise Simulator::Error, SUPPORTED_QUBIT_MESSAGE unless supported_qubit_count?
 
-      render_with_helpers || raise(Simulator::Error, 'symbolic run requires Python with SymPy or uv')
-    rescue Errno::ENOENT => e
-      raise Simulator::Error, e.message
+      render_with_helpers
     end
 
     private
@@ -33,6 +33,7 @@ module Qni
 
     def helper_commands
       [
+        [repo_runtime_path, helper_path],
         ['python3', helper_path],
         ['uv', 'run', '--quiet', '--with', 'sympy', 'python3', helper_path]
       ]
@@ -42,19 +43,29 @@ module Qni
       File.expand_path(HELPER_RELATIVE_PATH, __dir__)
     end
 
+    def repo_runtime_path
+      File.expand_path(REPO_RUNTIME_RELATIVE_PATH, __dir__)
+    end
+
     def render_with_helpers
       helper_commands.each do |command|
         output = render_with_helper(command)
         return output if output
       end
 
-      nil
+      raise Simulator::Error, SETUP_MESSAGE
     end
 
     def render_with_helper(command)
       stdout, stderr, status = run_helper(command)
       return stdout if status.success?
 
+      handle_failed_helper(command, stderr, status)
+    rescue Errno::ENOENT
+      nil
+    end
+
+    def handle_failed_helper(command, stderr, status)
       helper_class = self.class
       return nil if helper_class.retryable_with_next_command?(stderr, command)
 
@@ -72,9 +83,10 @@ module Qni
 
     class << self
       def retryable_with_next_command?(stderr, command)
-        return false unless command.first == 'python3'
-
-        stderr.to_s.include?("No module named 'sympy'")
+        executable = command.first
+        message = stderr.to_s
+        (executable == 'uv' && message.include?('Failed to fetch:')) ||
+          (executable == 'python3' && message.include?("No module named 'sympy'"))
       end
 
       def render_error_message(stderr, status)
