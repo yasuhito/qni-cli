@@ -3,3 +3,4 @@
 .bundle/
 .worktrees/
 .cache/
+.python-symbolic/
