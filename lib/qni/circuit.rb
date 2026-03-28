@@ -8,6 +8,7 @@ require_relative 'swap_gate'
 require_relative 'step'
 require_relative 'circuit/step_width_validator'
 require_relative 'circuit/variable_store'
+require_relative 'view/text_renderer'
 
 module Qni
   # Mutable circuit model backed by qubit count and column-oriented steps.
@@ -94,7 +95,7 @@ module Qni
     end
 
     def render_ascii
-      (0...qubits).map { |qubit| render_qubit_line(qubit) }.join("\n")
+      View::TextRenderer.new(self).render
     end
 
     def variables
@@ -134,10 +135,6 @@ module Qni
       count = qubit - qubits + 1
       @steps.each { |step| step.extend_right(count) }
       @qubits += count
-    end
-
-    def render_qubit_line(qubit)
-      "q#{qubit}: #{@steps.map { |step| step.render_slot(qubit) }.join}"
     end
   end
 end

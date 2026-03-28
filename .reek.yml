@@ -1,22 +1,59 @@
 detectors:
+  Attribute:
+    exclude:
+      - Qni::View::DrawElement#layer_width
   ControlParameter:
     exclude:
       - Qni::Export::QCircuitLatex#render_swap_cell
       - Qni::Export::QCircuitLatex#special_gate_label
+      - Qni::View::TextRenderer#merge_blank_bot
+      - Qni::View::TextRenderer#top_priority_merge
   DataClump:
     exclude:
       - Qni::Export::QCircuitLatex
+      - Qni::View::TextRenderer
+  DuplicateMethodCall:
+    exclude:
+      - Qni::View::TextRenderer#append_wire
+      - Qni::View::TextRenderer#control_step_parts
   FeatureEnvy:
     exclude:
       - Qni::Export::QCircuitLatex#controlled_step_parts
       - Qni::Export::QCircuitLatex#controlled_target
       - Qni::Export::QCircuitLatex#render_swap_cell
+      - Qni::View::TextRenderer#append_wire
+      - Qni::View::TextRenderer#control_step_parts
+      - Qni::View::TextRenderer#place_target
+  LongParameterList:
+    exclude:
+      - Qni::View::DrawElement#render_line
+      - Qni::View::TextRenderer#append_wire
+      - Qni::View::TextRenderer#place_control_bridges
+      - Qni::View::TextRenderer#place_controls
+      - Qni::View::TextRenderer#place_swap_bridges
+      - Qni::View::TextRenderer#place_target
+  NilCheck:
+    exclude:
+      - Qni::View::TextRenderer#merged_top_line
+  TooManyInstanceVariables:
+    exclude:
+      - Qni::View::DrawElement
+      - Qni::View::BoxOnQuWire
+      - Qni::View::DirectOnQuWire
   TooManyMethods:
     exclude:
       - Qni::Export::QCircuitLatex
+      - Qni::View::TextRenderer
   TooManyStatements:
     exclude:
       - Qni::Export::QCircuitLatex#render_swap_cell
+      - Qni::View::DrawElement#initialize
+      - Qni::View::BoxOnQuWire#initialize
+      - Qni::View::TextRenderer#build_layer
+      - Qni::View::TextRenderer#draw_wires
+      - Qni::View::TextRenderer#place_controls
+      - Qni::View::TextRenderer#render_controlled_step
+      - Qni::View::TextRenderer#render_swap_step
   UncommunicativeVariableName:
     accept:
       - e
@@ -27,3 +64,15 @@ detectors:
       - Qni::Export::QCircuitLatex#special_gate_label?
       - Qni::Export::QCircuitLatex#swap_step?
       - Qni::Export::QCircuitLatex#valid_swap_step?
+      - Qni::View::TextRenderer#blank_bot_common
+      - Qni::View::TextRenderer#cell_row
+      - Qni::View::TextRenderer#control_span
+      - Qni::View::TextRenderer#normalize_width
+      - Qni::View::TextRenderer#place_control_bridges
+      - Qni::View::TextRenderer#place_controls
+      - Qni::View::TextRenderer#place_swap_bridges
+      - Qni::View::TextRenderer#place_swap_endpoints
+      - Qni::View::TextRenderer#single_gate_slot?
+      - Qni::View::TextRenderer#top_priority_merge
+      - Qni::View::TextRenderer#trim_blank_edges
+      - Qni::View::TextRenderer#view_label

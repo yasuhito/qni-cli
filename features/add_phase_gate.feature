@@ -14,6 +14,13 @@ Feature: Phase ゲートを追加
         ]
       }
       """
+    When "qni view" を実行
+    Then 回路図:
+      """
+          ┌───┐
+      q0: ┤ P ├
+          └───┘
+      """
 
   Scenario: Phase ゲート追加で負の変数 angle を保存できる
     When "qni add P --angle=-alpha --qubit 0 --step 0" を実行

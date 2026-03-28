@@ -14,6 +14,13 @@ Feature: Rx ゲートを追加
         ]
       }
       """
+    When "qni view" を実行
+    Then 回路図:
+      """
+          ┌────┐
+      q0: ┤ Rx ├
+          └────┘
+      """
 
   Scenario: Rx ゲートは angle がないと追加できない
     When "qni add Rx --qubit 0 --step 0" を実行

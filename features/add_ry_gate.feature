@@ -14,6 +14,13 @@ Feature: Ry ゲートを追加
         ]
       }
       """
+    When "qni view" を実行
+    Then 回路図:
+      """
+          ┌────┐
+      q0: ┤ Ry ├
+          └────┘
+      """
 
   Scenario: Ry ゲートは変数 angle をそのまま保存できる
     When "qni add Ry --angle theta --qubit 0 --step 0" を実行

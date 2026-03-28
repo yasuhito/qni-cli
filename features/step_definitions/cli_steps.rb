@@ -134,6 +134,20 @@ Then('標準出力:') do |doc_string|
   MESSAGE
 end
 
+Then('回路図:') do |doc_string|
+  actual = @stdout.sub(/\n+\z/, '').lines.map(&:rstrip).join("\n")
+  expected = doc_string.lines.map(&:rstrip).join("\n")
+  next if actual == expected
+
+  raise <<~MESSAGE
+    expected circuit view to match
+    expected:
+    #{expected}
+    actual:
+    #{actual}
+  MESSAGE
+end
+
 Then('標準出力に次を含む:') do |doc_string|
   next if @stdout.include?(doc_string)
 

@@ -14,6 +14,13 @@ Feature: qni add SWAP コマンド
         ]
       }
       """
+    When "qni view" を実行
+    Then 回路図:
+      """
+      q0: ─X─
+           │
+      q1: ─X─
+      """
 
   Scenario: qni add SWAP は target qubit が 1 つだと失敗
     When "qni add SWAP --qubit 0 --step 0" を実行
