@@ -61,6 +61,32 @@ module Qni
       end
     end
 
+    # Narrow boxed gate used for labels with a small suffix like Ry or T†.
+    class CompactBoxOnQuWire < DrawElement
+      def initialize(label, top_connect: '─', bot_connect: '─')
+        super(label)
+        @top_format = '┌─%s┐'
+        @mid_format = '┤ %s├'
+        @bot_format = '└─%s┘'
+        @top_pad = @mid_bck = @bot_pad = '─'
+        @top_connect = top_connect
+        @bot_connect = bot_connect
+      end
+    end
+
+    # Narrow boxed gate used for labels with a small leading modifier like √X.
+    class LeadingCompactBoxOnQuWire < DrawElement
+      def initialize(label, top_connect: '─', bot_connect: '─')
+        super(label)
+        @top_format = '┌─%s┐'
+        @mid_format = '┤%s ├'
+        @bot_format = '└─%s┘'
+        @top_pad = @mid_bck = @bot_pad = '─'
+        @top_connect = top_connect
+        @bot_connect = bot_connect
+      end
+    end
+
     # Unboxed element drawn directly on a wire.
     class DirectOnQuWire < DrawElement
       def initialize(label)

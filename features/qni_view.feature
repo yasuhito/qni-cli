@@ -63,9 +63,9 @@ Feature: qni view コマンド
     When "qni view" を実行
     Then 回路図:
       """
-          ┌────┐
-      q0: ┤ S† ├
-          └────┘
+          ┌───┐
+      q0: ┤ S†├
+          └───┘
       """
 
   Scenario: qni view は T ゲートを表示
@@ -83,19 +83,25 @@ Feature: qni view コマンド
     When "qni view" を実行
     Then 回路図:
       """
-          ┌────┐
-      q0: ┤ T† ├
-          └────┘
+          ┌───┐
+      q0: ┤ T†├
+          └───┘
       """
+
+  Scenario: qni view は TTY では T† の修飾子を dim 表示する
+    Given "qni add T† --qubit 0 --step 0" を実行
+    When "qni view" を TTY で実行
+    Then コマンドは成功
+    And 標準出力に dim 修飾付きラベル "T†" を含む
 
   Scenario: qni view は √X ゲートを表示
     Given "qni add √X --qubit 0 --step 0" を実行
     When "qni view" を実行
     Then 回路図:
       """
-          ┌────┐
-      q0: ┤ √X ├
-          └────┘
+          ┌───┐
+      q0: ┤√X ├
+          └───┘
       """
 
   Scenario: qni view は Phase ゲートを表示
@@ -113,9 +119,9 @@ Feature: qni view コマンド
     When "qni view" を実行
     Then 回路図:
       """
-          ┌────┐
-      q0: ┤ Rx ├
-          └────┘
+          ┌───┐
+      q0: ┤ Rx├
+          └───┘
       """
 
   Scenario: qni view は Ry ゲートを表示
@@ -123,19 +129,25 @@ Feature: qni view コマンド
     When "qni view" を実行
     Then 回路図:
       """
-          ┌────┐
-      q0: ┤ Ry ├
-          └────┘
+          ┌───┐
+      q0: ┤ Ry├
+          └───┘
       """
+
+  Scenario: qni view は TTY では Ry の修飾子を dim 表示する
+    Given "qni add Ry --angle π/2 --qubit 0 --step 0" を実行
+    When "qni view" を TTY で実行
+    Then コマンドは成功
+    And 標準出力に dim 修飾付きラベル "Ry" を含む
 
   Scenario: qni view は Rz ゲートを表示
     Given "qni add Rz --angle π/2 --qubit 0 --step 0" を実行
     When "qni view" を実行
     Then 回路図:
       """
-          ┌────┐
-      q0: ┤ Rz ├
-          └────┘
+          ┌───┐
+      q0: ┤ Rz├
+          └───┘
       """
 
   Scenario: qni view は SWAP ゲートを表示
@@ -164,10 +176,10 @@ Feature: qni view コマンド
     When "qni view" を実行
     Then 回路図:
       """
-      q0: ──■───
-          ┌─┴──┐
-      q1: ┤ √X ├
-          └────┘
+      q0: ──■──
+          ┌─┴─┐
+      q1: ┤√X ├
+          └───┘
       """
 
   Scenario: qni view は control 付き Rz ゲートを表示
@@ -175,10 +187,21 @@ Feature: qni view コマンド
     When "qni view" を実行
     Then 回路図:
       """
-      q0: ──■───
-          ┌─┴──┐
-      q1: ┤ Rz ├
-          └────┘
+      q0: ──■──
+          ┌─┴─┐
+      q1: ┤ Rz├
+          └───┘
+      """
+
+  Scenario: qni view は control 付き T† ゲートを表示
+    Given "qni add T† --control 0 --qubit 1 --step 0" を実行
+    When "qni view" を実行
+    Then 回路図:
+      """
+      q0: ──■──
+          ┌─┴─┐
+      q1: ┤ T†├
+          └───┘
       """
 
   Scenario: 同じ step の 2 qubit に H がある回路を表示

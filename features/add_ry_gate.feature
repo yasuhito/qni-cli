@@ -17,9 +17,9 @@ Feature: Ry ゲートを追加
     When "qni view" を実行
     Then 回路図:
       """
-          ┌────┐
-      q0: ┤ Ry ├
-          └────┘
+          ┌───┐
+      q0: ┤ Ry├
+          └───┘
       """
 
   Scenario: Ry ゲートは変数 angle をそのまま保存できる

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'json'
+require 'pty'
 
 Given('空の 1 qubit 回路がある') do
   actual_path = File.join(@scenario_dir, 'circuit.json')
@@ -86,6 +87,31 @@ When('{string} を実行') do |command|
   )
 end
 
+When('{string} を TTY で実行') do |command|
+  argv = Shellwords.split(command)
+  raise "command must start with qni: #{command}" unless argv.first == 'qni'
+
+  bundler_env = { 'BUNDLE_GEMFILE' => File.join(PROJECT_ROOT, 'Gemfile') }
+  bundler_env['BUNDLE_PATH'] = ENV.fetch('BUNDLE_PATH') if ENV.key?('BUNDLE_PATH')
+
+  output = +''
+  status = nil
+
+  Dir.chdir(@scenario_dir) do
+    PTY.spawn(bundler_env, 'bundle', 'exec', QNI_BIN, *argv.drop(1)) do |stdout, _stdin, pid|
+      stdout.each { |chunk| output << chunk }
+    rescue Errno::EIO
+      nil
+    ensure
+      _, status = Process.wait2(pid)
+    end
+  end
+
+  @stdout = output.gsub("\r\n", "\n")
+  @stderr = ''
+  @status = status
+end
+
 Then('コマンドは成功') do
   next if @status.success?
 
@@ -145,6 +171,24 @@ Then('回路図:') do |doc_string|
     #{expected}
     actual:
     #{actual}
+  MESSAGE
+end
+
+Then('標準出力に dim 修飾付きラベル {string} を含む') do |label|
+  chars = label.each_char.to_a
+  raise "label must have at least 2 characters: #{label}" if chars.length < 2
+
+  base = chars[0...-1].join
+  suffix = chars.last
+  expected = "#{base}\e[37;2m#{suffix}\e[0m"
+  next if @stdout.include?(expected)
+
+  raise <<~MESSAGE
+    expected stdout to include dim-decorated label
+    expected:
+    #{expected.inspect}
+    actual:
+    #{@stdout.inspect}
   MESSAGE
 end
 
