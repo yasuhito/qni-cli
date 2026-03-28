@@ -26,7 +26,7 @@ Feature: Quantum Katas BasicGates Task 1.10 BellStateChange3
     When "qni run --symbolic" を実行
     Then 標準出力:
       """
-      0.707106781186547|01> - 0.707106781186547|10>
+      sqrt(2)/2|01> - sqrt(2)/2|10>
       """
 
   Scenario: Task 1.10 の controlled 検証回路は |000⟩ に戻る

@@ -246,7 +246,7 @@ Feature: qni run コマンド
     When "qni run --symbolic" を実行
     Then 標準出力:
       """
-      0.707106781186547|00> - 0.707106781186547|11>
+      sqrt(2)/2|00> - sqrt(2)/2|11>
       """
 
   Scenario: qni run は |1> に H ゲートを適用した状態ベクトルを標準出力に表示
@@ -371,7 +371,7 @@ Feature: qni run コマンド
     When "qni run --symbolic" を実行
     Then 標準出力:
       """
-      0.7071067811865475|0> + 0.7071067811865475|1>
+      sqrt(2)/2|0> + sqrt(2)/2|1>
       """
 
   Scenario: qni run --symbolic は Y ゲートの純虚数係数を表示

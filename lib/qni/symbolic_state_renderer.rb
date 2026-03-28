@@ -18,12 +18,20 @@ module Qni
     end
 
     def render
-      raise Simulator::Error, SUPPORTED_QUBIT_MESSAGE unless supported_qubit_count?
+      render_with_format('text')
+    end
 
-      render_with_helpers
+    def render_latex_formula
+      render_with_format('latex')
     end
 
     private
+
+    def render_with_format(format)
+      raise Simulator::Error, SUPPORTED_QUBIT_MESSAGE unless supported_qubit_count?
+
+      render_with_helpers('--format', format)
+    end
 
     attr_reader :circuit_hash
 
@@ -31,11 +39,11 @@ module Qni
       [1, 2].include?(circuit_hash.fetch('qubits'))
     end
 
-    def helper_commands
+    def helper_commands(*args)
       [
-        [repo_runtime_path, helper_path],
-        ['python3', helper_path],
-        ['uv', 'run', '--quiet', '--with', 'sympy', 'python3', helper_path]
+        [repo_runtime_path, helper_path, *args],
+        ['python3', helper_path, *args],
+        ['uv', 'run', '--quiet', '--with', 'sympy', 'python3', helper_path, *args]
       ]
     end
 
@@ -47,8 +55,8 @@ module Qni
       File.expand_path(REPO_RUNTIME_RELATIVE_PATH, __dir__)
     end
 
-    def render_with_helpers
-      helper_commands.each do |command|
+    def render_with_helpers(...)
+      helper_commands(...).each do |command|
         output = render_with_helper(command)
         return output if output
       end

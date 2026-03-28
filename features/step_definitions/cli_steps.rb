@@ -214,3 +214,64 @@ Then('{string} は存在しない') do |path|
     expected file not to exist: #{path}
   MESSAGE
 end
+
+Then('{string} は PNG 画像である') do |path|
+  actual_path = File.join(@scenario_dir, path)
+  raise "expected file to exist: #{path}" unless File.exist?(actual_path)
+
+  signature = File.binread(actual_path, 8)
+  next if signature == "\x89PNG\r\n\x1A\n".b
+
+  raise <<~MESSAGE
+    expected file to be a PNG image: #{path}
+  MESSAGE
+end
+
+Then('{string} は透過 PNG 画像である') do |path|
+  actual_path = File.join(@scenario_dir, path)
+  raise "expected file to exist: #{path}" unless File.exist?(actual_path)
+
+  output, status = Open3.capture2('identify', '-format', '%[channels]', actual_path)
+  raise "identify failed for: #{path}" unless status.success?
+
+  next if output.strip.include?('a')
+
+  raise <<~MESSAGE
+    expected file to be a transparent PNG image: #{path}
+    actual channels:
+    #{output}
+  MESSAGE
+end
+
+Then('{string} の画像サイズは {int}x{int} である') do |path, width, height|
+  actual_path = File.join(@scenario_dir, path)
+  raise "expected file to exist: #{path}" unless File.exist?(actual_path)
+
+  output, status = Open3.capture2('identify', '-format', '%wx%h', actual_path)
+  raise "identify failed for: #{path}" unless status.success?
+
+  next if output.strip == "#{width}x#{height}"
+
+  raise <<~MESSAGE
+    expected image size to match: #{path}
+    expected:
+    #{width}x#{height}
+    actual:
+    #{output}
+  MESSAGE
+end
+
+Then('{string} と {string} は異なるファイル内容である') do |left_path, right_path|
+  actual_left_path = File.join(@scenario_dir, left_path)
+  actual_right_path = File.join(@scenario_dir, right_path)
+  raise "expected file to exist: #{left_path}" unless File.exist?(actual_left_path)
+  raise "expected file to exist: #{right_path}" unless File.exist?(actual_right_path)
+
+  next unless File.binread(actual_left_path) == File.binread(actual_right_path)
+
+  raise <<~MESSAGE
+    expected files to differ:
+    #{left_path}
+    #{right_path}
+  MESSAGE
+end

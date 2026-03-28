@@ -1,4 +1,29 @@
 detectors:
+  ControlParameter:
+    exclude:
+      - Qni::Export::QCircuitLatex#render_swap_cell
+      - Qni::Export::QCircuitLatex#special_gate_label
+  DataClump:
+    exclude:
+      - Qni::Export::QCircuitLatex
+  FeatureEnvy:
+    exclude:
+      - Qni::Export::QCircuitLatex#controlled_step_parts
+      - Qni::Export::QCircuitLatex#controlled_target
+      - Qni::Export::QCircuitLatex#render_swap_cell
+  TooManyMethods:
+    exclude:
+      - Qni::Export::QCircuitLatex
+  TooManyStatements:
+    exclude:
+      - Qni::Export::QCircuitLatex#render_swap_cell
   UncommunicativeVariableName:
     accept:
       - e
+  UtilityFunction:
+    exclude:
+      - Qni::Export::QCircuitLatex#controlled_step?
+      - Qni::Export::QCircuitLatex#latex_angle
+      - Qni::Export::QCircuitLatex#special_gate_label?
+      - Qni::Export::QCircuitLatex#swap_step?
+      - Qni::Export::QCircuitLatex#valid_swap_step?

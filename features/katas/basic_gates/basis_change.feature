@@ -52,5 +52,5 @@ Feature: Quantum Katas BasicGates Task 1.2 BasisChange
     When "qni run --symbolic" を実行
     Then 標準出力:
       """
-      0.707106781186547*sqrt(2)*sin(theta/2 + pi/4)|0> + 0.707106781186547*sqrt(2)*cos(theta/2 + pi/4)|1>
+      sin(theta/2 + pi/4)|0> + cos(theta/2 + pi/4)|1>
       """

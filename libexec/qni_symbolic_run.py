@@ -6,7 +6,7 @@ import re
 import sys
 from dataclasses import dataclass
 
-from sympy import Float, I, Integer, Matrix, Symbol, cos, exp, pi, simplify, sin, sqrt
+from sympy import Float, I, Integer, Matrix, Symbol, cos, exp, latex, pi, simplify, sin, sqrt
 
 SUPPORTED_QUBIT_MESSAGE = "symbolic run currently supports only 1-qubit and 2-qubit circuits"
 EPSILON = sys.float_info.epsilon
@@ -114,8 +114,7 @@ def numeric_gate(gate, variables):
     if gate == 1:
         return None
     if gate == "H":
-        scale = 1.0 / math.sqrt(2)
-        return ((scale, scale), (scale, -scale))
+        return None
     if gate == "X":
         return ((0.0, 1.0), (1.0, 0.0))
     if gate == "Y":
@@ -167,7 +166,7 @@ def symbolic_gate(gate, variables):
     if gate == 1:
         return Matrix([[1, 0], [0, 1]])
     if gate == "H":
-        scale = 1.0 / math.sqrt(2)
+        scale = sqrt(2) / 2
         return Matrix([[scale, scale], [scale, -scale]])
     if gate == "X":
         return Matrix([[0, 1], [1, 0]])
@@ -253,8 +252,24 @@ def join_terms(terms):
     return rendered
 
 
+def join_latex_terms(terms):
+    if not terms:
+        return "0"
+
+    first_sign, first_term = terms[0]
+    rendered = f"- {first_term}" if first_sign == "-" else first_term
+
+    for sign, term in terms[1:]:
+        rendered += f" {sign} {term}"
+    return rendered
+
+
 def basis_label(basis: int, qubits: int) -> str:
     return format(basis, f"0{qubits}b")
+
+
+def basis_latex_label(basis: int, qubits: int) -> str:
+    return rf"\lvert {basis_label(basis, qubits)} \rangle"
 
 
 def tensor_product(left, right):
@@ -334,7 +349,48 @@ def render_symbolic_state_for_qubits(state, qubits: int):
     return join_terms(terms)
 
 
-def run(circuit):
+def latex_term(amplitude, basis, qubits):
+    sign = "-"
+    if amplitude.could_extract_minus_sign():
+        amplitude = -amplitude
+    else:
+        sign = "+"
+
+    basis_term = basis_latex_label(basis, qubits)
+    if amplitude == 1:
+        return sign, basis_term
+
+    return sign, rf"{latex(amplitude)} {basis_term}"
+
+
+def render_symbolic_state_latex_for_qubits(state, qubits: int):
+    terms = []
+    for basis, amplitude in enumerate(state):
+        simplified = simplify(amplitude)
+        if simplified == 0:
+            continue
+        terms.append(latex_term(simplified, basis, qubits))
+
+    return join_latex_terms(terms)
+
+
+def symbolic_state_for_qubits(circuit, qubits, variables):
+    cols = circuit.get("cols", [])
+
+    if qubits == 2:
+        symbolic_state = Matrix([1, 0, 0, 0])
+        for col in cols:
+            symbolic_state = two_qubit_gate_matrix(col, variables) * symbolic_state
+        return symbolic_state
+
+    symbolic_state = Matrix([1, 0])
+    for col in cols:
+        symbolic_state = symbolic_gate(col[0], variables) * symbolic_state
+
+    return symbolic_state
+
+
+def run(circuit, output_format="text"):
     qubits = circuit.get("qubits")
     if qubits not in (1, 2):
         raise ValueError(SUPPORTED_QUBIT_MESSAGE)
@@ -342,10 +398,12 @@ def run(circuit):
     cols = circuit.get("cols", [])
     variables = circuit.get("variables", {})
 
+    if output_format == "latex":
+        symbolic_state = symbolic_state_for_qubits(circuit, qubits, variables)
+        return render_symbolic_state_latex_for_qubits(symbolic_state, qubits)
+
     if qubits == 2:
-        symbolic_state = Matrix([1, 0, 0, 0])
-        for col in cols:
-            symbolic_state = two_qubit_gate_matrix(col, variables) * symbolic_state
+        symbolic_state = symbolic_state_for_qubits(circuit, qubits, variables)
         return render_symbolic_state_for_qubits(symbolic_state, 2)
 
     numeric_state = [1.0, 0.0]
@@ -362,17 +420,25 @@ def run(circuit):
     if not requires_symbolic:
         return render_numeric_state(numeric_state)
 
-    symbolic_state = Matrix([1, 0])
-    for col in cols:
-        symbolic_state = symbolic_gate(col[0], variables) * symbolic_state
+    symbolic_state = symbolic_state_for_qubits(circuit, qubits, variables)
 
     return render_symbolic_state(symbolic_state)
 
 
+def parse_output_format(argv):
+    if len(argv) == 1:
+        return "text"
+    if len(argv) == 3 and argv[1] == "--format" and argv[2] in {"text", "latex"}:
+        return argv[2]
+
+    raise ValueError("unsupported symbolic renderer arguments")
+
+
 def main():
     try:
+        output_format = parse_output_format(sys.argv)
         circuit = json.load(sys.stdin)
-        print(run(circuit))
+        print(run(circuit, output_format=output_format))
     except ValueError as e:
         print(str(e), file=sys.stderr)
         raise SystemExit(1)

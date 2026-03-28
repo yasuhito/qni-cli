@@ -9,6 +9,8 @@ require_relative 'cli/add_command_options'
 require_relative 'cli/bootstrap'
 require_relative 'cli/clear_help'
 require_relative 'cli/expect_help'
+require_relative 'cli/export_command'
+require_relative 'cli/export_help'
 require_relative 'cli/routing'
 require_relative 'cli/variable_command'
 require_relative 'cli/variable_help'
@@ -73,6 +75,22 @@ module Qni
     def clear
       current_circuit_file.clear
     rescue CircuitFile::Error => e
+      raise Thor::Error, e.message
+    end
+
+    desc 'export', 'Export the circuit as qcircuit LaTeX or PNG'
+    method_option :latex_source, type: :boolean, default: false, desc: 'Write qcircuit LaTeX'
+    method_option :png, type: :boolean, default: false, desc: 'Write PNG rendered from qcircuit LaTeX'
+    method_option :state_vector, type: :boolean, default: false, desc: 'Write the symbolic state vector as PNG'
+    method_option :dark, type: :boolean, default: false, desc: 'Draw white circuit lines for dark backgrounds'
+    method_option :light, type: :boolean, default: false, desc: 'Draw black circuit lines for light backgrounds'
+    method_option :output, type: :string, desc: 'Write to this path'
+    def export
+      output = ExportCommand.new(circuit_file: current_circuit_file, export_options: options).execute
+      return if output.to_s.empty?
+
+      $stdout.write(output)
+    rescue CircuitFile::Error, Simulator::Error => e
       raise Thor::Error, e.message
     end
 
