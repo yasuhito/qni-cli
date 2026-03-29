@@ -4,7 +4,7 @@
 
 **Goal:** `state_flip.feature` の controlled 検証 scenario を state-vector DSL にそろえ、`2 qubit + control` の ASCII 回路と `Ry(π/2)` のような角度つき ASCII 拡張を読めるようにする。
 
-**Architecture:** まず feature-first で controlled scenario と parser acceptance を赤くし、`最初の状態ベクトルは:` の 2 qubit 対応を最小実装する。その後、`AsciiCircuitParser` を「複数 wire を step ごとに読む」形へ広げて 2 qubit controlled / swap を通し、最後に angled gate の ASCII 拡張を 1 qubit から追加する。`qni view` 自体は変更せず、角度つき表記は parser 拡張 DSL として扱う。
+**Architecture:** まず feature-first で controlled scenario と parser acceptance を赤くし、`初期状態ベクトルは:` の 2 qubit 対応を最小実装する。その後、`AsciiCircuitParser` を「複数 wire を step ごとに読む」形へ広げて 2 qubit controlled / swap を通し、最後に angled gate の ASCII 拡張を 1 qubit から追加する。`qni view` 自体は変更せず、角度つき表記は parser 拡張 DSL として扱う。
 
 **Tech Stack:** Ruby, Cucumber, Minitest, Bundler, `qni-cli`
 
@@ -13,11 +13,11 @@
 ## File Structure
 
 - Modify: `features/katas/basic_gates/state_flip.feature`
-  - controlled 検証 scenario を `最初の状態ベクトルは:` / `次の回路を適用:` / `状態ベクトルは:` の形へそろえる。
+  - controlled 検証 scenario を `初期状態ベクトルは:` / `次の回路を適用:` / `状態ベクトルは:` の形へそろえる。
 - Modify: `features/ascii_circuit_parser.feature`
   - 2 qubit controlled ASCII と angled gate ASCII の受け入れ scenario を追加する。
 - Modify: `features/step_definitions/cli_steps.rb`
-  - `最初の状態ベクトルは:` の 2 qubit 対応と、必要なら 2 qubit symbolic の比較補助を追加する。
+  - `初期状態ベクトルは:` の 2 qubit 対応と、必要なら 2 qubit symbolic の比較補助を追加する。
 - Modify: `test/qni/view/ascii_circuit_parser_test.rb`
   - 2 qubit controlled gate、2 qubit swap、angled gate ASCII の parser unit test を追加する。
 - Modify: `lib/qni/view/ascii_circuit_parser.rb`
@@ -43,7 +43,7 @@
 
 ```gherkin
 Scenario: controlled な X 検証回路は control qubit を |0> に戻す
-  Given 最初の状態ベクトルは:
+  Given 初期状態ベクトルは:
     """
     0.6|00> + 0.8|01>
     """
@@ -119,7 +119,7 @@ git add features/katas/basic_gates/state_flip.feature features/ascii_circuit_par
 git commit -m "test: add controlled ASCII DSL scenarios"
 ```
 
-## Task 2: `最初の状態ベクトルは:` を 2 qubit へ広げる
+## Task 2: `初期状態ベクトルは:` を 2 qubit へ広げる
 
 **Files:**
 - Modify: `features/step_definitions/cli_steps.rb`
@@ -154,7 +154,7 @@ TWO_QUBIT_INITIAL_STATE_COLS = {
 }.freeze
 ```
 
-`Given('最初の状態ベクトルは:')` は、`|...>` の桁数や登録済み literal を見て 1 qubit / 2 qubit を切り替える。
+`Given('初期状態ベクトルは:')` は、`|...>` の桁数や登録済み literal を見て 1 qubit / 2 qubit を切り替える。
 
 - [ ] **Step 3: controlled scenario の state setup だけ green にする**
 

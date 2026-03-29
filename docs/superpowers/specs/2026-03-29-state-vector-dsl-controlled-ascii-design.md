@@ -2,7 +2,7 @@
 
 ## Problem
 
-`features/katas/basic_gates/state_flip.feature` の先頭 4 scenario は、`最初の状態ベクトルは:` / `次の回路を適用:` / `状態ベクトルは:` の高レベル DSL で読めるようになった。一方、最後の controlled 検証 scenario はまだ `qni add ...` と `qni expect ZI` の列挙に依存していて、feature 全体の読み味がそろっていない。
+`features/katas/basic_gates/state_flip.feature` の先頭 4 scenario は、`初期状態ベクトルは:` / `次の回路を適用:` / `状態ベクトルは:` の高レベル DSL で読めるようになった。一方、最後の controlled 検証 scenario はまだ `qni add ...` と `qni expect ZI` の列挙に依存していて、feature 全体の読み味がそろっていない。
 
 さらに、現在の `AsciiCircuitParser` は 1 qubit の固定ゲート box しか読めない。`state_flip.feature` の controlled scenario を高レベル DSL に寄せるには、少なくとも 2 qubit の fixed gate / control / swap を含む ASCII 回路を読める必要がある。
 
@@ -11,7 +11,7 @@
 ## Goal
 
 - `state_flip.feature` の controlled 検証 scenario を、ほかの scenario と同じ state-vector DSL にそろえる。
-- `Given 最初の状態ベクトルは:` を 2 qubit の必要状態まで広げる。
+- `Given 初期状態ベクトルは:` を 2 qubit の必要状態まで広げる。
 - `When 次の回路を適用:` が 2 qubit の controlled ASCII 回路を読めるようにする。
 - ASCII DSL は `qni view` 互換を基本にしつつ、角度付きゲートだけは parser 拡張表記を許す。
 
@@ -34,7 +34,7 @@
 
 ```gherkin
 Scenario: controlled な X 検証回路は control qubit を |0> に戻す
-  Given 最初の状態ベクトルは:
+  Given 初期状態ベクトルは:
     """
     0.6|00> + 0.8|01>
     """
@@ -58,7 +58,7 @@ Scenario: controlled な X 検証回路は control qubit を |0> に戻す
 
 ### State Vector DSL
 
-- `Given 最初の状態ベクトルは:` は 1 qubit に加えて 2 qubit の必要状態を受け付ける。
+- `Given 初期状態ベクトルは:` は 1 qubit に加えて 2 qubit の必要状態を受け付ける。
 - 最低限サポートする文字列は `|00>`, `|01>`, `|10>`, `|11>`, `0.6|00> + 0.8|01>` とする。
 - 実装は既存の `1 qubit の初期状態が ...` / `2 qubit の初期状態が ...` と同じく、「その状態を準備する列を `circuit.json` へ直接書く」方式を保つ。
 - `Then 状態ベクトルは:` は引き続き `qni run --symbolic` を内部実行して比較する。

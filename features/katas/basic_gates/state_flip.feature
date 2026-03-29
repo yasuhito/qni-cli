@@ -12,7 +12,7 @@ Feature: Quantum Katas BasicGates Task 1.1 StateFlip
   |1⟩ を |0⟩ に変える
 
   Scenario: X ゲートは |0> を |1> に反転する
-    Given 最初の状態ベクトルは:
+    Given 初期状態ベクトルは:
       """
       |0>
       """
@@ -28,7 +28,7 @@ Feature: Quantum Katas BasicGates Task 1.1 StateFlip
       """
 
   Scenario: X ゲートは |1> を |0> に反転する
-    Given 最初の状態ベクトルは:
+    Given 初期状態ベクトルは:
       """
       |1>
       """
@@ -44,7 +44,7 @@ Feature: Quantum Katas BasicGates Task 1.1 StateFlip
       """
 
   Scenario: X ゲートは重ね合わせ状態でも |0> と |1> の振幅を入れ替える
-    Given 最初の状態ベクトルは:
+    Given 初期状態ベクトルは:
       """
       0.6|0> + 0.8|1>
       """
@@ -60,7 +60,7 @@ Feature: Quantum Katas BasicGates Task 1.1 StateFlip
       """
 
   Scenario: X ゲートは symbolic 表示でも一般式の振幅を入れ替える
-    Given 最初の状態ベクトルは:
+    Given 初期状態ベクトルは:
       """
       cos(θ/2)|0> + sin(θ/2)|1>
       """

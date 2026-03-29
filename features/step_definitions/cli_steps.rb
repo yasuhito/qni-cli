@@ -159,7 +159,7 @@ Given('1 qubit の初期状態が {string} である') do |state|
   write_circuit_json(@scenario_dir, actual)
 end
 
-Given('最初の状態ベクトルは:') do |doc_string|
+Given('初期状態ベクトルは:') do |doc_string|
   actual = {
     'qubits' => 1,
     'cols' => one_qubit_initial_cols(normalized_doc_string(doc_string))
