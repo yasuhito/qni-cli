@@ -6,6 +6,14 @@ require 'pty'
 require 'shellwords'
 require_relative '../../lib/qni/view/ascii_circuit_parser'
 
+ONE_QUBIT_INITIAL_STATE_COLS = {
+  '|0>' => [[1]],
+  '|1>' => [['X']],
+  '0.6|0> + 0.8|1>' => [['Ry(1.8545904360032246)']],
+  'cos(theta/2)|0> + sin(theta/2)|1>' => [['Ry(theta)']],
+  'cos(θ/2)|0> + sin(θ/2)|1>' => [['Ry(theta)']]
+}.freeze
+
 def write_circuit_json(scenario_dir, data)
   actual_path = File.join(scenario_dir, 'circuit.json')
   File.write(actual_path, "#{JSON.pretty_generate(data)}\n")
@@ -14,6 +22,36 @@ end
 def write_ascii_circuit_json(scenario_dir, ascii_art)
   circuit = Qni::View::AsciiCircuitParser.new(ascii_art).parse
   write_circuit_json(scenario_dir, circuit.to_h)
+end
+
+def append_circuit_json(scenario_dir, data)
+  actual = read_circuit_json(scenario_dir)
+  actual_qubits = actual.fetch('qubits')
+  appended_qubits = data.fetch('qubits')
+  raise "qubit count mismatch: #{actual_qubits} != #{appended_qubits}" unless actual_qubits == appended_qubits
+
+  merged = actual.merge('cols' => actual.fetch('cols') + data.fetch('cols'))
+  write_circuit_json(scenario_dir, merged)
+end
+
+def append_ascii_circuit_json(scenario_dir, ascii_art)
+  circuit = Qni::View::AsciiCircuitParser.new(ascii_art).parse
+  append_circuit_json(scenario_dir, circuit.to_h)
+end
+
+def read_circuit_json(scenario_dir)
+  actual_path = File.join(scenario_dir, 'circuit.json')
+  JSON.parse(File.read(actual_path))
+end
+
+def normalized_doc_string(doc_string)
+  doc_string.sub(/\n+\z/, '')
+end
+
+def one_qubit_initial_cols(state)
+  ONE_QUBIT_INITIAL_STATE_COLS.fetch(state) do
+    raise "unsupported 1-qubit initial state: #{state}"
+  end
 end
 
 def bundler_env
@@ -83,14 +121,19 @@ def normalize_symbolic_state_vector(stdout)
         .gsub(/(?<= \+ )-1(?:\.0+)?(?=\|)/, '-')
 end
 
+def canonical_symbolic_notation(text)
+  text.gsub('θ', 'theta')
+end
+
 def assert_symbolic_state_matches!(stdout, doc_string)
-  actual = normalize_symbolic_state_vector(stdout)
-  return if actual == doc_string
+  actual = canonical_symbolic_notation(normalize_symbolic_state_vector(stdout))
+  expected = canonical_symbolic_notation(doc_string)
+  return if actual == expected
 
   raise <<~MESSAGE
     expected symbolic state vector to match
     expected:
-    #{doc_string}
+    #{expected}
     actual:
     #{actual}
   MESSAGE
@@ -109,19 +152,17 @@ Given(/^次の回路(?:図)?がある:$/) do |doc_string|
 end
 
 Given('1 qubit の初期状態が {string} である') do |state|
-  col = case state
-        when '|0>'
-          [1]
-        when '|1>'
-          ['X']
-        when '0.6|0> + 0.8|1>'
-          ['Ry(1.8545904360032246)']
-        else
-          raise "unsupported 1-qubit initial state: #{state}"
-        end
   actual = {
     'qubits' => 1,
-    'cols' => [col]
+    'cols' => one_qubit_initial_cols(state)
+  }
+  write_circuit_json(@scenario_dir, actual)
+end
+
+Given('最初の状態ベクトルは:') do |doc_string|
+  actual = {
+    'qubits' => 1,
+    'cols' => one_qubit_initial_cols(normalized_doc_string(doc_string))
   }
   write_circuit_json(@scenario_dir, actual)
 end
@@ -162,8 +203,8 @@ Given('2 qubit の初期状態が {string} である') do |state|
   write_circuit_json(@scenario_dir, actual)
 end
 
-When('回路を変更:') do |doc_string|
-  write_ascii_circuit_json(@scenario_dir, doc_string)
+When('次の回路を適用:') do |doc_string|
+  append_ascii_circuit_json(@scenario_dir, doc_string)
 end
 
 When('回路を実行') do

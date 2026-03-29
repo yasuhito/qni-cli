@@ -12,15 +12,11 @@ Feature: Quantum Katas BasicGates Task 1.1 StateFlip
   |1⟩ を |0⟩ に変える
 
   Scenario: X ゲートは |0> を |1> に反転する
-    Given 次の回路がある:
-      """
-      q0: ─────
-      """
-    And 状態ベクトルは:
+    Given 最初の状態ベクトルは:
       """
       |0>
       """
-    When 回路を変更:
+    When 次の回路を適用:
       """
           ┌───┐
       q0: ┤ X ├
@@ -32,43 +28,51 @@ Feature: Quantum Katas BasicGates Task 1.1 StateFlip
       """
 
   Scenario: X ゲートは |1> を |0> に反転する
-    Given 次の回路がある:
+    Given 最初の状態ベクトルは:
+      """
+      |1>
+      """
+    When 次の回路を適用:
       """
           ┌───┐
       q0: ┤ X ├
           └───┘
-      """
-    And 状態ベクトルは:
-      """
-      |1>
-      """
-    When 回路を変更:
-      """
-          ┌───┐┌───┐
-      q0: ┤ X ├┤ X ├
-          └───┘└───┘
       """
     Then 状態ベクトルは:
       """
       |0>
       """
 
-  Scenario: Task 1.1 の回路は 0.6|0> + 0.8|1> を 0.8|0> + 0.6|1> に反転する
-    Given 1 qubit の初期状態が "0.6|0> + 0.8|1>" である
-    And "qni add X --qubit 0 --step 1" を実行
-    When "qni run" を実行
-    Then 標準出力:
+  Scenario: X ゲートは重ね合わせ状態でも |0> と |1> の振幅を入れ替える
+    Given 最初の状態ベクトルは:
       """
-      0.8,0.6
+      0.6|0> + 0.8|1>
+      """
+    When 次の回路を適用:
+      """
+          ┌───┐
+      q0: ┤ X ├
+          └───┘
+      """
+    Then 状態ベクトルは:
+      """
+      0.8|0> + 0.6|1>
       """
 
-  Scenario: Task 1.1 の回路は symbolic 表示でも一般式の反転を示す
-    Given "qni add Ry --angle theta --qubit 0 --step 0" を実行
-    And "qni add X --qubit 0 --step 1" を実行
-    When "qni run --symbolic" を実行
-    Then 標準出力:
+  Scenario: X ゲートは symbolic 表示でも一般式の振幅を入れ替える
+    Given 最初の状態ベクトルは:
       """
-      sin(theta/2)|0> + cos(theta/2)|1>
+      cos(θ/2)|0> + sin(θ/2)|1>
+      """
+    When 次の回路を適用:
+      """
+          ┌───┐
+      q0: ┤ X ├
+          └───┘
+      """
+    Then 状態ベクトルは:
+      """
+      sin(θ/2)|0> + cos(θ/2)|1>
       """
 
   Scenario: Task 1.1 の controlled 検証回路は control qubit を |0> に戻す
