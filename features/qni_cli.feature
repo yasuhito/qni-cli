@@ -211,6 +211,14 @@ Feature: qni CLI
         qni variable clear
       """
 
+  Scenario: qni state --help は state コマンドの使い方を表示
+    When "qni state --help" を実行
+    Then コマンドは成功
+    And 標準出力に次を含む:
+      """
+      qni state set "alpha|0> + beta|1>"
+      """
+
   Scenario: qni help は使えない
     When "qni help add" を実行
     Then コマンドは失敗

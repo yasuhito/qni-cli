@@ -130,6 +130,46 @@ Feature: qni run コマンド
       unresolved angle variable: theta
       """
 
+  Scenario: qni run --symbolic は初期状態ベクトル alpha|0> + beta|1> に X を適用する
+    Given "qni state set \"alpha|0> + beta|1>\"" を実行
+    And "qni add X --qubit 0 --step 0" を実行
+    When "qni run --symbolic" を実行
+    Then 標準出力:
+      """
+      beta|0> + alpha|1>
+      """
+
+  Scenario: qni run は変数解決した初期状態ベクトルから数値実行する
+    Given "qni state set \"alpha|0> + beta|1>\"" を実行
+    And "qni variable set alpha 0.6" を実行
+    And "qni variable set beta 0.8" を実行
+    And "qni add X --qubit 0 --step 0" を実行
+    When "qni run" を実行
+    Then 標準出力:
+      """
+      0.8,0.6
+      """
+
+  Scenario: qni run は未束縛の初期状態変数では失敗する
+    Given "qni state set \"alpha|0> + beta|1>\"" を実行
+    When "qni run" を実行
+    Then コマンドは失敗
+    And 標準エラー:
+      """
+      unresolved initial state variable: alpha
+      """
+
+  Scenario: qni run は非正規化の初期状態ベクトルでは失敗する
+    Given "qni state set \"alpha|0> + beta|1>\"" を実行
+    And "qni variable set alpha 1" を実行
+    And "qni variable set beta 1" を実行
+    When "qni run" を実行
+    Then コマンドは失敗
+    And 標準エラー:
+      """
+      initial state must be normalized
+      """
+
   Scenario: qni run は負の変数 angle を解決して Phase ゲートの状態ベクトルを表示
     Given "qni add X --qubit 0 --step 0" を実行
     And "qni add P --angle=-alpha --qubit 0 --step 1" を実行

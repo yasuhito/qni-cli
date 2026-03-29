@@ -284,6 +284,20 @@ Then('標準出力:') do |doc_string|
   assert_stdout_matches!(@stdout, doc_string)
 end
 
+Then('circuit.json:') do |doc_string|
+  actual = read_circuit_json(@scenario_dir)
+  expected = JSON.parse(doc_string)
+  next if actual == expected
+
+  raise <<~MESSAGE
+    expected circuit.json to match
+    expected:
+    #{JSON.pretty_generate(expected)}
+    actual:
+    #{JSON.pretty_generate(actual)}
+  MESSAGE
+end
+
 Then('回路図:') do |doc_string|
   actual = @stdout.sub(/\n+\z/, '').lines.map(&:rstrip).join("\n")
   expected = doc_string.lines.map(&:rstrip).join("\n")
