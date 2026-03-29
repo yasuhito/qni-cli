@@ -158,7 +158,11 @@ def trim_trailing_decimal_zeros(text)
 end
 
 def canonical_symbolic_notation(text)
-  trim_trailing_decimal_zeros(text.gsub('θ', 'theta'))
+  trim_trailing_decimal_zeros(
+    text.gsub('θ', 'theta')
+        .gsub('α', 'alpha')
+        .gsub('β', 'beta')
+  )
 end
 
 def assert_symbolic_state_matches!(stdout, doc_string)

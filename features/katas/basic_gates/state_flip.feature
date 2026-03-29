@@ -59,10 +59,10 @@ Feature: Quantum Katas BasicGates Task 1.1 StateFlip
       0.8|0> + 0.6|1>
       """
 
-  Scenario: X ゲートは alpha|0> + beta|1> の振幅を入れ替える
+  Scenario: X ゲートは α|0> + β|1> の振幅を入れ替える
     Given 初期状態ベクトルは:
       """
-      alpha|0> + beta|1>
+      α|0> + β|1>
       """
     When 次の回路を適用:
       """
@@ -72,7 +72,7 @@ Feature: Quantum Katas BasicGates Task 1.1 StateFlip
       """
     Then 状態ベクトルは:
       """
-      beta|0> + alpha|1>
+      β|0> + α|1>
       """
 
   Scenario: X ゲートは実数係数の一般状態で振幅を入れ替える
