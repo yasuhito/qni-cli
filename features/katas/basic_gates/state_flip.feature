@@ -1,23 +1,37 @@
 Feature: Quantum Katas BasicGates Task 1.1 StateFlip
   Task 1.1 StateFlip: |0⟩ を |1⟩ に、|1⟩ を |0⟩ に反転する
+
   入力:
   1 量子ビットの状態 |ψ⟩ = α|0⟩ + β|1⟩
+
   目標:
   状態を α|1⟩ + β|0⟩ に変える
+
   具体例:
   |0⟩ を |1⟩ に変える
   |1⟩ を |0⟩ に変える
 
-  Scenario: Task 1.1 は |0> を |1> に反転する
-    Given 空の 1 qubit 回路がある
-    And "qni add X --qubit 0 --step 0" を実行
-    When "qni run" を実行
-    Then 標準出力:
+  Scenario: X ゲートは |0> を |1> に反転する
+    Given 次の回路がある:
       """
-      0.0,1.0
+      q0: ─────
+      """
+    And 状態ベクトルは:
+      """
+      |0>
+      """
+    When 回路を変更:
+      """
+          ┌───┐
+      q0: ┤ X ├
+          └───┘
+      """
+    Then 状態ベクトルは:
+      """
+      |1>
       """
 
-  Scenario: Task 1.1 は |1> を |0> に反転する
+  Scenario: Task 1.1 の回路は |1> を |0> に反転する
     Given 1 qubit の初期状態が "|1>" である
     And "qni add X --qubit 0 --step 1" を実行
     When "qni run" を実行
@@ -26,7 +40,7 @@ Feature: Quantum Katas BasicGates Task 1.1 StateFlip
       1.0,0.0
       """
 
-  Scenario: Task 1.1 は 0.6|0> + 0.8|1> を 0.8|0> + 0.6|1> に反転する
+  Scenario: Task 1.1 の回路は 0.6|0> + 0.8|1> を 0.8|0> + 0.6|1> に反転する
     Given 1 qubit の初期状態が "0.6|0> + 0.8|1>" である
     And "qni add X --qubit 0 --step 1" を実行
     When "qni run" を実行
@@ -35,7 +49,7 @@ Feature: Quantum Katas BasicGates Task 1.1 StateFlip
       0.8,0.6
       """
 
-  Scenario: Task 1.1 は symbolic 表示で一般式の反転を示す
+  Scenario: Task 1.1 の回路は symbolic 表示でも一般式の反転を示す
     Given "qni add Ry --angle theta --qubit 0 --step 0" を実行
     And "qni add X --qubit 0 --step 1" を実行
     When "qni run --symbolic" を実行

@@ -12,6 +12,7 @@ require_relative 'cli/expect_help'
 require_relative 'cli/export_command'
 require_relative 'cli/export_help'
 require_relative 'cli/routing'
+require_relative 'cli/supported_gates'
 require_relative 'cli/variable_command'
 require_relative 'cli/variable_help'
 require_relative 'simulator'
@@ -24,24 +25,6 @@ module Qni
   # Thor-based command-line interface for qni subcommands.
   class CLI < Thor
     extend CliBootstrap
-
-    SUPPORTED_GATES = {
-      'H' => 'H',
-      'P' => PhaseGate::COMMAND_SYMBOL,
-      'RX' => RxGate::COMMAND_SYMBOL,
-      'RY' => RyGate::COMMAND_SYMBOL,
-      'RZ' => RzGate::COMMAND_SYMBOL,
-      'S' => 'S',
-      'S†' => SDaggerGate::SYMBOL,
-      'SWAP' => SwapGate::SYMBOL,
-      'T' => 'T',
-      'T†' => TDaggerGate::SYMBOL,
-      'X' => 'X',
-      'X^½' => SqrtXGate::SYMBOL,
-      'Y' => 'Y',
-      'Z' => 'Z',
-      '√X' => SqrtXGate::SYMBOL
-    }.freeze
 
     def self.exit_on_failure?
       true
@@ -66,7 +49,7 @@ module Qni
 
     desc 'view', 'Render the circuit as ASCII art'
     def view
-      puts current_circuit_file.load.render_ascii(color: $stdout.tty?)
+      puts current_circuit_file.load.render_ascii(style: $stdout.tty? ? :colorized : :plain)
     rescue CircuitFile::Error => e
       raise Thor::Error, e.message
     end
@@ -127,9 +110,8 @@ module Qni
       end
 
       def normalize_gate(gate)
-        normalized_gate = gate.to_s.upcase
-        return SUPPORTED_GATES.fetch(normalized_gate) if SUPPORTED_GATES.key?(normalized_gate)
-
+        CliSupportedGates.normalize(gate)
+      rescue KeyError
         raise Thor::Error, "unsupported gate: #{gate}"
       end
 

@@ -1,19 +1,114 @@
 # frozen_string_literal: true
 
 require 'json'
+require 'open3'
 require 'pty'
+require 'shellwords'
+require_relative '../../lib/qni/view/ascii_circuit_parser'
+
+def write_circuit_json(scenario_dir, data)
+  actual_path = File.join(scenario_dir, 'circuit.json')
+  File.write(actual_path, "#{JSON.pretty_generate(data)}\n")
+end
+
+def write_ascii_circuit_json(scenario_dir, ascii_art)
+  circuit = Qni::View::AsciiCircuitParser.new(ascii_art).parse
+  write_circuit_json(scenario_dir, circuit.to_h)
+end
+
+def bundler_env
+  env = { 'BUNDLE_GEMFILE' => File.join(PROJECT_ROOT, 'Gemfile') }
+  env['BUNDLE_PATH'] = ENV.fetch('BUNDLE_PATH') if ENV.key?('BUNDLE_PATH')
+  env
+end
+
+def run_qni_command(scenario_dir, command)
+  argv = Shellwords.split(command)
+  raise "command must start with qni: #{command}" unless argv.first == 'qni'
+
+  Open3.capture3(
+    bundler_env,
+    'bundle',
+    'exec',
+    QNI_BIN,
+    *argv.drop(1),
+    chdir: scenario_dir
+  )
+end
+
+def assert_command_succeeded!(status, stdout, stderr)
+  return if status.success?
+
+  raise <<~MESSAGE
+    expected command to succeed, but it failed
+    exit status: #{status.exitstatus}
+    stdout:
+    #{stdout}
+    stderr:
+    #{stderr}
+  MESSAGE
+end
+
+def assert_command_failed!(status, stdout, stderr)
+  return unless status.success?
+
+  raise <<~MESSAGE
+    expected command to fail, but it succeeded
+    stdout:
+    #{stdout}
+    stderr:
+    #{stderr}
+  MESSAGE
+end
+
+def assert_stdout_matches!(stdout, doc_string)
+  actual = stdout.sub(/\n+\z/, '')
+  return if actual == doc_string
+
+  raise <<~MESSAGE
+    expected stdout to match
+    expected:
+    #{doc_string}
+    actual:
+    #{actual}
+  MESSAGE
+end
+
+def normalize_symbolic_state_vector(stdout)
+  stdout.sub(/\n+\z/, '')
+        .gsub(/\A1(?:\.0+)?(?=\|)/, '')
+        .gsub(/(?<= \+ )1(?:\.0+)?(?=\|)/, '')
+        .gsub(/(?<= - )1(?:\.0+)?(?=\|)/, '')
+        .gsub(/\A-1(?:\.0+)?(?=\|)/, '-')
+        .gsub(/(?<= \+ )-1(?:\.0+)?(?=\|)/, '-')
+end
+
+def assert_symbolic_state_matches!(stdout, doc_string)
+  actual = normalize_symbolic_state_vector(stdout)
+  return if actual == doc_string
+
+  raise <<~MESSAGE
+    expected symbolic state vector to match
+    expected:
+    #{doc_string}
+    actual:
+    #{actual}
+  MESSAGE
+end
 
 Given('空の 1 qubit 回路がある') do
-  actual_path = File.join(@scenario_dir, 'circuit.json')
   actual = {
     'qubits' => 1,
     'cols' => [[1]]
   }
-  File.write(actual_path, "#{JSON.pretty_generate(actual)}\n")
+  write_circuit_json(@scenario_dir, actual)
+end
+
+Given(/^次の回路(?:図)?がある:$/) do |doc_string|
+  write_ascii_circuit_json(@scenario_dir, doc_string)
 end
 
 Given('1 qubit の初期状態が {string} である') do |state|
-  actual_path = File.join(@scenario_dir, 'circuit.json')
   col = case state
         when '|0>'
           [1]
@@ -28,29 +123,26 @@ Given('1 qubit の初期状態が {string} である') do |state|
     'qubits' => 1,
     'cols' => [col]
   }
-  File.write(actual_path, "#{JSON.pretty_generate(actual)}\n")
+  write_circuit_json(@scenario_dir, actual)
 end
 
 Given('空の 2 qubit 回路がある') do
-  actual_path = File.join(@scenario_dir, 'circuit.json')
   actual = {
     'qubits' => 2,
     'cols' => [[1, 1]]
   }
-  File.write(actual_path, "#{JSON.pretty_generate(actual)}\n")
+  write_circuit_json(@scenario_dir, actual)
 end
 
 Given('空の 3 qubit 回路がある') do
-  actual_path = File.join(@scenario_dir, 'circuit.json')
   actual = {
     'qubits' => 3,
     'cols' => [[1, 1, 1]]
   }
-  File.write(actual_path, "#{JSON.pretty_generate(actual)}\n")
+  write_circuit_json(@scenario_dir, actual)
 end
 
 Given('2 qubit の初期状態が {string} である') do |state|
-  actual_path = File.join(@scenario_dir, 'circuit.json')
   col = case state
         when '|00>'
           [1, 1]
@@ -67,32 +159,24 @@ Given('2 qubit の初期状態が {string} である') do |state|
     'qubits' => 2,
     'cols' => [col]
   }
-  File.write(actual_path, "#{JSON.pretty_generate(actual)}\n")
+  write_circuit_json(@scenario_dir, actual)
+end
+
+When('回路を変更:') do |doc_string|
+  write_ascii_circuit_json(@scenario_dir, doc_string)
+end
+
+When('回路を実行') do
+  @stdout, @stderr, @status = run_qni_command(@scenario_dir, 'qni run')
 end
 
 When('{string} を実行') do |command|
-  argv = Shellwords.split(command)
-  raise "command must start with qni: #{command}" unless argv.first == 'qni'
-
-  bundler_env = { 'BUNDLE_GEMFILE' => File.join(PROJECT_ROOT, 'Gemfile') }
-  bundler_env['BUNDLE_PATH'] = ENV.fetch('BUNDLE_PATH') if ENV.key?('BUNDLE_PATH')
-
-  @stdout, @stderr, @status = Open3.capture3(
-    bundler_env,
-    'bundle',
-    'exec',
-    QNI_BIN,
-    *argv.drop(1),
-    chdir: @scenario_dir
-  )
+  @stdout, @stderr, @status = run_qni_command(@scenario_dir, command)
 end
 
 When('{string} を TTY で実行') do |command|
   argv = Shellwords.split(command)
   raise "command must start with qni: #{command}" unless argv.first == 'qni'
-
-  bundler_env = { 'BUNDLE_GEMFILE' => File.join(PROJECT_ROOT, 'Gemfile') }
-  bundler_env['BUNDLE_PATH'] = ENV.fetch('BUNDLE_PATH') if ENV.key?('BUNDLE_PATH')
 
   output = +''
   status = nil
@@ -113,28 +197,11 @@ When('{string} を TTY で実行') do |command|
 end
 
 Then('コマンドは成功') do
-  next if @status.success?
-
-  raise <<~MESSAGE
-    expected command to succeed, but it failed
-    exit status: #{@status.exitstatus}
-    stdout:
-    #{@stdout}
-    stderr:
-    #{@stderr}
-  MESSAGE
+  assert_command_succeeded!(@status, @stdout, @stderr)
 end
 
 Then('コマンドは失敗') do
-  next unless @status.success?
-
-  raise <<~MESSAGE
-    expected command to fail, but it succeeded
-    stdout:
-    #{@stdout}
-    stderr:
-    #{@stderr}
-  MESSAGE
+  assert_command_failed!(@status, @stdout, @stderr)
 end
 
 Then('標準出力は空') do
@@ -147,17 +214,14 @@ Then('標準出力は空') do
   MESSAGE
 end
 
-Then('標準出力:') do |doc_string|
-  actual = @stdout.sub(/\n+\z/, '')
-  next if actual == doc_string
+Then('状態ベクトルは:') do |doc_string|
+  @stdout, @stderr, @status = run_qni_command(@scenario_dir, 'qni run --symbolic')
+  assert_command_succeeded!(@status, @stdout, @stderr)
+  assert_symbolic_state_matches!(@stdout, doc_string)
+end
 
-  raise <<~MESSAGE
-    expected stdout to match
-    expected:
-    #{doc_string}
-    actual:
-    #{actual}
-  MESSAGE
+Then('標準出力:') do |doc_string|
+  assert_stdout_matches!(@stdout, doc_string)
 end
 
 Then('回路図:') do |doc_string|

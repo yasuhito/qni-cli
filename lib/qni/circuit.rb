@@ -94,8 +94,8 @@ module Qni
       @variables.clear
     end
 
-    def render_ascii(color: false)
-      View::TextRenderer.new(self, color:).render
+    def render_ascii(style: :plain)
+      View::TextRenderer.new(self, style:).render
     end
 
     def variables

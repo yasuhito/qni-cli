@@ -3,6 +3,7 @@
 require_relative '../swap_gate'
 require_relative '../sqrt_x_gate'
 require_relative 'cell'
+require_relative 'compact_suffix_colorizer'
 
 module Qni
   module View
@@ -10,11 +11,6 @@ module Qni
     # rubocop:disable Metrics/ClassLength
     class TextRenderer
       ANGLED_GATE_PATTERN = /\A(?<symbol>[A-Za-z]+)\(.+\)\z/
-      COMPACT_LABEL_PATTERN = /\A[A-Z][xyz†]\z/u
-      LEADING_COMPACT_LABEL_PATTERN = /\A√[A-Z]\z/u
-      DIM_SUFFIX_PATTERN = /┤ ([A-Z])([xyz†])├/u
-      DIM_WHITE = "\e[37;2m"
-      RESET_FORMATTING = "\e[0m"
       INTERSECTION_MERGES = {
         ['┬', '═'] => '╪',
         ['│', '═'] => '╪',
@@ -30,22 +26,22 @@ module Qni
         ['┘', '┐'] => '┤'
       }.freeze
 
-      def initialize(circuit, color: false)
+      def initialize(circuit, style: :plain)
         @circuit = circuit
-        @color = color
+        @style = style
       end
 
       def render
         lines = draw_wires(step_layers)
         output = trim_blank_edges(lines).join("\n")
-        return output unless color
+        return output unless colorized?
 
-        colorize_compact_suffixes(output)
+        CompactSuffixColorizer.colorize(output)
       end
 
       private
 
-      attr_reader :circuit, :color
+      attr_reader :circuit, :style
 
       def step_layers
         circuit.to_h.fetch('cols').map do |raw_step|
@@ -90,7 +86,7 @@ module Qni
           next unless single_gate_slot?(slot)
           next unless layer.fetch(qubit).is_a?(EmptyWire)
 
-          layer[qubit] = boxed_gate(view_label(slot))
+          layer[qubit] = BoxOnQuWire.build(view_label(slot))
         end
       end
 
@@ -109,29 +105,8 @@ module Qni
         layer.each { |cell| cell.layer_width = longest }
       end
 
-      def boxed_gate(label, top_connect: '─', bot_connect: '─')
-        gate_class = if compact_label?(label)
-                       CompactBoxOnQuWire
-                     elsif leading_compact_label?(label)
-                       LeadingCompactBoxOnQuWire
-                     else
-                       BoxOnQuWire
-                     end
-        gate_class.new(label, top_connect:, bot_connect:)
-      end
-
-      def compact_label?(label)
-        COMPACT_LABEL_PATTERN.match?(label)
-      end
-
-      def leading_compact_label?(label)
-        LEADING_COMPACT_LABEL_PATTERN.match?(label)
-      end
-
-      def colorize_compact_suffixes(output)
-        output.gsub(DIM_SUFFIX_PATTERN) do
-          "┤ #{Regexp.last_match(1)}#{DIM_WHITE}#{Regexp.last_match(2)}#{RESET_FORMATTING}├"
-        end
+      def colorized?
+        style == :colorized
       end
 
       def draw_wires(layers)
@@ -195,7 +170,7 @@ module Qni
       def place_target(layer, raw_step, target, min_involved, max_involved)
         top_connect = target > min_involved ? '┴' : '─'
         bot_connect = target < max_involved ? '┬' : '─'
-        layer[target] = boxed_gate(view_label(raw_step.fetch(target)), top_connect:, bot_connect:)
+        layer[target] = BoxOnQuWire.build(view_label(raw_step.fetch(target)), top_connect:, bot_connect:)
       end
 
       def place_control_bridges(layer, raw_step, min_involved, max_involved)

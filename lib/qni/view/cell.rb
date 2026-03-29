@@ -50,37 +50,26 @@ module Qni
 
     # Boxed quantum gate cell.
     class BoxOnQuWire < DrawElement
-      def initialize(label, top_connect: '─', bot_connect: '─')
-        super(label)
-        @top_format = '┌─%s─┐'
-        @mid_format = '┤ %s ├'
-        @bot_format = '└─%s─┘'
-        @top_pad = @mid_bck = @bot_pad = '─'
-        @top_connect = top_connect
-        @bot_connect = bot_connect
-      end
-    end
+      COMPACT_LABEL_PATTERN = /\A[A-Z][xyz†]\z/u
+      LEADING_COMPACT_LABEL_PATTERN = /\A√[A-Z]\z/u
+      STANDARD_FORMAT = ['┌─%s─┐', '┤ %s ├', '└─%s─┘'].freeze
+      COMPACT_FORMAT = ['┌─%s┐', '┤ %s├', '└─%s┘'].freeze
+      LEADING_COMPACT_FORMAT = ['┌─%s┐', '┤%s ├', '└─%s┘'].freeze
 
-    # Narrow boxed gate used for labels with a small suffix like Ry or T†.
-    class CompactBoxOnQuWire < DrawElement
-      def initialize(label, top_connect: '─', bot_connect: '─')
-        super(label)
-        @top_format = '┌─%s┐'
-        @mid_format = '┤ %s├'
-        @bot_format = '└─%s┘'
-        @top_pad = @mid_bck = @bot_pad = '─'
-        @top_connect = top_connect
-        @bot_connect = bot_connect
+      def self.build(label, top_connect: '─', bot_connect: '─')
+        new(label, format: format_for(label), top_connect:, bot_connect:)
       end
-    end
 
-    # Narrow boxed gate used for labels with a small leading modifier like √X.
-    class LeadingCompactBoxOnQuWire < DrawElement
-      def initialize(label, top_connect: '─', bot_connect: '─')
+      def self.format_for(label)
+        return COMPACT_FORMAT if COMPACT_LABEL_PATTERN.match?(label)
+        return LEADING_COMPACT_FORMAT if LEADING_COMPACT_LABEL_PATTERN.match?(label)
+
+        STANDARD_FORMAT
+      end
+
+      def initialize(label, format: STANDARD_FORMAT, top_connect: '─', bot_connect: '─')
         super(label)
-        @top_format = '┌─%s┐'
-        @mid_format = '┤%s ├'
-        @bot_format = '└─%s┘'
+        @top_format, @mid_format, @bot_format = format
         @top_pad = @mid_bck = @bot_pad = '─'
         @top_connect = top_connect
         @bot_connect = bot_connect
