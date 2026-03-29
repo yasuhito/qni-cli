@@ -38,7 +38,8 @@ Feature: ASCII アート回路セットアップ
       """
 
   Scenario: 2 qubit の controlled X 回路を ASCII アートから作る
-    Given 次の回路がある:
+    Given 2 qubit の初期状態が "|10>" である
+    When 次の回路を適用:
       """
           ┌───┐
       q0: ──■──
@@ -46,7 +47,6 @@ Feature: ASCII アート回路セットアップ
       q1: ┤ X ├
           └───┘
       """
-    Given 2 qubit の初期状態が "|10>" である
     When "qni run" を実行
     Then 標準出力:
       """
