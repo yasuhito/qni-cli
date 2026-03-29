@@ -14,6 +14,14 @@ ONE_QUBIT_INITIAL_STATE_COLS = {
   'cos(θ/2)|0> + sin(θ/2)|1>' => [['Ry(theta)']]
 }.freeze
 
+TWO_QUBIT_INITIAL_STATE_COLS = {
+  '|00>' => [[1, 1]],
+  '|01>' => [[1, 'X']],
+  '|10>' => [['X', 1]],
+  '|11>' => [%w[X X]],
+  '0.6|00> + 0.8|01>' => [[1, 'Ry(1.8545904360032246)']]
+}.freeze
+
 def write_circuit_json(scenario_dir, data)
   actual_path = File.join(scenario_dir, 'circuit.json')
   File.write(actual_path, "#{JSON.pretty_generate(data)}\n")
@@ -52,6 +60,20 @@ def one_qubit_initial_cols(state)
   ONE_QUBIT_INITIAL_STATE_COLS.fetch(state) do
     raise "unsupported 1-qubit initial state: #{state}"
   end
+end
+
+def two_qubit_initial_cols(state)
+  TWO_QUBIT_INITIAL_STATE_COLS.fetch(state) do
+    raise "unsupported 2-qubit initial state: #{state}"
+  end
+end
+
+def initial_state_vector_cols(state)
+  [ONE_QUBIT_INITIAL_STATE_COLS, TWO_QUBIT_INITIAL_STATE_COLS].each do |supported_states|
+    return supported_states.fetch(state) if supported_states.key?(state)
+  end
+
+  raise "unsupported initial state: #{state}"
 end
 
 def bundler_env
@@ -121,8 +143,15 @@ def normalize_symbolic_state_vector(stdout)
         .gsub(/(?<= \+ )-1(?:\.0+)?(?=\|)/, '-')
 end
 
+def trim_trailing_decimal_zeros(text)
+  text.gsub(/-?\d+\.\d+/) do |number|
+    number.sub(/(\.\d*?[1-9])0+\z/, '\1')
+          .sub(/\.0+\z/, '')
+  end
+end
+
 def canonical_symbolic_notation(text)
-  text.gsub('θ', 'theta')
+  trim_trailing_decimal_zeros(text.gsub('θ', 'theta'))
 end
 
 def assert_symbolic_state_matches!(stdout, doc_string)
@@ -160,9 +189,11 @@ Given('1 qubit の初期状態が {string} である') do |state|
 end
 
 Given('初期状態ベクトルは:') do |doc_string|
+  state = normalized_doc_string(doc_string)
+  cols = initial_state_vector_cols(state)
   actual = {
-    'qubits' => 1,
-    'cols' => one_qubit_initial_cols(normalized_doc_string(doc_string))
+    'qubits' => cols.first.length,
+    'cols' => cols
   }
   write_circuit_json(@scenario_dir, actual)
 end
@@ -184,21 +215,9 @@ Given('空の 3 qubit 回路がある') do
 end
 
 Given('2 qubit の初期状態が {string} である') do |state|
-  col = case state
-        when '|00>'
-          [1, 1]
-        when '|01>'
-          [1, 'X']
-        when '|10>'
-          ['X', 1]
-        when '|11>'
-          %w[X X]
-        else
-          raise "unsupported 2-qubit initial state: #{state}"
-        end
   actual = {
     'qubits' => 2,
-    'cols' => [col]
+    'cols' => two_qubit_initial_cols(state)
   }
   write_circuit_json(@scenario_dir, actual)
 end

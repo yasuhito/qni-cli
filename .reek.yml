@@ -10,6 +10,7 @@ detectors:
       - Qni::View::TextRenderer#top_priority_merge
   DataClump:
     exclude:
+      - Qni::View::AsciiStepParser
       - Qni::Export::QCircuitLatex
       - Qni::View::TextRenderer
   DuplicateMethodCall:
@@ -18,6 +19,8 @@ detectors:
       - Qni::View::TextRenderer#control_step_parts
   FeatureEnvy:
     exclude:
+      - Qni::View::AsciiCircuitParser#parse
+      - Qni::View::AsciiWireLayout#step_slices
       - Qni::Export::QCircuitLatex#controlled_step_parts
       - Qni::Export::QCircuitLatex#controlled_target
       - Qni::Export::QCircuitLatex#render_swap_cell
@@ -26,6 +29,7 @@ detectors:
       - Qni::View::TextRenderer#place_target
   LongParameterList:
     exclude:
+      - Qni::View::AsciiStepParser#mark_gate
       - Qni::View::DrawElement#render_line
       - Qni::View::TextRenderer#append_wire
       - Qni::View::TextRenderer#place_control_bridges
@@ -42,10 +46,17 @@ detectors:
       - Qni::View::DirectOnQuWire
   TooManyMethods:
     exclude:
+      - Qni::View::AsciiStepParser
+      - Qni::View::AsciiWireLayout
       - Qni::Export::QCircuitLatex
       - Qni::View::TextRenderer
   TooManyStatements:
     exclude:
+      - Qni::View::AsciiStepParser#apply_mid_cell
+      - Qni::View::AsciiStepParser#gate_symbol_for
+      - Qni::View::AsciiStepParser#to_slots
+      - Qni::View::AsciiWireLayout#box_width_from
+      - Qni::View::AsciiWireLayout#parsed_mid_lines
       - Qni::Export::QCircuitLatex#render_swap_cell
       - Qni::View::DrawElement#initialize
       - Qni::View::BoxOnQuWire#initialize
@@ -59,6 +70,15 @@ detectors:
       - e
   UtilityFunction:
     exclude:
+      - Qni::View::AsciiStepParser#control_mid?
+      - Qni::View::AsciiStepParser#empty_mid?
+      - Qni::View::AsciiStepParser#mark_control
+      - Qni::View::AsciiStepParser#mark_gate
+      - Qni::View::AsciiStepParser#mark_swap
+      - Qni::View::AsciiStepParser#swap_mid?
+      - Qni::View::AsciiStepParser#vertical_bridge_mid?
+      - Qni::View::AsciiWireLayout#box_width_from
+      - Qni::View::AsciiWireLayout#mid_line?
       - Qni::Export::QCircuitLatex#controlled_step?
       - Qni::Export::QCircuitLatex#latex_angle
       - Qni::Export::QCircuitLatex#special_gate_label?
@@ -76,3 +96,9 @@ detectors:
       - Qni::View::TextRenderer#top_priority_merge
       - Qni::View::TextRenderer#trim_blank_edges
       - Qni::View::TextRenderer#view_label
+  NestedIterators:
+    exclude:
+      - Qni::View::AsciiWireLayout#box_widths_at
+  TooManyConstants:
+    exclude:
+      - Qni::View::AsciiStepParser
