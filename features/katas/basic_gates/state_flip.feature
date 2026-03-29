@@ -82,7 +82,7 @@ Feature: Quantum Katas BasicGates Task 1.1 StateFlip
       """
     When 次の回路を適用:
       """
-          ┌───┐           ┌───┐
+          ┌───┐          ┌───┐
       q0: ┤ H ├──■────■──┤ H ├
           └───┘┌─┴─┐┌─┴─┐└───┘
       q1: ─────┤ X ├┤ X ├─────
