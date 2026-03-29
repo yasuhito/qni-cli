@@ -12,6 +12,8 @@ require_relative 'cli/expect_help'
 require_relative 'cli/export_command'
 require_relative 'cli/export_help'
 require_relative 'cli/routing'
+require_relative 'cli/state_command'
+require_relative 'cli/state_help'
 require_relative 'cli/supported_gates'
 require_relative 'cli/variable_command'
 require_relative 'cli/variable_help'
@@ -70,9 +72,7 @@ module Qni
     method_option :output, type: :string, desc: 'Write to this path'
     def export
       output = ExportCommand.new(circuit_file: current_circuit_file, export_options: options).execute
-      return if output.to_s.empty?
-
-      $stdout.write(output)
+      write_output(output)
     rescue CircuitFile::Error, Simulator::Error => e
       raise Thor::Error, e.message
     end
@@ -94,12 +94,18 @@ module Qni
       raise Thor::Error, e.message
     end
 
+    desc 'state SUBCOMMAND ...', 'Manage the initial state vector'
+    def state(subcommand = nil, *)
+      output = StateCommand.new(path: File.expand_path('circuit.json', Dir.pwd)).execute(subcommand, *)
+      write_output(output)
+    rescue CircuitFile::Error, StateFile::Error => e
+      raise Thor::Error, e.message
+    end
+
     desc 'variable SUBCOMMAND ...', 'Manage symbolic angle variables'
     def variable(subcommand = nil, *)
       output = VariableCommand.new(circuit_file: current_circuit_file).execute(subcommand, *)
-      return if output.to_s.empty?
-
-      puts output
+      write_output(output)
     rescue CircuitFile::Error => e
       raise Thor::Error, e.message
     end
@@ -120,6 +126,12 @@ module Qni
         return simulator.render_symbolic_state_vector if options[:symbolic]
 
         simulator.render_state_vector
+      end
+
+      def write_output(output)
+        return if output.to_s.empty?
+
+        puts output
       end
     end
   end

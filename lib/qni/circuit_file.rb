@@ -105,7 +105,7 @@ module Qni
 
     def with_domain_errors
       yield
-    rescue JSON::ParserError, Circuit::Error => e
+    rescue JSON::ParserError, Circuit::Error, InitialState::Error => e
       raise Error, e.message
     end
   end

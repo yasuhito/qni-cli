@@ -110,6 +110,24 @@ def parse_angle(raw_value: str, variables: dict[str, str]) -> ParsedAngle:
     raise ValueError(f"invalid angle: {resolved}")
 
 
+def initial_state_terms(circuit):
+    return circuit.get("initial_state", {}).get("terms", [])
+
+
+def symbolic_initial_state_for_qubits(circuit, qubits, variables):
+    if "initial_state" not in circuit:
+        return Matrix([1, 0]) if qubits == 1 else Matrix([1, 0, 0, 0])
+
+    if qubits != 1:
+        raise ValueError("initial state currently supports only 1 qubit")
+
+    state = [Integer(0), Integer(0)]
+    for term in initial_state_terms(circuit):
+        basis = int(term["basis"])
+        state[basis] = parse_angle(term["coefficient"], variables).symbolic
+    return Matrix(state)
+
+
 def numeric_gate(gate, variables):
     if gate == 1:
         return None
@@ -376,14 +394,13 @@ def render_symbolic_state_latex_for_qubits(state, qubits: int):
 
 def symbolic_state_for_qubits(circuit, qubits, variables):
     cols = circuit.get("cols", [])
+    symbolic_state = symbolic_initial_state_for_qubits(circuit, qubits, variables)
 
     if qubits == 2:
-        symbolic_state = Matrix([1, 0, 0, 0])
         for col in cols:
             symbolic_state = two_qubit_gate_matrix(col, variables) * symbolic_state
         return symbolic_state
 
-    symbolic_state = Matrix([1, 0])
     for col in cols:
         symbolic_state = symbolic_gate(col[0], variables) * symbolic_state
 
@@ -401,6 +418,13 @@ def run(circuit, output_format="text"):
     if output_format == "latex":
         symbolic_state = symbolic_state_for_qubits(circuit, qubits, variables)
         return render_symbolic_state_latex_for_qubits(symbolic_state, qubits)
+
+    if "initial_state" in circuit:
+        symbolic_state = symbolic_state_for_qubits(circuit, qubits, variables)
+        if qubits == 2:
+            return render_symbolic_state_for_qubits(symbolic_state, 2)
+
+        return render_symbolic_state(symbolic_state)
 
     if qubits == 2:
         symbolic_state = symbolic_state_for_qubits(circuit, qubits, variables)

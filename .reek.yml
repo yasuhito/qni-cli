@@ -39,6 +39,9 @@ detectors:
   NilCheck:
     exclude:
       - Qni::View::TextRenderer#merged_top_line
+  InstanceVariableAssumption:
+    exclude:
+      - Qni::Circuit
   TooManyInstanceVariables:
     exclude:
       - Qni::View::DrawElement
@@ -46,6 +49,7 @@ detectors:
       - Qni::View::DirectOnQuWire
   TooManyMethods:
     exclude:
+      - Qni::Circuit
       - Qni::View::AsciiStepParser
       - Qni::View::AsciiWireLayout
       - Qni::Export::QCircuitLatex

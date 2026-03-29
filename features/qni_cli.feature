@@ -14,6 +14,7 @@ Feature: qni CLI
         qni expect    # Show expectation values of Pauli strings
         qni export    # Export the circuit as qcircuit LaTeX or PNG
         qni run       # Show the state vector of the circuit
+        qni state     # Manage the initial state vector
         qni variable  # Manage symbolic angle variables
         qni view      # Render the circuit as ASCII art
       """

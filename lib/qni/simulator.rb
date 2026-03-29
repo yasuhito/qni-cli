@@ -4,6 +4,7 @@ require_relative 'angle_expression'
 require_relative 'angled_gates'
 require_relative 'circuit'
 require_relative 'h_gate'
+require_relative 'initial_state'
 require_relative 's_dagger_gate'
 require_relative 'swap_gate'
 require_relative 'simulator/step_operation'
@@ -62,10 +63,10 @@ module Qni
     attr_reader :data
 
     def state_vector
-      cols.reduce(StateVector.zero(qubits)) do |current_state_vector, col|
+      cols.reduce(starting_state_vector) do |current_state_vector, col|
         apply_col(current_state_vector, col)
       end
-    rescue AngleExpression::Error => e
+    rescue AngleExpression::Error, InitialState::Error => e
       raise Error, e.message
     end
 
@@ -75,6 +76,16 @@ module Qni
 
     def cols
       data.fetch('cols')
+    end
+
+    def starting_state_vector
+      initial_state = data['initial_state']
+      return StateVector.zero(qubits) unless initial_state
+
+      StateVector.new(
+        qubits:,
+        amplitudes: InitialState.from_h(initial_state).resolve_numeric(variables)
+      )
     end
 
     def apply_col(state_vector, col)

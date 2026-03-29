@@ -8,12 +8,14 @@ module Qni
       %i[clear_help_request? ClearHelp],
       %i[expect_help_request? ExpectHelp],
       %i[export_help_request? ExportHelp],
+      %i[state_help_request? StateHelp],
       %i[variable_help_request? VariableHelp]
     ].freeze
     USAGE_SUMMARIES = {
       'qni add ' => 'qni add',
       'qni expect ' => 'qni expect',
       'qni export ' => 'qni export',
+      'qni state ' => 'qni state',
       'qni variable ' => 'qni variable'
     }.freeze
 
@@ -37,6 +39,10 @@ module Qni
 
     def variable_help_request?(given_args)
       [%w[variable], %w[variable --help], %w[variable -h]].include?(given_args)
+    end
+
+    def state_help_request?(given_args)
+      [%w[state], %w[state --help], %w[state -h]].include?(given_args)
     end
 
     def help_request?(given_args)

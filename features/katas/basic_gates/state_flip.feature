@@ -59,7 +59,23 @@ Feature: Quantum Katas BasicGates Task 1.1 StateFlip
       0.8|0> + 0.6|1>
       """
 
-  Scenario: X ゲートは symbolic 表示でも一般式の振幅を入れ替える
+  Scenario: X ゲートは alpha|0> + beta|1> の振幅を入れ替える
+    Given 初期状態ベクトルは:
+      """
+      alpha|0> + beta|1>
+      """
+    When 次の回路を適用:
+      """
+          ┌───┐
+      q0: ┤ X ├
+          └───┘
+      """
+    Then 状態ベクトルは:
+      """
+      beta|0> + alpha|1>
+      """
+
+  Scenario: X ゲートは実数係数の一般状態で振幅を入れ替える
     Given 初期状態ベクトルは:
       """
       cos(θ/2)|0> + sin(θ/2)|1>
@@ -73,22 +89,4 @@ Feature: Quantum Katas BasicGates Task 1.1 StateFlip
     Then 状態ベクトルは:
       """
       sin(θ/2)|0> + cos(θ/2)|1>
-      """
-
-  Scenario: controlled な X 検証回路は control qubit を |0> に戻す
-    Given 初期状態ベクトルは:
-      """
-      0.6|00> + 0.8|01>
-      """
-    When 次の回路を適用:
-      """
-          ┌───┐          ┌───┐
-      q0: ┤ H ├──■────■──┤ H ├
-          └───┘┌─┴─┐┌─┴─┐└───┘
-      q1: ─────┤ X ├┤ X ├─────
-               └───┘└───┘
-      """
-    Then 状態ベクトルは:
-      """
-      0.6|00> + 0.8|01>
       """

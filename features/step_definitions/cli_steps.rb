@@ -4,6 +4,7 @@ require 'json'
 require 'open3'
 require 'pty'
 require 'shellwords'
+require_relative '../../lib/qni/initial_state'
 require_relative '../../lib/qni/view/ascii_circuit_parser'
 
 ONE_QUBIT_INITIAL_STATE_COLS = {
@@ -74,6 +75,12 @@ def initial_state_vector_cols(state)
   end
 
   raise "unsupported initial state: #{state}"
+end
+
+def direct_initial_state(state)
+  Qni::InitialState.parse(state)
+rescue Qni::InitialState::Error
+  nil
 end
 
 def bundler_env
@@ -190,11 +197,20 @@ end
 
 Given('初期状態ベクトルは:') do |doc_string|
   state = normalized_doc_string(doc_string)
-  cols = initial_state_vector_cols(state)
-  actual = {
-    'qubits' => cols.first.length,
-    'cols' => cols
-  }
+  initial_state = direct_initial_state(state)
+  actual = if initial_state
+             {
+               'qubits' => 1,
+               'initial_state' => initial_state.to_h,
+               'cols' => [[1]]
+             }
+           else
+             cols = initial_state_vector_cols(state)
+             {
+               'qubits' => cols.first.length,
+               'cols' => cols
+             }
+           end
   write_circuit_json(@scenario_dir, actual)
 end
 
