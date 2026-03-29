@@ -31,13 +31,26 @@ Feature: Quantum Katas BasicGates Task 1.1 StateFlip
       |1>
       """
 
-  Scenario: Task 1.1 の回路は |1> を |0> に反転する
-    Given 1 qubit の初期状態が "|1>" である
-    And "qni add X --qubit 0 --step 1" を実行
-    When "qni run" を実行
-    Then 標準出力:
+  Scenario: X ゲートは |1> を |0> に反転する
+    Given 次の回路がある:
       """
-      1.0,0.0
+          ┌───┐
+      q0: ┤ X ├
+          └───┘
+      """
+    And 状態ベクトルは:
+      """
+      |1>
+      """
+    When 回路を変更:
+      """
+          ┌───┐┌───┐
+      q0: ┤ X ├┤ X ├
+          └───┘└───┘
+      """
+    Then 状態ベクトルは:
+      """
+      |0>
       """
 
   Scenario: Task 1.1 の回路は 0.6|0> + 0.8|1> を 0.8|0> + 0.6|1> に反転する

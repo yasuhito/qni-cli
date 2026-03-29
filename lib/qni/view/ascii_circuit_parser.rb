@@ -2,6 +2,8 @@
 
 require_relative '../circuit'
 require_relative '../sqrt_x_gate'
+require_relative 'ascii_step_cell'
+require_relative 'ascii_step_rows'
 
 module Qni
   module View
@@ -10,9 +12,9 @@ module Qni
       # Raised when the provided ASCII art cannot be converted into a circuit.
       class Error < StandardError; end
 
+      CELL_WIDTH = 5
       EMPTY_STEP_WIRE = '─────'
       MID_LINE_PATTERN = /\Aq(?<qubit>\d+): (?<wire>.+)\z/
-      BOX_PATTERN = /\A┤(?<label>.+)├\z/
       FIXED_GATE_LABELS = {
         'H' => 'H',
         'S' => 'S',
@@ -30,10 +32,14 @@ module Qni
       end
 
       def parse
-        Circuit.empty(step: 0, qubit: qubit).tap do |circuit|
-          next if empty_step?
+        steps = parsed_steps
 
-          circuit.add_gate(gate:, step: 0, qubit:)
+        Circuit.empty(step: steps.length - 1, qubit: qubit).tap do |circuit|
+          steps.each_with_index do |gate_symbol, step|
+            next unless gate_symbol
+
+            circuit.add_gate(gate: gate_symbol, step:, qubit:)
+          end
         end
       end
 
@@ -58,48 +64,50 @@ module Qni
         parsed_mid_line[:qubit].to_i
       end
 
-      def gate
-        FIXED_GATE_LABELS.fetch(label) do
-          raise Error, "unsupported ASCII gate label: #{label.inspect}"
-        end
+      def parsed_steps
+        @parsed_steps ||= if empty_step?
+                            [nil]
+                          else
+                            validate_box_frame
+                            step_rows.cells.map { |step_cell| step_cell.gate_symbol(FIXED_GATE_LABELS) }
+                          end
       end
 
       def empty_step?
         lines.one? && parsed_mid_line[:wire] == EMPTY_STEP_WIRE
       end
 
-      def label
-        @label ||= begin
-          match = BOX_PATTERN.match(parsed_mid_line[:wire])
-          raise Error, 'ASCII parser currently supports exactly one boxed gate' unless match
-
-          validate_box_frame
-          match[:label].strip
-        end
+      def validate_box_frame
+        validate_line_count
+        validate_cell_alignment
+        validate_cell_count
       end
 
-      def validate_box_frame
-        raise Error, 'ASCII parser currently supports exactly three lines' unless lines.length == 3
+      def validate_line_count
+        return if lines.length == 3
 
-        return if boxed_top_wire? && boxed_bottom_wire?
+        raise Error, 'ASCII parser currently supports exactly three lines'
+      end
+
+      def validate_cell_alignment
+        return if step_rows.whole_cells?
+
+        raise Error, 'ASCII parser lines must align to whole step cells'
+      end
+
+      def validate_cell_count
+        return if step_rows.uniform_cell_count?
 
         raise Error, 'ASCII parser could not find a boxed gate frame'
       end
 
-      def boxed_top_wire?
-        top_wire&.start_with?('┌') && top_wire.end_with?('┐')
-      end
-
-      def boxed_bottom_wire?
-        bottom_wire&.start_with?('└') && bottom_wire.end_with?('┘')
-      end
-
-      def top_wire
-        @top_wire ||= wire_segment_for(lines.first)
-      end
-
-      def bottom_wire
-        @bottom_wire ||= wire_segment_for(lines.last)
+      def step_rows
+        @step_rows ||= AsciiStepRows.new(
+          top_wire: wire_segment_for(lines.first),
+          mid_wire: parsed_mid_line[:wire],
+          bottom_wire: wire_segment_for(lines.last),
+          cell_width: CELL_WIDTH
+        )
       end
 
       def wire_prefix

@@ -16,6 +16,12 @@ module Qni
             └───┘
       CIRCUIT
 
+      DOUBLE_X_GATE = <<~CIRCUIT
+            ┌───┐┌───┐
+        q0: ┤ X ├┤ X ├
+            └───┘└───┘
+      CIRCUIT
+
       LEFT_PACKED_X_GATE = <<~CIRCUIT
         ┌───┐
         q0: ┤ X ├
@@ -29,6 +35,18 @@ module Qni
           {
             'qubits' => 1,
             'cols' => [['X']]
+          },
+          circuit.to_h
+        )
+      end
+
+      def test_parse_double_x_gate_circuit
+        circuit = AsciiCircuitParser.new(DOUBLE_X_GATE).parse
+
+        assert_equal(
+          {
+            'qubits' => 1,
+            'cols' => [['X'], ['X']]
           },
           circuit.to_h
         )
@@ -51,7 +69,7 @@ module Qni
           AsciiCircuitParser.new(LEFT_PACKED_X_GATE).parse
         end
 
-        assert_equal 'ASCII parser could not find a boxed gate frame', error.message
+        assert_equal 'ASCII parser lines must align to whole step cells', error.message
       end
     end
   end
