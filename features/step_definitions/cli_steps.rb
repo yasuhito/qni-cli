@@ -159,9 +159,14 @@ end
 
 def canonical_symbolic_notation(text)
   trim_trailing_decimal_zeros(
-    text.gsub('θ', 'theta')
+    text.gsub('|+>', 'sqrt(2)/2|0> + sqrt(2)/2|1>')
+        .gsub('|->', 'sqrt(2)/2|0> - sqrt(2)/2|1>')
+        .gsub('θ', 'theta')
         .gsub('α', 'alpha')
         .gsub('β', 'beta')
+        .gsub('π', 'pi')
+        .gsub('√2', 'sqrt(2)')
+        .gsub(/(\d(?:\.\d+)?)(?=sqrt\(2\))/, '\1*')
   )
 end
 
