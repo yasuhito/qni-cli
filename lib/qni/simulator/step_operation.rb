@@ -7,9 +7,9 @@ module Qni
       CONTROL_SYMBOL = Circuit::CONTROL_SYMBOL
       SWAP_SYMBOL = SwapGate::SYMBOL
 
-      def initialize(col:, gate_class_for:)
+      def initialize(col:, gate_operator_for:)
         @col = col
-        @gate_class_for = gate_class_for
+        @gate_operator_for = gate_operator_for
       end
 
       def apply(state_vector)
@@ -21,7 +21,7 @@ module Qni
 
       private
 
-      attr_reader :col, :gate_class_for
+      attr_reader :col, :gate_operator_for
 
       def apply_swap(state_vector)
         raise Error, "unsupported swap step: #{col.inspect}" unless valid_swap_step?
@@ -33,7 +33,7 @@ module Qni
         state_vector.apply_controlled_single_qubit_gate(
           control_qubits,
           target_qubit,
-          gate_class
+          gate_operator
         )
       end
 
@@ -46,7 +46,7 @@ module Qni
       def apply_gate(state_vector, gate, qubit)
         return state_vector if gate == 1
 
-        state_vector.apply_single_qubit_gate(qubit, gate_class_for.call(gate))
+        state_vector.apply_single_qubit_gate(qubit, gate_operator_for.call(gate))
       end
 
       def swap?
@@ -61,8 +61,8 @@ module Qni
         @control_qubits ||= col.each_index.select { |qubit| col.fetch(qubit) == CONTROL_SYMBOL }
       end
 
-      def gate_class
-        gate_class_for.call(target_gate)
+      def gate_operator
+        gate_operator_for.call(target_gate)
       end
 
       def target_gate

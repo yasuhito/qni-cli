@@ -23,7 +23,7 @@ module Qni
     # Raised when simulation encounters unsupported circuit content.
     class Error < StandardError; end
 
-    GATE_CLASSES = {
+    FIXED_GATE_OPERATORS = {
       HGate::SYMBOL => HGate,
       SGate::SYMBOL => SGate,
       SDaggerGate::SYMBOL => SDaggerGate,
@@ -78,18 +78,18 @@ module Qni
     end
 
     def apply_col(state_vector, col)
-      StepOperation.new(col:, gate_class_for: method(:gate_class_for)).apply(state_vector)
+      StepOperation.new(col:, gate_operator_for: method(:gate_operator_for)).apply(state_vector)
     end
 
-    def gate_class_for(gate)
-      return GATE_CLASSES.fetch(gate) if GATE_CLASSES.key?(gate)
+    def gate_operator_for(gate)
+      return FIXED_GATE_OPERATORS.fetch(gate) if FIXED_GATE_OPERATORS.key?(gate)
 
-      phase_gate_for(gate)
+      angled_gate_operator_for(gate)
     rescue AngleExpression::Error => e
       raise Error, e.message
     end
 
-    def phase_gate_for(gate)
+    def angled_gate_operator_for(gate)
       parsed_gate = AngledGates.parse(gate, variables:)
       return parsed_gate if parsed_gate
 

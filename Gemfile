@@ -7,6 +7,7 @@ gem 'erb'
 gem 'flay', require: false
 gem 'flog', require: false
 gem 'logger'
+gem 'minitest'
 gem 'rake'
 gem 'reek', require: false
 gem 'rubocop', require: false

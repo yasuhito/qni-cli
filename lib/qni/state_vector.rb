@@ -74,10 +74,10 @@ module Qni
 
     # Encapsulates how a single-qubit gate maps amplitude pairs within a state vector.
     class SingleQubitGateLayout
-      def initialize(qubits:, qubit:, gate_class:)
+      def initialize(qubits:, qubit:, gate_operator:)
         @stride = 1 << (qubits - qubit - 1)
         @block_size = @stride * 2
-        @gate_class = gate_class
+        @gate_operator = gate_operator
       end
 
       attr_reader :block_size
@@ -91,21 +91,21 @@ module Qni
 
       private
 
-      attr_reader :gate_class, :stride
+      attr_reader :gate_operator, :stride
 
       def each_transformed_pair(block, block_index)
         base_index = block_index * block_size
 
         stride.times do |offset|
-          yield base_index + offset, gate_class.apply(block.fetch(offset), block.fetch(offset + stride))
+          yield base_index + offset, gate_operator.apply(block.fetch(offset), block.fetch(offset + stride))
         end
       end
     end
 
     # Applies a single-qubit gate only when all control qubits are set to 1.
     class ControlledSingleQubitGateLayout < SingleQubitGateLayout
-      def initialize(qubits:, qubit:, controls:, gate_class:)
-        super(qubits:, qubit:, gate_class:)
+      def initialize(qubits:, qubit:, controls:, gate_operator:)
+        super(qubits:, qubit:, gate_operator:)
         @controls = controls
         @qubits = qubits
       end
@@ -165,12 +165,12 @@ module Qni
       @amplitudes = amplitudes.dup
     end
 
-    def apply_single_qubit_gate(qubit, gate_class)
-      apply_gate_layout(SingleQubitGateLayout.new(qubits:, qubit:, gate_class:))
+    def apply_single_qubit_gate(qubit, gate_operator)
+      apply_gate_layout(SingleQubitGateLayout.new(qubits:, qubit:, gate_operator:))
     end
 
-    def apply_controlled_single_qubit_gate(controls, qubit, gate_class)
-      apply_gate_layout(ControlledSingleQubitGateLayout.new(qubits:, qubit:, controls:, gate_class:))
+    def apply_controlled_single_qubit_gate(controls, qubit, gate_operator)
+      apply_gate_layout(ControlledSingleQubitGateLayout.new(qubits:, qubit:, controls:, gate_operator:))
     end
 
     def apply_swap(first_qubit, second_qubit)
