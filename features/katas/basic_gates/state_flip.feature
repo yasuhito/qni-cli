@@ -75,15 +75,20 @@ Feature: Quantum Katas BasicGates Task 1.1 StateFlip
       sin(θ/2)|0> + cos(θ/2)|1>
       """
 
-  Scenario: Task 1.1 の controlled 検証回路は control qubit を |0> に戻す
-    Given 空の 2 qubit 回路がある
-    And "qni add H --qubit 0 --step 0" を実行
-    And "qni add Ry --angle 1.8545904360032246 --qubit 1 --step 1" を実行
-    And "qni add X --control 0 --qubit 1 --step 2" を実行
-    And "qni add X --control 0 --qubit 1 --step 3" を実行
-    And "qni add H --qubit 0 --step 4" を実行
-    When "qni expect ZI" を実行
-    Then 標準出力:
+  Scenario: controlled な X 検証回路は control qubit を |0> に戻す
+    Given 初期状態ベクトルは:
       """
-      ZI=1.0
+      0.6|00> + 0.8|01>
+      """
+    When 次の回路を適用:
+      """
+          ┌───┐           ┌───┐
+      q0: ┤ H ├──■────■──┤ H ├
+          └───┘┌─┴─┐┌─┴─┐└───┘
+      q1: ─────┤ X ├┤ X ├─────
+               └───┘└───┘
+      """
+    Then 状態ベクトルは:
+      """
+      0.6|00> + 0.8|01>
       """
