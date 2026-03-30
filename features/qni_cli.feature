@@ -229,7 +229,7 @@ Feature: qni CLI
       """
     And 標準出力に次を含む:
       """
-      [--basis=BASIS]  # Show a symbolic state in a named basis such as x
+      Show a symbolic state in a named basis such as x
       """
 
   Scenario: qni help は使えない

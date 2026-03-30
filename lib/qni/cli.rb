@@ -11,6 +11,7 @@ require_relative 'cli/clear_help'
 require_relative 'cli/expect_help'
 require_relative 'cli/export_command'
 require_relative 'cli/export_help'
+require_relative 'cli/run_help'
 require_relative 'cli/routing'
 require_relative 'cli/state_command'
 require_relative 'cli/state_help'
@@ -80,6 +81,7 @@ module Qni
     map 'run' => :simulate
     desc 'run', 'Show the state vector of the circuit'
     method_option :symbolic, type: :boolean, default: false, desc: 'Show a 1-qubit symbolic state expression'
+    method_option :basis, type: :string, desc: 'Show a symbolic state in a named basis such as x'
     def simulate
       puts rendered_state_vector
     rescue CircuitFile::Error, Simulator::Error => e
@@ -123,7 +125,11 @@ module Qni
 
       def rendered_state_vector
         simulator = Simulator.new(current_circuit_file.load)
-        return simulator.render_symbolic_state_vector if options[:symbolic]
+        if options[:basis] && !options[:symbolic]
+          raise Thor::Error, '--basis requires --symbolic'
+        end
+
+        return simulator.render_symbolic_state_vector(basis: options[:basis]) if options[:symbolic]
 
         simulator.render_state_vector
       end

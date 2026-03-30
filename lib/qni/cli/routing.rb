@@ -8,6 +8,7 @@ module Qni
       %i[clear_help_request? ClearHelp],
       %i[expect_help_request? ExpectHelp],
       %i[export_help_request? ExportHelp],
+      %i[run_help_request? RunHelp],
       %i[state_help_request? StateHelp],
       %i[variable_help_request? VariableHelp]
     ].freeze
@@ -15,6 +16,7 @@ module Qni
       'qni add ' => 'qni add',
       'qni expect ' => 'qni expect',
       'qni export ' => 'qni export',
+      'qni run ' => 'qni run',
       'qni state ' => 'qni state',
       'qni variable ' => 'qni variable'
     }.freeze
@@ -31,6 +33,10 @@ module Qni
 
     def export_help_request?(given_args)
       [%w[export], %w[export --help], %w[export -h]].include?(given_args)
+    end
+
+    def run_help_request?(given_args)
+      [%w[run --help], %w[run -h]].include?(given_args)
     end
 
     def clear_help_request?(given_args)
