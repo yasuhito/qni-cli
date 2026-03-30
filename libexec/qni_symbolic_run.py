@@ -257,6 +257,33 @@ def render_symbolic_state(state):
     return join_terms(terms)
 
 
+def render_named_basis_term(amplitude, label):
+    simplified = simplify(amplitude)
+    if simplified == 0:
+        return None
+    if simplified == 1:
+        return label
+    if simplified == -1:
+        return f"-{label}"
+
+    return f"{simplified}{label}"
+
+
+def render_symbolic_state_x_basis(state):
+    zero = simplify(state[0])
+    one = simplify(state[1])
+    plus = simplify((zero + one) / sqrt(2))
+    minus = simplify((zero - one) / sqrt(2))
+
+    terms = []
+    for amplitude, label in ((plus, "|+>"), (minus, "|->")):
+        term = render_named_basis_term(amplitude, label)
+        if term:
+            terms.append(term)
+
+    return join_terms(terms)
+
+
 def join_terms(terms):
     if not terms:
         return "0"
@@ -407,13 +434,25 @@ def symbolic_state_for_qubits(circuit, qubits, variables):
     return symbolic_state
 
 
-def run(circuit, output_format="text"):
+def run(circuit, output_format="text", basis=None):
     qubits = circuit.get("qubits")
     if qubits not in (1, 2):
         raise ValueError(SUPPORTED_QUBIT_MESSAGE)
 
     cols = circuit.get("cols", [])
     variables = circuit.get("variables", {})
+
+    if basis == "x":
+        if qubits != 1:
+            raise ValueError("symbolic x-basis run currently supports only 1-qubit circuits")
+        if output_format != "text":
+            raise ValueError("symbolic basis display currently supports only text output")
+
+        symbolic_state = symbolic_state_for_qubits(circuit, qubits, variables)
+        return render_symbolic_state_x_basis(symbolic_state)
+
+    if basis is not None:
+        raise ValueError(f"unsupported symbolic basis: {basis}")
 
     if output_format == "latex":
         symbolic_state = symbolic_state_for_qubits(circuit, qubits, variables)
@@ -449,20 +488,34 @@ def run(circuit, output_format="text"):
     return render_symbolic_state(symbolic_state)
 
 
-def parse_output_format(argv):
-    if len(argv) == 1:
-        return "text"
-    if len(argv) == 3 and argv[1] == "--format" and argv[2] in {"text", "latex"}:
-        return argv[2]
+def parse_args(argv):
+    output_format = "text"
+    basis = None
+    index = 1
 
-    raise ValueError("unsupported symbolic renderer arguments")
+    while index < len(argv):
+        if argv[index] == "--format" and index + 1 < len(argv):
+            output_format = argv[index + 1]
+            index += 2
+            continue
+        if argv[index] == "--basis" and index + 1 < len(argv):
+            basis = argv[index + 1]
+            index += 2
+            continue
+
+        raise ValueError("unsupported symbolic renderer arguments")
+
+    if output_format not in {"text", "latex"}:
+        raise ValueError("unsupported symbolic renderer arguments")
+
+    return output_format, basis
 
 
 def main():
     try:
-        output_format = parse_output_format(sys.argv)
+        output_format, basis = parse_args(sys.argv)
         circuit = json.load(sys.stdin)
-        print(run(circuit, output_format=output_format))
+        print(run(circuit, output_format=output_format, basis=basis))
     except ValueError as e:
         print(str(e), file=sys.stderr)
         raise SystemExit(1)
