@@ -41,7 +41,7 @@ Feature: Quantum Katas BasicGates Task 1.2 BasisChange
       |->
       """
 
-  Scenario: H ゲートは 0.6|0> + 0.8|1> を |+>, |-> 基底で表すと 0.6|+> + 0.8|-> になる
+  Scenario: 0.6|0> + 0.8|1> に H ゲートを適用すると、|+>, |-> 基底では 0.6|+> + 0.8|-> になる
     Given 初期状態ベクトルは:
       """
       0.6|0> + 0.8|1>
@@ -57,7 +57,7 @@ Feature: Quantum Katas BasicGates Task 1.2 BasisChange
       0.6|+> + 0.8|->
       """
 
-  Scenario: H ゲートは実数係数の一般状態を |+>, |-> 基底で表す
+  Scenario: 実数係数の一般状態に H ゲートを適用すると、|+>, |-> 基底では係数がそのまま保たれる
     Given 初期状態ベクトルは:
       """
       cos(θ/2)|0> + sin(θ/2)|1>
@@ -73,7 +73,7 @@ Feature: Quantum Katas BasicGates Task 1.2 BasisChange
       cos(θ/2)|+> + sin(θ/2)|->
       """
 
-  Scenario: H ゲートは α|0> + β|1> を |+>, |-> 基底で表すと α|+> + β|-> になる
+  Scenario: α|0> + β|1> に H ゲートを適用すると、|+>, |-> 基底では α|+> + β|-> になる
     Given 初期状態ベクトルは:
       """
       α|0> + β|1>
