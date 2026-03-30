@@ -20,7 +20,7 @@ Feature: Quantum Katas BasicGates Task 1.2 BasisChange
       q0: ┤ H ├
           └───┘
       """
-    Then 状態ベクトルは:
+    Then |+>, |-> 基底での状態ベクトルは:
       """
       |+>
       """
@@ -36,7 +36,7 @@ Feature: Quantum Katas BasicGates Task 1.2 BasisChange
       q0: ┤ H ├
           └───┘
       """
-    Then 状態ベクトルは:
+    Then |+>, |-> 基底での状態ベクトルは:
       """
       |->
       """

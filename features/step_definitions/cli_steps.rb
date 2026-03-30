@@ -209,6 +209,12 @@ def assert_named_basis_state_matches!(stdout, doc_string)
   MESSAGE
 end
 
+def assert_computational_basis_state_vector!(scenario_dir, doc_string)
+  stdout, stderr, status = run_qni_command(scenario_dir, 'qni run --symbolic')
+  assert_command_succeeded!(status, stdout, stderr)
+  assert_symbolic_state_matches!(stdout, doc_string)
+end
+
 Given('空の 1 qubit 回路がある') do
   actual = {
     'qubits' => 1,
@@ -324,10 +330,12 @@ Then('標準出力は空') do
   MESSAGE
 end
 
+Then('計算基底での状態ベクトルは:') do |doc_string|
+  assert_computational_basis_state_vector!(@scenario_dir, doc_string)
+end
+
 Then('状態ベクトルは:') do |doc_string|
-  @stdout, @stderr, @status = run_qni_command(@scenario_dir, 'qni run --symbolic')
-  assert_command_succeeded!(@status, @stdout, @stderr)
-  assert_symbolic_state_matches!(@stdout, doc_string)
+  assert_computational_basis_state_vector!(@scenario_dir, doc_string)
 end
 
 Then('|+>, |-> 基底での状態ベクトルは:') do |doc_string|
