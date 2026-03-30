@@ -22,7 +22,7 @@ Feature: Quantum Katas BasicGates Task 1.1 StateFlip
       q0: ┤ X ├
           └───┘
       """
-    Then 計算基底での状態ベクトルは:
+    Then 状態ベクトルは:
       """
       |1>
       """
@@ -38,7 +38,7 @@ Feature: Quantum Katas BasicGates Task 1.1 StateFlip
       q0: ┤ X ├
           └───┘
       """
-    Then 計算基底での状態ベクトルは:
+    Then 状態ベクトルは:
       """
       |0>
       """
@@ -54,7 +54,7 @@ Feature: Quantum Katas BasicGates Task 1.1 StateFlip
       q0: ┤ X ├
           └───┘
       """
-    Then 計算基底での状態ベクトルは:
+    Then 状態ベクトルは:
       """
       0.8|0> + 0.6|1>
       """
@@ -70,7 +70,7 @@ Feature: Quantum Katas BasicGates Task 1.1 StateFlip
       q0: ┤ X ├
           └───┘
       """
-    Then 計算基底での状態ベクトルは:
+    Then 状態ベクトルは:
       """
       sin(θ/2)|0> + cos(θ/2)|1>
       """
@@ -86,7 +86,7 @@ Feature: Quantum Katas BasicGates Task 1.1 StateFlip
       q0: ┤ X ├
           └───┘
       """
-    Then 計算基底での状態ベクトルは:
+    Then 状態ベクトルは:
       """
       β|0> + α|1>
       """

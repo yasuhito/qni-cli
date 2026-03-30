@@ -330,11 +330,11 @@ Then('標準出力は空') do
   MESSAGE
 end
 
-Then('計算基底での状態ベクトルは:') do |doc_string|
+Then('状態ベクトルは:') do |doc_string|
   assert_computational_basis_state_vector!(@scenario_dir, doc_string)
 end
 
-Then('状態ベクトルは:') do |doc_string|
+Then('計算基底での状態ベクトルは:') do |doc_string|
   assert_computational_basis_state_vector!(@scenario_dir, doc_string)
 end
 

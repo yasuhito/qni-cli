@@ -54,7 +54,7 @@ Feature: Quantum Katas BasicGates Task 1.3 SignFlip
       q0: ┤ Z ├
           └───┘
       """
-    Then 計算基底での状態ベクトルは:
+    Then 状態ベクトルは:
       """
       0.6|0> - 0.8|1>
       """
@@ -70,7 +70,7 @@ Feature: Quantum Katas BasicGates Task 1.3 SignFlip
       q0: ┤ Z ├
           └───┘
       """
-    Then 計算基底での状態ベクトルは:
+    Then 状態ベクトルは:
       """
       cos(θ/2)|0> - sin(θ/2)|1>
       """
@@ -86,7 +86,7 @@ Feature: Quantum Katas BasicGates Task 1.3 SignFlip
       q0: ┤ Z ├
           └───┘
       """
-    Then 計算基底での状態ベクトルは:
+    Then 状態ベクトルは:
       """
       α|0> - β|1>
       """
