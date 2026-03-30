@@ -220,6 +220,18 @@ Feature: qni CLI
       qni state set "alpha|0> + beta|1>"
       """
 
+  Scenario: qni run --help は symbolic basis option を表示
+    When "qni run --help" を実行
+    Then コマンドは成功
+    And 標準出力に次を含む:
+      """
+      [--symbolic] [--basis=BASIS]
+      """
+    And 標準出力に次を含む:
+      """
+      [--basis=BASIS]  # Show a symbolic state in a named basis such as x
+      """
+
   Scenario: qni help は使えない
     When "qni help add" を実行
     Then コマンドは失敗
