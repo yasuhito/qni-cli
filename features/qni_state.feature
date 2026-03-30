@@ -40,6 +40,24 @@ Feature: qni state コマンド
       alpha|0> + beta|1>
       """
 
+  Scenario: qni state set は |+> を shorthand のまま表示できる初期状態として保存する
+    When "qni state set \"|+>\"" を実行
+    Then コマンドは成功
+    And "qni state show" を実行
+    And 標準出力:
+      """
+      |+>
+      """
+
+  Scenario: qni state set は |-> を shorthand のまま表示できる初期状態として保存する
+    When "qni state set \"|->\"" を実行
+    Then コマンドは成功
+    And "qni state show" を実行
+    And 標準出力:
+      """
+      |->
+      """
+
   Scenario: qni state clear は初期状態設定を削除する
     Given "qni state set \"alpha|0> + beta|1>\"" を実行
     When "qni state clear" を実行

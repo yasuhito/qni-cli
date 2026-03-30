@@ -259,6 +259,12 @@ def render_symbolic_state(state):
 
 def render_named_basis_term(amplitude, label):
     simplified = simplify(amplitude)
+    if getattr(simplified, "is_number", False):
+        numeric = normalize_scalar(float(simplified.evalf()))
+        if abs(numeric - 1.0) <= EPSILON:
+            simplified = Integer(1)
+        elif abs(numeric + 1.0) <= EPSILON:
+            simplified = Integer(-1)
     if simplified == 0:
         return None
     if simplified == 1:

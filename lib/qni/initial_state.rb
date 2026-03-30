@@ -7,6 +7,8 @@ module Qni
   class InitialState
     # Raised when an initial state cannot be parsed or resolved safely.
     class Error < StandardError; end
+    PLUS_MINUS_COEFFICIENT_TEXT = Math.sqrt(0.5).to_s
+    NEGATED_PLUS_MINUS_COEFFICIENT_TEXT = (-Math.sqrt(0.5)).to_s
 
     # Resolves 1-qubit ket-sum coefficients into concrete numeric amplitudes.
     class NumericResolver
@@ -120,10 +122,23 @@ module Qni
     end
 
     def self.parse(raw_value)
-      normalized = normalize_text(raw_value)
-      raise Error, 'initial state is required' if normalized.empty?
+      special_state_for(raw_value) || parse_ket_sum(raw_value)
+    end
 
-      new(terms: normalized.split(' + ').map { |term| Term.parse(term) })
+    def self.special_state_for(raw_value)
+      case raw_value.to_s.strip
+      when '|+>' then superposition_state(PLUS_MINUS_COEFFICIENT_TEXT)
+      when '|->' then superposition_state(NEGATED_PLUS_MINUS_COEFFICIENT_TEXT)
+      end
+    end
+
+    def self.superposition_state(one_coefficient)
+      new(
+        terms: [
+          Term.new(basis: '0', coefficient: PLUS_MINUS_COEFFICIENT_TEXT),
+          Term.new(basis: '1', coefficient: one_coefficient)
+        ]
+      )
     end
 
     def self.normalize_text(raw_value)
@@ -133,6 +148,13 @@ module Qni
                .gsub(/\s+/, ' ')
                .gsub(/\s*-\s*/, ' + -')
                .gsub(/\s*\+\s*/, ' + ')
+    end
+
+    def self.parse_ket_sum(raw_value)
+      normalized = normalize_text(raw_value)
+      raise Error, 'initial state is required' if normalized.empty?
+
+      new(terms: normalized.split(' + ').map { |term| Term.parse(term) })
     end
 
     def initialize(terms:)
@@ -158,6 +180,9 @@ module Qni
     end
 
     def to_s
+      return '|+>' if plus_state?
+      return '|->' if minus_state?
+
       terms.join(' + ').gsub('+ -', '- ')
     end
 
@@ -170,6 +195,21 @@ module Qni
       return if (norm - 1.0).abs <= NORMALIZATION_TOLERANCE
 
       raise Error, 'initial state must be normalized'
+    end
+
+    def plus_state?
+      shorthand_terms?(PLUS_MINUS_COEFFICIENT_TEXT, PLUS_MINUS_COEFFICIENT_TEXT)
+    end
+
+    def minus_state?
+      shorthand_terms?(PLUS_MINUS_COEFFICIENT_TEXT, NEGATED_PLUS_MINUS_COEFFICIENT_TEXT)
+    end
+
+    def shorthand_terms?(expected_zero, expected_one)
+      return false unless terms.length == 2
+      return false unless terms.map(&:basis) == %w[0 1]
+
+      terms.map(&:coefficient) == [expected_zero, expected_one]
     end
   end
 end
