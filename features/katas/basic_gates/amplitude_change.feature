@@ -1,76 +1,58 @@
 Feature: Quantum Katas BasicGates Task 1.4 AmplitudeChange
-  Task 1.4 AmplitudeChange: |0⟩ を cos(alpha)|0⟩ + sin(alpha)|1⟩ に変える
+  Task 1.4 AmplitudeChange: |0⟩ を cos(θ)|0⟩ + sin(θ)|1⟩ に変える
+
   入力:
-  角度 alpha
-  1 量子ビットの状態 β|0⟩ + γ|1⟩
+  角度 θ
+  1 量子ビットの状態 α|0⟩ + β|1⟩
+
   目標:
-  |0⟩ を cos(alpha)|0⟩ + sin(alpha)|1⟩ に変え、
-  |1⟩ を -sin(alpha)|0⟩ + cos(alpha)|1⟩ に変える
+  |0⟩ を cos(θ)|0⟩ + sin(θ)|1⟩ に変え、
+  |1⟩ を -sin(θ)|0⟩ + cos(θ)|1⟩ に変える
 
-  Scenario: Task 1.4 は dumpAlpha = π/3 で非自明状態を変換する
-    Given 1 qubit の初期状態が "0.6|0> + 0.8|1>" である
-    And "qni add Ry --angle 2π/3 --qubit 0 --step 1" を実行
-    When "qni run" を実行
-    Then 標準出力:
+  具体例:
+  |0⟩ を cos(θ)|0⟩ + sin(θ)|1⟩ に変える
+  |1⟩ を -sin(θ)|0⟩ + cos(θ)|1⟩ に変える
+
+  Scenario: 振幅回転は |0> を cos(θ)|0> + sin(θ)|1> に変える
+    Given 初期状態ベクトルは:
       """
-      -0.3928203230275509,0.9196152422706633
+      |0>
+      """
+    When 振幅を θ だけ回転:
+    Then 状態ベクトルは:
+      """
+      cos(θ)|0> + sin(θ)|1>
       """
 
-  Scenario Outline: Task 1.4 の controlled 検証回路は alpha を走査して control qubit を |0> に戻す
-    Given 空の 2 qubit 回路がある
-    And "qni add H --qubit 0 --step 0" を実行
-    And "qni add Ry --angle 1.8545904360032246 --qubit 1 --step 1" を実行
-    And "qni add Ry --angle 2*alpha --control 0 --qubit 1 --step 2" を実行
-    And "qni variable set alpha <alpha>" を実行
-    And "qni add Ry --angle -2*alpha --control 0 --qubit 1 --step 3" を実行
-    And "qni add H --qubit 0 --step 4" を実行
-    When "qni expect ZI" を実行
-    Then 期待値 "ZI" は 1.0 ± 1e-12
-
-    Examples:
-      | alpha  |
-      | 0      |
-      | π/18   |
-      | 2π/18  |
-      | 3π/18  |
-      | 4π/18  |
-      | 5π/18  |
-      | 6π/18  |
-      | 7π/18  |
-      | 8π/18  |
-      | π/2    |
-      | 10π/18 |
-      | 11π/18 |
-      | 12π/18 |
-      | 13π/18 |
-      | 14π/18 |
-      | 15π/18 |
-      | 16π/18 |
-      | 17π/18 |
-      | π      |
-      | 19π/18 |
-      | 20π/18 |
-      | 21π/18 |
-      | 22π/18 |
-      | 23π/18 |
-      | 24π/18 |
-      | 25π/18 |
-      | 26π/18 |
-      | 3π/2   |
-      | 28π/18 |
-      | 29π/18 |
-      | 30π/18 |
-      | 31π/18 |
-      | 32π/18 |
-      | 33π/18 |
-      | 34π/18 |
-      | 35π/18 |
-      | 2π     |
-
-  Scenario: Task 1.4 は symbolic 表示で一般式を示す
-    Given "qni add Ry --angle 2*alpha --qubit 0 --step 0" を実行
-    When "qni run --symbolic" を実行
-    Then 標準出力:
+  Scenario: 振幅回転は |1> を -sin(θ)|0> + cos(θ)|1> に変える
+    Given 初期状態ベクトルは:
       """
-      cos(alpha)|0> + sin(alpha)|1>
+      |1>
+      """
+    When 振幅を θ だけ回転:
+    Then 状態ベクトルは:
+      """
+      -sin(θ)|0> + cos(θ)|1>
+      """
+
+  Scenario: θ = π/3 の振幅回転は 0.6|0> + 0.8|1> を -0.3928203230275509|0> + 0.9196152422706633|1> に変える
+    Given 初期状態ベクトルは:
+      """
+      0.6|0> + 0.8|1>
+      """
+    When 振幅を π/3 だけ回転:
+    Then 状態ベクトルは:
+      """
+      -0.3928203230275509|0> + 0.9196152422706633|1>
+      """
+
+  Scenario: 振幅回転は α|0> + β|1> を一般式どおりに変える
+    Given 初期状態ベクトルは:
+      """
+      α|0> + β|1>
+      """
+    When 振幅を θ だけ回転:
+    Then 状態ベクトルは:
+      """
+      (α*cos(θ) - β*sin(θ))|0> + (α*sin(θ) + β*cos(θ))|1>
       """
