@@ -64,11 +64,14 @@ def parse_pi_term(value: str) -> tuple[object, float] | None:
     if not match:
         return None
 
-    sign = -1.0 if match.group("sign") == "-" else 1.0
-    coefficient = float(match.group("coefficient") or "1")
-    denominator = float(match.group("denominator") or "1")
-    symbolic = sign * coefficient * pi / denominator
-    concrete = sign * coefficient * math.pi / denominator
+    symbolic_sign = Integer(-1) if match.group("sign") == "-" else Integer(1)
+    concrete_sign = -1.0 if match.group("sign") == "-" else 1.0
+    coefficient_text = match.group("coefficient") or "1"
+    denominator_text = match.group("denominator") or "1"
+    coefficient = float(coefficient_text)
+    denominator = float(denominator_text)
+    symbolic = symbolic_sign * symbolic_scalar(coefficient_text) * pi / symbolic_scalar(denominator_text)
+    concrete = concrete_sign * coefficient * math.pi / denominator
     return symbolic, concrete
 
 
@@ -77,11 +80,12 @@ def parse_angle(raw_value: str, variables: dict[str, str]) -> ParsedAngle:
 
     signed_identifier = SIGNED_IDENTIFIER_PATTERN.match(normalized)
     if signed_identifier:
-        sign = -1.0 if signed_identifier.group("sign") == "-" else 1.0
+        symbolic_sign = Integer(-1) if signed_identifier.group("sign") == "-" else Integer(1)
+        concrete_sign = -1.0 if signed_identifier.group("sign") == "-" else 1.0
         resolved_identifier = signed_identifier.group("identifier")
         resolved_term = parse_angle(resolved_identifier, variables)
-        symbolic = sign * resolved_term.symbolic
-        concrete = None if resolved_term.concrete is None else sign * resolved_term.concrete
+        symbolic = symbolic_sign * resolved_term.symbolic
+        concrete = None if resolved_term.concrete is None else concrete_sign * resolved_term.concrete
         return ParsedAngle(symbolic=symbolic, concrete=concrete, unresolved=resolved_term.unresolved)
 
     resolved = variables.get(normalized, normalized)
@@ -252,7 +256,7 @@ def render_symbolic_state(state):
         simplified = simplify(amplitude)
         if simplified == 0:
             continue
-        terms.append(f"{simplified}|{basis}>")
+        terms.append(f"{text_basis_amplitude(simplified)}|{basis}>")
 
     return join_terms(terms)
 
@@ -395,9 +399,13 @@ def render_symbolic_state_for_qubits(state, qubits: int):
         simplified = simplify(amplitude)
         if simplified == 0:
             continue
-        terms.append(f"{simplified}|{basis_label(basis, qubits)}>")
+        terms.append(f"{text_basis_amplitude(simplified)}|{basis_label(basis, qubits)}>")
 
     return join_terms(terms)
+
+
+def text_basis_amplitude(amplitude):
+    return f"({amplitude})" if getattr(amplitude, "is_Add", False) else str(amplitude)
 
 
 def latex_term(amplitude, basis, qubits):

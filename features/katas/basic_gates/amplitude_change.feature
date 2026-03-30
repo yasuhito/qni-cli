@@ -35,7 +35,7 @@ Feature: Quantum Katas BasicGates Task 1.4 AmplitudeChange
       -sin(θ)|0> + cos(θ)|1>
       """
 
-  Scenario: θ = π/3 の振幅回転は 0.6|0> + 0.8|1> を -0.3928203230275509|0> + 0.9196152422706633|1> に変える
+  Scenario: θ = π/3 の振幅回転は 0.6|0> + 0.8|1> を (0.3 - 0.4*sqrt(3))|0> + (0.4 + 0.3*sqrt(3))|1> に変える
     Given 初期状態ベクトルは:
       """
       0.6|0> + 0.8|1>
@@ -43,7 +43,7 @@ Feature: Quantum Katas BasicGates Task 1.4 AmplitudeChange
     When 振幅を π/3 だけ回転:
     Then 状態ベクトルは:
       """
-      -0.3928203230275509|0> + 0.9196152422706633|1>
+      (0.3 - 0.4*sqrt(3))|0> + (0.4 + 0.3*sqrt(3))|1>
       """
 
   Scenario: 振幅回転は α|0> + β|1> を一般式どおりに変える
