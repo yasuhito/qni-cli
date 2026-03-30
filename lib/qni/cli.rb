@@ -11,6 +11,7 @@ require_relative 'cli/clear_help'
 require_relative 'cli/expect_help'
 require_relative 'cli/export_command'
 require_relative 'cli/export_help'
+require_relative 'cli/internal_helpers'
 require_relative 'cli/run_help'
 require_relative 'cli/routing'
 require_relative 'cli/state_command'
@@ -28,6 +29,7 @@ module Qni
   # Thor-based command-line interface for qni subcommands.
   class CLI < Thor
     extend CliBootstrap
+    include InternalHelpers
 
     def self.exit_on_failure?
       true
@@ -110,35 +112,6 @@ module Qni
       write_output(output)
     rescue CircuitFile::Error => e
       raise Thor::Error, e.message
-    end
-
-    no_commands do
-      def current_circuit_file
-        @current_circuit_file ||= CircuitFile.new(File.expand_path('circuit.json', Dir.pwd))
-      end
-
-      def normalize_gate(gate)
-        CliSupportedGates.normalize(gate)
-      rescue KeyError
-        raise Thor::Error, "unsupported gate: #{gate}"
-      end
-
-      def rendered_state_vector
-        simulator = Simulator.new(current_circuit_file.load)
-        if options[:basis] && !options[:symbolic]
-          raise Thor::Error, '--basis requires --symbolic'
-        end
-
-        return simulator.render_symbolic_state_vector(basis: options[:basis]) if options[:symbolic]
-
-        simulator.render_state_vector
-      end
-
-      def write_output(output)
-        return if output.to_s.empty?
-
-        puts output
-      end
     end
   end
 end

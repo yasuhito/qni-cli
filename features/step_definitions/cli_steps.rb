@@ -170,6 +170,17 @@ def canonical_symbolic_notation(text)
   )
 end
 
+def canonical_named_basis_notation(text)
+  trim_trailing_decimal_zeros(
+    text.gsub('θ', 'theta')
+        .gsub('α', 'alpha')
+        .gsub('β', 'beta')
+        .gsub('π', 'pi')
+        .gsub('√2', 'sqrt(2)')
+        .gsub(/(\d(?:\.\d+)?)(?=sqrt\(2\))/, '\1*')
+  )
+end
+
 def assert_symbolic_state_matches!(stdout, doc_string)
   actual = canonical_symbolic_notation(normalize_symbolic_state_vector(stdout))
   expected = canonical_symbolic_notation(doc_string)
@@ -177,6 +188,20 @@ def assert_symbolic_state_matches!(stdout, doc_string)
 
   raise <<~MESSAGE
     expected symbolic state vector to match
+    expected:
+    #{expected}
+    actual:
+    #{actual}
+  MESSAGE
+end
+
+def assert_named_basis_state_matches!(stdout, doc_string)
+  actual = canonical_named_basis_notation(normalize_symbolic_state_vector(stdout))
+  expected = canonical_named_basis_notation(doc_string)
+  return if actual == expected
+
+  raise <<~MESSAGE
+    expected named-basis state vector to match
     expected:
     #{expected}
     actual:
@@ -303,6 +328,12 @@ Then('状態ベクトルは:') do |doc_string|
   @stdout, @stderr, @status = run_qni_command(@scenario_dir, 'qni run --symbolic')
   assert_command_succeeded!(@status, @stdout, @stderr)
   assert_symbolic_state_matches!(@stdout, doc_string)
+end
+
+Then('|+>, |-> 基底での状態ベクトルは:') do |doc_string|
+  @stdout, @stderr, @status = run_qni_command(@scenario_dir, 'qni run --symbolic --basis x')
+  assert_command_succeeded!(@status, @stdout, @stderr)
+  assert_named_basis_state_matches!(@stdout, doc_string)
 end
 
 Then('標準出力:') do |doc_string|
