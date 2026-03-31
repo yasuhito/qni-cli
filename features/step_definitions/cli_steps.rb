@@ -203,11 +203,17 @@ def normalize_symbolic_aliases(text)
       .gsub(/(\d(?:\.\d+)?)(?=sqrt\(2\))/, '\1*')
 end
 
+def normalize_phase_factor_order(text)
+  text.gsub(/exp\(([^)]+)\)([a-zA-Z_][a-zA-Z0-9_]*)/, '\2*exp(\1)')
+end
+
 def canonical_symbolic_notation(text)
   trim_trailing_decimal_zeros(
-    normalize_symbolic_aliases(
-      normalize_imaginary_unit(
-        normalize_symbolic_shorthand(text)
+    normalize_phase_factor_order(
+      normalize_symbolic_aliases(
+        normalize_imaginary_unit(
+          normalize_symbolic_shorthand(text)
+        )
       )
     )
   )
