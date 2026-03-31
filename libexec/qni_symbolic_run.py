@@ -158,30 +158,9 @@ def numeric_gate(gate, variables):
     if not match:
         raise ValueError(f"unsupported gate for symbolic run: {gate!r}")
 
-    angle = parse_angle(match.group("angle"), variables)
-    if angle.unresolved:
-        return None
-
-    phi = angle.concrete
-    half = phi / 2.0
-
-    if match.group("gate") == "P":
-        return ((1.0, 0.0), (0.0, complex(math.cos(phi), math.sin(phi))))
-    if match.group("gate") == "Rx":
-        sine = math.sin(half)
-        cosine = math.cos(half)
-        return ((cosine, -1j * sine), (-1j * sine, cosine))
-    if match.group("gate") == "Ry":
-        sine = math.sin(half)
-        cosine = math.cos(half)
-        return ((cosine, -sine), (sine, cosine))
-    if match.group("gate") == "Rz":
-        return (
-            (complex(math.cos(half), -math.sin(half)), 0.0),
-            (0.0, complex(math.cos(half), math.sin(half))),
-        )
-
-    raise ValueError(f"unsupported gate for symbolic run: {gate!r}")
+    # Keep angled gates on the exact SymPy path even when the angle resolves
+    # to a concrete value such as π/2. This preserves symbolic output.
+    return None
 
 
 def symbolic_gate(gate, variables):

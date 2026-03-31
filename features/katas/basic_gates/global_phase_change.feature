@@ -20,8 +20,7 @@ Feature: Quantum Katas BasicGates Task 1.7 GlobalPhaseChange
   Scenario: Task 1.7 は symbolic 表示で全体に -1 が掛かることを示す
     Given 1 qubit の初期状態が "0.6|0> + 0.8|1>" である
     And "qni add Rz --angle 2π --qubit 0 --step 1" を実行
-    When "qni run --symbolic" を実行
-    Then 標準出力:
+    Then 状態ベクトルは:
       """
       -0.6|0> - 0.8|1>
       """

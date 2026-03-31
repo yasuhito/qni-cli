@@ -158,16 +158,32 @@ def trim_trailing_decimal_zeros(text)
   end
 end
 
+def normalize_imaginary_unit(text)
+  text.gsub('*I', 'i')
+      .gsub(/\bI\b/, 'i')
+end
+
+def normalize_symbolic_shorthand(text)
+  text.gsub('|+>', 'sqrt(2)/2|0> + sqrt(2)/2|1>')
+      .gsub('|->', 'sqrt(2)/2|0> - sqrt(2)/2|1>')
+end
+
+def normalize_symbolic_aliases(text)
+  text.gsub('θ', 'theta')
+      .gsub('α', 'alpha')
+      .gsub('β', 'beta')
+      .gsub('π', 'pi')
+      .gsub('√2', 'sqrt(2)')
+      .gsub(/(\d(?:\.\d+)?)(?=sqrt\(2\))/, '\1*')
+end
+
 def canonical_symbolic_notation(text)
   trim_trailing_decimal_zeros(
-    text.gsub('|+>', 'sqrt(2)/2|0> + sqrt(2)/2|1>')
-        .gsub('|->', 'sqrt(2)/2|0> - sqrt(2)/2|1>')
-        .gsub('θ', 'theta')
-        .gsub('α', 'alpha')
-        .gsub('β', 'beta')
-        .gsub('π', 'pi')
-        .gsub('√2', 'sqrt(2)')
-        .gsub(/(\d(?:\.\d+)?)(?=sqrt\(2\))/, '\1*')
+    normalize_symbolic_aliases(
+      normalize_imaginary_unit(
+        normalize_symbolic_shorthand(text)
+      )
+    )
   )
 end
 

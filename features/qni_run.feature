@@ -455,6 +455,14 @@ Feature: qni run コマンド
       cos(alpha)|0> + sin(alpha)|1>
       """
 
+  Scenario: qni run --symbolic は具体的な π 角度も exact に表示
+    Given "qni add Ry --angle π/2 --qubit 0 --step 0" を実行
+    When "qni run --symbolic" を実行
+    Then 標準出力:
+      """
+      sqrt(2)/2|0> + sqrt(2)/2|1>
+      """
+
   Scenario: qni run --symbolic は 2 qubit の空回路を ket 形式で表示
     Given 空の 2 qubit 回路がある
     When "qni run --symbolic" を実行
