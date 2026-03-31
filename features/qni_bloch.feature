@@ -1,7 +1,7 @@
 Feature: qni bloch コマンド
   qni-cli のユーザとして
   1 qubit の状態を幾何学的に理解するために
-  qni bloch でブロッホ球の PNG や GIF を出力したい
+  qni bloch でブロッホ球の PNG や GIF や inline 表示を使いたい
 
   Scenario: qni bloch --png は 1 qubit 回路のブロッホ球 PNG を書き出す
     Given "qni add H --qubit 0 --step 0" を実行
@@ -23,6 +23,20 @@ Feature: qni bloch コマンド
     When "qni bloch --png --light --output bloch-light.png" を実行
     Then コマンドは成功
     And "bloch-light.png" は PNG 画像である
+
+  Scenario: qni bloch --inline は 1 qubit 回路のブロッホ球を Kitty graphics protocol で表示する
+    Given "qni add H --qubit 0 --step 0" を実行
+    And 環境変数 "QNI_TEST_FORCE_INLINE" を "1" に設定する
+    When "qni bloch --inline" を TTY で実行
+    Then コマンドは成功
+    And 標準出力は Kitty graphics escape sequence を含む
+
+  Scenario: qni bloch --inline --animate は回転ゲートのブロッホ球を inline animation で表示する
+    Given "qni add Ry --angle π/2 --qubit 0 --step 0" を実行
+    And 環境変数 "QNI_TEST_FORCE_INLINE" を "1" に設定する
+    When "qni bloch --inline --animate" を TTY で実行
+    Then コマンドは成功
+    And 標準出力は 2 個以上の Kitty graphics escape sequence を含む
 
   Scenario: qni bloch は 2 qubit 回路では失敗する
     Given 空の 2 qubit 回路がある
@@ -48,5 +62,32 @@ Feature: qni bloch コマンド
     Then コマンドは失敗
     And 標準エラー:
       """
-      choose exactly one of --png or --gif
+      choose exactly one of --png, --gif, or --inline
+      """
+
+  Scenario: qni bloch は --inline と --output の同時指定で失敗する
+    Given "qni add H --qubit 0 --step 0" を実行
+    When "qni bloch --inline --output bloch.png" を実行
+    Then コマンドは失敗
+    And 標準エラー:
+      """
+      --output is not supported with --inline
+      """
+
+  Scenario: qni bloch は --animate を --inline なしでは使えない
+    Given "qni add Ry --angle π/2 --qubit 0 --step 0" を実行
+    When "qni bloch --gif --animate --output bloch.gif" を実行
+    Then コマンドは失敗
+    And 標準エラー:
+      """
+      --animate is supported only with --inline
+      """
+
+  Scenario: qni bloch --inline は unsupported terminal では失敗する
+    Given "qni add H --qubit 0 --step 0" を実行
+    When "qni bloch --inline" を実行
+    Then コマンドは失敗
+    And 標準エラー:
+      """
+      inline bloch rendering requires a Kitty-compatible terminal; use --png or --gif instead
       """

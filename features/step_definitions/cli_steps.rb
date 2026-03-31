@@ -86,6 +86,7 @@ end
 def bundler_env
   env = { 'BUNDLE_GEMFILE' => File.join(PROJECT_ROOT, 'Gemfile') }
   env['BUNDLE_PATH'] = ENV.fetch('BUNDLE_PATH') if ENV.key?('BUNDLE_PATH')
+  env.merge!(@command_env) if defined?(@command_env) && @command_env
   env
 end
 
@@ -270,6 +271,11 @@ Given('空の 3 qubit 回路がある') do
   write_circuit_json(@scenario_dir, actual)
 end
 
+Given('環境変数 {string} を {string} に設定する') do |name, value|
+  @command_env ||= {}
+  @command_env[name] = value
+end
+
 Given('2 qubit の初期状態が {string} である') do |state|
   actual = {
     'qubits' => 2,
@@ -306,15 +312,15 @@ When('{string} を TTY で実行') do |command|
 
   Dir.chdir(@scenario_dir) do
     PTY.spawn(bundler_env, 'bundle', 'exec', QNI_BIN, *argv.drop(1)) do |stdout, _stdin, pid|
-      stdout.each { |chunk| output << chunk }
-    rescue Errno::EIO
+      loop { output << stdout.readpartial(4096) }
+    rescue EOFError, Errno::EIO
       nil
     ensure
       _, status = Process.wait2(pid)
     end
   end
 
-  @stdout = output.gsub("\r\n", "\n")
+  @stdout = output.b.gsub("\r\n".b, "\n".b).force_encoding(Encoding::UTF_8)
   @stderr = ''
   @status = status
 end
@@ -438,6 +444,27 @@ Then('標準出力に次を含まない:') do |doc_string|
     #{doc_string}
     actual:
     #{@stdout}
+  MESSAGE
+end
+
+Then('標準出力は Kitty graphics escape sequence を含む') do
+  next if @stdout.include?("\e_G")
+
+  raise <<~MESSAGE
+    expected stdout to include Kitty graphics escape sequence
+    actual:
+    #{@stdout.inspect}
+  MESSAGE
+end
+
+Then('標準出力は {int} 個以上の Kitty graphics escape sequence を含む') do |minimum_count|
+  actual_count = @stdout.scan("\e_G").length
+  next if actual_count >= minimum_count
+
+  raise <<~MESSAGE
+    expected stdout to include at least #{minimum_count} Kitty graphics escape sequences
+    actual:
+    #{actual_count}
   MESSAGE
 end
 

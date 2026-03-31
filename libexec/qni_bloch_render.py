@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import base64
 import io
 import json
 import math
@@ -35,6 +36,10 @@ def render(payload):
       image.save(output_path, format="PNG")
       return
 
+    if format_name == "inline_png":
+      sys.stdout.buffer.write(render_frame_bytes(frames, len(frames) - 1, theme))
+      return
+
     if format_name == "gif":
       images = [render_frame_image(frames, index, theme) for index in range(len(frames))]
       first, rest = images[0], images[1:]
@@ -47,6 +52,14 @@ def render(payload):
           loop=0,
           disposal=2,
       )
+      return
+
+    if format_name == "inline_frames":
+      encoded_frames = [
+          base64.b64encode(render_frame_bytes(frames, index, theme)).decode("ascii")
+          for index in range(len(frames))
+      ]
+      json.dump({"frames": encoded_frames}, sys.stdout)
       return
 
     raise ValueError(f"unsupported bloch output format: {format_name}")
@@ -69,6 +82,13 @@ def render_frame_image(frames, frame_index, theme):
     plt.close(fig)
     buffer.seek(0)
     return Image.open(buffer).convert("RGBA")
+
+
+def render_frame_bytes(frames, frame_index, theme):
+    image = render_frame_image(frames, frame_index, theme)
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
+    return buffer.getvalue()
 
 
 def style_axes(ax, theme):

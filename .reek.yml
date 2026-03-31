@@ -19,6 +19,7 @@ detectors:
       - Qni::View::TextRenderer#control_step_parts
   FeatureEnvy:
     exclude:
+      - Qni::KittyGraphicsEmitter#emit_payload
       - Qni::View::AsciiCircuitParser#parse
       - Qni::View::AsciiWireLayout#step_slices
       - Qni::Export::QCircuitLatex#controlled_step_parts
@@ -51,6 +52,7 @@ detectors:
       - Qni::View::DirectOnQuWire
   TooManyMethods:
     exclude:
+      - Qni::CLI::BlochCommand
       - Qni::Circuit
       - Qni::View::AsciiStepParser
       - Qni::View::AsciiWireLayout
@@ -79,6 +81,7 @@ detectors:
       - e
   UtilityFunction:
     exclude:
+      - Qni::BlochRenderer#resolved_result
       - Qni::View::AsciiStepParser#control_mid?
       - Qni::View::AsciiStepParser#empty_mid?
       - Qni::View::AsciiStepParser#mark_control

@@ -64,6 +64,8 @@ module Qni
     desc 'bloch', 'Render the current 1-qubit state on the Bloch sphere'
     method_option :png, type: :boolean, default: false, desc: 'Write a Bloch sphere PNG'
     method_option :gif, type: :boolean, default: false, desc: 'Write a Bloch sphere GIF'
+    method_option :inline, type: :boolean, default: false, desc: 'Render inline in a Kitty-compatible terminal'
+    method_option :animate, type: :boolean, default: false, desc: 'Animate inline Bloch output'
     method_option :dark, type: :boolean, default: false, desc: 'Draw light content for dark backgrounds'
     method_option :light, type: :boolean, default: false, desc: 'Draw dark content for light backgrounds'
     method_option :output, type: :string, desc: 'Write to this path'

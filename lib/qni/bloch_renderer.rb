@@ -3,6 +3,7 @@
 require 'json'
 require 'open3'
 require 'tmpdir'
+require_relative 'simulator'
 
 module Qni
   # Invokes the Python helper that renders Bloch-sphere PNG and GIF files.
@@ -23,7 +24,12 @@ module Qni
     end
 
     def render
-      return if helper_commands.any? { |command| run_with_helper(command) }
+      helper_commands.each do |command|
+        result = resolved_result(run_with_helper(command))
+        next if result == :continue_render
+
+        return result
+      end
 
       raise Simulator::Error, SETUP_MESSAGE
     end
@@ -57,26 +63,43 @@ module Qni
     end
 
     def run_with_helper(command)
-      stderr, status = helper_result(command)
-      return true if status.success?
+      stdout, stderr, status = helper_result(command)
+      return parsed_output(stdout) if status.success?
 
       handle_failed_helper(stderr, status)
     rescue Errno::ENOENT
-      nil
+      :retry_with_next_command
     end
 
     def helper_result(command)
-      _stdout, stderr, status = Open3.capture3(
+      stdout, stderr, status = Open3.capture3(
         HELPER_ENV,
         *command,
         stdin_data: JSON.generate(payload)
       )
-      [stderr, status]
+      [stdout, stderr, status]
+    end
+
+    def parsed_output(stdout)
+      return :file_rendered if %w[png gif].include?(format)
+      return stdout.b if format == 'inline_png'
+      if format == 'inline_frames'
+        return JSON.parse(stdout).fetch('frames').map { |encoded_frame| encoded_frame.unpack1('m0').b }
+      end
+
+      stdout
+    end
+
+    def resolved_result(result)
+      return :continue_render if result == :retry_with_next_command
+      return nil if result == :file_rendered
+
+      result
     end
 
     def handle_failed_helper(stderr, status)
       renderer_class = self.class
-      return nil if renderer_class.retryable_with_next_command?(stderr)
+      return :retry_with_next_command if renderer_class.retryable_with_next_command?(stderr)
 
       raise Simulator::Error, renderer_class.helper_error_message(stderr, status)
     end
