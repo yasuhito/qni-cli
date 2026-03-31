@@ -1,7 +1,7 @@
 Feature: qni bloch コマンド
   qni-cli のユーザとして
   1 qubit の状態を幾何学的に理解するために
-  qni bloch でブロッホ球の PNG や GIF や inline 表示を使いたい
+  qni bloch でブロッホ球の PNG や APNG や inline 表示を使いたい
 
   Scenario: qni bloch --png は 1 qubit 回路のブロッホ球 PNG を書き出す
     Given "qni add H --qubit 0 --step 0" を実行
@@ -11,12 +11,12 @@ Feature: qni bloch コマンド
     And "bloch.png" は透過 PNG 画像である
     And "bloch.png" の画像サイズは 512x512 である
 
-  Scenario: qni bloch --gif は回転ゲートを含む 1 qubit 回路のブロッホ球 GIF を書き出す
+  Scenario: qni bloch --apng は回転ゲートを含む 1 qubit 回路のブロッホ球 APNG を書き出す
     Given "qni add Ry --angle π/2 --qubit 0 --step 0" を実行
-    When "qni bloch --gif --output bloch.gif" を実行
+    When "qni bloch --apng --output bloch.png" を実行
     Then コマンドは成功
-    And "bloch.gif" は GIF 画像である
-    And "bloch.gif" は 2 フレーム以上の GIF 画像である
+    And "bloch.png" は APNG 画像である
+    And "bloch.png" は 2 フレーム以上の APNG 画像である
 
   Scenario: qni bloch --gif は S ゲートの位相回転も段階的にアニメーションする
     Given "qni state set \"|+>\"" を実行
@@ -64,13 +64,13 @@ Feature: qni bloch コマンド
       unresolved angle variable: theta
       """
 
-  Scenario: qni bloch は --png と --gif の同時指定で失敗する
+  Scenario: qni bloch は --png と --apng の同時指定で失敗する
     Given "qni add H --qubit 0 --step 0" を実行
-    When "qni bloch --png --gif --output bloch.png" を実行
+    When "qni bloch --png --apng --output bloch.png" を実行
     Then コマンドは失敗
     And 標準エラー:
       """
-      choose exactly one of --png, --gif, or --inline
+      choose exactly one of --png, --apng, or --inline
       """
 
   Scenario: qni bloch は --inline と --output の同時指定で失敗する
@@ -84,7 +84,7 @@ Feature: qni bloch コマンド
 
   Scenario: qni bloch は --animate を --inline なしでは使えない
     Given "qni add Ry --angle π/2 --qubit 0 --step 0" を実行
-    When "qni bloch --gif --animate --output bloch.gif" を実行
+    When "qni bloch --apng --animate --output bloch.png" を実行
     Then コマンドは失敗
     And 標準エラー:
       """
@@ -97,5 +97,5 @@ Feature: qni bloch コマンド
     Then コマンドは失敗
     And 標準エラー:
       """
-      inline bloch rendering requires a Kitty-compatible terminal; use --png or --gif instead
+      inline bloch rendering requires a Kitty-compatible terminal; use --png or --apng instead
       """

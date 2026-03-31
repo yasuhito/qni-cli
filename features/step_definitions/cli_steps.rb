@@ -581,6 +581,24 @@ Then('{string} は GIF 画像である') do |path|
   MESSAGE
 end
 
+Then('{string} は APNG 画像である') do |path|
+  actual_path = File.join(@scenario_dir, path)
+  raise "expected file to exist: #{path}" unless File.exist?(actual_path)
+
+  signature = File.binread(actual_path, 8)
+  raise "expected file to be a PNG image: #{path}" unless signature == "\x89PNG\r\n\x1A\n".b
+
+  output, status = Open3.capture2('file', actual_path)
+  raise "file failed for: #{path}" unless status.success?
+  next if output.include?('animated')
+
+  raise <<~MESSAGE
+    expected file to be an animated PNG image: #{path}
+    actual:
+    #{output}
+  MESSAGE
+end
+
 Then('{string} は {int} フレーム以上の GIF 画像である') do |path, minimum_frames|
   actual_path = File.join(@scenario_dir, path)
   raise "expected file to exist: #{path}" unless File.exist?(actual_path)
@@ -593,6 +611,23 @@ Then('{string} は {int} フレーム以上の GIF 画像である') do |path, m
 
   raise <<~MESSAGE
     expected GIF frame count to be at least #{minimum_frames}: #{path}
+    actual:
+    #{actual_frames}
+  MESSAGE
+end
+
+Then('{string} は {int} フレーム以上の APNG 画像である') do |path, minimum_frames|
+  actual_path = File.join(@scenario_dir, path)
+  raise "expected file to exist: #{path}" unless File.exist?(actual_path)
+
+  output, status = Open3.capture2('identify', actual_path)
+  raise "identify failed for: #{path}" unless status.success?
+
+  actual_frames = output.lines.count
+  next if actual_frames >= minimum_frames
+
+  raise <<~MESSAGE
+    expected APNG frame count to be at least #{minimum_frames}: #{path}
     actual:
     #{actual_frames}
   MESSAGE
