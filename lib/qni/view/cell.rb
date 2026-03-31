@@ -87,6 +87,28 @@ module Qni
         super(label, format:, top_connect:, bot_connect:)
         @annotation_text = angle_text
       end
+
+      def annotation
+        return annotation_text if annotation_width == annotation_text_length
+
+        annotation_text.rjust(annotation_text_length + left_annotation_padding)
+                       .ljust(annotation_width)
+      end
+
+      private
+
+      def annotation_width
+        [layer_width, annotation_text_length].max
+      end
+
+      def left_annotation_padding
+        padding = annotation_width - annotation_text_length
+        [(padding / 2) + 1, padding].min
+      end
+
+      def annotation_text_length
+        annotation_text.length
+      end
     end
 
     # Unboxed element drawn directly on a wire.
