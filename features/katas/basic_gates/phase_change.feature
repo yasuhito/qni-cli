@@ -19,7 +19,7 @@ Feature: Quantum Katas BasicGates Task 1.6 PhaseChange
       """
     When 次の回路を適用:
       """
-           θ
+            θ
           ┌───┐
       q0: ┤ P ├
           └───┘
@@ -36,7 +36,7 @@ Feature: Quantum Katas BasicGates Task 1.6 PhaseChange
       """
     When 次の回路を適用:
       """
-           θ
+            θ
           ┌───┐
       q0: ┤ P ├
           └───┘
@@ -53,7 +53,7 @@ Feature: Quantum Katas BasicGates Task 1.6 PhaseChange
       """
     When 次の回路を適用:
       """
-          π/2
+           π/2
           ┌───┐
       q0: ┤ P ├
           └───┘
@@ -70,7 +70,7 @@ Feature: Quantum Katas BasicGates Task 1.6 PhaseChange
       """
     When 次の回路を適用:
       """
-           θ
+            θ
           ┌───┐
       q0: ┤ P ├
           └───┘
