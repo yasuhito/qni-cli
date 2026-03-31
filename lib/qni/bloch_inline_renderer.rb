@@ -8,7 +8,7 @@ module Qni
   # Renders Bloch sphere previews directly into Kitty-compatible terminals.
   class BlochInlineRenderer
     UNSUPPORTED_TERMINAL_MESSAGE =
-      'inline bloch rendering requires a Kitty-compatible terminal; use --png or --gif instead'
+      'inline bloch rendering requires a Kitty-compatible terminal; use --png or --apng instead'
 
     def initialize(frames:, theme:, io: $stdout, env: ENV)
       @frames = frames

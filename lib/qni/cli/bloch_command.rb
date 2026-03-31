@@ -8,7 +8,7 @@ module Qni
   class CLI < Thor
     # Validates and executes qni bloch.
     class BlochCommand
-      FILE_FORMATS = %i[png gif inline].freeze
+      FILE_FORMATS = %i[png apng inline].freeze
 
       def initialize(circuit_file:, bloch_options:)
         @circuit_file = circuit_file
@@ -43,7 +43,7 @@ module Qni
       def validate_format_selection
         return if FILE_FORMATS.one? { |name| option_enabled?(name) }
 
-        raise Thor::Error, 'choose exactly one of --png, --gif, or --inline'
+        raise Thor::Error, 'choose exactly one of --png, --apng, or --inline'
       end
 
       def validate_animate_option
@@ -89,7 +89,7 @@ module Qni
       end
 
       def format
-        option_enabled?(:gif) ? 'gif' : 'png'
+        option_enabled?(:apng) ? 'apng' : 'png'
       end
 
       def theme

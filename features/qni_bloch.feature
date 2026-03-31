@@ -18,13 +18,13 @@ Feature: qni bloch コマンド
     And "bloch.png" は APNG 画像である
     And "bloch.png" は 2 フレーム以上の APNG 画像である
 
-  Scenario: qni bloch --gif は S ゲートの位相回転も段階的にアニメーションする
+  Scenario: qni bloch --apng は S ゲートの位相回転も段階的にアニメーションする
     Given "qni state set \"|+>\"" を実行
     And "qni add S --qubit 0 --step 0" を実行
-    When "qni bloch --gif --output bloch-s.gif" を実行
+    When "qni bloch --apng --output bloch-s.png" を実行
     Then コマンドは成功
-    And "bloch-s.gif" は GIF 画像である
-    And "bloch-s.gif" は 3 フレーム以上の GIF 画像である
+    And "bloch-s.png" は APNG 画像である
+    And "bloch-s.png" は 3 フレーム以上の APNG 画像である
 
   Scenario: qni bloch --png --light は light theme のブロッホ球 PNG を書き出す
     Given "qni add H --qubit 0 --step 0" を実行
