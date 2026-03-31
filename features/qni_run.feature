@@ -431,6 +431,15 @@ Feature: qni run コマンド
       alpha|+> + beta|->
       """
 
+  Scenario: qni run --symbolic --basis y は S を適用した |+> を |+i> で表示
+    Given "qni state set \"|+>\"" を実行
+    And "qni add S --qubit 0 --step 0" を実行
+    When "qni run --symbolic --basis y" を実行
+    Then 標準出力:
+      """
+      |+i>
+      """
+
   Scenario: qni run --symbolic は Y ゲートの純虚数係数を表示
     Given "qni add Y --qubit 0 --step 0" を実行
     When "qni run --symbolic" を実行
@@ -478,6 +487,15 @@ Feature: qni run コマンド
     And 標準エラー:
       """
       symbolic x-basis run currently supports only 1-qubit circuits
+      """
+
+  Scenario: qni run --symbolic --basis y は 2 qubit 回路では失敗
+    Given 空の 2 qubit 回路がある
+    When "qni run --symbolic --basis y" を実行
+    Then コマンドは失敗
+    And 標準エラー:
+      """
+      symbolic y-basis run currently supports only 1-qubit circuits
       """
 
   Scenario: qni run --symbolic は 3 qubit 回路では失敗

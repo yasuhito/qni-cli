@@ -9,8 +9,8 @@ module Qni
     class Error < StandardError; end
     PLUS_MINUS_COEFFICIENT_TEXT = Math.sqrt(0.5).to_s
     NEGATED_PLUS_MINUS_COEFFICIENT_TEXT = (-Math.sqrt(0.5)).to_s
-
-    # Resolves 1-qubit ket-sum coefficients into concrete numeric amplitudes.
+    IMAGINARY_NUMERIC_PATTERN = /\A(?<real>[+-]?\d+(?:\.\d+)?)i\z/
+    # Resolves initial-state coefficient strings into numeric amplitudes.
     class NumericResolver
       def initialize(variables)
         @variables = variables
@@ -18,8 +18,9 @@ module Qni
 
       def resolve(coefficient)
         return coefficient.to_f if coefficient.match?(AngleExpression::NUMERIC_PATTERN)
+        return imaginary_numeric(coefficient) if coefficient.match?(InitialState::IMAGINARY_NUMERIC_PATTERN)
 
-        signed_identifier = InitialState::SIGNED_IDENTIFIER_PATTERN.match(coefficient)
+        signed_identifier = Term::SIGNED_IDENTIFIER_PATTERN.match(coefficient)
         if signed_identifier
           return signed_identifier_value(sign: signed_identifier[:sign], identifier: signed_identifier[:identifier])
         end
@@ -30,6 +31,10 @@ module Qni
       private
 
       attr_reader :variables
+
+      def imaginary_numeric(coefficient)
+        Complex(0, InitialState::IMAGINARY_NUMERIC_PATTERN.match(coefficient)[:real].to_f)
+      end
 
       def signed_identifier_value(sign:, identifier:)
         { '+' => 1.0, '-' => -1.0 }.fetch(sign) * resolve_identifier(identifier)
@@ -52,7 +57,7 @@ module Qni
       end
     end
 
-    # Single basis/coefficient entry in an initial state ket sum.
+    # Single term in a 1-qubit initial-state ket sum.
     class Term
       TERM_PATTERN = /\A(?<coefficient>.+)\|(?<basis>[01])>\z/
       SIGNED_IDENTIFIER_PATTERN = /\A(?<sign>[+-])(?<identifier>[a-zA-Z_][a-zA-Z0-9_]*)\z/
@@ -83,11 +88,18 @@ module Qni
 
       def self.validated_coefficient(raw_coefficient)
         coefficient = raw_coefficient.to_s.strip
-        return coefficient if coefficient.match?(AngleExpression::IDENTIFIER_PATTERN)
-        return coefficient if coefficient.match?(SIGNED_IDENTIFIER_PATTERN)
-        return coefficient if coefficient.match?(AngleExpression::NUMERIC_PATTERN)
+        return coefficient if supported_coefficient?(coefficient)
 
         raise Error, "invalid initial state coefficient: #{coefficient}"
+      end
+
+      def self.supported_coefficient?(coefficient)
+        [
+          AngleExpression::IDENTIFIER_PATTERN,
+          SIGNED_IDENTIFIER_PATTERN,
+          AngleExpression::NUMERIC_PATTERN,
+          IMAGINARY_NUMERIC_PATTERN
+        ].any? { |pattern| coefficient.match?(pattern) }
       end
 
       attr_reader :basis, :coefficient
@@ -108,8 +120,6 @@ module Qni
 
     FORMAT = 'ket_sum_v1'
     NORMALIZATION_TOLERANCE = 1e-12
-    SIGNED_IDENTIFIER_PATTERN = /\A(?<sign>[+-])(?<identifier>[a-zA-Z_][a-zA-Z0-9_]*)\z/
-
     def self.zero
       new(terms: [Term.new(basis: '0', coefficient: '1')])
     end
@@ -129,6 +139,8 @@ module Qni
       case raw_value.to_s.strip
       when '|+>' then superposition_state(PLUS_MINUS_COEFFICIENT_TEXT)
       when '|->' then superposition_state(NEGATED_PLUS_MINUS_COEFFICIENT_TEXT)
+      when '|+i>' then superposition_state("#{PLUS_MINUS_COEFFICIENT_TEXT}i")
+      when '|-i>' then superposition_state("-#{PLUS_MINUS_COEFFICIENT_TEXT}i")
       end
     end
 
@@ -182,6 +194,8 @@ module Qni
     def to_s
       return '|+>' if plus_state?
       return '|->' if minus_state?
+      return '|+i>' if plus_i_state?
+      return '|-i>' if minus_i_state?
 
       terms.join(' + ').gsub('+ -', '- ')
     end
@@ -191,25 +205,31 @@ module Qni
     attr_reader :terms
 
     def ensure_normalized(amplitudes)
-      norm = amplitudes.sum { |amplitude| amplitude**2 }
+      norm = amplitudes.sum { |amplitude| amplitude_norm(amplitude) }
       return if (norm - 1.0).abs <= NORMALIZATION_TOLERANCE
 
       raise Error, 'initial state must be normalized'
     end
 
-    def plus_state?
-      shorthand_terms?(PLUS_MINUS_COEFFICIENT_TEXT, PLUS_MINUS_COEFFICIENT_TEXT)
-    end
+    def plus_state? = shorthand_terms?(PLUS_MINUS_COEFFICIENT_TEXT, PLUS_MINUS_COEFFICIENT_TEXT)
 
-    def minus_state?
-      shorthand_terms?(PLUS_MINUS_COEFFICIENT_TEXT, NEGATED_PLUS_MINUS_COEFFICIENT_TEXT)
-    end
+    def minus_state? = shorthand_terms?(PLUS_MINUS_COEFFICIENT_TEXT, NEGATED_PLUS_MINUS_COEFFICIENT_TEXT)
+
+    def plus_i_state? = shorthand_terms?(PLUS_MINUS_COEFFICIENT_TEXT, "#{PLUS_MINUS_COEFFICIENT_TEXT}i")
+
+    def minus_i_state? = shorthand_terms?(PLUS_MINUS_COEFFICIENT_TEXT, "-#{PLUS_MINUS_COEFFICIENT_TEXT}i")
 
     def shorthand_terms?(expected_zero, expected_one)
       return false unless terms.length == 2
       return false unless terms.map(&:basis) == %w[0 1]
 
       terms.map(&:coefficient) == [expected_zero, expected_one]
+    end
+
+    def amplitude_norm(amplitude)
+      return amplitude.abs2 if amplitude.is_a?(Complex)
+
+      amplitude**2
     end
   end
 end

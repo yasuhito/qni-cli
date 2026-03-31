@@ -14,6 +14,7 @@ ANGLED_GATE_PATTERN = re.compile(r"\A(?P<gate>P|Rx|Ry|Rz)\((?P<angle>.+)\)\Z")
 IDENTIFIER_PATTERN = re.compile(r"\A[a-zA-Z_][a-zA-Z0-9_]*\Z")
 SIGNED_IDENTIFIER_PATTERN = re.compile(r"\A(?P<sign>[+-])(?P<identifier>[a-zA-Z_][a-zA-Z0-9_]*)\Z")
 NUMERIC_PATTERN = re.compile(r"\A[+-]?\d+(?:\.\d+)?\Z")
+IMAGINARY_NUMERIC_PATTERN = re.compile(r"\A(?P<real>[+-]?\d+(?:\.\d+)?)i\Z")
 MULTIPLIED_PATTERN = re.compile(r"\A(?P<coefficient>[+-]?\d+(?:\.\d+)?)\*(?P<term>.+)\Z")
 PI_PATTERN = re.compile(
     r"\A(?P<sign>[+-]?)(?:(?P<coefficient>\d+(?:\.\d+)?)(?:\*)?)?(?:π|pi)(?:(?:/|_)(?P<denominator>\d+(?:\.\d+)?))?\Z"
@@ -118,6 +119,15 @@ def initial_state_terms(circuit):
     return circuit.get("initial_state", {}).get("terms", [])
 
 
+def parse_state_coefficient(raw_value: str, variables: dict[str, str]):
+    normalized = str(raw_value).replace(" ", "")
+    imaginary_numeric = IMAGINARY_NUMERIC_PATTERN.match(normalized)
+    if imaginary_numeric:
+        return I * symbolic_scalar(imaginary_numeric.group("real"))
+
+    return parse_angle(normalized, variables).symbolic
+
+
 def symbolic_initial_state_for_qubits(circuit, qubits, variables):
     if "initial_state" not in circuit:
         return Matrix([1, 0]) if qubits == 1 else Matrix([1, 0, 0, 0])
@@ -128,7 +138,7 @@ def symbolic_initial_state_for_qubits(circuit, qubits, variables):
     state = [Integer(0), Integer(0)]
     for term in initial_state_terms(circuit):
         basis = int(term["basis"])
-        state[basis] = parse_angle(term["coefficient"], variables).symbolic
+        state[basis] = parse_state_coefficient(term["coefficient"], variables)
     return Matrix(state)
 
 
@@ -266,6 +276,21 @@ def render_symbolic_state_x_basis(state):
 
     terms = []
     for amplitude, label in ((plus, "|+>"), (minus, "|->")):
+        term = render_named_basis_term(amplitude, label)
+        if term:
+            terms.append(term)
+
+    return join_terms(terms)
+
+
+def render_symbolic_state_y_basis(state):
+    zero = simplify(state[0])
+    one = simplify(state[1])
+    plus_i = simplify((zero - I * one) / sqrt(2))
+    minus_i = simplify((zero + I * one) / sqrt(2))
+
+    terms = []
+    for amplitude, label in ((plus_i, "|+i>"), (minus_i, "|-i>")):
         term = render_named_basis_term(amplitude, label)
         if term:
             terms.append(term)
@@ -443,6 +468,15 @@ def run(circuit, output_format="text", basis=None):
 
         symbolic_state = symbolic_state_for_qubits(circuit, qubits, variables)
         return render_symbolic_state_x_basis(symbolic_state)
+
+    if basis == "y":
+        if qubits != 1:
+            raise ValueError("symbolic y-basis run currently supports only 1-qubit circuits")
+        if output_format != "text":
+            raise ValueError("symbolic basis display currently supports only text output")
+
+        symbolic_state = symbolic_state_for_qubits(circuit, qubits, variables)
+        return render_symbolic_state_y_basis(symbolic_state)
 
     if basis is not None:
         raise ValueError(f"unsupported symbolic basis: {basis}")

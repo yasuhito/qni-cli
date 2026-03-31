@@ -265,7 +265,7 @@ Feature: qni CLI
       """
     And 標準出力に次を含む:
       """
-      Show a symbolic state in a named basis such as x
+      Show a symbolic state in a named basis such as x or y
       """
 
   Scenario: qni help は使えない

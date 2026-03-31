@@ -29,8 +29,8 @@ module Qni
     private
 
     def render_with_format(format)
-      if basis == 'x' && circuit_hash.fetch('qubits') != 1
-        raise Simulator::Error, 'symbolic x-basis run currently supports only 1-qubit circuits'
+      if %w[x y].include?(basis) && circuit_hash.fetch('qubits') != 1
+        raise Simulator::Error, "symbolic #{basis}-basis run currently supports only 1-qubit circuits"
       end
 
       raise Simulator::Error, SUPPORTED_QUBIT_MESSAGE unless supported_qubit_count?

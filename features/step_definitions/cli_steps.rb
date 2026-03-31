@@ -143,12 +143,20 @@ def assert_stdout_matches!(stdout, doc_string)
 end
 
 def normalize_symbolic_state_vector(stdout)
-  stdout.sub(/\n+\z/, '')
-        .gsub(/\A1(?:\.0+)?(?=\|)/, '')
-        .gsub(/(?<= \+ )1(?:\.0+)?(?=\|)/, '')
-        .gsub(/(?<= - )1(?:\.0+)?(?=\|)/, '')
-        .gsub(/\A-1(?:\.0+)?(?=\|)/, '-')
-        .gsub(/(?<= \+ )-1(?:\.0+)?(?=\|)/, '-')
+  compact_unit_coefficients(stdout.sub(/\n+\z/, ''))
+end
+
+def compact_unit_coefficients(text)
+  text.gsub(/\A1(?:\.0+)?(?=\|)/, '')
+      .gsub(/\A1(?:\.0+)?i(?=\|)/, 'i')
+      .gsub(/(?<= \+ )1(?:\.0+)?(?=\|)/, '')
+      .gsub(/(?<= \+ )1(?:\.0+)?i(?=\|)/, 'i')
+      .gsub(/(?<= - )1(?:\.0+)?(?=\|)/, '')
+      .gsub(/(?<= - )1(?:\.0+)?i(?=\|)/, 'i')
+      .gsub(/\A-1(?:\.0+)?(?=\|)/, '-')
+      .gsub(/(?<= \+ )-1(?:\.0+)?(?=\|)/, '-')
+      .gsub(/\A-1(?:\.0+)?i(?=\|)/, '-i')
+      .gsub(/(?<= \+ )-1(?:\.0+)?i(?=\|)/, '-i')
 end
 
 def trim_trailing_decimal_zeros(text)
@@ -161,6 +169,8 @@ end
 def normalize_imaginary_unit(text)
   text.gsub('*I', 'i')
       .gsub(/\bI\b/, 'i')
+      .gsub(/\bi\*(?=[a-zA-Z_])/, 'i')
+      .gsub(/\b-i\*(?=[a-zA-Z_])/, '-i')
 end
 
 def normalize_symbolic_shorthand(text)
@@ -385,6 +395,12 @@ end
 
 Then('|+>, |-> 基底での状態ベクトルは:') do |doc_string|
   @stdout, @stderr, @status = run_qni_command(@scenario_dir, 'qni run --symbolic --basis x')
+  assert_command_succeeded!(@status, @stdout, @stderr)
+  assert_named_basis_state_matches!(@stdout, doc_string)
+end
+
+Then('|+i>, |-i> 基底での状態ベクトルは:') do |doc_string|
+  @stdout, @stderr, @status = run_qni_command(@scenario_dir, 'qni run --symbolic --basis y')
   assert_command_succeeded!(@status, @stdout, @stderr)
   assert_named_basis_state_matches!(@stdout, doc_string)
 end

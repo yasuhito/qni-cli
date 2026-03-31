@@ -82,6 +82,7 @@ detectors:
   UtilityFunction:
     exclude:
       - Qni::BlochRenderer#resolved_result
+      - Qni::InitialState#amplitude_norm
       - Qni::View::AsciiStepParser#control_mid?
       - Qni::View::AsciiStepParser#empty_mid?
       - Qni::View::AsciiStepParser#mark_control
