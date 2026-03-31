@@ -221,6 +221,8 @@ module Qni
     def normalized
       @normalized ||= begin
         value = raw_value.to_s.delete(' ')
+                         .gsub('θ', 'theta')
+                         .gsub(/(?<=\d)theta/, '*theta')
         raise Error, 'angle is required' if value.empty?
 
         value

@@ -10,7 +10,7 @@ module Qni
     # Renders qni circuits as Qiskit-style box-drawing text.
     # rubocop:disable Metrics/ClassLength
     class TextRenderer
-      ANGLED_GATE_PATTERN = /\A(?<symbol>[A-Za-z]+)\(.+\)\z/
+      ANGLED_GATE_PATTERN = /\A(?<symbol>[A-Za-z]+)\((?<angle>.+)\)\z/
       INTERSECTION_MERGES = {
         ['┬', '═'] => '╪',
         ['│', '═'] => '╪',
@@ -86,7 +86,7 @@ module Qni
           next unless single_gate_slot?(slot)
           next unless layer.fetch(qubit).is_a?(EmptyWire)
 
-          layer[qubit] = BoxOnQuWire.build(view_label(slot))
+          layer[qubit] = gate_element(slot)
         end
       end
 
@@ -97,7 +97,8 @@ module Qni
       def view_label(slot)
         return SqrtXGate::VIEW_SYMBOL if slot == SqrtXGate::SYMBOL
 
-        slot.to_s.sub(ANGLED_GATE_PATTERN, '\k<symbol>')
+        slot_text = slot.to_s
+        ANGLED_GATE_PATTERN.match(slot_text)&.[](:symbol) || slot_text
       end
 
       def normalize_width(layer)
@@ -114,8 +115,7 @@ module Qni
         previous_bottom = nil
 
         circuit.qubits.times do |qubit|
-          top_line, mid_line, bottom_line = wire_lines(layers, qubit)
-          previous_bottom = append_wire(lines, previous_bottom, top_line, mid_line, bottom_line)
+          previous_bottom = append_wire(lines, previous_bottom, wire_lines(layers, qubit))
         end
 
         lines
@@ -170,7 +170,7 @@ module Qni
       def place_target(layer, raw_step, target, min_involved, max_involved)
         top_connect = target > min_involved ? '┴' : '─'
         bot_connect = target < max_involved ? '┬' : '─'
-        layer[target] = BoxOnQuWire.build(view_label(raw_step.fetch(target)), top_connect:, bot_connect:)
+        layer[target] = gate_element(raw_step.fetch(target), top_connect:, bot_connect:)
       end
 
       def place_control_bridges(layer, raw_step, min_involved, max_involved)
@@ -192,8 +192,11 @@ module Qni
         end
       end
 
-      def append_wire(lines, previous_bottom, top_line, mid_line, bottom_line)
-        lines << merged_top_line(lines, previous_bottom, top_line)
+      def append_wire(lines, previous_bottom, wire_lines)
+        annotation_line, top_line, mid_line, bottom_line = wire_lines
+        merged_top = merged_top_line(lines, previous_bottom, top_line)
+        lines << annotation_line unless annotation_line.strip.empty?
+        lines << merged_top
         lines << merge_lines(lines.last, mid_line, icod: 'bot')
         lines << merge_lines(lines.last, bottom_line, icod: 'bot')
         bottom_line
@@ -206,12 +209,47 @@ module Qni
       end
 
       def wire_lines(layers, qubit)
-        wire_cells = layers.map { |layer| layer.fetch(qubit) }
+        wire_cells = wire_cells_for(layers, qubit)
         [
-          wire_prefix + cell_row(wire_cells, :top),
-          wire_label(qubit).rjust(wire_label_width) + cell_row(wire_cells, :mid),
-          wire_prefix + cell_row(wire_cells, :bot)
+          framed_wire_line(wire_cells, :annotation),
+          framed_wire_line(wire_cells, :top),
+          labeled_wire_line(qubit, wire_cells),
+          framed_wire_line(wire_cells, :bot)
         ]
+      end
+
+      def wire_cells_for(layers, qubit)
+        layers.map { |layer| layer.fetch(qubit) }
+      end
+
+      def framed_wire_line(wire_cells, part)
+        wire_prefix + cell_row(wire_cells, part)
+      end
+
+      def labeled_wire_line(qubit, wire_cells)
+        wire_label(qubit).rjust(wire_label_width) + cell_row(wire_cells, :mid)
+      end
+
+      def gate_element(slot, top_connect: '─', bot_connect: '─')
+        angled_match = ANGLED_GATE_PATTERN.match(slot.to_s)
+        return BoxOnQuWire.build(view_label(slot), top_connect:, bot_connect:) unless angled_match
+
+        angled_gate_element(angled_match[:symbol], angled_match[:angle], top_connect:, bot_connect:)
+      end
+
+      def angled_gate_element(symbol, angle, top_connect:, bot_connect:)
+        AngledBoxOnQuWire.new(
+          symbol,
+          view_angle(angle),
+          format: AngledBoxOnQuWire.format_for(symbol),
+          top_connect:,
+          bot_connect:
+        )
+      end
+
+      def view_angle(raw_angle)
+        raw_angle.to_s.gsub('theta', 'θ')
+                 .gsub(/(?<=\d)\*θ/, 'θ')
       end
 
       def cell_row(wire_cells, part)

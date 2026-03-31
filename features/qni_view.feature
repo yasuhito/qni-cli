@@ -109,6 +109,7 @@ Feature: qni view コマンド
     When "qni view" を実行
     Then 回路図:
       """
+           π/3
           ┌───┐
       q0: ┤ P ├
           └───┘
@@ -119,6 +120,7 @@ Feature: qni view コマンド
     When "qni view" を実行
     Then 回路図:
       """
+           π/2
           ┌───┐
       q0: ┤ Rx├
           └───┘
@@ -129,6 +131,7 @@ Feature: qni view コマンド
     When "qni view" を実行
     Then 回路図:
       """
+           π/2
           ┌───┐
       q0: ┤ Ry├
           └───┘
@@ -145,6 +148,7 @@ Feature: qni view コマンド
     When "qni view" を実行
     Then 回路図:
       """
+           π/2
           ┌───┐
       q0: ┤ Rz├
           └───┘
@@ -188,6 +192,7 @@ Feature: qni view コマンド
     Then 回路図:
       """
       q0: ──■──
+           π/2
           ┌─┴─┐
       q1: ┤ Rz├
           └───┘

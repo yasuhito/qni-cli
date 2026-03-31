@@ -18,7 +18,13 @@ Feature: Quantum Katas BasicGates Task 1.4 AmplitudeChange
       """
       |0>
       """
-    When 振幅を θ だけ回転:
+    When 次の回路を適用:
+      """
+           2θ
+          ┌───┐
+      q0: ┤ Ry├
+          └───┘
+      """
     Then 状態ベクトルは:
       """
       cos(θ)|0> + sin(θ)|1>
@@ -29,7 +35,13 @@ Feature: Quantum Katas BasicGates Task 1.4 AmplitudeChange
       """
       |1>
       """
-    When 振幅を θ だけ回転:
+    When 次の回路を適用:
+      """
+           2θ
+          ┌───┐
+      q0: ┤ Ry├
+          └───┘
+      """
     Then 状態ベクトルは:
       """
       -sin(θ)|0> + cos(θ)|1>
@@ -40,7 +52,13 @@ Feature: Quantum Katas BasicGates Task 1.4 AmplitudeChange
       """
       0.6|0> + 0.8|1>
       """
-    When 振幅を π/3 だけ回転:
+    When 次の回路を適用:
+      """
+          2π/3
+          ┌───┐
+      q0: ┤ Ry├
+          └───┘
+      """
     Then 状態ベクトルは:
       """
       (0.3 - 0.4*sqrt(3))|0> + (0.4 + 0.3*sqrt(3))|1>
@@ -51,7 +69,13 @@ Feature: Quantum Katas BasicGates Task 1.4 AmplitudeChange
       """
       α|0> + β|1>
       """
-    When 振幅を θ だけ回転:
+    When 次の回路を適用:
+      """
+           2θ
+          ┌───┐
+      q0: ┤ Ry├
+          └───┘
+      """
     Then 状態ベクトルは:
       """
       (α*cos(θ) - β*sin(θ))|0> + (α*sin(θ) + β*cos(θ))|1>

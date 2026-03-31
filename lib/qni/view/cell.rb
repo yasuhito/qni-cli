@@ -8,12 +8,17 @@ module Qni
 
       def initialize(label = '')
         @label = label
+        @annotation_text = ''
         @width = nil
         @layer_width = 0
         @top_format = @mid_format = @bot_format = '%s'
         @top_connect = @bot_connect = ' '
         @top_pad = @mid_padding = @bot_pad = ' '
         @top_bck = @mid_bck = @bot_bck = ' '
+      end
+
+      def annotation
+        annotation_text.center([layer_width, annotation_text.length].max, ' ')
       end
 
       def top
@@ -30,7 +35,7 @@ module Qni
       end
 
       def length
-        [top.length, mid.length, bot.length].max
+        [annotation.length, top.length, mid.length, bot.length].max
       end
 
       def width
@@ -39,8 +44,8 @@ module Qni
 
       private
 
-      attr_reader :bot_bck, :bot_connect, :bot_format, :bot_pad, :label, :mid_bck, :mid_format,
-                  :mid_padding, :top_bck, :top_connect, :top_format, :top_pad
+      attr_reader :annotation_text, :bot_bck, :bot_connect, :bot_format, :bot_pad, :label, :mid_bck,
+                  :mid_format, :mid_padding, :top_bck, :top_connect, :top_format, :top_pad
 
       def render_line(format, connect, pad, background)
         rendered = format % connect.center(width, pad)
@@ -73,6 +78,14 @@ module Qni
         @top_pad = @mid_bck = @bot_pad = '─'
         @top_connect = top_connect
         @bot_connect = bot_connect
+      end
+    end
+
+    # Boxed parameterized gate with its angle rendered above the box.
+    class AngledBoxOnQuWire < BoxOnQuWire
+      def initialize(label, angle_text, format: STANDARD_FORMAT, top_connect: '─', bot_connect: '─')
+        super(label, format:, top_connect:, bot_connect:)
+        @annotation_text = angle_text
       end
     end
 

@@ -49,6 +49,13 @@ module Qni
       CIRCUIT
 
       RY_GATE = <<~CIRCUIT
+             π/2
+            ┌───┐
+        q0: ┤ Ry├
+            └───┘
+      CIRCUIT
+
+      LEGACY_RY_GATE = <<~CIRCUIT
             ┌─────────┐
         q0: ┤ Ry(π/2) ├
             └─────────┘
@@ -114,6 +121,14 @@ module Qni
           },
           circuit.to_h
         )
+      end
+
+      def test_rejects_legacy_long_box_angled_gate
+        error = assert_raises(AsciiCircuitParser::Error) do
+          AsciiCircuitParser.new(LEGACY_RY_GATE).parse
+        end
+
+        assert_equal 'ASCII parser angled gates require a dedicated angle line above the box', error.message
       end
 
       def test_parse_single_empty_step_circuit

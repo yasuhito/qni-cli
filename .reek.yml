@@ -27,10 +27,12 @@ detectors:
       - Qni::View::TextRenderer#append_wire
       - Qni::View::TextRenderer#control_step_parts
       - Qni::View::TextRenderer#place_target
+      - Qni::View::TextRenderer#view_label
   LongParameterList:
     exclude:
       - Qni::View::AsciiStepParser#mark_gate
       - Qni::View::DrawElement#render_line
+      - Qni::View::TextRenderer#angled_gate_element
       - Qni::View::TextRenderer#append_wire
       - Qni::View::TextRenderer#place_control_bridges
       - Qni::View::TextRenderer#place_controls
@@ -59,12 +61,15 @@ detectors:
       - Qni::View::AsciiStepParser#apply_mid_cell
       - Qni::View::AsciiStepParser#gate_symbol_for
       - Qni::View::AsciiStepParser#to_slots
+      - Qni::View::AsciiWireLayout#annotation_candidate_segment
       - Qni::View::AsciiWireLayout#box_width_from
       - Qni::View::AsciiWireLayout#parsed_mid_lines
+      - Qni::View::AsciiWireLayout#annotation_wire_segment
       - Qni::Export::QCircuitLatex#render_swap_cell
       - Qni::View::DrawElement#initialize
       - Qni::View::BoxOnQuWire#initialize
       - Qni::View::TextRenderer#build_layer
+      - Qni::View::TextRenderer#append_wire
       - Qni::View::TextRenderer#draw_wires
       - Qni::View::TextRenderer#place_controls
       - Qni::View::TextRenderer#render_controlled_step
@@ -100,6 +105,8 @@ detectors:
       - Qni::View::TextRenderer#top_priority_merge
       - Qni::View::TextRenderer#trim_blank_edges
       - Qni::View::TextRenderer#view_label
+      - Qni::View::TextRenderer#view_angle
+      - Qni::View::TextRenderer#wire_cells_for
   NestedIterators:
     exclude:
       - Qni::View::AsciiWireLayout#box_widths_at

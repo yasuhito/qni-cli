@@ -55,11 +55,24 @@ Feature: ASCII アート回路セットアップ
   Scenario: 1 qubit の Ry(π/2) 回路を拡張 ASCII から作る
     Given 次の回路がある:
       """
-          ┌─────────┐
-      q0: ┤ Ry(π/2) ├
-          └─────────┘
+           π/2
+          ┌───┐
+      q0: ┤ Ry├
+          └───┘
       """
     Then 状態ベクトルは:
       """
       0.7071067811865476|0> + 0.7071067811865475|1>
+      """
+
+  Scenario: 旧式の横長な Ry 箱はサポートしない
+    When 次の回路を読み込もうとする:
+      """
+          ┌─────────┐
+      q0: ┤ Ry(π/2) ├
+          └─────────┘
+      """
+    Then 読み込みエラー:
+      """
+      ASCII parser angled gates require a dedicated angle line above the box
       """

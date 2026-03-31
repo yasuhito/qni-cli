@@ -3,12 +3,14 @@
 module Qni
   module View
     # Extracts aligned wire rows and step slices from circuit ASCII art.
+    # rubocop:disable Metrics/ClassLength
     class AsciiWireLayout
+      BOX_BORDER_PATTERN = /[┌┐└┘├┤]/
       CELL_WIDTH = 5
       MID_LINE_PATTERN = /\Aq(?<qubit>\d+): (?<wire>.*)\z/
 
-      # Holds the visible top/mid/bottom strings for one qubit row.
-      WireRow = Struct.new(:top, :mid, :bottom)
+      # Holds the visible annotation/top/mid/bottom strings for one qubit row.
+      WireRow = Struct.new(:annotation, :top, :mid, :bottom)
 
       def initialize(ascii_art, error_class:)
         @ascii_art = ascii_art
@@ -35,6 +37,7 @@ module Qni
       def step_slices(position, step_width)
         wire_rows.map do |wire_row|
           {
+            annotation: wire_row.annotation[position, step_width],
             top: wire_row.top[position, step_width],
             mid: wire_row.mid[position, step_width],
             bottom: wire_row.bottom[position, step_width]
@@ -70,11 +73,19 @@ module Qni
       def wire_rows
         @wire_rows ||= parsed_mid_lines.map do |line_index, match|
           WireRow.new(
+            padded_wire_segment(annotation_wire_segment(line_index)),
             padded_wire_segment(adjacent_wire_segment(line_index - 1)),
             padded_wire_segment(match[:wire]),
             padded_wire_segment(adjacent_wire_segment(line_index + 1))
           )
         end
+      end
+
+      def annotation_wire_segment(line_index)
+        return unless adjacent_wire_segment(line_index - 1)&.match?(BOX_BORDER_PATTERN)
+
+        candidate_index = line_index - 2
+        annotation_candidate_segment(candidate_index)
       end
 
       def adjacent_wire_segment(line_index)
@@ -92,6 +103,18 @@ module Qni
         raise error_class, 'ASCII parser lines must align to whole step cells' unless line.start_with?(wire_prefix)
 
         line.delete_prefix(wire_prefix)
+      end
+
+      def annotation_candidate_segment(candidate_index)
+        return if candidate_index.negative? || candidate_index >= lines.length
+
+        line = lines[candidate_index]
+        return if mid_line?(line)
+
+        segment = wire_segment_for(line)
+        return if segment.strip.empty? || segment.match?(BOX_BORDER_PATTERN)
+
+        segment
       end
 
       def parsed_mid_lines
@@ -132,5 +155,6 @@ module Qni
 
       def mid_line?(line) = MID_LINE_PATTERN.match?(line)
     end
+    # rubocop:enable Metrics/ClassLength
   end
 end

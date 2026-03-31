@@ -17,6 +17,7 @@ Feature: Rx ゲートを追加
     When "qni view" を実行
     Then 回路図:
       """
+           π/2
           ┌───┐
       q0: ┤ Rx├
           └───┘

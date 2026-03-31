@@ -8,6 +8,7 @@ require_relative '../swap_gate'
 module Qni
   module View
     # Parses one ASCII step spanning one or more qubits into circuit slots.
+    # rubocop:disable Metrics/ClassLength
     class AsciiStepParser
       BOX_PATTERN = /\A┤(?<label>.+)├\z/
       CONTROL_PATTERN = /\A─*■─*\z/
@@ -60,7 +61,7 @@ module Qni
         @shape = StepShape.new
         @slots = Array.new(step_slices.length, 1)
         step_slices.each_with_index do |step_slice, qubit|
-          apply_mid_cell(step_slice.fetch(:mid), qubit)
+          apply_mid_cell(step_slice, qubit)
         end
         validate_shape(shape)
         slots
@@ -73,8 +74,9 @@ module Qni
 
       attr_reader :error_class, :shape, :slots, :step_slices
 
-      def apply_mid_cell(mid_cell, qubit)
-        gate_symbol = gate_symbol_for(mid_cell)
+      def apply_mid_cell(step_slice, qubit)
+        mid_cell = step_slice.fetch(:mid)
+        gate_symbol = gate_symbol_for(step_slice)
         return mark_gate(gate_symbol, qubit) if gate_symbol
         return mark_control(qubit) if control_mid?(mid_cell)
         return mark_swap(qubit) if swap_mid?(mid_cell)
@@ -104,16 +106,44 @@ module Qni
         raise error_class, 'ASCII parser currently supports one target gate or one swap per step'
       end
 
-      def gate_symbol_for(mid_cell)
+      def gate_symbol_for(step_slice)
+        mid_cell = step_slice.fetch(:mid)
         label = BOX_PATTERN.match(mid_cell)&.[](:label)&.strip
         return unless label
 
-        FIXED_GATE_LABELS.fetch(label) do
-          parsed_gate = AngledGates.parse(label)
-          return parsed_gate.serialized if parsed_gate
+        annotation = step_slice.fetch(:annotation).to_s.strip
+        return legacy_angled_gate_error if AngledGates.parse(label)
 
+        angled_gate_symbol_for(label, annotation) ||
+          fixed_gate_symbol_for(label, annotation)
+      end
+
+      def angled_gate_symbol_for(label, annotation)
+        gate_class = AngledGates.fetch(label)
+        return unless gate_class
+
+        raise error_class, 'ASCII parser angled gates require a dedicated angle line above the box' if annotation.empty?
+
+        gate_class.serialized(annotation)
+      end
+
+      def fixed_gate_symbol_for(label, annotation)
+        raise_unexpected_angle_line(annotation)
+
+        FIXED_GATE_LABELS.fetch(label) do
           raise error_class, "unsupported ASCII gate label: #{label.inspect}"
         end
+      end
+
+      def raise_unexpected_angle_line(annotation)
+        return if annotation.empty?
+
+        raise error_class,
+              'ASCII parser angle lines are only supported for Rx, Ry, Rz, and P boxes'
+      end
+
+      def legacy_angled_gate_error
+        raise error_class, 'ASCII parser angled gates require a dedicated angle line above the box'
       end
 
       def control_mid?(mid_cell)
@@ -132,5 +162,6 @@ module Qni
         VERTICAL_BRIDGE_PATTERN.match?(mid_cell)
       end
     end
+    # rubocop:enable Metrics/ClassLength
   end
 end

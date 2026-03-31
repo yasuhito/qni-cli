@@ -57,14 +57,6 @@ def normalized_doc_string(doc_string)
   doc_string.sub(/\n+\z/, '')
 end
 
-def normalize_angle_text(text)
-  text.gsub('θ', 'theta').delete(' ')
-end
-
-def amplitude_rotation_column(angle)
-  [["Ry(2*#{normalize_angle_text(angle)})"]]
-end
-
 def one_qubit_initial_cols(state)
   ONE_QUBIT_INITIAL_STATE_COLS.fetch(state) do
     raise "unsupported 1-qubit initial state: #{state}"
@@ -290,14 +282,11 @@ When('次の回路を適用:') do |doc_string|
   append_ascii_circuit_json(@scenario_dir, doc_string)
 end
 
-When(/^振幅を (.+) だけ回転:$/) do |angle|
-  append_circuit_json(
-    @scenario_dir,
-    {
-      'qubits' => 1,
-      'cols' => amplitude_rotation_column(angle)
-    }
-  )
+When('次の回路を読み込もうとする:') do |doc_string|
+  @parse_error = nil
+  write_ascii_circuit_json(@scenario_dir, doc_string)
+rescue Qni::View::AsciiCircuitParser::Error => e
+  @parse_error = e.message
 end
 
 When('回路を実行') do
@@ -350,6 +339,22 @@ end
 
 Then('状態ベクトルは:') do |doc_string|
   assert_computational_basis_state_vector!(@scenario_dir, doc_string)
+end
+
+Then('読み込みエラー:') do |doc_string|
+  expected = normalized_doc_string(doc_string)
+  actual = @parse_error
+
+  raise 'expected ASCII parser to fail, but it succeeded' if actual.nil?
+  next if actual == expected
+
+  raise <<~MESSAGE
+    expected ASCII parser error to match
+    expected:
+    #{expected}
+    actual:
+    #{actual}
+  MESSAGE
 end
 
 Then('計算基底での状態ベクトルは:') do |doc_string|
