@@ -6,7 +6,7 @@ require 'tmpdir'
 require_relative 'simulator'
 
 module Qni
-  # Invokes the Python helper that renders Bloch-sphere PNG and GIF files.
+  # Invokes the Python helper that renders Bloch-sphere PNG and APNG files.
   class BlochRenderer
     SETUP_MESSAGE = 'bloch rendering requires matplotlib and Pillow; run scripts/setup_symbolic_python.sh'
     HELPER_RELATIVE_PATH = '../../libexec/qni_bloch_render.py'
@@ -81,7 +81,7 @@ module Qni
     end
 
     def parsed_output(stdout)
-      return :file_rendered if %w[png gif].include?(format)
+      return :file_rendered if %w[png apng].include?(format)
       return stdout.b if format == 'inline_png'
       if format == 'inline_frames'
         return JSON.parse(stdout).fetch('frames').map { |encoded_frame| encoded_frame.unpack1('m0').b }

@@ -90,6 +90,22 @@ def bundler_env
   env
 end
 
+def python_symbolic_runtime
+  File.join(PROJECT_ROOT, '.python-symbolic', 'bin', 'python')
+end
+
+def animated_png_frame_count(actual_path)
+  output, status = Open3.capture2(
+    python_symbolic_runtime,
+    '-c',
+    'from PIL import Image; import sys; print(getattr(Image.open(sys.argv[1]), "n_frames", 1))',
+    actual_path
+  )
+  raise "python frame inspection failed for: #{actual_path}" unless status.success?
+
+  output.to_i
+end
+
 def run_qni_command(scenario_dir, command)
   argv = Shellwords.split(command)
   raise "command must start with qni: #{command}" unless argv.first == 'qni'
@@ -620,10 +636,7 @@ Then('{string} は {int} フレーム以上の APNG 画像である') do |path, 
   actual_path = File.join(@scenario_dir, path)
   raise "expected file to exist: #{path}" unless File.exist?(actual_path)
 
-  output, status = Open3.capture2('identify', actual_path)
-  raise "identify failed for: #{path}" unless status.success?
-
-  actual_frames = output.lines.count
+  actual_frames = animated_png_frame_count(actual_path)
   next if actual_frames >= minimum_frames
 
   raise <<~MESSAGE

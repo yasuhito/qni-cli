@@ -40,17 +40,17 @@ def render(payload):
       sys.stdout.buffer.write(render_frame_bytes(frames, len(frames) - 1, theme))
       return
 
-    if format_name == "gif":
+    if format_name == "apng":
       images = [render_frame_image(frames, index, theme) for index in range(len(frames))]
       first, rest = images[0], images[1:]
       first.save(
           output_path,
-          format="GIF",
+          format="PNG",
           save_all=True,
           append_images=rest,
-          duration=90,
+          duration=[90] * len(images),
           loop=0,
-          disposal=2,
+          default_image=False,
       )
       return
 
