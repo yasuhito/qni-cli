@@ -7,6 +7,8 @@ require_relative 'cli/add_command'
 require_relative 'cli/add_help'
 require_relative 'cli/add_command_options'
 require_relative 'cli/bootstrap'
+require_relative 'cli/bloch_command'
+require_relative 'cli/bloch_help'
 require_relative 'cli/clear_help'
 require_relative 'cli/expect_help'
 require_relative 'cli/export_command'
@@ -56,6 +58,19 @@ module Qni
     def view
       puts current_circuit_file.load.render_ascii(style: $stdout.tty? ? :colorized : :plain)
     rescue CircuitFile::Error => e
+      raise Thor::Error, e.message
+    end
+
+    desc 'bloch', 'Render the current 1-qubit state on the Bloch sphere'
+    method_option :png, type: :boolean, default: false, desc: 'Write a Bloch sphere PNG'
+    method_option :gif, type: :boolean, default: false, desc: 'Write a Bloch sphere GIF'
+    method_option :dark, type: :boolean, default: false, desc: 'Draw light content for dark backgrounds'
+    method_option :light, type: :boolean, default: false, desc: 'Draw dark content for light backgrounds'
+    method_option :output, type: :string, desc: 'Write to this path'
+    def bloch
+      output = BlochCommand.new(circuit_file: current_circuit_file, bloch_options: options).execute
+      write_output(output)
+    rescue CircuitFile::Error, Simulator::Error => e
       raise Thor::Error, e.message
     end
 

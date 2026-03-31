@@ -189,6 +189,20 @@ module Qni
       end
     end
 
+    def bloch_coordinates
+      vector_class = self.class
+
+      [
+        vector_class.real_component(expectation('X')),
+        vector_class.real_component(expectation('Y')),
+        vector_class.real_component(expectation('Z'))
+      ]
+    end
+
+    def self.real_component(value)
+      (value.is_a?(Complex) ? value.real : value).to_f
+    end
+
     private
 
     attr_reader :amplitudes, :qubits

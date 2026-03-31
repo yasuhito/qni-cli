@@ -10,6 +10,7 @@ Feature: qni CLI
       """
       qni commands:
         qni add       # Add a gate to the circuit
+        qni bloch     # Render the current 1-qubit state on the Bloch sphere
         qni clear     # Delete the current circuit file
         qni expect    # Show expectation values of Pauli strings
         qni export    # Export the circuit as qcircuit LaTeX or PNG
@@ -218,6 +219,34 @@ Feature: qni CLI
     And 標準出力に次を含む:
       """
       qni state set "alpha|0> + beta|1>"
+      """
+
+  Scenario: qni bloch --help は bloch コマンドの使い方を表示
+    When "qni bloch --help" を実行
+    Then コマンドは成功
+    And 標準出力:
+      """
+      Usage:
+        qni bloch --png --output bloch.png
+        qni bloch --gif --output bloch.gif
+
+      Overview:
+        Render the current 1-qubit state on the Bloch sphere.
+        --png writes a static Bloch sphere image.
+        --gif writes an animated Bloch sphere showing state evolution.
+        The first release supports only 1-qubit circuits with fully resolved numeric parameters.
+
+      Options:
+        --png           # write a Bloch sphere PNG
+        --gif           # write a Bloch sphere GIF
+        --dark          # draw light content for dark backgrounds (default)
+        --light         # draw dark content for light backgrounds
+        [--output=PATH] # output file path; required
+
+      Examples:
+        qni bloch --png --output bloch.png
+        qni bloch --gif --output bloch.gif
+        qni bloch --png --light --output bloch.png
       """
 
   Scenario: qni run --help は symbolic basis option を表示

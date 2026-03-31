@@ -5,6 +5,7 @@ module Qni
   module CliRouting
     HELP_TEXT_ROUTES = [
       %i[add_help_request? AddHelp],
+      %i[bloch_help_request? BlochHelp],
       %i[clear_help_request? ClearHelp],
       %i[expect_help_request? ExpectHelp],
       %i[export_help_request? ExportHelp],
@@ -14,6 +15,7 @@ module Qni
     ].freeze
     USAGE_SUMMARIES = {
       'qni add ' => 'qni add',
+      'qni bloch ' => 'qni bloch',
       'qni expect ' => 'qni expect',
       'qni export ' => 'qni export',
       'qni run ' => 'qni run',
@@ -29,6 +31,10 @@ module Qni
 
     def expect_help_request?(given_args)
       [%w[expect], %w[expect --help], %w[expect -h]].include?(given_args)
+    end
+
+    def bloch_help_request?(given_args)
+      [%w[bloch], %w[bloch --help], %w[bloch -h]].include?(given_args)
     end
 
     def export_help_request?(given_args)
