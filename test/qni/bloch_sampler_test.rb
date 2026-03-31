@@ -24,6 +24,15 @@ module Qni
       assert_vector_close frames.last.fetch('vector'), [1.0, 0.0, 0.0]
     end
 
+    def test_s_gate_adds_intermediate_phase_frames
+      frames = BlochSampler.new(
+        circuit_with_initial_state('|+>', 'S')
+      ).frames
+
+      assert_operator frames.length, :>, 2
+      assert_vector_close frames.last.fetch('vector'), [0.0, -1.0, 0.0]
+    end
+
     private
 
     def empty_circuit
@@ -36,6 +45,14 @@ module Qni
     def single_gate_circuit(gate)
       {
         'qubits' => 1,
+        'cols' => [[gate]]
+      }
+    end
+
+    def circuit_with_initial_state(initial_state, gate)
+      {
+        'qubits' => 1,
+        'initial_state' => InitialState.parse(initial_state).to_h,
         'cols' => [[gate]]
       }
     end

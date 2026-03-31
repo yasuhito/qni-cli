@@ -11,6 +11,13 @@ module Qni
   class BlochSampler
     INTERMEDIATE_ANGLED_FRAMES = 12
     ANGLED_GATE_PATTERN = /\A(?<gate>P|Rx|Ry|Rz)\((?<angle>.+)\)\z/
+    FIXED_PHASE_ROTATION_ANGLES = {
+      'Z' => Math::PI,
+      'S' => Math::PI / 2,
+      'S†' => -(Math::PI / 2),
+      'T' => Math::PI / 4,
+      'T†' => -(Math::PI / 4)
+    }.freeze
 
     def initialize(circuit_data)
       @data = circuit_data
@@ -41,17 +48,27 @@ module Qni
     end
 
     def sample_col_frames(current_state, col)
-      if col.length == 1 && ANGLED_GATE_PATTERN.match?(col.fetch(0).to_s)
-        return interpolated_angled_frames(current_state, col)
-      end
+      gate = col.length == 1 ? col.fetch(0).to_s : nil
+      partial_col = gate && interpolated_partial_col_for(gate)
+      return sample_partial_frames(current_state, partial_col) if partial_col
 
       [{ 'vector' => state_after_col(current_state, col).bloch_coordinates }]
     end
 
-    def interpolated_angled_frames(current_state, col)
-      gate_name, total_angle = parse_angled_gate(col.fetch(0))
+    def interpolated_partial_col_for(gate)
+      return angled_partial_col(gate) if ANGLED_GATE_PATTERN.match?(gate)
+
+      total_angle = FIXED_PHASE_ROTATION_ANGLES[gate]
+      return unless total_angle
+
       partial_angle = total_angle / INTERMEDIATE_ANGLED_FRAMES
-      sample_partial_frames(current_state, ["#{gate_name}(#{partial_angle})"])
+      ["P(#{partial_angle})"]
+    end
+
+    def angled_partial_col(gate)
+      gate_name, total_angle = parse_angled_gate(gate)
+      partial_angle = total_angle / INTERMEDIATE_ANGLED_FRAMES
+      ["#{gate_name}(#{partial_angle})"]
     end
 
     def parse_angled_gate(gate)
