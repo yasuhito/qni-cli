@@ -288,10 +288,11 @@ Given('初期状態ベクトルは:') do |doc_string|
   state = normalized_doc_string(doc_string)
   initial_state = direct_initial_state(state)
   actual = if initial_state
+             qubits = initial_state.qubits
              {
-               'qubits' => 1,
+               'qubits' => qubits,
                'initial_state' => initial_state.to_h,
-               'cols' => [[1]]
+               'cols' => [Array.new(qubits, 1)]
              }
            else
              cols = initial_state_vector_cols(state)
@@ -423,6 +424,12 @@ end
 
 Then('|+i>, |-i> 基底での状態ベクトルは:') do |doc_string|
   @stdout, @stderr, @status = run_qni_command(@scenario_dir, 'qni run --symbolic --basis y')
+  assert_command_succeeded!(@status, @stdout, @stderr)
+  assert_named_basis_state_matches!(@stdout, doc_string)
+end
+
+Then('Bell 基底での状態ベクトルは:') do |doc_string|
+  @stdout, @stderr, @status = run_qni_command(@scenario_dir, 'qni run --symbolic --basis bell')
   assert_command_succeeded!(@status, @stdout, @stderr)
   assert_named_basis_state_matches!(@stdout, doc_string)
 end
