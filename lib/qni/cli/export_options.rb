@@ -66,8 +66,11 @@ module Qni
       end
 
       def validate_special_png_modes
-        raise Thor::Error, '--state-vector currently supports only --png' if state_vector? && !png?
-        raise Thor::Error, '--circle-notation currently supports only --png' if circle_notation? && !png?
+        png_selected = png?
+        return if png_selected
+
+        raise Thor::Error, '--state-vector currently supports only --png' if state_vector?
+        raise Thor::Error, '--circle-notation currently supports only --png' if circle_notation?
       end
 
       def validate_special_mode_exclusivity

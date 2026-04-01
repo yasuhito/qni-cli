@@ -36,7 +36,7 @@ module Qni
     def test_x_gate_adds_intermediate_frames_when_trajectory_is_enabled
       frames = BlochSampler.new(
         single_gate_circuit('X'),
-        trajectory: true
+        interpolation: :trajectory
       ).frames
 
       assert_operator frames.length, :>, 2
@@ -46,7 +46,7 @@ module Qni
     def test_h_gate_adds_intermediate_frames_when_trajectory_is_enabled
       frames = BlochSampler.new(
         single_gate_circuit('H'),
-        trajectory: true
+        interpolation: :trajectory
       ).frames
 
       assert_operator frames.length, :>, 2

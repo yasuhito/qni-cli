@@ -8,20 +8,50 @@ require_relative 'simulator'
 module Qni
   # Invokes the Python helper that renders Bloch-sphere PNG and APNG files.
   class BlochRenderer
+    # Decodes the helper's stdout into the Ruby value expected by the caller.
+    class OutputParser
+      def initialize(format, stdout)
+        @format = format
+        @stdout = stdout
+      end
+
+      def parse
+        return :file_rendered if %w[png apng].include?(format)
+        return stdout.b if format == 'inline_png'
+        return inline_frames if format == 'inline_frames'
+
+        stdout
+      end
+
+      private
+
+      attr_reader :format, :stdout
+
+      def inline_frames
+        JSON.parse(stdout).fetch('frames').map { |encoded_frame| encoded_frame.unpack1('m0').b }
+      end
+    end
+
     SETUP_MESSAGE = 'bloch rendering requires matplotlib and Pillow; run scripts/setup_symbolic_python.sh'
     HELPER_RELATIVE_PATH = '../../libexec/qni_bloch_render.py'
     REPO_RUNTIME_RELATIVE_PATH = '../../.python-symbolic/bin/python'
+    TRAIL_VISIBILITY = {
+      hidden: false,
+      visible: true
+    }.freeze
     HELPER_ENV = {
       'MPLCONFIGDIR' => File.join(Dir.tmpdir, 'qni-cli-matplotlib'),
       'UV_CACHE_DIR' => File.join(Dir.tmpdir, 'qni-cli-uv-cache')
     }.freeze
 
-    def initialize(format:, output_path:, frames:, theme:, show_trail: false)
-      @format = format
-      @output_path = output_path
-      @frames = frames
-      @theme = theme
-      @show_trail = show_trail
+    def initialize(format:, output_path:, frames:, theme:, trail_visibility: :hidden)
+      @request = {
+        format:,
+        output_path:,
+        frames:,
+        theme:,
+        show_trail: TRAIL_VISIBILITY.fetch(trail_visibility)
+      }
     end
 
     def render
@@ -37,7 +67,7 @@ module Qni
 
     private
 
-    attr_reader :format, :frames, :output_path, :show_trail, :theme
+    attr_reader :request
 
     def helper_commands
       [
@@ -52,11 +82,11 @@ module Qni
 
     def payload
       {
-        'format' => format,
-        'output_path' => output_path,
-        'frames' => frames,
-        'show_trail' => show_trail,
-        'theme' => theme.to_s
+        'format' => request.fetch(:format),
+        'output_path' => request.fetch(:output_path),
+        'frames' => request.fetch(:frames),
+        'show_trail' => request.fetch(:show_trail),
+        'theme' => request.fetch(:theme).to_s
       }
     end
 
@@ -83,13 +113,7 @@ module Qni
     end
 
     def parsed_output(stdout)
-      return :file_rendered if %w[png apng].include?(format)
-      return stdout.b if format == 'inline_png'
-      if format == 'inline_frames'
-        return JSON.parse(stdout).fetch('frames').map { |encoded_frame| encoded_frame.unpack1('m0').b }
-      end
-
-      stdout
+      OutputParser.new(request.fetch(:format), stdout).parse
     end
 
     def resolved_result(result)

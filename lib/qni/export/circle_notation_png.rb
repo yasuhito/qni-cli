@@ -24,25 +24,14 @@ module Qni
         @theme = theme
       end
 
-      # rubocop:disable Metrics/MethodLength
       def export
         FileUtils.mkdir_p(File.dirname(output_path))
-
-        result = nil
-        helper_commands.each do |command|
-          helper_result = run_with_helper(command)
-          next if helper_result == :retry_with_next_command
-
-          result = helper_result
-          break
-        end
-
+        result = render_with_helper_commands
         return if result == :file_rendered
         return result if result
 
         raise Simulator::Error, SETUP_MESSAGE
       end
-      # rubocop:enable Metrics/MethodLength
 
       private
 
@@ -83,10 +72,20 @@ module Qni
         :retry_with_next_command
       end
 
-      def handle_failed_helper(stderr, status)
-        return :retry_with_next_command if self.class.retryable_with_next_command?(stderr)
+      def render_with_helper_commands
+        helper_commands.each do |command|
+          result = run_with_helper(command)
+          return result unless result == :retry_with_next_command
+        end
 
-        raise Simulator::Error, self.class.helper_error_message(stderr, status)
+        nil
+      end
+
+      def handle_failed_helper(stderr, status)
+        renderer_class = self.class
+        return :retry_with_next_command if renderer_class.retryable_with_next_command?(stderr)
+
+        raise Simulator::Error, renderer_class.helper_error_message(stderr, status)
       end
 
       class << self

@@ -9,11 +9,17 @@ module Qni
   class BlochInlineRenderer
     UNSUPPORTED_TERMINAL_MESSAGE =
       'inline bloch rendering requires a Kitty-compatible terminal; use --png or --apng instead'
+    TRAIL_VISIBILITY = {
+      hidden: false,
+      visible: true
+    }.freeze
 
-    def initialize(frames:, theme:, show_trail: false, io: $stdout, env: ENV)
-      @frames = frames
-      @theme = theme
-      @show_trail = show_trail
+    def initialize(frames:, theme:, trail_visibility: :hidden, io: $stdout, env: ENV)
+      @render_options = {
+        frames:,
+        theme:,
+        show_trail: TRAIL_VISIBILITY.fetch(trail_visibility)
+      }
       @io = io
       @env = env
     end
@@ -32,7 +38,7 @@ module Qni
 
     private
 
-    attr_reader :env, :frames, :io, :show_trail, :theme
+    attr_reader :env, :io, :render_options
 
     def animated_png_frames
       BlochRenderer.new(
@@ -40,7 +46,7 @@ module Qni
         output_path: nil,
         frames:,
         theme:,
-        show_trail:
+        trail_visibility:
       ).render
     end
 
@@ -63,12 +69,24 @@ module Qni
         output_path: nil,
         frames:,
         theme:,
-        show_trail:
+        trail_visibility:
       ).render
     end
 
     def supported_terminal?
       io.tty? && (ghostty_terminal? || kitty_terminal?)
+    end
+
+    def frames
+      render_options.fetch(:frames)
+    end
+
+    def theme
+      render_options.fetch(:theme)
+    end
+
+    def trail_visibility
+      render_options.fetch(:show_trail) ? :visible : :hidden
     end
 
     def ensure_supported_terminal

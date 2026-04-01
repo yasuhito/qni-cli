@@ -8,26 +8,16 @@ detectors:
       - Qni::Export::QCircuitLatex#special_gate_label
       - Qni::View::TextRenderer#merge_blank_bot
       - Qni::View::TextRenderer#top_priority_merge
-  BooleanParameter:
-    exclude:
-      - Qni::BlochInlineRenderer#initialize
-      - Qni::BlochRenderer#initialize
-      - Qni::BlochSampler#initialize
   DataClump:
     exclude:
       - Qni::View::AsciiStepParser
       - Qni::Export::QCircuitLatex
       - Qni::View::TextRenderer
-      - Qni::BlochSampler
   DuplicateMethodCall:
     exclude:
       - Qni::InitialState#bell_shorthand_state?
       - Qni::View::TextRenderer#append_wire
       - Qni::View::TextRenderer#control_step_parts
-      - Qni::BlochSampler#interpolated_rotation_for
-      - Qni::BlochSampler#normalize_vector
-      - Qni::CLI::ExportOptions#validate_special_png_modes
-      - Qni::Export::CircleNotationPng#handle_failed_helper
   FeatureEnvy:
     exclude:
       - Qni::KittyGraphicsEmitter#emit_payload
@@ -40,8 +30,6 @@ detectors:
       - Qni::View::TextRenderer#control_step_parts
       - Qni::View::TextRenderer#place_target
       - Qni::View::TextRenderer#view_label
-      - Qni::BlochSampler#sample_rotation_frames
-      - Qni::StateVector#export_payload
   LongParameterList:
     exclude:
       - Qni::View::AsciiStepParser#mark_gate
@@ -52,8 +40,6 @@ detectors:
       - Qni::View::TextRenderer#place_controls
       - Qni::View::TextRenderer#place_swap_bridges
       - Qni::View::TextRenderer#place_target
-      - Qni::BlochSampler#rotated_components
-      - Qni::BlochSampler#rotated_component
   NilCheck:
     exclude:
       - Qni::View::TextRenderer#merged_top_line
@@ -65,8 +51,6 @@ detectors:
       - Qni::View::DrawElement
       - Qni::View::BoxOnQuWire
       - Qni::View::DirectOnQuWire
-      - Qni::BlochInlineRenderer
-      - Qni::BlochRenderer
   TooManyMethods:
     exclude:
       - Qni::CLI::BlochCommand
@@ -76,7 +60,6 @@ detectors:
       - Qni::View::AsciiWireLayout
       - Qni::Export::QCircuitLatex
       - Qni::View::TextRenderer
-      - Qni::BlochSampler
   TooManyStatements:
     exclude:
       - Qni::InitialState#to_s
@@ -97,19 +80,12 @@ detectors:
       - Qni::View::TextRenderer#place_controls
       - Qni::View::TextRenderer#render_controlled_step
       - Qni::View::TextRenderer#render_swap_step
-      - Qni::Export::CircleNotationPng#export
   UncommunicativeVariableName:
     accept:
       - e
   UtilityFunction:
     exclude:
       - Qni::BlochRenderer#resolved_result
-      - Qni::BlochSampler#cross_x
-      - Qni::BlochSampler#cross_y
-      - Qni::BlochSampler#cross_z
-      - Qni::BlochSampler#dot
-      - Qni::BlochSampler#normalize_component
-      - Qni::BlochSampler#rotated_component
       - Qni::InitialState#amplitude_norm
       - Qni::InitialState::ClassMethods#basis_components
       - Qni::InitialState::ClassMethods#basis_qubit_count
@@ -150,4 +126,3 @@ detectors:
     exclude:
       - Qni::InitialState
       - Qni::View::AsciiStepParser
-      - Qni::BlochSampler
