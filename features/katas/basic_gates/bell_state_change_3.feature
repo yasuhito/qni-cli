@@ -1,48 +1,78 @@
 Feature: Quantum Katas BasicGates Task 1.10 BellStateChange3
   Task 1.10 BellStateChange3: |Φ⁺⟩ を |Ψ⁻⟩ に変える
+
   入力:
-  2 量子ビットの Bell 状態 |Φ⁺⟩ = (|00⟩ + |11⟩) / sqrt(2)
+  2 量子ビットの Bell 状態 |ψ⟩ = α|Φ⁺⟩ + β|Ψ⁻⟩
+
   目標:
-  状態を |Ψ⁻⟩ = (|01⟩ - |10⟩) / sqrt(2) に変える
+  |Φ⁺⟩ を |Ψ⁻⟩ に変え、|Ψ⁻⟩ には符号つきで作用する
 
-  Scenario: Task 1.10 は |Φ⁺⟩ を |Ψ⁻⟩ に変換する
-    Given 空の 2 qubit 回路がある
-    And "qni add H --qubit 0 --step 0" を実行
-    And "qni add X --control 0 --qubit 1 --step 1" を実行
-    And "qni add X --qubit 0 --step 2" を実行
-    And "qni add Z --qubit 0 --step 3" を実行
-    When "qni run" を実行
-    Then 標準出力:
-      """
-      0.0,0.7071067811865475,-0.7071067811865475,0.0
-      """
+  Bell 基底の重ね合わせでも、Bell 基底上の位相つきな状態変化として振る舞う
 
-  Scenario: Task 1.10 は symbolic 表示で |Ψ⁻⟩ を示す
-    Given 空の 2 qubit 回路がある
-    And "qni add H --qubit 0 --step 0" を実行
-    And "qni add X --control 0 --qubit 1 --step 1" を実行
-    And "qni add X --qubit 0 --step 2" を実行
-    And "qni add Z --qubit 0 --step 3" を実行
-    When "qni run --symbolic" を実行
-    Then 標準出力:
+  Scenario: X と Z を順に適用した回路は |Φ+> を |Ψ-> に変える
+    Given 初期状態ベクトルは:
       """
-      sqrt(2)/2|01> - sqrt(2)/2|10>
+      |Φ+>
+      """
+    When 次の回路を適用:
+      """
+          ┌───┐┌───┐
+      q0: ┤ X ├┤ Z ├
+          └───┘└───┘
+      q1: ──────────
+      """
+    Then Bell 基底での状態ベクトルは:
+      """
+      |Ψ->
       """
 
-  Scenario: Task 1.10 の controlled 検証回路は |000⟩ に戻る
-    Given 空の 3 qubit 回路がある
-    And "qni add H --qubit 0 --step 0" を実行
-    And "qni add H --control 0 --qubit 1 --step 1" を実行
-    And "qni add X --control 0,1 --qubit 2 --step 2" を実行
-    And "qni add X --control 0 --qubit 1 --step 3" を実行
-    And "qni add Z --control 0 --qubit 1 --step 4" を実行
-    And "qni add X --control 0 --qubit 2 --step 5" を実行
-    And "qni add Z --control 0 --qubit 2 --step 6" を実行
-    And "qni add X --control 0,1 --qubit 2 --step 7" を実行
-    And "qni add H --control 0 --qubit 1 --step 8" を実行
-    And "qni add H --qubit 0 --step 9" を実行
-    When "qni run" を実行
-    Then 標準出力:
+  Scenario: X と Z を順に適用した回路は |Ψ-> を -|Φ+> に変える
+    Given 初期状態ベクトルは:
       """
-      1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+      |Ψ->
+      """
+    When 次の回路を適用:
+      """
+          ┌───┐┌───┐
+      q0: ┤ X ├┤ Z ├
+          └───┘└───┘
+      q1: ──────────
+      """
+    Then Bell 基底での状態ベクトルは:
+      """
+      -|Φ+>
+      """
+
+  Scenario: 0.6|Φ+> + 0.8|Ψ-> に X と Z を順に適用すると、Bell 基底では -0.8|Φ+> + 0.6|Ψ-> になる
+    Given 初期状態ベクトルは:
+      """
+      0.6|Φ+> + 0.8|Ψ->
+      """
+    When 次の回路を適用:
+      """
+          ┌───┐┌───┐
+      q0: ┤ X ├┤ Z ├
+          └───┘└───┘
+      q1: ──────────
+      """
+    Then Bell 基底での状態ベクトルは:
+      """
+      -0.8|Φ+> + 0.6|Ψ->
+      """
+
+  Scenario: α|Φ+> + β|Ψ-> に X と Z を順に適用すると、Bell 基底では -β|Φ+> + α|Ψ-> になる
+    Given 初期状態ベクトルは:
+      """
+      α|Φ+> + β|Ψ->
+      """
+    When 次の回路を適用:
+      """
+          ┌───┐┌───┐
+      q0: ┤ X ├┤ Z ├
+          └───┘└───┘
+      q1: ──────────
+      """
+    Then Bell 基底での状態ベクトルは:
+      """
+      -β|Φ+> + α|Ψ->
       """
