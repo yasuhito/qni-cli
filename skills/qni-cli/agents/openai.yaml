@@ -1,0 +1,7 @@
+interface:
+  display_name: "qni CLI"
+  short_description: "Build, simulate, and visualize circuits with qni"
+  default_prompt: "Use $qni-cli to build, simulate, or visualize this quantum circuit with the local qni command."
+
+policy:
+  allow_implicit_invocation: true
