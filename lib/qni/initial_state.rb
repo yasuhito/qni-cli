@@ -252,6 +252,10 @@ module Qni
       { 'format' => FORMAT, 'terms' => terms.map(&:to_h) }
     end
 
+    def qubits
+      self.class.basis_qubit_count(terms.first.basis)
+    end
+
     def to_s
       return '|+>' if plus_state?
       return '|->' if minus_state?

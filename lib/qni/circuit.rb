@@ -105,6 +105,7 @@ module Qni
     end
 
     def replace_initial_state(next_initial_state)
+      expand_qubits_to(next_initial_state.qubits - 1) if next_initial_state
       @initial_state = next_initial_state
     end
 

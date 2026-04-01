@@ -19,6 +19,12 @@ MULTIPLIED_PATTERN = re.compile(r"\A(?P<coefficient>[+-]?\d+(?:\.\d+)?)\*(?P<ter
 PI_PATTERN = re.compile(
     r"\A(?P<sign>[+-]?)(?:(?P<coefficient>\d+(?:\.\d+)?)(?:\*)?)?(?:π|pi)(?:(?:/|_)(?P<denominator>\d+(?:\.\d+)?))?\Z"
 )
+BELL_BASIS_COMPONENTS = {
+    "Φ+": ((0, Integer(1)), (3, Integer(1))),
+    "Φ-": ((0, Integer(1)), (3, Integer(-1))),
+    "Ψ+": ((1, Integer(1)), (2, Integer(1))),
+    "Ψ-": ((1, Integer(1)), (2, Integer(-1))),
+}
 
 
 @dataclass
@@ -132,14 +138,29 @@ def symbolic_initial_state_for_qubits(circuit, qubits, variables):
     if "initial_state" not in circuit:
         return Matrix([1, 0]) if qubits == 1 else Matrix([1, 0, 0, 0])
 
-    if qubits != 1:
-        raise ValueError("initial state currently supports only 1 qubit")
-
-    state = [Integer(0), Integer(0)]
+    state = [Integer(0)] * (2**qubits)
     for term in initial_state_terms(circuit):
-        basis = int(term["basis"])
-        state[basis] = parse_state_coefficient(term["coefficient"], variables)
+        coefficient = parse_state_coefficient(term["coefficient"], variables)
+        for basis_index, scale in basis_components(term["basis"], qubits):
+            state[basis_index] += coefficient * scale / bell_basis_scale(term["basis"])
     return Matrix(state)
+
+
+def basis_components(basis: str, qubits: int):
+    if qubits == 1:
+        return ((int(basis), Integer(1)),)
+
+    if basis in {"00", "01", "10", "11"}:
+        return ((int(basis, 2), Integer(1)),)
+
+    if basis in BELL_BASIS_COMPONENTS:
+        return BELL_BASIS_COMPONENTS[basis]
+
+    raise ValueError(f"unsupported initial state basis: {basis}")
+
+
+def bell_basis_scale(basis: str):
+    return sqrt(2) if basis in BELL_BASIS_COMPONENTS else Integer(1)
 
 
 def numeric_gate(gate, variables):
@@ -291,6 +312,31 @@ def render_symbolic_state_y_basis(state):
 
     terms = []
     for amplitude, label in ((plus_i, "|+i>"), (minus_i, "|-i>")):
+        term = render_named_basis_term(amplitude, label)
+        if term:
+            terms.append(term)
+
+    return join_terms(terms)
+
+
+def render_symbolic_state_bell_basis(state):
+    zero_zero = simplify(state[0])
+    zero_one = simplify(state[1])
+    one_zero = simplify(state[2])
+    one_one = simplify(state[3])
+
+    phi_plus = simplify((zero_zero + one_one) / sqrt(2))
+    phi_minus = simplify((zero_zero - one_one) / sqrt(2))
+    psi_plus = simplify((zero_one + one_zero) / sqrt(2))
+    psi_minus = simplify((zero_one - one_zero) / sqrt(2))
+
+    terms = []
+    for amplitude, label in (
+        (phi_plus, "|Φ+>"),
+        (phi_minus, "|Φ->"),
+        (psi_plus, "|Ψ+>"),
+        (psi_minus, "|Ψ->"),
+    ):
         term = render_named_basis_term(amplitude, label)
         if term:
             terms.append(term)
@@ -477,6 +523,15 @@ def run(circuit, output_format="text", basis=None):
 
         symbolic_state = symbolic_state_for_qubits(circuit, qubits, variables)
         return render_symbolic_state_y_basis(symbolic_state)
+
+    if basis == "bell":
+        if qubits != 2:
+            raise ValueError("symbolic bell-basis run currently supports only 2-qubit circuits")
+        if output_format != "text":
+            raise ValueError("symbolic basis display currently supports only text output")
+
+        symbolic_state = symbolic_state_for_qubits(circuit, qubits, variables)
+        return render_symbolic_state_bell_basis(symbolic_state)
 
     if basis is not None:
         raise ValueError(f"unsupported symbolic basis: {basis}")

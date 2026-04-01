@@ -440,6 +440,31 @@ Feature: qni run コマンド
       |+i>
       """
 
+  Scenario: qni run --symbolic --basis bell は |Φ+> を |Φ+> と表示
+    Given "qni state set \"|Φ+>\"" を実行
+    When "qni run --symbolic --basis bell" を実行
+    Then 標準出力:
+      """
+      |Φ+>
+      """
+
+  Scenario: qni run --symbolic --basis bell は Z を適用した |Φ+> を |Φ-> と表示
+    Given "qni state set \"|Φ+>\"" を実行
+    And "qni add Z --qubit 0 --step 0" を実行
+    When "qni run --symbolic --basis bell" を実行
+    Then 標準出力:
+      """
+      |Φ->
+      """
+
+  Scenario: qni run --symbolic --basis bell は alpha|Φ+> + beta|Φ-> を表示
+    Given "qni state set \"alpha|Φ+> + beta|Φ->\"" を実行
+    When "qni run --symbolic --basis bell" を実行
+    Then 標準出力:
+      """
+      alpha|Φ+> + beta|Φ->
+      """
+
   Scenario: qni run --symbolic は Y ゲートの純虚数係数を表示
     Given "qni add Y --qubit 0 --step 0" を実行
     When "qni run --symbolic" を実行
@@ -496,6 +521,15 @@ Feature: qni run コマンド
     And 標準エラー:
       """
       symbolic y-basis run currently supports only 1-qubit circuits
+      """
+
+  Scenario: qni run --symbolic --basis bell は 1 qubit 回路では失敗
+    Given 空の 1 qubit 回路がある
+    When "qni run --symbolic --basis bell" を実行
+    Then コマンドは失敗
+    And 標準エラー:
+      """
+      symbolic bell-basis run currently supports only 2-qubit circuits
       """
 
   Scenario: qni run --symbolic は 3 qubit 回路では失敗
