@@ -30,7 +30,7 @@ module Qni
 
       def sampled_frames
         circuit = circuit_file.load
-        BlochSampler.new(circuit.to_h).frames
+        BlochSampler.new(circuit.to_h, trajectory: trajectory_enabled?).frames
       end
 
       def validate_options
@@ -97,14 +97,24 @@ module Qni
       end
 
       def render_file(frames)
-        BlochRenderer.new(format:, output_path:, frames:, theme:).render
+        BlochRenderer.new(
+          format:,
+          output_path:,
+          frames:,
+          theme:,
+          show_trail: trajectory_enabled?
+        ).render
       end
 
       def render_inline(frames)
-        renderer = BlochInlineRenderer.new(frames:, theme:)
+        renderer = BlochInlineRenderer.new(frames:, theme:, show_trail: trajectory_enabled?)
         return renderer.render_animation if option_enabled?(:animate)
 
         renderer.render_static
+      end
+
+      def trajectory_enabled?
+        option_enabled?(:trajectory)
       end
     end
   end

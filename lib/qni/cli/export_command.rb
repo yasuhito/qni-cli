@@ -2,6 +2,7 @@
 
 require 'fileutils'
 require_relative 'export_options'
+require_relative '../export/circle_notation_png'
 require_relative '../export/png_exporter'
 require_relative '../export/qcircuit_latex'
 require_relative '../export/state_vector_latex'
@@ -29,6 +30,7 @@ module Qni
 
       def export_loaded_circuit(circuit)
         return write_state_vector_png(circuit) if state_vector?
+        return write_circle_notation_png(circuit) if circle_notation?
 
         export_circuit(circuit)
       end
@@ -72,6 +74,15 @@ module Qni
         nil
       end
 
+      def write_circle_notation_png(circuit)
+        Export::CircleNotationPng.new(
+          state_vector: Simulator.new(circuit).final_state_vector,
+          output_path:,
+          theme: options.theme
+        ).export
+        nil
+      end
+
       def ensure_parent_directory
         FileUtils.mkdir_p(File.dirname(output_path))
       end
@@ -86,6 +97,10 @@ module Qni
 
       def state_vector?
         options.state_vector?
+      end
+
+      def circle_notation?
+        options.circle_notation?
       end
     end
   end

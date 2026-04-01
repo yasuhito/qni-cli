@@ -16,11 +16,12 @@ module Qni
       'UV_CACHE_DIR' => File.join(Dir.tmpdir, 'qni-cli-uv-cache')
     }.freeze
 
-    def initialize(format:, output_path:, frames:, theme:)
+    def initialize(format:, output_path:, frames:, theme:, show_trail: false)
       @format = format
       @output_path = output_path
       @frames = frames
       @theme = theme
+      @show_trail = show_trail
     end
 
     def render
@@ -36,7 +37,7 @@ module Qni
 
     private
 
-    attr_reader :format, :frames, :output_path, :theme
+    attr_reader :format, :frames, :output_path, :show_trail, :theme
 
     def helper_commands
       [
@@ -54,6 +55,7 @@ module Qni
         'format' => format,
         'output_path' => output_path,
         'frames' => frames,
+        'show_trail' => show_trail,
         'theme' => theme.to_s
       }
     end

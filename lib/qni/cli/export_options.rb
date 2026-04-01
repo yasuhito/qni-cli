@@ -9,9 +9,10 @@ module Qni
       end
 
       def validate
+        validate_special_png_modes
         validate_format_selection
         validate_theme_selection
-        validate_state_vector_selection
+        validate_special_mode_exclusivity
         validate_output_path
       end
 
@@ -25,6 +26,10 @@ module Qni
 
       def state_vector?
         raw_options.fetch(:state_vector, false)
+      end
+
+      def circle_notation?
+        raw_options.fetch(:circle_notation, false)
       end
 
       def output_path
@@ -60,8 +65,15 @@ module Qni
         raise Thor::Error, 'choose at most one of --dark or --light' if dark? && light?
       end
 
-      def validate_state_vector_selection
+      def validate_special_png_modes
         raise Thor::Error, '--state-vector currently supports only --png' if state_vector? && !png?
+        raise Thor::Error, '--circle-notation currently supports only --png' if circle_notation? && !png?
+      end
+
+      def validate_special_mode_exclusivity
+        return unless state_vector? && circle_notation?
+
+        raise Thor::Error, 'choose at most one of --state-vector or --circle-notation'
       end
 
       def validate_output_path

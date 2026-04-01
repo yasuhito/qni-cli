@@ -58,6 +58,10 @@ module Qni
       raise Error, e.message
     end
 
+    def final_state_vector
+      state_vector
+    end
+
     private
 
     attr_reader :data

@@ -106,6 +106,186 @@ def animated_png_frame_count(actual_path)
   output.to_i
 end
 
+# rubocop:disable Metrics/MethodLength
+def image_includes_color?(actual_path, hex_color)
+  color = hex_color.delete_prefix('#')
+  script = <<~PYTHON
+    from PIL import Image
+    import sys
+
+    image = Image.open(sys.argv[1]).convert("RGBA")
+    pixels = image.load()
+    width, height = image.size
+    target = tuple(int(sys.argv[2][index:index + 2], 16) for index in (0, 2, 4))
+    print(any(
+        pixels[x, y][:3] == target and pixels[x, y][3] > 0
+        for y in range(height)
+        for x in range(width)
+    ))
+  PYTHON
+  output, status = Open3.capture2(python_symbolic_runtime, '-c', script, actual_path, color)
+  raise "python color inspection failed for: #{actual_path}" unless status.success?
+
+  output.strip == 'True'
+end
+
+def circle_notation_phase_metrics(real:, imag:)
+  script = <<~PYTHON
+    import importlib.util
+    import json
+    import math
+    import sys
+
+    import matplotlib.pyplot as plt
+
+    spec = importlib.util.spec_from_file_location("qni_circle_notation_render", sys.argv[1])
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    fig, ax = plt.subplots(figsize=(2, 2), dpi=module.DPI)
+    ax.set_axis_off()
+    ax.set_xlim(-2, 2)
+    ax.set_ylim(-2, 2)
+    ax.set_aspect("equal")
+
+    module.draw_basis_circle(
+        ax,
+        0.0,
+        0.0,
+        "|0>",
+        complex(float(sys.argv[2]), float(sys.argv[3])),
+        module.theme_config("light")
+    )
+
+    phase_lines = [line for line in ax.lines if len(line.get_xdata()) == 2 and len(line.get_ydata()) == 2]
+    if phase_lines:
+        line = phase_lines[0]
+        xdata = list(line.get_xdata())
+        ydata = list(line.get_ydata())
+        needle_length = math.hypot(xdata[1] - xdata[0], ydata[1] - ydata[0])
+        phase_visible = True
+    else:
+        needle_length = 0.0
+        phase_visible = False
+
+    center_dot_visible = any(
+        line.get_marker() == "o" and len(line.get_xdata()) == 1 and len(line.get_ydata()) == 1
+        for line in ax.lines
+    )
+
+    plt.close(fig)
+    print(json.dumps({
+        "outer_radius": module.OUTER_RADIUS,
+        "needle_length": needle_length,
+        "phase_visible": phase_visible,
+        "center_dot_visible": center_dot_visible
+    }))
+  PYTHON
+  helper_path = File.join(PROJECT_ROOT, 'libexec', 'qni_circle_notation_render.py')
+  output, status = Open3.capture2(
+    python_symbolic_runtime,
+    '-c',
+    script,
+    helper_path,
+    real.to_s,
+    imag.to_s
+  )
+  raise 'python circle notation phase inspection failed' unless status.success?
+
+  JSON.parse(output)
+end
+
+def circle_notation_outline_metrics
+  script = <<~PYTHON
+    import importlib.util
+    import json
+    import sys
+
+    import matplotlib.pyplot as plt
+
+    spec = importlib.util.spec_from_file_location("qni_circle_notation_render", sys.argv[1])
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    fig, ax = plt.subplots(figsize=(2, 2), dpi=module.DPI)
+    ax.set_axis_off()
+    ax.set_xlim(-2, 2)
+    ax.set_ylim(-2, 2)
+    ax.set_aspect("equal")
+    fig.canvas.draw()
+
+    module.draw_basis_circle(
+        ax,
+        0.0,
+        0.0,
+        "|0>",
+        complex(1.0, 0.0),
+        module.theme_config("light")
+    )
+
+    outer = ax.patches[0]
+    linewidth_px = outer.get_linewidth() * fig.dpi / 72.0
+    origin = ax.transData.transform((0.0, 0.0))
+    unit_x = ax.transData.transform((1.0, 0.0))
+    pixels_per_data = unit_x[0] - origin[0]
+    half_linewidth_data = (linewidth_px / pixels_per_data) / 2.0
+
+    plt.close(fig)
+    print(json.dumps({
+        "intended_radius": module.OUTER_RADIUS,
+        "outline_radius": outer.get_radius(),
+        "outline_inner_edge": outer.get_radius() - half_linewidth_data
+    }))
+  PYTHON
+  helper_path = File.join(PROJECT_ROOT, 'libexec', 'qni_circle_notation_render.py')
+  output, status = Open3.capture2(
+    python_symbolic_runtime,
+    '-c',
+    script,
+    helper_path
+  )
+  raise 'python circle notation outline inspection failed' unless status.success?
+
+  JSON.parse(output)
+end
+
+def bloch_label_layout
+  script = <<~PYTHON
+    import importlib.util
+    import json
+    import sys
+
+    spec = importlib.util.spec_from_file_location("qni_bloch_render", sys.argv[1])
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    print(json.dumps(module.label_layout()))
+  PYTHON
+  helper_path = File.join(PROJECT_ROOT, 'libexec', 'qni_bloch_render.py')
+  output, status = Open3.capture2(python_symbolic_runtime, '-c', script, helper_path)
+  raise 'python bloch label layout inspection failed' unless status.success?
+
+  JSON.parse(output)
+end
+
+def bloch_label_metrics
+  script = <<~PYTHON
+    import importlib.util
+    import json
+    import sys
+
+    spec = importlib.util.spec_from_file_location("qni_bloch_render", sys.argv[1])
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    print(json.dumps(module.label_metrics()))
+  PYTHON
+  helper_path = File.join(PROJECT_ROOT, 'libexec', 'qni_bloch_render.py')
+  output, status = Open3.capture2(python_symbolic_runtime, '-c', script, helper_path)
+  raise 'python bloch label metrics inspection failed' unless status.success?
+
+  JSON.parse(output)
+end
+# rubocop:enable Metrics/MethodLength
+
 def run_qni_command(scenario_dir, command)
   argv = Shellwords.split(command)
   raise "command must start with qni: #{command}" unless argv.first == 'qni'
@@ -690,6 +870,218 @@ Then('{string} の画像サイズは {int}x{int} である') do |path, width, he
     #{width}x#{height}
     actual:
     #{output}
+  MESSAGE
+end
+
+Then('{string} は色 {string} のピクセルを含む') do |path, hex_color|
+  actual_path = File.join(@scenario_dir, path)
+  raise "expected file to exist: #{path}" unless File.exist?(actual_path)
+
+  next if image_includes_color?(actual_path, hex_color)
+
+  raise <<~MESSAGE
+    expected image to include color #{hex_color}: #{path}
+  MESSAGE
+end
+
+Then('circle notation renderer では振幅 {float} の位相針の長さは外円の半径に等しい') do |real|
+  metrics = circle_notation_phase_metrics(real: real, imag: 0.0)
+  actual = metrics.fetch('needle_length')
+  expected = metrics.fetch('outer_radius')
+  tolerance = 0.001
+
+  next if metrics.fetch('phase_visible') && (actual - expected).abs <= tolerance
+
+  raise <<~MESSAGE
+    expected phase needle length to equal the outer radius for nonzero amplitudes
+    actual:
+    #{actual}
+    expected:
+    #{expected}
+  MESSAGE
+end
+
+Then('circle notation renderer では外円の輪郭線は内側へ食い込まない') do
+  metrics = circle_notation_outline_metrics
+  actual = metrics.fetch('outline_inner_edge')
+  expected = metrics.fetch('intended_radius')
+  tolerance = 0.001
+
+  next if actual >= expected - tolerance
+
+  raise <<~MESSAGE
+    expected outline stroke not to intrude inside the intended outer radius
+    actual:
+    #{actual}
+    expected:
+    #{expected}
+  MESSAGE
+end
+
+Then('circle notation renderer では振幅 0 のとき位相針は描画されない') do
+  metrics = circle_notation_phase_metrics(real: 0.0, imag: 0.0)
+  next unless metrics.fetch('phase_visible')
+
+  raise <<~MESSAGE
+    expected phase needle to be hidden for zero amplitude
+    actual:
+    #{metrics}
+  MESSAGE
+end
+
+Then('circle notation renderer では振幅 0 のとき中心ドットも描画されない') do
+  metrics = circle_notation_phase_metrics(real: 0.0, imag: 0.0)
+  next unless metrics.fetch('center_dot_visible')
+
+  raise <<~MESSAGE
+    expected center dot to be hidden for zero amplitude
+    actual:
+    #{metrics}
+  MESSAGE
+end
+
+Then('ブロッホ球のラベル {string} と {string} の距離は {float} より大きい') do |first_label, second_label, minimum_distance|
+  labels = bloch_label_layout.fetch('labels')
+  first = labels.fetch(first_label)
+  second = labels.fetch(second_label)
+  distance = Math.sqrt(
+    first.zip(second).sum do |lhs, rhs|
+      (lhs - rhs)**2
+    end
+  )
+  next if distance > minimum_distance
+
+  raise <<~MESSAGE
+    expected distance between #{first_label} and #{second_label} to be > #{minimum_distance}
+    actual:
+    #{distance}
+  MESSAGE
+end
+
+Then('ブロッホ球のラベル {string} と {string} は z 軸上で上向きに並ぶ') do |lower_label, upper_label|
+  labels = bloch_label_layout.fetch('labels')
+  lower = labels.fetch(lower_label)
+  upper = labels.fetch(upper_label)
+  tolerance = 0.01
+
+  next if lower[0].abs <= tolerance &&
+          lower[1].abs <= tolerance &&
+          upper[0].abs <= tolerance &&
+          upper[1].abs <= tolerance &&
+          upper[2] > lower[2]
+
+  raise <<~MESSAGE
+    expected #{lower_label} and #{upper_label} to align with the z axis and stack upward
+    actual:
+    #{lower_label}=#{lower.inspect}
+    #{upper_label}=#{upper.inspect}
+  MESSAGE
+end
+
+Then('ブロッホ球のラベル {string} と {string} は x 軸上で右向きに並ぶ') do |lower_label, upper_label|
+  labels = bloch_label_layout.fetch('labels')
+  lower = labels.fetch(lower_label)
+  upper = labels.fetch(upper_label)
+  tolerance = 0.01
+
+  next if lower[1].abs <= tolerance &&
+          lower[2].abs <= tolerance &&
+          upper[1].abs <= tolerance &&
+          upper[2].abs <= tolerance &&
+          upper[0] > lower[0]
+
+  raise <<~MESSAGE
+    expected #{lower_label} and #{upper_label} to align with the x axis and stack rightward
+    actual:
+    #{lower_label}=#{lower.inspect}
+    #{upper_label}=#{upper.inspect}
+  MESSAGE
+end
+
+Then('ブロッホ球のラベル {string} の表示は z 軸の先端より上にある') do |label|
+  metrics = bloch_label_metrics
+  label_box = metrics.fetch('labels').fetch(label).fetch('bbox')
+  axis_tip = metrics.fetch('axis_tips').fetch('z')
+
+  next if label_box.fetch('bottom') > axis_tip.fetch('y')
+
+  raise <<~MESSAGE
+    expected #{label} to render above the z-axis tip
+    actual:
+    bbox=#{label_box}
+    axis_tip=#{axis_tip}
+  MESSAGE
+end
+
+Then('ブロッホ球のラベル {string} の表示は x 軸の先端より右にある') do |label|
+  metrics = bloch_label_metrics
+  label_box = metrics.fetch('labels').fetch(label).fetch('bbox')
+  axis_tip = metrics.fetch('axis_tips').fetch('x')
+
+  next if label_box.fetch('left') > axis_tip.fetch('x')
+
+  raise <<~MESSAGE
+    expected #{label} to render to the right of the x-axis tip
+    actual:
+    bbox=#{label_box}
+    axis_tip=#{axis_tip}
+  MESSAGE
+end
+
+Then('ブロッホ球のラベル {string} の表示は y 軸の先端より右にある') do |label|
+  metrics = bloch_label_metrics
+  label_box = metrics.fetch('labels').fetch(label).fetch('bbox')
+  axis_tip = metrics.fetch('axis_tips').fetch('y')
+
+  next if label_box.fetch('left') > axis_tip.fetch('x')
+
+  raise <<~MESSAGE
+    expected #{label} to render to the right of the y-axis tip
+    actual:
+    bbox=#{label_box}
+    axis_tip=#{axis_tip}
+  MESSAGE
+end
+
+Then('ブロッホ球のラベル {string} の表示は y 軸の先端より上にある') do |label|
+  metrics = bloch_label_metrics
+  label_box = metrics.fetch('labels').fetch(label).fetch('bbox')
+  axis_tip = metrics.fetch('axis_tips').fetch('y')
+
+  next if label_box.fetch('bottom') > axis_tip.fetch('y')
+
+  raise <<~MESSAGE
+    expected #{label} to render above the y-axis tip
+    actual:
+    bbox=#{label_box}
+    axis_tip=#{axis_tip}
+  MESSAGE
+end
+
+Then('ブロッホ球のラベル {string} が表示される') do |label|
+  next if bloch_label_metrics.fetch('labels').key?(label)
+
+  raise <<~MESSAGE
+    expected rendered labels to include #{label}
+  MESSAGE
+end
+
+Then('ブロッホ球のラベル {string} と {string} の表示領域は重ならない') do |first_label, second_label|
+  metrics = bloch_label_metrics.fetch('labels')
+  first = metrics.fetch(first_label).fetch('bbox')
+  second = metrics.fetch(second_label).fetch('bbox')
+
+  overlap = first.fetch('left') < second.fetch('right') &&
+            first.fetch('right') > second.fetch('left') &&
+            first.fetch('bottom') < second.fetch('top') &&
+            first.fetch('top') > second.fetch('bottom')
+  next unless overlap
+
+  raise <<~MESSAGE
+    expected rendered label boxes not to overlap
+    actual:
+    #{first_label}=#{first}
+    #{second_label}=#{second}
   MESSAGE
 end
 

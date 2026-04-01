@@ -33,6 +33,26 @@ module Qni
       assert_vector_close frames.last.fetch('vector'), [0.0, -1.0, 0.0]
     end
 
+    def test_x_gate_adds_intermediate_frames_when_trajectory_is_enabled
+      frames = BlochSampler.new(
+        single_gate_circuit('X'),
+        trajectory: true
+      ).frames
+
+      assert_operator frames.length, :>, 2
+      assert_vector_close frames.last.fetch('vector'), [0.0, 0.0, -1.0]
+    end
+
+    def test_h_gate_adds_intermediate_frames_when_trajectory_is_enabled
+      frames = BlochSampler.new(
+        single_gate_circuit('H'),
+        trajectory: true
+      ).frames
+
+      assert_operator frames.length, :>, 2
+      assert_vector_close frames.last.fetch('vector'), [1.0, 0.0, 0.0]
+    end
+
     private
 
     def empty_circuit

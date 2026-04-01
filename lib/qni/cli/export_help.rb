@@ -9,6 +9,7 @@ module Qni
           qni export --latex-source [--output=PATH]
           qni export --png --output=PATH
           qni export --state-vector --png --output=PATH
+          qni export --circle-notation --png --output=PATH
 
         Overview:
           Export ./circuit.json as qcircuit LaTeX or PNG.
@@ -16,12 +17,14 @@ module Qni
           With --output=PATH, --latex-source writes the LaTeX file instead.
           --png renders the qcircuit LaTeX with pdflatex and converts the PDF to PNG with pdftocairo.
           --state-vector renders the symbolic state vector as LaTeX and converts it to PNG.
+          --circle-notation renders the final computational-basis state as a circle-notation PNG.
           qni export follows qni's step constraints, so one step can contain simple 1-qubit gates, one controlled gate, or one 2-qubit SWAP.
 
         Options:
           --latex-source  # write qcircuit LaTeX
           --png           # write PNG rendered from qcircuit LaTeX
           --state-vector  # write the symbolic state vector as PNG
+          --circle-notation # write the computational-basis circle notation as PNG
           --dark          # draw white circuit lines for dark backgrounds (default)
           --light         # draw black circuit lines for light backgrounds
           [--output=PATH] # output file path; required for --png
@@ -33,6 +36,7 @@ module Qni
           qni export --png --output circuit.png
           qni export --png --dark --output circuit.png
           qni export --state-vector --png --output state.png
+          qni export --circle-notation --png --output circles.png
       HELP
     end
   end

@@ -1,6 +1,6 @@
 Feature: qni export コマンド
   qni-cli のユーザとして
-  回路図を外部ツールで表示したり保存したりするために
+  回路図や状態表示を外部ツールで表示したり保存したりするために
   qni export で qcircuit LaTeX や PNG を出力したい
 
   Scenario: qni export --help は export コマンドの使い方を表示
@@ -12,6 +12,7 @@ Feature: qni export コマンド
         qni export --latex-source [--output=PATH]
         qni export --png --output=PATH
         qni export --state-vector --png --output=PATH
+        qni export --circle-notation --png --output=PATH
 
       Overview:
         Export ./circuit.json as qcircuit LaTeX or PNG.
@@ -19,12 +20,14 @@ Feature: qni export コマンド
         With --output=PATH, --latex-source writes the LaTeX file instead.
         --png renders the qcircuit LaTeX with pdflatex and converts the PDF to PNG with pdftocairo.
         --state-vector renders the symbolic state vector as LaTeX and converts it to PNG.
+        --circle-notation renders the final computational-basis state as a circle-notation PNG.
         qni export follows qni's step constraints, so one step can contain simple 1-qubit gates, one controlled gate, or one 2-qubit SWAP.
 
       Options:
         --latex-source  # write qcircuit LaTeX
         --png           # write PNG rendered from qcircuit LaTeX
         --state-vector  # write the symbolic state vector as PNG
+        --circle-notation # write the computational-basis circle notation as PNG
         --dark          # draw white circuit lines for dark backgrounds (default)
         --light         # draw black circuit lines for light backgrounds
         [--output=PATH] # output file path; required for --png
@@ -36,6 +39,7 @@ Feature: qni export コマンド
         qni export --png --output circuit.png
         qni export --png --dark --output circuit.png
         qni export --state-vector --png --output state.png
+        qni export --circle-notation --png --output circles.png
       """
 
   Scenario: qni export --latex-source はデフォルトで dark theme の qcircuit LaTeX を標準出力へ出す
@@ -145,4 +149,68 @@ Feature: qni export コマンド
     And 標準エラー:
       """
       symbolic run currently supports only 1-qubit and 2-qubit circuits
+      """
+
+  Scenario: qni export --circle-notation --png は 1 qubit 状態の PNG を書き出す
+    Given "qni state set |+>" を実行
+    When "qni export --circle-notation --png --output circles.png" を実行
+    Then コマンドは成功
+    And "circles.png" は PNG 画像である
+    And "circles.png" は透過 PNG 画像である
+
+  Scenario: qni export --circle-notation --png は 2 qubit Bell 状態の PNG を書き出す
+    Given "qni state set |Φ+>" を実行
+    When "qni export --circle-notation --png --output circles.png" を実行
+    Then コマンドは成功
+    And "circles.png" は PNG 画像である
+    And "circles.png" は透過 PNG 画像である
+
+  Scenario: qni export --circle-notation は振幅が小さくても位相針を外円まで描く
+    Given "qni state set '0.1|0> + 0.99498743710662|1>'" を実行
+    When "qni export --circle-notation --png --light --output circles.png" を実行
+    Then コマンドは成功
+    And "circles.png" は PNG 画像である
+    And circle notation renderer では振幅 0.1 の位相針の長さは外円の半径に等しい
+    And circle notation renderer では外円の輪郭線は内側へ食い込まない
+
+  Scenario: qni export --circle-notation は振幅が 0 のときだけ位相針を描かない
+    Given 空の 1 qubit 回路がある
+    When "qni export --circle-notation --png --light --output circles.png" を実行
+    Then コマンドは成功
+    And "circles.png" は PNG 画像である
+    And circle notation renderer では振幅 0 のとき位相針は描画されない
+    And circle notation renderer では振幅 0 のとき中心ドットも描画されない
+
+  Scenario: qni export --circle-notation --png は state-vector PNG と異なる画像を書き出す
+    Given "qni state set |Φ+>" を実行
+    When "qni export --circle-notation --png --output circles.png" を実行
+    And "qni export --state-vector --png --output state.png" を実行
+    Then コマンドは成功
+    And "circles.png" と "state.png" は異なるファイル内容である
+
+  Scenario: qni export --circle-notation は --png なしでは失敗する
+    Given "qni state set |+>" を実行
+    When "qni export --circle-notation --output circles.png" を実行
+    Then コマンドは失敗
+    And 標準エラー:
+      """
+      --circle-notation currently supports only --png
+      """
+
+  Scenario: qni export --circle-notation と --state-vector を同時指定すると失敗する
+    Given "qni state set |+>" を実行
+    When "qni export --circle-notation --state-vector --png --output circles.png" を実行
+    Then コマンドは失敗
+    And 標準エラー:
+      """
+      choose at most one of --state-vector or --circle-notation
+      """
+
+  Scenario: qni export --circle-notation --png は 3 qubit 回路では失敗する
+    Given 空の 3 qubit 回路がある
+    When "qni export --circle-notation --png --output circles.png" を実行
+    Then コマンドは失敗
+    And 標準エラー:
+      """
+      circle notation currently supports only 1-qubit and 2-qubit circuits
       """

@@ -66,6 +66,7 @@ module Qni
     method_option :apng, type: :boolean, default: false, desc: 'Write a Bloch sphere APNG'
     method_option :inline, type: :boolean, default: false, desc: 'Render inline in a Kitty-compatible terminal'
     method_option :animate, type: :boolean, default: false, desc: 'Animate inline Bloch output'
+    method_option :trajectory, type: :boolean, default: false, desc: 'Draw the sampled state-evolution trail'
     method_option :dark, type: :boolean, default: false, desc: 'Draw light content for dark backgrounds'
     method_option :light, type: :boolean, default: false, desc: 'Draw dark content for light backgrounds'
     method_option :output, type: :string, desc: 'Write to this path'
@@ -87,6 +88,10 @@ module Qni
     method_option :latex_source, type: :boolean, default: false, desc: 'Write qcircuit LaTeX'
     method_option :png, type: :boolean, default: false, desc: 'Write PNG rendered from qcircuit LaTeX'
     method_option :state_vector, type: :boolean, default: false, desc: 'Write the symbolic state vector as PNG'
+    method_option :circle_notation,
+                  type: :boolean,
+                  default: false,
+                  desc: 'Write the computational-basis circle notation as PNG'
     method_option :dark, type: :boolean, default: false, desc: 'Draw white circuit lines for dark backgrounds'
     method_option :light, type: :boolean, default: false, desc: 'Draw black circuit lines for light backgrounds'
     method_option :output, type: :string, desc: 'Write to this path'

@@ -13,11 +13,25 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
+from mpl_toolkits.mplot3d import proj3d
 
 CANVAS_PX = 512
 DPI = 100
 FIGSIZE = CANVAS_PX / DPI
 SPHERE_STEPS = 24
+AXIS_LABELS = [
+    {"text": "x", "anchor": (1.1, 0.0, 0.0), "offset": (6, 0), "fontsize": 11, "ha": "left", "va": "center"},
+    {"text": "y", "anchor": (0.0, 1.1, 0.0), "offset": (4, 2), "fontsize": 11, "ha": "left", "va": "bottom"},
+    {"text": "z", "anchor": (0.0, 0.0, 1.1), "offset": (0, 4), "fontsize": 11, "ha": "center", "va": "bottom"},
+]
+BASIS_LABELS = [
+    {"text": "|0>", "anchor": (0.0, 0.0, 1.1), "offset": (0, 18), "fontsize": 13, "ha": "center", "va": "bottom"},
+    {"text": "|1>", "anchor": (0.0, 0.0, -1.1), "offset": (0, -4), "fontsize": 13, "ha": "center", "va": "top"},
+    {"text": "|+>", "anchor": (1.1, 0.0, 0.0), "offset": (28, 0), "fontsize": 13, "ha": "left", "va": "center"},
+    {"text": "|->", "anchor": (-1.1, 0.0, 0.0), "offset": (-28, 0), "fontsize": 13, "ha": "right", "va": "center"},
+    {"text": "|+i>", "anchor": (0.0, 1.1, 0.0), "offset": (16, 14), "fontsize": 13, "ha": "left", "va": "bottom"},
+    {"text": "|-i>", "anchor": (0.0, -1.1, 0.0), "offset": (-16, -14), "fontsize": 13, "ha": "right", "va": "top"},
+]
 
 
 def main():
@@ -25,57 +39,119 @@ def main():
     render(payload)
 
 
-def render(payload):
-    frames = payload["frames"]
-    format_name = payload["format"]
-    output_path = payload["output_path"]
-    theme = theme_config(payload.get("theme", "dark"))
-
-    if format_name == "png":
-      image = render_frame_image(frames, len(frames) - 1, theme)
-      image.save(output_path, format="PNG")
-      return
-
-    if format_name == "inline_png":
-      sys.stdout.buffer.write(render_frame_bytes(frames, len(frames) - 1, theme))
-      return
-
-    if format_name == "apng":
-      images = [render_frame_image(frames, index, theme) for index in range(len(frames))]
-      first, rest = images[0], images[1:]
-      first.save(
-          output_path,
-          format="PNG",
-          save_all=True,
-          append_images=rest,
-          duration=[90] * len(images),
-          loop=0,
-          default_image=False,
-      )
-      return
-
-    if format_name == "inline_frames":
-      encoded_frames = [
-          base64.b64encode(render_frame_bytes(frames, index, theme)).decode("ascii")
-          for index in range(len(frames))
-      ]
-      json.dump({"frames": encoded_frames}, sys.stdout)
-      return
-
-    raise ValueError(f"unsupported bloch output format: {format_name}")
+def label_layout():
+    labels = {}
+    for label in all_labels():
+        labels[label["text"]] = [float(component) for component in label["anchor"]]
+    return {"labels": labels}
 
 
-def render_frame_image(frames, frame_index, theme):
+def label_kwargs(label):
+    kwargs = {}
+    if "ha" in label:
+        kwargs["ha"] = label["ha"]
+    if "va" in label:
+        kwargs["va"] = label["va"]
+    return kwargs
+
+
+def label_metrics():
     fig = plt.figure(figsize=(FIGSIZE, FIGSIZE), dpi=DPI)
     fig.patch.set_alpha(0)
     ax = fig.add_subplot(111, projection="3d")
     ax.set_facecolor((0, 0, 0, 0))
-    style_axes(ax, theme)
+    style_axes(ax)
+    draw_sphere(ax, theme_config("light"))
+    draw_axes(ax, theme_config("light"))
+    artists = draw_labels(ax, theme_config("light"))
+
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    labels = {}
+    for label in all_labels():
+        artist = artists[label["text"]]
+        bbox = artist.get_window_extent(renderer)
+        labels[label["text"]] = {
+            "bbox": {
+                "left": float(bbox.x0),
+                "right": float(bbox.x1),
+                "bottom": float(bbox.y0),
+                "top": float(bbox.y1),
+            },
+            "anchor": project_point(ax, label["anchor"]),
+        }
+
+    metrics = {
+        "axis_tips": {label["text"]: project_point(ax, label["anchor"]) for label in AXIS_LABELS},
+        "labels": labels,
+    }
+    plt.close(fig)
+    return metrics
+
+
+def all_labels():
+    return AXIS_LABELS + BASIS_LABELS
+
+
+def project_point(ax, point):
+    x, y, _ = proj3d.proj_transform(*point, ax.get_proj())
+    display_x, display_y = ax.transData.transform((x, y))
+    return {"x": float(display_x), "y": float(display_y)}
+
+
+def render(payload):
+    frames = payload["frames"]
+    format_name = payload["format"]
+    output_path = payload["output_path"]
+    show_trail = payload.get("show_trail", False)
+    theme = theme_config(payload.get("theme", "dark"))
+
+    if format_name == "png":
+        image = render_frame_image(frames, len(frames) - 1, theme, show_trail)
+        image.save(output_path, format="PNG")
+        return
+
+    if format_name == "inline_png":
+        sys.stdout.buffer.write(render_frame_bytes(frames, len(frames) - 1, theme, show_trail))
+        return
+
+    if format_name == "apng":
+        images = [render_frame_image(frames, index, theme, show_trail) for index in range(len(frames))]
+        first, rest = images[0], images[1:]
+        first.save(
+            output_path,
+            format="PNG",
+            save_all=True,
+            append_images=rest,
+            duration=[90] * len(images),
+            loop=0,
+            default_image=False,
+        )
+        return
+
+    if format_name == "inline_frames":
+        encoded_frames = [
+            base64.b64encode(render_frame_bytes(frames, index, theme, show_trail)).decode("ascii")
+            for index in range(len(frames))
+        ]
+        json.dump({"frames": encoded_frames}, sys.stdout)
+        return
+
+    raise ValueError(f"unsupported bloch output format: {format_name}")
+
+
+def render_frame_image(frames, frame_index, theme, show_trail):
+    fig = plt.figure(figsize=(FIGSIZE, FIGSIZE), dpi=DPI)
+    fig.patch.set_alpha(0)
+    ax = fig.add_subplot(111, projection="3d")
+    ax.set_facecolor((0, 0, 0, 0))
+    style_axes(ax)
     draw_sphere(ax, theme)
     draw_axes(ax, theme)
-    draw_basis_labels(ax, theme)
-    draw_trail(ax, frames, frame_index, theme)
+    if show_trail:
+        draw_trail(ax, frames, frame_index, theme)
     draw_state_vector(ax, frames[frame_index]["vector"], theme)
+    draw_labels(ax, theme)
 
     buffer = io.BytesIO()
     plt.savefig(buffer, format="png", transparent=True)
@@ -84,14 +160,14 @@ def render_frame_image(frames, frame_index, theme):
     return Image.open(buffer).convert("RGBA")
 
 
-def render_frame_bytes(frames, frame_index, theme):
-    image = render_frame_image(frames, frame_index, theme)
+def render_frame_bytes(frames, frame_index, theme, show_trail):
+    image = render_frame_image(frames, frame_index, theme, show_trail)
     buffer = io.BytesIO()
     image.save(buffer, format="PNG")
     return buffer.getvalue()
 
 
-def style_axes(ax, theme):
+def style_axes(ax):
     ax.set_xlim(-1.1, 1.1)
     ax.set_ylim(-1.1, 1.1)
     ax.set_zlim(-1.1, 1.1)
@@ -121,11 +197,11 @@ def draw_sphere(ax, theme):
 
 def draw_axes(ax, theme):
     axes = [
-        ((-1.1, 0, 0), (1.1, 0, 0), "x"),
-        ((0, -1.1, 0), (0, 1.1, 0), "y"),
-        ((0, 0, -1.1), (0, 0, 1.1), "z"),
+        ((-1.1, 0, 0), (1.1, 0, 0)),
+        ((0, -1.1, 0), (0, 1.1, 0)),
+        ((0, 0, -1.1), (0, 0, 1.1)),
     ]
-    for start, end, label in axes:
+    for start, end in axes:
         ax.plot(
             [start[0], end[0]],
             [start[1], end[1]],
@@ -134,18 +210,28 @@ def draw_axes(ax, theme):
             linewidth=1.5,
             alpha=0.9,
         )
-        ax.text(end[0] * 1.03, end[1] * 1.03, end[2] * 1.03, label, color=theme["text"], fontsize=11)
 
 
-def draw_basis_labels(ax, theme):
-    labels = [
-        ((0, 0, 1.12), "|0>"),
-        ((0, 0, -1.18), "|1>"),
-        ((1.14, 0, 0), "|+>"),
-        ((-1.20, 0, 0), "|->"),
-    ]
-    for (x, y, z), text in labels:
-        ax.text(x, y, z, text, color=theme["text"], fontsize=13)
+def draw_labels(ax, theme):
+    return {
+        label["text"]: add_projected_label(ax, label, theme)
+        for label in all_labels()
+    }
+
+
+def add_projected_label(ax, label, theme):
+    x, y, _ = proj3d.proj_transform(*label["anchor"], ax.get_proj())
+    return ax.annotate(
+        label["text"],
+        xy=(x, y),
+        xycoords="data",
+        xytext=label.get("offset", (0, 0)),
+        textcoords="offset points",
+        color=theme["text"],
+        fontsize=label["fontsize"],
+        annotation_clip=False,
+        **label_kwargs(label),
+    )
 
 
 def draw_trail(ax, frames, frame_index, theme):

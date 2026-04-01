@@ -199,6 +199,19 @@ module Qni
       ]
     end
 
+    def export_payload
+      {
+        'qubits' => qubits,
+        'amplitudes' => amplitudes.map do |amplitude|
+          if amplitude.is_a?(Complex)
+            { 'real' => amplitude.real.to_f, 'imag' => amplitude.imag.to_f }
+          else
+            { 'real' => amplitude.to_f, 'imag' => 0.0 }
+          end
+        end
+      }
+    end
+
     def self.real_component(value)
       (value.is_a?(Complex) ? value.real : value).to_f
     end

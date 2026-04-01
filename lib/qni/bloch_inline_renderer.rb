@@ -10,9 +10,10 @@ module Qni
     UNSUPPORTED_TERMINAL_MESSAGE =
       'inline bloch rendering requires a Kitty-compatible terminal; use --png or --apng instead'
 
-    def initialize(frames:, theme:, io: $stdout, env: ENV)
+    def initialize(frames:, theme:, show_trail: false, io: $stdout, env: ENV)
       @frames = frames
       @theme = theme
+      @show_trail = show_trail
       @io = io
       @env = env
     end
@@ -31,10 +32,16 @@ module Qni
 
     private
 
-    attr_reader :env, :frames, :io, :theme
+    attr_reader :env, :frames, :io, :show_trail, :theme
 
     def animated_png_frames
-      BlochRenderer.new(format: 'inline_frames', output_path: nil, frames:, theme:).render
+      BlochRenderer.new(
+        format: 'inline_frames',
+        output_path: nil,
+        frames:,
+        theme:,
+        show_trail:
+      ).render
     end
 
     def force_inline?
@@ -51,7 +58,13 @@ module Qni
     end
 
     def static_png_frame
-      BlochRenderer.new(format: 'inline_png', output_path: nil, frames:, theme:).render
+      BlochRenderer.new(
+        format: 'inline_png',
+        output_path: nil,
+        frames:,
+        theme:,
+        show_trail:
+      ).render
     end
 
     def supported_terminal?

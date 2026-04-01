@@ -7,6 +7,7 @@ module Qni
       TEXT = <<~HELP
         Usage:
           qni bloch --png --output bloch.png
+          qni bloch --png --trajectory --output bloch.png
           qni bloch --apng --output bloch.png
           qni bloch --inline
           qni bloch --inline --animate
@@ -23,12 +24,14 @@ module Qni
           --apng          # write a Bloch sphere APNG
           --inline        # render a Bloch sphere inline in a Kitty-compatible terminal
           --animate       # animate inline Bloch output; valid only with --inline
+          --trajectory    # draw the sampled state-evolution trail on the Bloch sphere
           --dark          # draw light content for dark backgrounds (default)
           --light         # draw dark content for light backgrounds
           [--output=PATH] # output file path; required for --png and --apng
 
         Examples:
           qni bloch --png --output bloch.png
+          qni bloch --png --trajectory --output bloch.png
           qni bloch --apng --output bloch.png
           qni bloch --png --light --output bloch.png
           qni bloch --inline
