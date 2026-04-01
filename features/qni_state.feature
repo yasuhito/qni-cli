@@ -76,6 +76,51 @@ Feature: qni state コマンド
       |-i>
       """
 
+  Scenario: qni state set は |Φ+> を shorthand のまま表示できる初期状態として保存する
+    When "qni state set \"|Φ+>\"" を実行
+    Then コマンドは成功
+    And "qni state show" を実行
+    And 標準出力:
+      """
+      |Φ+>
+      """
+
+  Scenario: qni state set は |Φ-> を shorthand のまま表示できる初期状態として保存する
+    When "qni state set \"|Φ->\"" を実行
+    Then コマンドは成功
+    And "qni state show" を実行
+    And 標準出力:
+      """
+      |Φ->
+      """
+
+  Scenario: qni state set は |Ψ+> を shorthand のまま表示できる初期状態として保存する
+    When "qni state set \"|Ψ+>\"" を実行
+    Then コマンドは成功
+    And "qni state show" を実行
+    And 標準出力:
+      """
+      |Ψ+>
+      """
+
+  Scenario: qni state set は |Ψ-> を shorthand のまま表示できる初期状態として保存する
+    When "qni state set \"|Ψ->\"" を実行
+    Then コマンドは成功
+    And "qni state show" を実行
+    And 標準出力:
+      """
+      |Ψ->
+      """
+
+  Scenario: qni state set は Bell 基底上の線形結合を表示できる初期状態として保存する
+    When "qni state set \"α|Φ+> + β|Φ->\"" を実行
+    Then コマンドは成功
+    And "qni state show" を実行
+    And 標準出力:
+      """
+      alpha|Φ+> + beta|Φ->
+      """
+
   Scenario: qni state clear は初期状態設定を削除する
     Given "qni state set \"alpha|0> + beta|1>\"" を実行
     When "qni state clear" を実行

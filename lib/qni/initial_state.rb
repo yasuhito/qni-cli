@@ -9,7 +9,51 @@ module Qni
     class Error < StandardError; end
     PLUS_MINUS_COEFFICIENT_TEXT = Math.sqrt(0.5).to_s
     NEGATED_PLUS_MINUS_COEFFICIENT_TEXT = (-Math.sqrt(0.5)).to_s
+    BELL_BASIS_FACTOR = Math.sqrt(0.5)
+    BELL_PLACEHOLDERS = {
+      'Φ+' => '__QNI_BELL_PHI_PLUS__',
+      'Φ-' => '__QNI_BELL_PHI_MINUS__',
+      'Ψ+' => '__QNI_BELL_PSI_PLUS__',
+      'Ψ-' => '__QNI_BELL_PSI_MINUS__'
+    }.freeze
+    BELL_BASIS_COMPONENTS = {
+      'Φ+' => [[0, BELL_BASIS_FACTOR], [3, BELL_BASIS_FACTOR]],
+      'Φ-' => [[0, BELL_BASIS_FACTOR], [3, -BELL_BASIS_FACTOR]],
+      'Ψ+' => [[1, BELL_BASIS_FACTOR], [2, BELL_BASIS_FACTOR]],
+      'Ψ-' => [[1, BELL_BASIS_FACTOR], [2, -BELL_BASIS_FACTOR]]
+    }.freeze
     IMAGINARY_NUMERIC_PATTERN = /\A(?<real>[+-]?\d+(?:\.\d+)?)i\z/
+
+    def self.supported_basis?(basis)
+      basis_qubit_count(basis).positive?
+    end
+
+    def self.basis_qubit_count(basis)
+      case basis
+      when '0', '1' then 1
+      when '00', '01', '10', '11' then 2
+      else
+        BELL_BASIS_COMPONENTS.key?(basis) ? 2 : 0
+      end
+    end
+
+    def self.basis_components(basis)
+      case basis
+      when '0' then [[0, 1.0]]
+      when '1' then [[1, 1.0]]
+      when '00' then [[0, 1.0]]
+      when '01' then [[1, 1.0]]
+      when '10' then [[2, 1.0]]
+      when '11' then [[3, 1.0]]
+      else
+        BELL_BASIS_COMPONENTS.fetch(basis)
+      end
+    end
+
+    def self.bell_shorthand?(basis)
+      BELL_PLACEHOLDERS.key?(basis)
+    end
+
     # Resolves initial-state coefficient strings into numeric amplitudes.
     class NumericResolver
       def initialize(variables)
@@ -59,7 +103,7 @@ module Qni
 
     # Single term in a 1-qubit initial-state ket sum.
     class Term
-      TERM_PATTERN = /\A(?<coefficient>.+)\|(?<basis>[01])>\z/
+      TERM_PATTERN = /\A(?<coefficient>.+)\|(?<basis>[^>]+)>\z/
       SIGNED_IDENTIFIER_PATTERN = /\A(?<sign>[+-])(?<identifier>[a-zA-Z_][a-zA-Z0-9_]*)\z/
 
       def self.from_h(data)
@@ -81,7 +125,7 @@ module Qni
 
       def self.validated_basis(raw_basis)
         basis = raw_basis.to_s
-        return basis if %w[0 1].include?(basis)
+        return basis if InitialState.supported_basis?(basis)
 
         raise Error, "unsupported basis state: #{basis}"
       end
@@ -141,6 +185,10 @@ module Qni
       when '|->' then superposition_state(NEGATED_PLUS_MINUS_COEFFICIENT_TEXT)
       when '|+i>' then superposition_state("#{PLUS_MINUS_COEFFICIENT_TEXT}i")
       when '|-i>' then superposition_state("-#{PLUS_MINUS_COEFFICIENT_TEXT}i")
+      when '|Φ+>' then bell_state('Φ+')
+      when '|Φ->' then bell_state('Φ-')
+      when '|Ψ+>' then bell_state('Ψ+')
+      when '|Ψ->' then bell_state('Ψ-')
       end
     end
 
@@ -153,13 +201,19 @@ module Qni
       )
     end
 
+    def self.bell_state(basis)
+      new(terms: [Term.new(basis: basis, coefficient: '1')])
+    end
+
     def self.normalize_text(raw_value)
-      raw_value.to_s.gsub('α', 'alpha')
-               .gsub('β', 'beta')
-               .strip
-               .gsub(/\s+/, ' ')
-               .gsub(/\s*-\s*/, ' + -')
-               .gsub(/\s*\+\s*/, ' + ')
+      text = protect_bell_shorthands(raw_value.to_s)
+      normalized = text.gsub('α', 'alpha')
+                       .gsub('β', 'beta')
+                       .strip
+                       .gsub(/\s+/, ' ')
+                       .gsub(/\s*-\s*/, ' + -')
+                       .gsub(/\s*\+\s*/, ' + ')
+      restore_bell_shorthands(normalized)
     end
 
     def self.parse_ket_sum(raw_value)
@@ -174,13 +228,20 @@ module Qni
       duplicate_basis = grouped_terms.find { |_basis, basis_terms| basis_terms.length > 1 }&.first
       raise Error, "duplicate basis state: #{duplicate_basis}" if duplicate_basis
 
+      basis_dimensions = terms.map { |term| self.class.basis_qubit_count(term.basis) }.uniq
+      raise Error, 'mixed basis dimensions are not supported' if basis_dimensions.length > 1
+
       @terms = terms.sort_by(&:basis)
     end
 
     def resolve_numeric(variables)
       resolver = NumericResolver.new(variables)
-      amplitudes = terms.each_with_object(Array.new(2, 0.0)) do |term, resolved|
-        resolved[term.basis.to_i] = resolver.resolve(term.coefficient)
+      amplitudes = Array.new(2**self.class.basis_qubit_count(terms.first.basis), 0.0)
+      terms.each do |term|
+        coefficient = resolver.resolve(term.coefficient)
+        self.class.basis_components(term.basis).each do |index, scale|
+          amplitudes[index] += coefficient * scale
+        end
       end
 
       ensure_normalized(amplitudes)
@@ -196,6 +257,7 @@ module Qni
       return '|->' if minus_state?
       return '|+i>' if plus_i_state?
       return '|-i>' if minus_i_state?
+      return "|#{terms.first.basis}>" if bell_shorthand_state?
 
       terms.join(' + ').gsub('+ -', '- ')
     end
@@ -224,6 +286,22 @@ module Qni
       return false unless terms.map(&:basis) == %w[0 1]
 
       terms.map(&:coefficient) == [expected_zero, expected_one]
+    end
+
+    def bell_shorthand_state?
+      terms.length == 1 && self.class.bell_shorthand?(terms.first.basis) && terms.first.coefficient == '1'
+    end
+
+    def self.protect_bell_shorthands(text)
+      BELL_PLACEHOLDERS.reduce(text) do |current, (basis, placeholder)|
+        current.gsub("|#{basis}>", placeholder)
+      end
+    end
+
+    def self.restore_bell_shorthands(text)
+      BELL_PLACEHOLDERS.reduce(text) do |current, (basis, placeholder)|
+        current.gsub(placeholder, "|#{basis}>")
+      end
     end
 
     def amplitude_norm(amplitude)
