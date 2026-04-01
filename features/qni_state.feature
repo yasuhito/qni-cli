@@ -85,6 +85,31 @@ Feature: qni state コマンド
       |Φ+>
       """
 
+  Scenario: qni state set は |Φ+> を qubits 2 の circuit.json として保存する
+    When "qni state set \"|Φ+>\"" を実行
+    Then コマンドは成功
+    And circuit.json:
+      """
+      {
+        "qubits": 2,
+        "initial_state": {
+          "format": "ket_sum_v1",
+          "terms": [
+            {
+              "basis": "Φ+",
+              "coefficient": "1"
+            }
+          ]
+        },
+        "cols": [
+          [
+            1,
+            1
+          ]
+        ]
+      }
+      """
+
   Scenario: qni state set は |Φ-> を shorthand のまま表示できる初期状態として保存する
     When "qni state set \"|Φ->\"" を実行
     Then コマンドは成功
