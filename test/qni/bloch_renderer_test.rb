@@ -1,17 +1,19 @@
 # frozen_string_literal: true
 
 require 'minitest/autorun'
-require 'open3'
 require 'tmpdir'
 require_relative '../../lib/qni/bloch_renderer'
+require_relative '../../lib/qni/image_inspector'
 
 module Qni
   class BlochRendererTest < Minitest::Test
     def test_apng_writes_animated_png_file
       with_rendered_file(format: 'apng') do |output_path|
-        file_output, file_status = Open3.capture2('file', output_path)
-        assert file_status.success?, 'expected file command to succeed'
-        assert_includes file_output, 'animated'
+        inspector = ImageInspector.new(output_path, python_runtime: python_runtime)
+
+        assert inspector.png?
+        assert inspector.animated_png?
+        assert_operator inspector.frame_count, :>, 1
       end
     end
 
@@ -45,6 +47,10 @@ module Qni
         { 'vector' => [0.0, 0.0, 1.0] },
         { 'vector' => [1.0, 0.0, 0.0] }
       ]
+    end
+
+    def python_runtime
+      File.expand_path('../../.python-symbolic/bin/python', __dir__)
     end
 
     def with_rendered_file(format:)
