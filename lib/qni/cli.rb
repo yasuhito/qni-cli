@@ -56,7 +56,10 @@ module Qni
 
     desc 'view', 'Render the circuit as ASCII art'
     def view
-      puts current_circuit_file.load.render_ascii(style: $stdout.tty? ? :colorized : :plain)
+      puts View::TextRenderer.new(
+        current_circuit_file.load,
+        style: $stdout.tty? ? :colorized : :plain
+      ).render
     rescue CircuitFile::Error => e
       raise Thor::Error, e.message
     end

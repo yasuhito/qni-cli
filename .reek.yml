@@ -14,13 +14,11 @@ detectors:
   NilCheck:
     exclude: []
   InstanceVariableAssumption:
-    exclude:
-      - Qni::Circuit
+    exclude: []
   TooManyInstanceVariables:
     exclude: []
   TooManyMethods:
-    exclude:
-      - Qni::Circuit
+    exclude: []
   TooManyStatements:
     exclude: []
   UncommunicativeVariableName:

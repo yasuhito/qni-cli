@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'circuit/controlled_gate'
+require_relative 'circuit/loader'
 require_relative 'circuit/layout_normalizer'
 require_relative 'circuit/slot_position'
 require_relative 'circuit/symbol_placement'
@@ -13,64 +14,35 @@ require_relative 'view/text_renderer'
 
 module Qni
   # Mutable circuit model backed by qubit count and column-oriented steps.
-  # rubocop:disable Metrics/ClassLength
   class Circuit
     # Raised when circuit data is invalid or a requested mutation cannot be applied.
     class Error < StandardError; end
+    # Mutable storage for circuit steps, symbolic variables, and optional initial state.
+    State = Struct.new(:steps, :variables, :initial_state)
     CONTROL_SYMBOL = '•'
 
     def self.empty(step:, qubit:)
-      qubits = qubit + 1
-      steps = Array.new(step + 1) { Step.empty(qubits) }
-      new(qubits:, steps:, variables: VariableStore.empty, initial_state: nil)
+      new(**Loader.empty_attributes(step:, qubit:))
     end
 
     def self.from_h(data)
-      new(**attributes_from(data))
+      new(**Loader.attributes_from(data))
     rescue Step::Error => e
       raise Error, e.message
     end
 
-    def self.attributes_from(data)
-      qubits = validated_qubits(data.fetch('qubits'))
-      initial_state_data = data['initial_state']
-
-      {
-        qubits:,
-        steps: validated_steps(data.fetch('cols'), qubits),
-        variables: VariableStore.build(data.fetch('variables', {})),
-        initial_state: initial_state_data && InitialState.from_h(initial_state_data)
-      }
-    end
-
-    def self.validate_qubits!(qubits)
-      return if qubits.is_a?(Integer) && qubits.positive?
-
-      raise Error, 'qubits must be a positive integer'
-    end
-
-    def self.validate_cols(cols, qubits)
-      StepWidthValidator.new(qubits).validate_raw_cols(cols)
-      cols
-    end
-
-    def self.validated_qubits(qubits)
-      validate_qubits!(qubits)
-      qubits
-    end
-
-    def self.validated_steps(cols, qubits)
-      validate_cols(cols, qubits).map { |col| Step.from_a(col) }
-    end
-
     def initialize(qubits:, steps:, variables: VariableStore.empty, initial_state: nil)
-      self.class.validate_qubits!(qubits)
+      Loader.validate_qubits!(qubits)
       StepWidthValidator.new(qubits).validate_steps(steps)
       @qubits = qubits
-      store_state(steps, variables, initial_state)
+      @state = State.new(steps.dup, variables, initial_state)
     end
 
-    attr_reader :initial_state, :qubits
+    attr_reader :qubits
+
+    def initial_state
+      @state.initial_state
+    end
 
     def add_gate(gate:, step:, qubit:)
       add_placement(SymbolPlacement.new(step:, symbols: { qubit => gate }))
@@ -85,69 +57,60 @@ module Qni
     end
 
     def set_variable(name:, value:)
-      @variables.set(name:, value:)
+      @state.variables.set(name:, value:)
     end
 
     def unset_variable(name:)
-      @variables.delete(name)
+      @state.variables.delete(name)
     end
 
     def clear_variables
-      @variables.clear
-    end
-
-    def render_ascii(style: :plain)
-      View::TextRenderer.new(self, style:).render
+      @state.variables.clear
     end
 
     def variables
-      @variables.to_h
+      @state.variables.to_h
     end
 
     def replace_initial_state(next_initial_state)
       expand_qubits_to(next_initial_state.qubits - 1) if next_initial_state
-      @initial_state = next_initial_state
+      @state.initial_state = next_initial_state
     end
 
     def to_h
       result = { 'qubits' => qubits }
       result['initial_state'] = initial_state.to_h if initial_state
-      result['cols'] = @steps.map(&:to_a)
-      result['variables'] = variables unless @variables.empty?
+      result['cols'] = @state.steps.map(&:to_a)
+      result['variables'] = variables unless @state.variables.empty?
       result
     end
 
     private
 
-    def store_state(steps, variables, initial_state)
-      @steps = steps.dup
-      @variables = variables
-      @initial_state = initial_state
-    end
-
     def add_placement(placement)
+      steps = @state.steps
       prepare_slots(placement)
-      placement.place_on(@steps)
-      @qubits = LayoutNormalizer.new(steps: @steps, qubits:).normalize
+      placement.place_on(steps)
+      @qubits = LayoutNormalizer.new(steps:, qubits:).normalize
     end
 
     def prepare_slots(placement)
       expand_qubits_to(placement.max_qubit)
       expand_to(placement.step)
-      placement.ensure_available_in(@steps)
+      placement.ensure_available_in(@state.steps)
     end
 
     def expand_to(step)
-      @steps << Step.empty(qubits) until @steps.length > step
+      steps = @state.steps
+      steps << Step.empty(qubits) until steps.length > step
     end
 
     def expand_qubits_to(qubit)
       return if qubit < qubits
 
       count = qubit - qubits + 1
-      @steps.each { |step| step.extend_right(count) }
+      @state.steps.each { |step| step.extend_right(count) }
       @qubits += count
     end
   end
-  # rubocop:enable Metrics/ClassLength
 end
