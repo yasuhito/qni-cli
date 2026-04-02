@@ -3,26 +3,19 @@ detectors:
     exclude:
       - Qni::View::DrawElement#layer_width
   ControlParameter:
-    exclude:
-      - Qni::View::TextRenderer#merge_blank_bot
-      - Qni::View::TextRenderer#top_priority_merge
+    exclude: []
   DataClump:
-    exclude:
-      - Qni::View::TextRenderer
+    exclude: []
   DuplicateMethodCall:
-    exclude:
-      - Qni::View::TextRenderer#append_wire
+    exclude: []
   FeatureEnvy:
     exclude:
       - Qni::KittyGraphicsEmitter#emit_payload
-      - Qni::View::TextRenderer#append_wire
   LongParameterList:
     exclude:
       - Qni::View::DrawElement#render_line
-      - Qni::View::TextRenderer#append_wire
   NilCheck:
-    exclude:
-      - Qni::View::TextRenderer#merged_top_line
+    exclude: []
   InstanceVariableAssumption:
     exclude:
       - Qni::Circuit
@@ -35,21 +28,13 @@ detectors:
     exclude:
       - Qni::CLI::BlochCommand
       - Qni::Circuit
-      - Qni::View::TextRenderer
   TooManyStatements:
     exclude:
       - Qni::View::DrawElement#initialize
       - Qni::View::BoxOnQuWire#initialize
-      - Qni::View::TextRenderer#append_wire
-      - Qni::View::TextRenderer#draw_wires
   UncommunicativeVariableName:
     accept:
       - e
   UtilityFunction:
     exclude:
       - Qni::BlochRenderer#resolved_result
-      - Qni::View::TextRenderer#blank_bot_common
-      - Qni::View::TextRenderer#cell_row
-      - Qni::View::TextRenderer#top_priority_merge
-      - Qni::View::TextRenderer#trim_blank_edges
-      - Qni::View::TextRenderer#wire_cells_for
