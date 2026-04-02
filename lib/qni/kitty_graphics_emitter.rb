@@ -3,6 +3,36 @@
 module Qni
   # Emits Kitty graphics protocol payloads to a writable IO object.
   class KittyGraphicsEmitter
+    # Presents base64-encoded PNG bytes as kitty payload chunks with continuation flags.
+    class PayloadChunks
+      include Enumerable
+
+      def initialize(png_bytes, chunk_size:)
+        @encoded_png = [png_bytes].pack('m0')
+        @chunk_size = chunk_size
+      end
+
+      def each
+        return enum_for(:each) unless block_given?
+
+        chunks.each_with_index do |chunk, index|
+          yield chunk, more_chunks_flag(index)
+        end
+      end
+
+      private
+
+      attr_reader :encoded_png, :chunk_size
+
+      def chunks
+        @chunks ||= encoded_png.scan(/.{1,#{chunk_size}}/)
+      end
+
+      def more_chunks_flag(index)
+        index < chunks.length - 1 ? 1 : 0
+      end
+    end
+
     APC_BEGIN = "\e_G"
     APC_END = "\e\\"
     PNG_FORMAT = 100
@@ -43,9 +73,7 @@ module Qni
     end
 
     def emit_payload(command, png_bytes)
-      chunks = [png_bytes].pack('m0').scan(/.{1,#{CHUNK_SIZE}}/)
-      chunks.each_with_index do |chunk, index|
-        more_chunks = index < chunks.length - 1 ? 1 : 0
+      PayloadChunks.new(png_bytes, chunk_size: CHUNK_SIZE).each do |chunk, more_chunks|
         write_apc("#{command},m=#{more_chunks};#{chunk}")
       end
     end

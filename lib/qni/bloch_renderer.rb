@@ -16,7 +16,7 @@ module Qni
       end
 
       def parse
-        return :file_rendered if %w[png apng].include?(format)
+        return nil if %w[png apng].include?(format)
         return stdout.b if format == 'inline_png'
         return inline_frames if format == 'inline_frames'
 
@@ -56,8 +56,8 @@ module Qni
 
     def render
       helper_commands.each do |command|
-        result = resolved_result(run_with_helper(command))
-        next if result == :continue_render
+        result = run_with_helper(command)
+        next if result == :retry_with_next_command
 
         return result
       end
@@ -114,13 +114,6 @@ module Qni
 
     def parsed_output(stdout)
       OutputParser.new(request.fetch(:format), stdout).parse
-    end
-
-    def resolved_result(result)
-      return :continue_render if result == :retry_with_next_command
-      return nil if result == :file_rendered
-
-      result
     end
 
     def handle_failed_helper(stderr, status)

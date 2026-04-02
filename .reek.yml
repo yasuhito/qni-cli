@@ -9,8 +9,7 @@ detectors:
   DuplicateMethodCall:
     exclude: []
   FeatureEnvy:
-    exclude:
-      - Qni::KittyGraphicsEmitter#emit_payload
+    exclude: []
   LongParameterList:
     exclude:
       - Qni::View::DrawElement#render_line
@@ -36,5 +35,4 @@ detectors:
     accept:
       - e
   UtilityFunction:
-    exclude:
-      - Qni::BlochRenderer#resolved_result
+    exclude: []
