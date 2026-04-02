@@ -124,12 +124,17 @@ bundle exec bin/qni bloch --inline
 Run all checks:
 
 ```bash
+scripts/setup_symbolic_python.sh
 bundle exec rake check
 ```
+
+`bundle exec rake check` runs RuboCop, Flog, Flay, Reek, Cucumber, and Minitest.
+Run `scripts/setup_symbolic_python.sh` first so the image-related tests have the Python runtime they need.
 
 Run individual checks:
 
 ```bash
+bundle exec rake test
 bundle exec rake cucumber
 bundle exec rake rubocop
 bundle exec rake flog
