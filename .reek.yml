@@ -15,7 +15,6 @@ detectors:
       - Qni::View::TextRenderer
   DuplicateMethodCall:
     exclude:
-      - Qni::InitialState#bell_shorthand_state?
       - Qni::View::TextRenderer#append_wire
       - Qni::View::TextRenderer#control_step_parts
   FeatureEnvy:
@@ -55,22 +54,14 @@ detectors:
     exclude:
       - Qni::CLI::BlochCommand
       - Qni::Circuit
-      - Qni::InitialState
       - Qni::View::AsciiStepParser
-      - Qni::View::AsciiWireLayout
       - Qni::Export::QCircuitLatex
       - Qni::View::TextRenderer
   TooManyStatements:
     exclude:
-      - Qni::InitialState#to_s
-      - Qni::InitialState::ClassMethods#from_h
       - Qni::View::AsciiStepParser#apply_mid_cell
       - Qni::View::AsciiStepParser#gate_symbol_for
       - Qni::View::AsciiStepParser#to_slots
-      - Qni::View::AsciiWireLayout#annotation_candidate_segment
-      - Qni::View::AsciiWireLayout#box_width_from
-      - Qni::View::AsciiWireLayout#parsed_mid_lines
-      - Qni::View::AsciiWireLayout#annotation_wire_segment
       - Qni::Export::QCircuitLatex#render_swap_cell
       - Qni::View::DrawElement#initialize
       - Qni::View::BoxOnQuWire#initialize
@@ -86,11 +77,6 @@ detectors:
   UtilityFunction:
     exclude:
       - Qni::BlochRenderer#resolved_result
-      - Qni::InitialState#amplitude_norm
-      - Qni::InitialState::ClassMethods#basis_components
-      - Qni::InitialState::ClassMethods#basis_qubit_count
-      - Qni::InitialState::ClassMethods#bell_shorthand?
-      - Qni::InitialState::ClassMethods#normalize_text
       - Qni::View::AsciiStepParser#control_mid?
       - Qni::View::AsciiStepParser#empty_mid?
       - Qni::View::AsciiStepParser#mark_control
@@ -98,8 +84,6 @@ detectors:
       - Qni::View::AsciiStepParser#mark_swap
       - Qni::View::AsciiStepParser#swap_mid?
       - Qni::View::AsciiStepParser#vertical_bridge_mid?
-      - Qni::View::AsciiWireLayout#box_width_from
-      - Qni::View::AsciiWireLayout#mid_line?
       - Qni::Export::QCircuitLatex#controlled_step?
       - Qni::Export::QCircuitLatex#latex_angle
       - Qni::Export::QCircuitLatex#special_gate_label?
@@ -119,10 +103,6 @@ detectors:
       - Qni::View::TextRenderer#view_label
       - Qni::View::TextRenderer#view_angle
       - Qni::View::TextRenderer#wire_cells_for
-  NestedIterators:
-    exclude:
-      - Qni::View::AsciiWireLayout#box_widths_at
   TooManyConstants:
     exclude:
-      - Qni::InitialState
       - Qni::View::AsciiStepParser

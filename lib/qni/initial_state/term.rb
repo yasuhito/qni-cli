@@ -26,10 +26,11 @@ module Qni
       end
 
       def self.validated_basis(raw_basis)
-        basis = raw_basis.to_s
-        return basis if InitialState.supported_basis?(basis)
+        basis = Basis.new(raw_basis)
+        basis_value = basis.value
+        return basis_value if basis.supported?
 
-        raise Error, "unsupported basis state: #{basis}"
+        raise Error, "unsupported basis state: #{basis_value}"
       end
 
       def self.validated_coefficient(raw_coefficient)
@@ -57,6 +58,19 @@ module Qni
 
       def to_h
         { 'basis' => basis, 'coefficient' => coefficient }
+      end
+
+      def add_to_amplitudes(amplitudes, resolved_coefficient)
+        Basis.new(basis).components.each do |index, scale|
+          amplitudes[index] += resolved_coefficient * scale
+        end
+      end
+
+      def bell_basis_label
+        return unless coefficient == '1'
+        return unless Basis.new(basis).bell_shorthand?
+
+        "|#{basis}>"
       end
 
       def to_s

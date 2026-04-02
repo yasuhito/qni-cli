@@ -38,6 +38,14 @@ module Qni
       assert_equal 'initial state must have at least one term', error.message
     end
 
+    def test_from_h_rejects_unsupported_format
+      error = assert_raises(InitialState::Error) do
+        InitialState.from_h('format' => 'legacy', 'terms' => [{ 'basis' => '0', 'coefficient' => '1' }])
+      end
+
+      assert_equal 'unsupported initial state format: legacy', error.message
+    end
+
     def test_rejects_non_normalized_numeric_state
       initial_state = InitialState.parse('alpha|0> + beta|1>')
 
