@@ -16,3 +16,9 @@
 - qni CLI にまだ無い機能が必要になったときは、既存機能でごまかす前に機能追加を検討する。
 - Quantum Katas など既知のユースケースで自然に必要な機能は、feature-first で qni CLI に追加することを優先する。
 - 元の task や回路の意図を崩して回避するのではなく、qni CLI 自体を成長させる方向をまず考える。
+
+## Verification Rule
+
+- commit や push の前には full check を fresh に通す。
+- 少なくとも `bundle exec rake check` を成功させてから commit / push する。
+- 部分的なテストや前回の成功結果ではなく、その時点の作業木に対する最新の実行結果を確認する。
