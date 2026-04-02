@@ -93,6 +93,19 @@ Feature: qni export コマンド
       \targ
       """
 
+  Scenario: qni export --latex-source は SWAP を qswap と qwx で出力する
+    Given "qni add SWAP --qubit 0,1 --step 0" を実行
+    When "qni export --latex-source" を実行
+    Then コマンドは成功
+    And 標準出力に次を含む:
+      """
+      \qswap
+      """
+    And 標準出力に次を含む:
+      """
+      \qwx[-1]
+      """
+
   Scenario: qni export --dark と --light を同時指定すると失敗する
     Given "qni add H --qubit 0 --step 0" を実行
     When "qni export --latex-source --dark --light" を実行

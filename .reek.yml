@@ -4,13 +4,10 @@ detectors:
       - Qni::View::DrawElement#layer_width
   ControlParameter:
     exclude:
-      - Qni::Export::QCircuitLatex#render_swap_cell
-      - Qni::Export::QCircuitLatex#special_gate_label
       - Qni::View::TextRenderer#merge_blank_bot
       - Qni::View::TextRenderer#top_priority_merge
   DataClump:
     exclude:
-      - Qni::Export::QCircuitLatex
       - Qni::View::TextRenderer
   DuplicateMethodCall:
     exclude:
@@ -19,9 +16,6 @@ detectors:
   FeatureEnvy:
     exclude:
       - Qni::KittyGraphicsEmitter#emit_payload
-      - Qni::Export::QCircuitLatex#controlled_step_parts
-      - Qni::Export::QCircuitLatex#controlled_target
-      - Qni::Export::QCircuitLatex#render_swap_cell
       - Qni::View::TextRenderer#append_wire
       - Qni::View::TextRenderer#control_step_parts
       - Qni::View::TextRenderer#place_target
@@ -50,11 +44,9 @@ detectors:
     exclude:
       - Qni::CLI::BlochCommand
       - Qni::Circuit
-      - Qni::Export::QCircuitLatex
       - Qni::View::TextRenderer
   TooManyStatements:
     exclude:
-      - Qni::Export::QCircuitLatex#render_swap_cell
       - Qni::View::DrawElement#initialize
       - Qni::View::BoxOnQuWire#initialize
       - Qni::View::TextRenderer#build_layer
@@ -69,11 +61,6 @@ detectors:
   UtilityFunction:
     exclude:
       - Qni::BlochRenderer#resolved_result
-      - Qni::Export::QCircuitLatex#controlled_step?
-      - Qni::Export::QCircuitLatex#latex_angle
-      - Qni::Export::QCircuitLatex#special_gate_label?
-      - Qni::Export::QCircuitLatex#swap_step?
-      - Qni::Export::QCircuitLatex#valid_swap_step?
       - Qni::View::TextRenderer#blank_bot_common
       - Qni::View::TextRenderer#cell_row
       - Qni::View::TextRenderer#control_span
