@@ -428,6 +428,12 @@ def two_qubit_gate_matrix(col, variables):
     if left_gate == 1 and right_gate == 1:
         return identity_matrix(4)
 
+    if plain_single_qubit_gate(left_gate) and plain_single_qubit_gate(right_gate):
+        return tensor_product(
+            single_qubit_gate_matrix(left_gate, variables),
+            single_qubit_gate_matrix(right_gate, variables),
+        )
+
     if left_gate == 1:
         return tensor_product(identity_matrix(2), single_qubit_gate_matrix(right_gate, variables))
 
@@ -441,6 +447,10 @@ def two_qubit_gate_matrix(col, variables):
         return controlled_z_matrix()
 
     raise ValueError(f"unsupported 2-qubit symbolic gate column: {col!r}")
+
+
+def plain_single_qubit_gate(gate):
+    return gate not in (1, "●", "•")
 
 
 def render_symbolic_state_for_qubits(state, qubits: int):

@@ -505,6 +505,21 @@ Feature: qni run コマンド
       1|00>
       """
 
+  Scenario: qni run --symbolic は同じ step に 2 qubit の独立した H がある回路を ket 形式で表示
+    Given 次の回路図がある:
+      """
+          ┌───┐
+      q0: ┤ H ├
+          ├───┤
+      q1: ┤ H ├
+          └───┘
+      """
+    When "qni run --symbolic" を実行
+    Then 標準出力:
+      """
+      1/2|00> + 1/2|01> + 1/2|10> + 1/2|11>
+      """
+
   Scenario: qni run --symbolic --basis x は 2 qubit 回路では失敗
     Given 空の 2 qubit 回路がある
     When "qni run --symbolic --basis x" を実行
