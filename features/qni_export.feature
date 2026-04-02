@@ -173,6 +173,14 @@ Feature: qni export コマンド
     And circle notation renderer では振幅 0.1 の位相針の長さは外円の半径に等しい
     And circle notation renderer では外円の輪郭線は内側へ食い込まない
 
+  Scenario: qni export --circle-notation は qni と同じ位相向きを使う
+    Given "qni state set '|+>'" を実行
+    When "qni export --circle-notation --png --light --output circles.png" を実行
+    Then コマンドは成功
+    And "circles.png" は PNG 画像である
+    And circle notation renderer では正の実数振幅の位相針は上を向く
+    And circle notation renderer では正の虚数振幅の位相針は左を向く
+
   Scenario: qni export --circle-notation は振幅が 0 のときだけ位相針を描かない
     Given 空の 1 qubit 回路がある
     When "qni export --circle-notation --png --light --output circles.png" を実行

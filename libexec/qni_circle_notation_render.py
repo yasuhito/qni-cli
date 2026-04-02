@@ -83,6 +83,7 @@ def half_linewidth_data(ax, linewidth_points):
 def draw_basis_circle(ax, x, y, label, amplitude, theme):
     magnitude = abs(amplitude)
     phase = 0.0 if magnitude < ZERO_EPSILON else math.atan2(amplitude.imag, amplitude.real)
+    display_phase = phase + (math.pi / 2.0)
 
     outline_radius = OUTER_RADIUS + half_linewidth_data(ax, OUTLINE_LINEWIDTH_PT)
     outer = Circle((x, y), outline_radius, fill=False, linewidth=OUTLINE_LINEWIDTH_PT, edgecolor=theme["outline"])
@@ -94,8 +95,8 @@ def draw_basis_circle(ax, x, y, label, amplitude, theme):
         ax.add_patch(inner)
 
         line_length = OUTER_RADIUS
-        end_x = x + line_length * math.cos(phase)
-        end_y = y + line_length * math.sin(phase)
+        end_x = x + line_length * math.cos(display_phase)
+        end_y = y + line_length * math.sin(display_phase)
         ax.plot([x, end_x], [y, end_y], color=theme["phase"], linewidth=2.2, solid_capstyle="round")
         ax.plot(x, y, marker="o", markersize=3.2, color=theme["phase"])
 

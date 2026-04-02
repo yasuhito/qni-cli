@@ -162,9 +162,13 @@ def circle_notation_phase_metrics(real:, imag:)
         line = phase_lines[0]
         xdata = list(line.get_xdata())
         ydata = list(line.get_ydata())
+        needle_dx = xdata[1] - xdata[0]
+        needle_dy = ydata[1] - ydata[0]
         needle_length = math.hypot(xdata[1] - xdata[0], ydata[1] - ydata[0])
         phase_visible = True
     else:
+        needle_dx = 0.0
+        needle_dy = 0.0
         needle_length = 0.0
         phase_visible = False
 
@@ -176,6 +180,8 @@ def circle_notation_phase_metrics(real:, imag:)
     plt.close(fig)
     print(json.dumps({
         "outer_radius": module.OUTER_RADIUS,
+        "needle_dx": needle_dx,
+        "needle_dy": needle_dy,
         "needle_length": needle_length,
         "phase_visible": phase_visible,
         "center_dot_visible": center_dot_visible
@@ -898,6 +904,34 @@ Then('circle notation renderer では振幅 {float} の位相針の長さは外�
     #{actual}
     expected:
     #{expected}
+  MESSAGE
+end
+
+Then('circle notation renderer では正の実数振幅の位相針は上を向く') do
+  metrics = circle_notation_phase_metrics(real: 1.0, imag: 0.0)
+
+  next if metrics.fetch('phase_visible') &&
+          metrics.fetch('needle_dx').abs <= 0.001 &&
+          metrics.fetch('needle_dy') > 0.0
+
+  raise <<~MESSAGE
+    expected positive real amplitude to point upward
+    actual:
+    #{metrics}
+  MESSAGE
+end
+
+Then('circle notation renderer では正の虚数振幅の位相針は左を向く') do
+  metrics = circle_notation_phase_metrics(real: 0.0, imag: 1.0)
+
+  next if metrics.fetch('phase_visible') &&
+          metrics.fetch('needle_dx') < 0.0 &&
+          metrics.fetch('needle_dy').abs <= 0.001
+
+  raise <<~MESSAGE
+    expected positive imaginary amplitude to point leftward
+    actual:
+    #{metrics}
   MESSAGE
 end
 
