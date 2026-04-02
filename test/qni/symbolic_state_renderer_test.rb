@@ -7,7 +7,7 @@ module Qni
   class SymbolicStateRendererTest < Minitest::Test
     def test_render_supports_two_qubit_tensor_product_gate_column
       output = SymbolicStateRenderer.new(
-        { 'qubits' => 2, 'cols' => [['H', 'H']] }
+        { 'qubits' => 2, 'cols' => [%w[H H]] }
       ).render
 
       assert_equal '1/2|00> + 1/2|01> + 1/2|10> + 1/2|11>', output
