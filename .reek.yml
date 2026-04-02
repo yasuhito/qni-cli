@@ -10,7 +10,6 @@ detectors:
       - Qni::View::TextRenderer#top_priority_merge
   DataClump:
     exclude:
-      - Qni::View::AsciiStepParser
       - Qni::Export::QCircuitLatex
       - Qni::View::TextRenderer
   DuplicateMethodCall:
@@ -20,8 +19,6 @@ detectors:
   FeatureEnvy:
     exclude:
       - Qni::KittyGraphicsEmitter#emit_payload
-      - Qni::View::AsciiCircuitParser#parse
-      - Qni::View::AsciiWireLayout#step_slices
       - Qni::Export::QCircuitLatex#controlled_step_parts
       - Qni::Export::QCircuitLatex#controlled_target
       - Qni::Export::QCircuitLatex#render_swap_cell
@@ -31,7 +28,6 @@ detectors:
       - Qni::View::TextRenderer#view_label
   LongParameterList:
     exclude:
-      - Qni::View::AsciiStepParser#mark_gate
       - Qni::View::DrawElement#render_line
       - Qni::View::TextRenderer#angled_gate_element
       - Qni::View::TextRenderer#append_wire
@@ -54,14 +50,10 @@ detectors:
     exclude:
       - Qni::CLI::BlochCommand
       - Qni::Circuit
-      - Qni::View::AsciiStepParser
       - Qni::Export::QCircuitLatex
       - Qni::View::TextRenderer
   TooManyStatements:
     exclude:
-      - Qni::View::AsciiStepParser#apply_mid_cell
-      - Qni::View::AsciiStepParser#gate_symbol_for
-      - Qni::View::AsciiStepParser#to_slots
       - Qni::Export::QCircuitLatex#render_swap_cell
       - Qni::View::DrawElement#initialize
       - Qni::View::BoxOnQuWire#initialize
@@ -77,13 +69,6 @@ detectors:
   UtilityFunction:
     exclude:
       - Qni::BlochRenderer#resolved_result
-      - Qni::View::AsciiStepParser#control_mid?
-      - Qni::View::AsciiStepParser#empty_mid?
-      - Qni::View::AsciiStepParser#mark_control
-      - Qni::View::AsciiStepParser#mark_gate
-      - Qni::View::AsciiStepParser#mark_swap
-      - Qni::View::AsciiStepParser#swap_mid?
-      - Qni::View::AsciiStepParser#vertical_bridge_mid?
       - Qni::Export::QCircuitLatex#controlled_step?
       - Qni::Export::QCircuitLatex#latex_angle
       - Qni::Export::QCircuitLatex#special_gate_label?
@@ -103,6 +88,3 @@ detectors:
       - Qni::View::TextRenderer#view_label
       - Qni::View::TextRenderer#view_angle
       - Qni::View::TextRenderer#wire_cells_for
-  TooManyConstants:
-    exclude:
-      - Qni::View::AsciiStepParser

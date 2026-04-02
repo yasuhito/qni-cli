@@ -16,14 +16,7 @@ module Qni
       end
 
       def parse
-        layout = AsciiWireLayout.new(ascii_art, error_class: Error)
-
-        Circuit.from_h(
-          'qubits' => layout.qubit_count,
-          'cols' => layout.each_step.map do |step_slices|
-            AsciiStepParser.new(step_slices, error_class: Error).to_slots
-          end
-        )
+        Circuit.from_h(AsciiWireLayout.new(ascii_art, error_class: Error).to_circuit_h)
       end
 
       private

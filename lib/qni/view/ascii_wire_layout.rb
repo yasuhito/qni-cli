@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'ascii_step_parser'
+
 module Qni
   module View
     # Extracts aligned wire rows and step slices from circuit ASCII art.
@@ -163,6 +165,13 @@ module Qni
         return enum_for(:each_step) unless block_given?
 
         each_step_position { |position| yield step_slices(position) }
+      end
+
+      def to_circuit_h
+        {
+          'qubits' => qubit_count,
+          'cols' => each_step.map { |step_slices| AsciiStepParser.new(step_slices, error_class: @error_class).to_slots }
+        }
       end
 
       def qubit_count = line_set.parsed_mid_lines.length
