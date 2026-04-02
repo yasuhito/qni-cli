@@ -20,7 +20,6 @@ detectors:
     exclude: []
   TooManyMethods:
     exclude:
-      - Qni::CLI::BlochCommand
       - Qni::Circuit
   TooManyStatements:
     exclude: []
