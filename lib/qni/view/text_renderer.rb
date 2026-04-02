@@ -1,16 +1,15 @@
 # frozen_string_literal: true
 
 require_relative '../swap_gate'
-require_relative '../sqrt_x_gate'
 require_relative 'cell'
 require_relative 'compact_suffix_colorizer'
+require_relative 'text_step_layer_builder'
 
 module Qni
   module View
     # Renders qni circuits as Qiskit-style box-drawing text.
     # rubocop:disable Metrics/ClassLength
     class TextRenderer
-      ANGLED_GATE_PATTERN = /\A(?<symbol>[A-Za-z]+)\((?<angle>.+)\)\z/
       INTERSECTION_MERGES = {
         ['┬', '═'] => '╪',
         ['│', '═'] => '╪',
@@ -45,65 +44,8 @@ module Qni
 
       def step_layers
         circuit.to_h.fetch('cols').map do |raw_step|
-          layer = build_layer(raw_step)
-          normalize_width(layer)
-          layer
+          TextStepLayerBuilder.new(raw_step, circuit.qubits).build
         end
-      end
-
-      def build_layer(raw_step)
-        layer = Array.new(circuit.qubits) { EmptyWire.new }
-
-        render_swap_step(raw_step, layer)
-        render_controlled_step(raw_step, layer)
-        render_single_gates(raw_step, layer)
-
-        layer
-      end
-
-      def render_swap_step(raw_step, layer)
-        swap_qubits = raw_step.each_index.select { |index| raw_step.fetch(index) == SwapGate::SYMBOL }
-        return unless swap_qubits.length == 2
-
-        upper, lower = swap_qubits.minmax
-        place_swap_endpoints(layer, upper, lower)
-        place_swap_bridges(layer, raw_step, upper, lower)
-      end
-
-      def render_controlled_step(raw_step, layer)
-        controls, targets = control_step_parts(raw_step)
-        return unless controls.any? && targets.one?
-
-        target = targets.first
-        min_involved, max_involved = control_span(controls, target)
-        place_controls(layer, controls, min_involved, max_involved)
-        place_target(layer, raw_step, target, min_involved, max_involved)
-        place_control_bridges(layer, raw_step, min_involved, max_involved)
-      end
-
-      def render_single_gates(raw_step, layer)
-        raw_step.each_with_index do |slot, qubit|
-          next unless single_gate_slot?(slot)
-          next unless layer.fetch(qubit).is_a?(EmptyWire)
-
-          layer[qubit] = gate_element(slot)
-        end
-      end
-
-      def single_gate_slot?(slot)
-        slot != 1 && slot != Circuit::CONTROL_SYMBOL && slot != SwapGate::SYMBOL
-      end
-
-      def view_label(slot)
-        return SqrtXGate::VIEW_SYMBOL if slot == SqrtXGate::SYMBOL
-
-        slot_text = slot.to_s
-        ANGLED_GATE_PATTERN.match(slot_text)&.[](:symbol) || slot_text
-      end
-
-      def normalize_width(layer)
-        longest = layer.map(&:length).max
-        layer.each { |cell| cell.layer_width = longest }
       end
 
       def colorized?
@@ -146,52 +88,6 @@ module Qni
         end.join
       end
 
-      def control_step_parts(raw_step)
-        controls = raw_step.each_index.select { |index| raw_step.fetch(index) == Circuit::CONTROL_SYMBOL }
-        targets = raw_step.each_index.select do |index|
-          single_gate_slot?(raw_step.fetch(index))
-        end
-        [controls, targets]
-      end
-
-      def control_span(controls, target)
-        involved = controls + [target]
-        involved.minmax
-      end
-
-      def place_controls(layer, controls, min_involved, max_involved)
-        controls.each do |qubit|
-          top_connect = qubit > min_involved ? '│' : ' '
-          bot_connect = qubit < max_involved ? '│' : ' '
-          layer[qubit] = Bullet.new(top_connect:, bot_connect:)
-        end
-      end
-
-      def place_target(layer, raw_step, target, min_involved, max_involved)
-        top_connect = target > min_involved ? '┴' : '─'
-        bot_connect = target < max_involved ? '┬' : '─'
-        layer[target] = gate_element(raw_step.fetch(target), top_connect:, bot_connect:)
-      end
-
-      def place_control_bridges(layer, raw_step, min_involved, max_involved)
-        ((min_involved + 1)...max_involved).each do |qubit|
-          next unless raw_step.fetch(qubit) == 1
-
-          layer[qubit] = VerticalBridge.new
-        end
-      end
-
-      def place_swap_endpoints(layer, upper, lower)
-        layer[upper] = Ex.new(bot_connect: lower > upper ? '│' : ' ')
-        layer[lower] = Ex.new(top_connect: upper < lower ? '│' : ' ')
-      end
-
-      def place_swap_bridges(layer, raw_step, upper, lower)
-        ((upper + 1)...lower).each do |qubit|
-          layer[qubit] = VerticalBridge.new if raw_step.fetch(qubit) == 1
-        end
-      end
-
       def append_wire(lines, previous_bottom, wire_lines)
         annotation_line, top_line, mid_line, bottom_line = wire_lines
         merged_top = merged_top_line(lines, previous_bottom, top_line)
@@ -228,28 +124,6 @@ module Qni
 
       def labeled_wire_line(qubit, wire_cells)
         wire_label(qubit).rjust(wire_label_width) + cell_row(wire_cells, :mid)
-      end
-
-      def gate_element(slot, top_connect: '─', bot_connect: '─')
-        angled_match = ANGLED_GATE_PATTERN.match(slot.to_s)
-        return BoxOnQuWire.build(view_label(slot), top_connect:, bot_connect:) unless angled_match
-
-        angled_gate_element(angled_match[:symbol], angled_match[:angle], top_connect:, bot_connect:)
-      end
-
-      def angled_gate_element(symbol, angle, top_connect:, bot_connect:)
-        AngledBoxOnQuWire.new(
-          symbol,
-          view_angle(angle),
-          format: AngledBoxOnQuWire.format_for(symbol),
-          top_connect:,
-          bot_connect:
-        )
-      end
-
-      def view_angle(raw_angle)
-        raw_angle.to_s.gsub('theta', 'θ')
-                 .gsub(/(?<=\d)\*θ/, 'θ')
       end
 
       def cell_row(wire_cells, part)

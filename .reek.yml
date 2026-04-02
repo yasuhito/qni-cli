@@ -12,23 +12,14 @@ detectors:
   DuplicateMethodCall:
     exclude:
       - Qni::View::TextRenderer#append_wire
-      - Qni::View::TextRenderer#control_step_parts
   FeatureEnvy:
     exclude:
       - Qni::KittyGraphicsEmitter#emit_payload
       - Qni::View::TextRenderer#append_wire
-      - Qni::View::TextRenderer#control_step_parts
-      - Qni::View::TextRenderer#place_target
-      - Qni::View::TextRenderer#view_label
   LongParameterList:
     exclude:
       - Qni::View::DrawElement#render_line
-      - Qni::View::TextRenderer#angled_gate_element
       - Qni::View::TextRenderer#append_wire
-      - Qni::View::TextRenderer#place_control_bridges
-      - Qni::View::TextRenderer#place_controls
-      - Qni::View::TextRenderer#place_swap_bridges
-      - Qni::View::TextRenderer#place_target
   NilCheck:
     exclude:
       - Qni::View::TextRenderer#merged_top_line
@@ -49,12 +40,8 @@ detectors:
     exclude:
       - Qni::View::DrawElement#initialize
       - Qni::View::BoxOnQuWire#initialize
-      - Qni::View::TextRenderer#build_layer
       - Qni::View::TextRenderer#append_wire
       - Qni::View::TextRenderer#draw_wires
-      - Qni::View::TextRenderer#place_controls
-      - Qni::View::TextRenderer#render_controlled_step
-      - Qni::View::TextRenderer#render_swap_step
   UncommunicativeVariableName:
     accept:
       - e
@@ -63,15 +50,6 @@ detectors:
       - Qni::BlochRenderer#resolved_result
       - Qni::View::TextRenderer#blank_bot_common
       - Qni::View::TextRenderer#cell_row
-      - Qni::View::TextRenderer#control_span
-      - Qni::View::TextRenderer#normalize_width
-      - Qni::View::TextRenderer#place_control_bridges
-      - Qni::View::TextRenderer#place_controls
-      - Qni::View::TextRenderer#place_swap_bridges
-      - Qni::View::TextRenderer#place_swap_endpoints
-      - Qni::View::TextRenderer#single_gate_slot?
       - Qni::View::TextRenderer#top_priority_merge
       - Qni::View::TextRenderer#trim_blank_edges
-      - Qni::View::TextRenderer#view_label
-      - Qni::View::TextRenderer#view_angle
       - Qni::View::TextRenderer#wire_cells_for
