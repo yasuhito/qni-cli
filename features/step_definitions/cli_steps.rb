@@ -5,6 +5,7 @@ require 'open3'
 require 'pty'
 require 'shellwords'
 require_relative '../../lib/qni/initial_state'
+require_relative '../../lib/qni/image_inspector'
 require_relative '../../lib/qni/view/ascii_circuit_parser'
 
 ONE_QUBIT_INITIAL_STATE_COLS = {
@@ -96,6 +97,10 @@ end
 
 def python_symbolic_runtime
   File.join(PROJECT_ROOT, '.python-symbolic', 'bin', 'python')
+end
+
+def image_inspector(actual_path)
+  Qni::ImageInspector.new(actual_path, python_runtime: python_symbolic_runtime)
 end
 
 def animated_png_frame_count(actual_path)
@@ -817,8 +822,7 @@ Then('{string} は GIF 画像である') do |path|
   actual_path = File.join(@scenario_dir, path)
   raise "expected file to exist: #{path}" unless File.exist?(actual_path)
 
-  signature = File.binread(actual_path, 6)
-  next if ['GIF87a'.b, 'GIF89a'.b].include?(signature)
+  next if image_inspector(actual_path).gif?
 
   raise <<~MESSAGE
     expected file to be a GIF image: #{path}
@@ -829,17 +833,11 @@ Then('{string} は APNG 画像である') do |path|
   actual_path = File.join(@scenario_dir, path)
   raise "expected file to exist: #{path}" unless File.exist?(actual_path)
 
-  signature = File.binread(actual_path, 8)
-  raise "expected file to be a PNG image: #{path}" unless signature == "\x89PNG\r\n\x1A\n".b
-
-  output, status = Open3.capture2('file', actual_path)
-  raise "file failed for: #{path}" unless status.success?
-  next if output.include?('animated')
+  inspector = image_inspector(actual_path)
+  next if inspector.animated_png?
 
   raise <<~MESSAGE
     expected file to be an animated PNG image: #{path}
-    actual:
-    #{output}
   MESSAGE
 end
 
@@ -847,10 +845,7 @@ Then('{string} は {int} フレーム以上の GIF 画像である') do |path, m
   actual_path = File.join(@scenario_dir, path)
   raise "expected file to exist: #{path}" unless File.exist?(actual_path)
 
-  output, status = Open3.capture2('identify', actual_path)
-  raise "identify failed for: #{path}" unless status.success?
-
-  actual_frames = output.lines.count
+  actual_frames = image_inspector(actual_path).frame_count
   next if actual_frames >= minimum_frames
 
   raise <<~MESSAGE
@@ -878,15 +873,10 @@ Then('{string} は透過 PNG 画像である') do |path|
   actual_path = File.join(@scenario_dir, path)
   raise "expected file to exist: #{path}" unless File.exist?(actual_path)
 
-  output, status = Open3.capture2('identify', '-format', '%[channels]', actual_path)
-  raise "identify failed for: #{path}" unless status.success?
-
-  next if output.strip.include?('a')
+  next if image_inspector(actual_path).transparent_png?
 
   raise <<~MESSAGE
     expected file to be a transparent PNG image: #{path}
-    actual channels:
-    #{output}
   MESSAGE
 end
 
@@ -894,17 +884,15 @@ Then('{string} の画像サイズは {int}x{int} である') do |path, width, he
   actual_path = File.join(@scenario_dir, path)
   raise "expected file to exist: #{path}" unless File.exist?(actual_path)
 
-  output, status = Open3.capture2('identify', '-format', '%wx%h', actual_path)
-  raise "identify failed for: #{path}" unless status.success?
-
-  next if output.strip == "#{width}x#{height}"
+  actual_width, actual_height = image_inspector(actual_path).dimensions
+  next if [actual_width, actual_height] == [width, height]
 
   raise <<~MESSAGE
     expected image size to match: #{path}
     expected:
     #{width}x#{height}
     actual:
-    #{output}
+    #{actual_width}x#{actual_height}
   MESSAGE
 end
 

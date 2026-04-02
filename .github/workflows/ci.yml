@@ -16,6 +16,11 @@ jobs:
         with:
           bundler-cache: true
 
+      - name: Install system packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y texlive-latex-base poppler-utils
+
       - name: Set up symbolic Python runtime
         run: scripts/setup_symbolic_python.sh
 

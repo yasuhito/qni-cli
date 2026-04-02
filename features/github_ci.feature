@@ -12,5 +12,8 @@ Feature: GitHub CI
     Then リポジトリファイル ".github/workflows/ci.yml" は存在する
     And リポジトリファイル ".github/workflows/ci.yml" は "push:" を含む
     And リポジトリファイル ".github/workflows/ci.yml" は "pull_request:" を含む
+    And リポジトリファイル ".github/workflows/ci.yml" は "sudo apt-get update" を含む
+    And リポジトリファイル ".github/workflows/ci.yml" は "texlive-latex-base" を含む
+    And リポジトリファイル ".github/workflows/ci.yml" は "poppler-utils" を含む
     And リポジトリファイル ".github/workflows/ci.yml" は "scripts/setup_symbolic_python.sh" を含む
     And リポジトリファイル ".github/workflows/ci.yml" は "bundle exec rake check" を含む
