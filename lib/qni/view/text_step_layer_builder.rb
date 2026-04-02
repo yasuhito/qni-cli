@@ -23,7 +23,7 @@ module Qni
 
         def normalize_width
           longest = @cells.map(&:length).max
-          @cells.each { |cell| cell.layer_width = longest }
+          @cells.each { |cell| cell.expand_to_layer(longest) }
           self
         end
 

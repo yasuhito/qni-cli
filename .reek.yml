@@ -1,7 +1,6 @@
 detectors:
   Attribute:
-    exclude:
-      - Qni::View::DrawElement#layer_width
+    exclude: []
   ControlParameter:
     exclude: []
   DataClump:
@@ -11,26 +10,20 @@ detectors:
   FeatureEnvy:
     exclude: []
   LongParameterList:
-    exclude:
-      - Qni::View::DrawElement#render_line
+    exclude: []
   NilCheck:
     exclude: []
   InstanceVariableAssumption:
     exclude:
       - Qni::Circuit
   TooManyInstanceVariables:
-    exclude:
-      - Qni::View::DrawElement
-      - Qni::View::BoxOnQuWire
-      - Qni::View::DirectOnQuWire
+    exclude: []
   TooManyMethods:
     exclude:
       - Qni::CLI::BlochCommand
       - Qni::Circuit
   TooManyStatements:
-    exclude:
-      - Qni::View::DrawElement#initialize
-      - Qni::View::BoxOnQuWire#initialize
+    exclude: []
   UncommunicativeVariableName:
     accept:
       - e

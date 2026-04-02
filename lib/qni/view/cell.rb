@@ -4,34 +4,90 @@ module Qni
   module View
     # Base class for a fixed three-line text cell.
     class DrawElement
-      attr_accessor :layer_width
+      # Top/bottom line style with an explicit connector character.
+      class ConnectedLineStyle
+        attr_reader :background
 
-      def initialize(label = '')
+        def initialize(format: '%s', pad: ' ', background: ' ', connect: ' ')
+          @format = format
+          @pad = pad
+          @background = background
+          @connect = connect
+        end
+
+        def render(width)
+          format % connect.center(width, pad)
+        end
+
+        private
+
+        attr_reader :connect, :format, :pad
+      end
+
+      # Middle line style that renders the label itself.
+      class MidLineStyle
+        attr_reader :background
+
+        def initialize(format: '%s', padding: ' ', background: ' ')
+          @format = format
+          @padding = padding
+          @background = background
+        end
+
+        def render(label, width)
+          format % label.center(width, padding)
+        end
+
+        private
+
+        attr_reader :format, :padding
+      end
+
+      # Bundles the three display lines that make up a text cell.
+      class CellStyle
+        attr_reader :bot, :mid, :top
+
+        def initialize(top:, mid:, bot:)
+          @top = top
+          @mid = mid
+          @bot = bot
+        end
+      end
+
+      DEFAULT_STYLE = CellStyle.new(
+        top: ConnectedLineStyle.new,
+        mid: MidLineStyle.new,
+        bot: ConnectedLineStyle.new
+      ).freeze
+
+      attr_reader :layer_width
+
+      def initialize(label = '', style: DEFAULT_STYLE, annotation_text: '')
         @label = label
-        @annotation_text = ''
-        @width = nil
+        @annotation_text = annotation_text
         @layer_width = 0
-        @top_format = @mid_format = @bot_format = '%s'
-        @top_connect = @bot_connect = ' '
-        @top_pad = @mid_padding = @bot_pad = ' '
-        @top_bck = @mid_bck = @bot_bck = ' '
+        @style = style
       end
 
       def annotation
         annotation_text.center([layer_width, annotation_text.length].max, ' ')
       end
 
+      def expand_to_layer(width)
+        @layer_width = width
+      end
+
       def top
-        render_line(top_format, top_connect, top_pad, top_bck)
+        render_connected_line(style.top)
       end
 
       def mid
-        rendered = mid_format % label.center(width, mid_padding)
-        rendered.center(layer_width, mid_bck)
+        middle_style = style.mid
+        middle_style.render(label, width).center(layer_width, middle_style.background)
       end
 
       def bot
-        render_line(bot_format, bot_connect, bot_pad, bot_bck)
+        render_connected_line(style.bot)
       end
 
       def length
@@ -39,17 +95,15 @@ module Qni
       end
 
       def width
-        @width || label.length
+        label.length
       end
 
       private
 
-      attr_reader :annotation_text, :bot_bck, :bot_connect, :bot_format, :bot_pad, :label, :mid_bck,
-                  :mid_format, :mid_padding, :top_bck, :top_connect, :top_format, :top_pad
+      attr_reader :annotation_text, :label, :style
 
-      def render_line(format, connect, pad, background)
-        rendered = format % connect.center(width, pad)
-        rendered.center(layer_width, background)
+      def render_connected_line(line_style)
+        line_style.render(width).center(layer_width, line_style.background)
       end
     end
 
@@ -72,20 +126,27 @@ module Qni
         STANDARD_FORMAT
       end
 
-      def initialize(label, format: STANDARD_FORMAT, top_connect: '─', bot_connect: '─')
-        super(label)
-        @top_format, @mid_format, @bot_format = format
-        @top_pad = @mid_bck = @bot_pad = '─'
-        @top_connect = top_connect
-        @bot_connect = bot_connect
+      def self.style_for(format:, top_connect:, bot_connect:)
+        DrawElement::CellStyle.new(
+          top: DrawElement::ConnectedLineStyle.new(format: format[0], pad: '─', connect: top_connect),
+          mid: DrawElement::MidLineStyle.new(format: format[1], background: '─'),
+          bot: DrawElement::ConnectedLineStyle.new(format: format[2], pad: '─', connect: bot_connect)
+        )
+      end
+
+      def initialize(label, format: STANDARD_FORMAT, top_connect: '─', bot_connect: '─', annotation_text: '')
+        super(
+          label,
+          style: self.class.style_for(format:, top_connect:, bot_connect:),
+          annotation_text:
+        )
       end
     end
 
     # Boxed parameterized gate with its angle rendered above the box.
     class AngledBoxOnQuWire < BoxOnQuWire
       def initialize(label, angle_text, format: STANDARD_FORMAT, top_connect: '─', bot_connect: '─')
-        super(label, format:, top_connect:, bot_connect:)
-        @annotation_text = angle_text
+        super(label, format:, top_connect:, bot_connect:, annotation_text: angle_text)
       end
 
       def annotation
@@ -113,47 +174,52 @@ module Qni
 
     # Unboxed element drawn directly on a wire.
     class DirectOnQuWire < DrawElement
-      def initialize(label)
-        super
-        @top_format = ' %s '
-        @mid_format = '─%s─'
-        @bot_format = ' %s '
-        @mid_padding = @mid_bck = '─'
+      def self.style_for(top_connect:, bot_connect:)
+        DrawElement::CellStyle.new(
+          top: DrawElement::ConnectedLineStyle.new(format: ' %s ', connect: top_connect),
+          mid: DrawElement::MidLineStyle.new(format: '─%s─', padding: '─', background: '─'),
+          bot: DrawElement::ConnectedLineStyle.new(format: ' %s ', connect: bot_connect)
+        )
+      end
+
+      def initialize(label, top_connect: ' ', bot_connect: ' ')
+        super(label, style: self.class.style_for(top_connect:, bot_connect:))
       end
     end
 
     # Direct wire control bullet.
     class Bullet < DirectOnQuWire
       def initialize(top_connect: ' ', bot_connect: ' ')
-        super('■')
-        @top_connect = top_connect
-        @bot_connect = bot_connect
+        super('■', top_connect:, bot_connect:)
       end
     end
 
     # Direct wire swap marker.
     class Ex < DirectOnQuWire
       def initialize(top_connect: ' ', bot_connect: ' ')
-        super('X')
-        @top_connect = top_connect
-        @bot_connect = bot_connect
+        super('X', top_connect:, bot_connect:)
       end
     end
 
     # Vertical connector drawn on an otherwise empty wire.
     class VerticalBridge < DirectOnQuWire
       def initialize
-        super('│')
-        @top_connect = '│'
-        @bot_connect = '│'
+        super('│', top_connect: '│', bot_connect: '│')
       end
     end
 
     # Plain empty quantum wire.
     class EmptyWire < DrawElement
       def initialize(wire = '─')
-        super
-        @mid_padding = @mid_bck = wire
+        super('', style: self.class.empty_wire_style(wire))
+      end
+
+      def self.empty_wire_style(wire)
+        DrawElement::CellStyle.new(
+          top: DrawElement::ConnectedLineStyle.new,
+          mid: DrawElement::MidLineStyle.new(padding: wire, background: wire),
+          bot: DrawElement::ConnectedLineStyle.new
+        )
       end
     end
   end
