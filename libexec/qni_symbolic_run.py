@@ -8,7 +8,6 @@ from dataclasses import dataclass
 
 from sympy import Float, I, Integer, Matrix, Symbol, cos, exp, latex, pi, simplify, sin, sqrt
 
-SUPPORTED_QUBIT_MESSAGE = "symbolic run currently supports only 1-qubit and 2-qubit circuits"
 EPSILON = sys.float_info.epsilon
 ANGLED_GATE_PATTERN = re.compile(r"\A(?P<gate>P|Rx|Ry|Rz)\((?P<angle>.+)\)\Z")
 IDENTIFIER_PATTERN = re.compile(r"\A[a-zA-Z_][a-zA-Z0-9_]*\Z")
@@ -136,7 +135,7 @@ def parse_state_coefficient(raw_value: str, variables: dict[str, str]):
 
 def symbolic_initial_state_for_qubits(circuit, qubits, variables):
     if "initial_state" not in circuit:
-        return Matrix([1, 0]) if qubits == 1 else Matrix([1, 0, 0, 0])
+        return Matrix([Integer(1), *([Integer(0)] * ((2**qubits) - 1))])
 
     state = [Integer(0)] * (2**qubits)
     for term in initial_state_terms(circuit):
@@ -150,7 +149,7 @@ def basis_components(basis: str, qubits: int):
     if qubits == 1:
         return ((int(basis), Integer(1)),)
 
-    if basis in {"00", "01", "10", "11"}:
+    if re.fullmatch(rf"[01]{{{qubits}}}", basis):
         return ((int(basis, 2), Integer(1)),)
 
     if basis in BELL_BASIS_COMPONENTS:
@@ -389,6 +388,13 @@ def tensor_product(left, right):
     return Matrix(rows)
 
 
+def tensor_product_many(matrices):
+    result = Matrix([[1]])
+    for matrix in matrices:
+        result = tensor_product(result, matrix)
+    return result
+
+
 def identity_matrix(size: int) -> Matrix:
     return Matrix.eye(size)
 
@@ -415,6 +421,19 @@ def controlled_z_matrix():
     )
 
 
+def basis_bit(index: int, qubit: int, qubits: int) -> int:
+    shift = qubits - qubit - 1
+    return (index >> shift) & 1
+
+
+def replace_basis_bit(index: int, qubit: int, qubits: int, value: int) -> int:
+    shift = qubits - qubit - 1
+    mask = 1 << shift
+    if value:
+        return index | mask
+    return index & ~mask
+
+
 def single_qubit_gate_matrix(gate, variables):
     gate_matrix = symbolic_gate(gate, variables)
     if gate_matrix.shape != (2, 2):
@@ -422,31 +441,53 @@ def single_qubit_gate_matrix(gate, variables):
     return gate_matrix
 
 
-def two_qubit_gate_matrix(col, variables):
-    left_gate, right_gate = col
+def controlled_gate_matrix(qubits: int, controls, target: int, target_gate: Matrix):
+    size = 2**qubits
+    matrix = Matrix.zeros(size, size)
 
-    if left_gate == 1 and right_gate == 1:
-        return identity_matrix(4)
+    for basis_index in range(size):
+        if not all(basis_bit(basis_index, control, qubits) == 1 for control in controls):
+            matrix[basis_index, basis_index] = 1
+            continue
 
-    if plain_single_qubit_gate(left_gate) and plain_single_qubit_gate(right_gate):
-        return tensor_product(
-            single_qubit_gate_matrix(left_gate, variables),
-            single_qubit_gate_matrix(right_gate, variables),
-        )
+        target_basis = basis_bit(basis_index, target, qubits)
+        for output_basis in range(2):
+            amplitude = target_gate[output_basis, target_basis]
+            if amplitude == 0:
+                continue
+            output_index = replace_basis_bit(basis_index, target, qubits, output_basis)
+            matrix[output_index, basis_index] = amplitude
 
-    if left_gate == 1:
-        return tensor_product(identity_matrix(2), single_qubit_gate_matrix(right_gate, variables))
+    return matrix
 
-    if right_gate == 1:
-        return tensor_product(single_qubit_gate_matrix(left_gate, variables), identity_matrix(2))
 
-    if left_gate in ("●", "•") and right_gate == "X":
-        return controlled_x_matrix()
+def column_gate_matrix(col, qubits, variables):
+    if len(col) != qubits:
+        raise ValueError(f"gate column width {len(col)} does not match qubit count {qubits}")
 
-    if left_gate in ("●", "•") and right_gate == "Z":
-        return controlled_z_matrix()
+    controls = [index for index, gate in enumerate(col) if gate in ("●", "•")]
+    non_identity = [(index, gate) for index, gate in enumerate(col) if gate != 1 and gate not in ("●", "•")]
 
-    raise ValueError(f"unsupported 2-qubit symbolic gate column: {col!r}")
+    if not controls:
+        matrices = [
+            identity_matrix(2) if gate == 1 else single_qubit_gate_matrix(gate, variables)
+            for gate in col
+        ]
+        return tensor_product_many(matrices)
+
+    if len(non_identity) != 1:
+        raise ValueError(f"unsupported symbolic gate column: {col!r}")
+
+    target, target_gate = non_identity[0]
+    if target_gate not in ("X", "Z"):
+        raise ValueError(f"unsupported symbolic gate column: {col!r}")
+
+    return controlled_gate_matrix(
+        qubits,
+        controls,
+        target,
+        single_qubit_gate_matrix(target_gate, variables),
+    )
 
 
 def plain_single_qubit_gate(gate):
@@ -459,7 +500,16 @@ def render_symbolic_state_for_qubits(state, qubits: int):
         simplified = simplify(amplitude)
         if simplified == 0:
             continue
-        terms.append(f"{text_basis_amplitude(simplified)}|{basis_label(basis, qubits)}>")
+
+        basis_text = f"|{basis_label(basis, qubits)}>"
+        if simplified == 1:
+            terms.append(basis_text)
+            continue
+        if simplified == -1:
+            terms.append(f"-{basis_text}")
+            continue
+
+        terms.append(f"{text_basis_amplitude(simplified)}{basis_text}")
 
     return join_terms(terms)
 
@@ -497,21 +547,14 @@ def symbolic_state_for_qubits(circuit, qubits, variables):
     cols = circuit.get("cols", [])
     symbolic_state = symbolic_initial_state_for_qubits(circuit, qubits, variables)
 
-    if qubits == 2:
-        for col in cols:
-            symbolic_state = two_qubit_gate_matrix(col, variables) * symbolic_state
-        return symbolic_state
-
     for col in cols:
-        symbolic_state = symbolic_gate(col[0], variables) * symbolic_state
+        symbolic_state = column_gate_matrix(col, qubits, variables) * symbolic_state
 
     return symbolic_state
 
 
 def run(circuit, output_format="text", basis=None):
     qubits = circuit.get("qubits")
-    if qubits not in (1, 2):
-        raise ValueError(SUPPORTED_QUBIT_MESSAGE)
 
     cols = circuit.get("cols", [])
     variables = circuit.get("variables", {})
@@ -552,14 +595,14 @@ def run(circuit, output_format="text", basis=None):
 
     if "initial_state" in circuit:
         symbolic_state = symbolic_state_for_qubits(circuit, qubits, variables)
-        if qubits == 2:
-            return render_symbolic_state_for_qubits(symbolic_state, 2)
+        if qubits > 1:
+            return render_symbolic_state_for_qubits(symbolic_state, qubits)
 
         return render_symbolic_state(symbolic_state)
 
-    if qubits == 2:
+    if qubits > 1:
         symbolic_state = symbolic_state_for_qubits(circuit, qubits, variables)
-        return render_symbolic_state_for_qubits(symbolic_state, 2)
+        return render_symbolic_state_for_qubits(symbolic_state, qubits)
 
     numeric_state = [1.0, 0.0]
     requires_symbolic = False

@@ -502,7 +502,7 @@ Feature: qni run コマンド
     When "qni run --symbolic" を実行
     Then 標準出力:
       """
-      1|00>
+      |00>
       """
 
   Scenario: qni run --symbolic は同じ step に 2 qubit の独立した H がある回路を ket 形式で表示
@@ -547,13 +547,13 @@ Feature: qni run コマンド
       symbolic bell-basis run currently supports only 2-qubit circuits
       """
 
-  Scenario: qni run --symbolic は 3 qubit 回路では失敗
+  Scenario: qni run --symbolic は 3 qubit 回路を計算基底で表示
     Given 空の 3 qubit 回路がある
     When "qni run --symbolic" を実行
-    Then コマンドは失敗
-    And 標準エラー:
+    Then コマンドは成功
+    And 標準出力:
       """
-      symbolic run currently supports only 1-qubit and 2-qubit circuits
+      |000>
       """
 
   Scenario: qni run --basis x は --symbolic なしでは失敗

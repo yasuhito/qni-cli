@@ -3,11 +3,11 @@
 require 'json'
 require 'open3'
 require 'tmpdir'
+require_relative 'symbolic_basis_validator'
 
 module Qni
   # Invokes the Python symbolic helper for small symbolic state rendering.
   class SymbolicStateRenderer
-    SUPPORTED_QUBIT_MESSAGE = 'symbolic run currently supports only 1-qubit and 2-qubit circuits'
     SETUP_MESSAGE = 'symbolic run requires SymPy runtime; run scripts/setup_symbolic_python.sh'
     HELPER_RELATIVE_PATH = '../../libexec/qni_symbolic_run.py'
     REPO_RUNTIME_RELATIVE_PATH = '../../.python-symbolic/bin/python'
@@ -29,21 +29,20 @@ module Qni
     private
 
     def render_with_format(format)
-      if %w[x y].include?(basis) && circuit_hash.fetch('qubits') != 1
-        raise Simulator::Error, "symbolic #{basis}-basis run currently supports only 1-qubit circuits"
-      end
-
-      raise Simulator::Error, SUPPORTED_QUBIT_MESSAGE unless supported_qubit_count?
-
-      args = ['--format', format]
-      args.push('--basis', basis) if basis
-      render_with_helpers(*args)
+      SymbolicBasisValidator.new(basis:, qubits:).validate
+      render_with_helpers(*render_args(format))
     end
 
     attr_reader :basis, :circuit_hash
 
-    def supported_qubit_count?
-      [1, 2].include?(circuit_hash.fetch('qubits'))
+    def render_args(format)
+      args = ['--format', format]
+      args.push('--basis', basis) if basis
+      args
+    end
+
+    def qubits
+      circuit_hash.fetch('qubits')
     end
 
     def helper_commands(*args)

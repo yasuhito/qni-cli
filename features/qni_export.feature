@@ -155,14 +155,11 @@ Feature: qni export コマンド
     Then コマンドは成功
     And "circuit.png" と "state.png" は異なるファイル内容である
 
-  Scenario: qni export --state-vector --png は 3 qubit 回路では失敗する
+  Scenario: qni export --state-vector --png は 3 qubit 回路の状態ベクトル画像を書き出す
     Given 空の 3 qubit 回路がある
     When "qni export --state-vector --png --output state.png" を実行
-    Then コマンドは失敗
-    And 標準エラー:
-      """
-      symbolic run currently supports only 1-qubit and 2-qubit circuits
-      """
+    Then コマンドは成功
+    And "state.png" は PNG 画像である
 
   Scenario: qni export --circle-notation --png は 1 qubit 状態の PNG を書き出す
     Given "qni state set |+>" を実行
