@@ -53,6 +53,10 @@ def read_circuit_json(scenario_dir)
   JSON.parse(File.read(actual_path))
 end
 
+def project_file_path(path)
+  File.join(PROJECT_ROOT, path)
+end
+
 def normalized_doc_string(doc_string)
   doc_string.sub(/\n+\z/, '')
 end
@@ -769,6 +773,31 @@ Then('{string} は存在しない') do |path|
 
   raise <<~MESSAGE
     expected file not to exist: #{path}
+  MESSAGE
+end
+
+Then('リポジトリファイル {string} は存在する') do |path|
+  actual_path = project_file_path(path)
+  next if File.exist?(actual_path)
+
+  raise <<~MESSAGE
+    expected repository file to exist: #{path}
+  MESSAGE
+end
+
+Then('リポジトリファイル {string} は {string} を含む') do |path, text|
+  actual_path = project_file_path(path)
+  raise "expected repository file to exist: #{path}" unless File.exist?(actual_path)
+
+  actual = File.read(actual_path)
+  next if actual.include?(text)
+
+  raise <<~MESSAGE
+    expected repository file to include text
+    file:
+    #{path}
+    expected:
+    #{text}
   MESSAGE
 end
 

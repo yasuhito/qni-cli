@@ -3,16 +3,24 @@
 require 'cucumber/rake/task'
 require 'flay_task'
 require 'flog_task'
+require 'rake/testtask'
 require 'reek/rake/task'
 require 'rubocop/rake_task'
 
 desc 'Run RuboCop'
 RuboCop::RakeTask.new(:rubocop) do |task|
   task.options = ['--cache-root', File.expand_path('tmp/rubocop-cache', __dir__)]
+  task.patterns = ['Rakefile', 'bin/*', 'features/**/*.rb', 'lib/**/*.rb', 'test/**/*.rb']
 end
 
 desc 'Run Cucumber features'
 Cucumber::Rake::Task.new(:cucumber)
+
+desc 'Run Minitest tests'
+Rake::TestTask.new(:test) do |task|
+  task.libs << 'test'
+  task.pattern = 'test/**/*_test.rb'
+end
 
 FlogTask.new(:flog, 20, %w[lib bin], :max_method, true) do |task|
   task.verbose = false
@@ -29,6 +37,6 @@ Reek::Rake::Task.new(:reek) do |task|
 end
 
 desc 'Run all checks'
-task check: %i[rubocop flog flay reek cucumber]
+task check: %i[rubocop flog flay reek cucumber test]
 
 task default: :check
