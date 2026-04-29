@@ -20,7 +20,7 @@
 - Modify: `/home/yasuhito/Work/qni-cli/features/add/add_z_gate.feature.md`
 - Modify: `/home/yasuhito/Work/qni-cli/features/add_s_gate.feature`
 - Modify: `/home/yasuhito/Work/qni-cli/features/add_s_dagger_gate.feature`
-- Modify: `/home/yasuhito/Work/qni-cli/features/add_t_gate.feature`
+- Modify: `/home/yasuhito/Work/qni-cli/features/add/add_t_gate.feature.md`
 - Modify: `/home/yasuhito/Work/qni-cli/features/add_t_dagger_gate.feature`
 - Modify: `/home/yasuhito/Work/qni-cli/features/add_sqrt_x_gate.feature`
 - Modify: `/home/yasuhito/Work/qni-cli/features/add_phase_gate.feature`
