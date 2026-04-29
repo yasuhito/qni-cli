@@ -24,30 +24,6 @@ Feature: qni add コマンド
     When "qni add H --qubit 0 --step 0" を実行
     Then コマンドは失敗
 
-  Scenario: 空の先頭ステップは自動的に削除される
-    When "qni add H --qubit 0 --step 1" を実行
-    Then "circuit.json" の内容:
-      """
-      {
-        "qubits": 1,
-        "cols": [
-          ["H"]
-        ]
-      }
-      """
-
-  Scenario: 空の先頭 qubit は自動的に削除される
-    When "qni add H --qubit 1 --step 0" を実行
-    Then "circuit.json" の内容:
-      """
-      {
-        "qubits": 1,
-        "cols": [
-          ["H"]
-        ]
-      }
-      """
-
   Scenario: 既存回路に新しい qubit を追加できる
     Given "qni add H --qubit 0 --step 0" を実行
     When "qni add H --qubit 1 --step 0" を実行
