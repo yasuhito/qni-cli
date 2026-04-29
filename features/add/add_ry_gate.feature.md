@@ -3,6 +3,11 @@
 qni-cli のユーザとして、コマンドラインから量子回路を組み立てるために、
 指定した step と qubit に Ry ゲートを追加したい。
 
+## Scenario: Ry ゲート追加コマンドは成功
+
+- When "qni add Ry --angle π/2 --qubit 0 --step 0" を実行
+- Then コマンドは成功
+
 ## Scenario: Ry ゲートを指定位置から取得
 
 - Given "qni add Ry --angle π/2 --qubit 0 --step 0" を実行
