@@ -2,8 +2,14 @@
 
 ## Feature Development Rule
 
-- `features/*.feature` のない機能は存在しないのと同じ。
-- 機能を追加するときには、先に `features/*.feature` を追加する。
+- `features/*.feature` または `features/*.feature.md` のない機能は存在しないのと同じ。
+- 機能を追加するときには、先に `features/*.feature` または `features/*.feature.md` を追加する。
+
+## Cucumber Scenario Rule
+
+- 1つの Cucumber シナリオに `Then` は1つだけ置く。
+- `Then` の後に続く検証目的の `And` も `Then` とみなす。
+- 2つ以上の検証が必要な場合は、失敗箇所を分かりやすくするため別々のシナリオに分ける。
 
 ## Reek Rule
 

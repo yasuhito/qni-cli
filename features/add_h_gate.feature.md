@@ -17,6 +17,9 @@ qni-cli のユーザとして、コマンドラインから量子回路を組み
   }
   ```
 
+## Scenario: H ゲートを追加した回路を表示
+
+- Given "qni add H --qubit 0 --step 0" を実行
 - When "qni view" を実行
 - Then 回路図:
 
