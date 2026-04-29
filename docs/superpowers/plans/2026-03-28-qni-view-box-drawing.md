@@ -15,7 +15,7 @@
 **Files:**
 - Modify: `/home/yasuhito/Work/qni-cli/features/qni_view.feature`
 - Modify: `/home/yasuhito/Work/qni-cli/features/add_h_gate.feature`
-- Modify: `/home/yasuhito/Work/qni-cli/features/add_x_gate.feature`
+- Modify: `/home/yasuhito/Work/qni-cli/features/add/add_x_gate.feature.md`
 - Modify: `/home/yasuhito/Work/qni-cli/features/add_y_gate.feature`
 - Modify: `/home/yasuhito/Work/qni-cli/features/add_z_gate.feature`
 - Modify: `/home/yasuhito/Work/qni-cli/features/add_s_gate.feature`
