@@ -22,7 +22,15 @@
 bundle install
 ```
 
-### 2. Set up the Python runtime for symbolic and image features
+### 2. Install JavaScript test dependencies
+
+Use Node.js 22 or another Node.js version supported by `@cucumber/cucumber`.
+
+```bash
+npm install
+```
+
+### 3. Set up the Python runtime for symbolic and image features
 
 Run this before using `qni run --symbolic`, `qni bloch`, or `qni export --circle-notation --png`.
 
@@ -30,7 +38,7 @@ Run this before using `qni run --symbolic`, `qni bloch`, or `qni export --circle
 scripts/setup_symbolic_python.sh
 ```
 
-### 3. Install external tools for circuit PNG export
+### 4. Install external tools for circuit PNG export
 
 `qni export --png` and `qni export --state-vector --png` require:
 
@@ -137,14 +145,15 @@ scripts/setup_symbolic_python.sh
 bundle exec rake check
 ```
 
-`bundle exec rake check` runs RuboCop, Flog, Flay, Reek, Cucumber, and Minitest.
-Run `scripts/setup_symbolic_python.sh` first so the image-related tests have the Python runtime they need.
+`bundle exec rake check` runs RuboCop, Flog, Flay, Reek, Ruby Cucumber, cucumber-js Markdown features, and Minitest.
+Run `npm install` and `scripts/setup_symbolic_python.sh` first so the JavaScript BDD runner and image-related tests have the runtimes they need.
 
 Run individual checks:
 
 ```bash
 bundle exec rake test
 bundle exec rake cucumber
+npm run cucumber
 bundle exec rake rubocop
 bundle exec rake flog
 bundle exec rake flay

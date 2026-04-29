@@ -4,3 +4,5 @@
 .worktrees/
 .cache/
 .python-symbolic/
+node_modules/
+__pycache__/

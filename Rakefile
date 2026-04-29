@@ -13,8 +13,13 @@ RuboCop::RakeTask.new(:rubocop) do |task|
   task.patterns = ['Rakefile', 'bin/*', 'features/**/*.rb', 'lib/**/*.rb', 'test/**/*.rb']
 end
 
-desc 'Run Cucumber features'
+desc 'Run Ruby Cucumber features'
 Cucumber::Rake::Task.new(:cucumber)
+
+desc 'Run cucumber-js Markdown features'
+task :cucumber_js do
+  sh 'npm run cucumber'
+end
 
 desc 'Run Minitest tests'
 Rake::TestTask.new(:test) do |task|
@@ -37,6 +42,6 @@ Reek::Rake::Task.new(:reek) do |task|
 end
 
 desc 'Run all checks'
-task check: %i[rubocop flog flay reek cucumber test]
+task check: %i[rubocop flog flay reek cucumber cucumber_js test]
 
 task default: :check

@@ -1,0 +1,11 @@
+{
+  "name": "qni-cli",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "cucumber": "cucumber-js --config cucumber-js.mjs --require \"features/support/**/*.js\" --require \"features/step_definitions/**/*.js\" --format progress \"features/**/*.feature.md\""
+  },
+  "devDependencies": {
+    "@cucumber/cucumber": "^12.2.0"
+  }
+}
