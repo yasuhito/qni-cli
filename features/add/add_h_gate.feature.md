@@ -8,6 +8,11 @@ qni-cli のユーザとして、コマンドラインから量子回路を組み
 - When "qni add H --qubit 0 --step 0" を実行
 - Then コマンドは成功
 
+## Scenario: H ゲート追加コマンドの標準出力は空
+
+- When "qni add H --qubit 0 --step 0" を実行
+- Then 標準出力は空
+
 ## Scenario: H ゲートを指定位置から取得
 
 - Given "qni add H --qubit 0 --step 0" を実行

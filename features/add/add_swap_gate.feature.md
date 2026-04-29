@@ -8,6 +8,11 @@ qni add SWAP を実行したい。
 - When "qni add SWAP --qubit 0,1 --step 0" を実行
 - Then コマンドは成功
 
+## Scenario: qni add SWAP の標準出力は空
+
+- When "qni add SWAP --qubit 0,1 --step 0" を実行
+- Then 標準出力は空
+
 ## Scenario: qni add SWAP は指定位置から Swap を取得
 
 - Given "qni add SWAP --qubit 0,1 --step 0" を実行

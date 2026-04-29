@@ -8,6 +8,11 @@ qni-cli のユーザとして、コマンドラインから量子回路を組み
 - When "qni add Y --qubit 0 --step 0" を実行
 - Then コマンドは成功
 
+## Scenario: Y ゲート追加コマンドの標準出力は空
+
+- When "qni add Y --qubit 0 --step 0" を実行
+- Then 標準出力は空
+
 ## Scenario: Y ゲートを指定位置から取得
 
 - Given "qni add Y --qubit 0 --step 0" を実行

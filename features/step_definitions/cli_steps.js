@@ -140,6 +140,10 @@ Then('コマンドは成功', function () {
   assert.equal(this.lastCommand.code, 0, commandFailureMessage(this.lastCommand));
 });
 
+Then('標準出力は空', function () {
+  assert.equal(this.lastCommand.stdout, '');
+});
+
 Then('{string} の内容:', function (filePath, docString) {
   assert.equal(this.lastCommand.code, 0, commandFailureMessage(this.lastCommand));
 
