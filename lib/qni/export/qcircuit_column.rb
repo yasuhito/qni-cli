@@ -11,6 +11,8 @@ module Qni
       CONTROL_SYMBOL = Circuit::CONTROL_SYMBOL
       SWAP_SYMBOL = SwapGate::SYMBOL
       DIRECT_SLOT_RENDERERS = {
+        nil => '\\qw',
+        '' => '\\qw',
         1 => '\\qw'
       }.freeze
       TARGET_SLOT_RENDERERS = {
@@ -76,7 +78,7 @@ module Qni
       end
 
       def valid_swap_step?
-        swap_qubits.length == 2 && slots.all? { |slot| [1, SWAP_SYMBOL].include?(slot) }
+        swap_qubits.length == 2 && slots.all? { |slot| [nil, '', 1, SWAP_SYMBOL].include?(slot) }
       end
 
       def swap_qubits
@@ -100,7 +102,7 @@ module Qni
 
       def controlled_target
         targets = slots.each_with_index.filter_map do |slot, index|
-          ControlledTarget.new(slot, index) unless [1, CONTROL_SYMBOL].include?(slot)
+          ControlledTarget.new(slot, index) unless [nil, '', 1, CONTROL_SYMBOL].include?(slot)
         end
         raise "unsupported controlled step: #{slots.inspect}" unless targets.one?
 

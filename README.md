@@ -97,6 +97,15 @@ If ASCII output is not enough, use `export` or `bloch` to generate images.
 bundle exec bin/qni export --png --light --output circuit.png
 ```
 
+Add a caption for notes, slides, or documentation. Use `--no-transparent` when the image should keep a white background in dark note themes:
+
+```bash
+bundle exec bin/qni export --png --light --no-transparent \
+  --caption "CNOT before cut" \
+  --caption-position bottom \
+  --output circuit.png
+```
+
 ### Export the symbolic state vector as PNG
 
 ```bash

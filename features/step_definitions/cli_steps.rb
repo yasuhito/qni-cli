@@ -880,6 +880,17 @@ Then('{string} は透過 PNG 画像である') do |path|
   MESSAGE
 end
 
+Then('{string} は不透過 PNG 画像である') do |path|
+  actual_path = File.join(@scenario_dir, path)
+  raise "expected file to exist: #{path}" unless File.exist?(actual_path)
+
+  next if image_inspector(actual_path).png? && !image_inspector(actual_path).transparent_png?
+
+  raise <<~MESSAGE
+    expected file to be an opaque PNG image: #{path}
+  MESSAGE
+end
+
 Then('{string} の画像サイズは {int}x{int} である') do |path, width, height|
   actual_path = File.join(@scenario_dir, path)
   raise "expected file to exist: #{path}" unless File.exist?(actual_path)

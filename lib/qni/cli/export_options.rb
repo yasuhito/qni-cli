@@ -1,19 +1,20 @@
 # frozen_string_literal: true
 
+require_relative 'export_caption_options'
+require_relative 'export_options_validator'
+require_relative '../export/png_exporter'
+
 module Qni
   class CLI < Thor
     # Normalizes and validates qni export CLI options.
     class ExportOptions
       def initialize(raw_options)
         @raw_options = raw_options
+        @caption_options = ExportCaptionOptions.new(raw_options)
       end
 
       def validate
-        validate_special_png_modes
-        validate_format_selection
-        validate_theme_selection
-        validate_special_mode_exclusivity
-        validate_output_path
+        ExportOptionsValidator.new(self, caption_options).validate
       end
 
       def latex_source?
@@ -45,9 +46,19 @@ module Qni
         :dark
       end
 
-      private
+      def caption?
+        caption_options.present?
+      end
 
-      attr_reader :raw_options
+      def caption_options_hash
+        caption_options.to_h
+      end
+
+      def png_transparency
+        return Export::PngExporter::ExportOptions::TRANSPARENT if raw_options.fetch(:transparent, true)
+
+        Export::PngExporter::ExportOptions::OPAQUE
+      end
 
       def dark?
         raw_options.fetch(:dark, false)
@@ -57,31 +68,9 @@ module Qni
         raw_options.fetch(:light, false)
       end
 
-      def validate_format_selection
-        raise Thor::Error, 'choose exactly one of --latex-source or --png' unless latex_source? ^ png?
-      end
+      private
 
-      def validate_theme_selection
-        raise Thor::Error, 'choose at most one of --dark or --light' if dark? && light?
-      end
-
-      def validate_special_png_modes
-        png_selected = png?
-        return if png_selected
-
-        raise Thor::Error, '--state-vector currently supports only --png' if state_vector?
-        raise Thor::Error, '--circle-notation currently supports only --png' if circle_notation?
-      end
-
-      def validate_special_mode_exclusivity
-        return unless state_vector? && circle_notation?
-
-        raise Thor::Error, 'choose at most one of --state-vector or --circle-notation'
-      end
-
-      def validate_output_path
-        raise Thor::Error, '--output=PATH is required for --png' if png? && !output_path
-      end
+      attr_reader :caption_options, :raw_options
     end
   end
 end

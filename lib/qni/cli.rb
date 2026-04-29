@@ -91,12 +91,14 @@ module Qni
     method_option :latex_source, type: :boolean, default: false, desc: 'Write qcircuit LaTeX'
     method_option :png, type: :boolean, default: false, desc: 'Write PNG rendered from qcircuit LaTeX'
     method_option :state_vector, type: :boolean, default: false, desc: 'Write the symbolic state vector as PNG'
-    method_option :circle_notation,
-                  type: :boolean,
-                  default: false,
-                  desc: 'Write the computational-basis circle notation as PNG'
+    method_option :circle_notation, type: :boolean, default: false, desc: 'Write circle-notation PNG'
     method_option :dark, type: :boolean, default: false, desc: 'Draw white circuit lines for dark backgrounds'
     method_option :light, type: :boolean, default: false, desc: 'Draw black circuit lines for light backgrounds'
+    method_option :transparent, type: :boolean, default: true, desc: 'Write PNG with transparent background'
+    method_option :caption, type: :string, desc: 'Add a caption to regular circuit export'
+    method_option :caption_tex, type: :boolean, default: false, desc: 'Treat --caption as raw LaTeX'
+    method_option :caption_position, type: :string, default: 'bottom', desc: 'Caption position: top or bottom'
+    method_option :caption_size, type: :numeric, default: 12, desc: 'Caption font size in pt'
     method_option :output, type: :string, desc: 'Write to this path'
     def export
       output = ExportCommand.new(circuit_file: current_circuit_file, export_options: options).execute

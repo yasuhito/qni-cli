@@ -23,6 +23,32 @@ module Qni
         end
       end
 
+      # PNG conversion settings for one export run.
+      class ExportOptions
+        TRANSPARENT = :transparent
+        OPAQUE = :opaque
+
+        def initialize(target_width: nil, target_height: nil, transparency: TRANSPARENT)
+          @target_width = target_width
+          @target_height = target_height
+          @transparency = transparency
+        end
+
+        def transparent?
+          transparency == TRANSPARENT
+        end
+
+        def size_args
+          return [] unless target_width && target_height
+
+          ['-scale-to-x', target_width.to_s, '-scale-to-y', target_height.to_s]
+        end
+
+        private
+
+        attr_reader :target_height, :target_width, :transparency
+      end
+
       # Captured shell result used to build exporter error messages.
       class CommandResult
         def self.capture(command)
@@ -59,11 +85,10 @@ module Qni
         attr_reader :command_name, :status, :stderr, :stdout
       end
 
-      def initialize(latex_source:, output_path:, target_width: nil, target_height: nil)
+      def initialize(latex_source:, output_path:, options: ExportOptions.new)
         @latex_source = latex_source
         @output_path = output_path
-        @target_width = target_width
-        @target_height = target_height
+        @options = options
       end
 
       def export
@@ -74,7 +99,7 @@ module Qni
 
       private
 
-      attr_reader :latex_source, :output_path, :target_height, :target_width
+      attr_reader :latex_source, :options, :output_path
 
       def export_from(dir)
         paths = ArtifactPaths.build(dir)
@@ -113,13 +138,13 @@ module Qni
       end
 
       def pdf_to_png_base_command
-        ['pdftocairo', '-singlefile', '-png', '-transp', '-q']
+        command = ['pdftocairo', '-singlefile', '-png', '-q']
+        command << '-transp' if options.transparent?
+        command
       end
 
       def pdf_to_png_size_args
-        return [] unless target_width && target_height
-
-        ['-scale-to-x', target_width.to_s, '-scale-to-y', target_height.to_s]
+        options.size_args
       end
 
       def run_command(command, missing_message:)
