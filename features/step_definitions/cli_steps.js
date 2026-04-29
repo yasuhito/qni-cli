@@ -145,3 +145,12 @@ Then('回路図:', function (docString) {
     normalizeMultilineText(docString)
   );
 });
+
+Then('標準出力:', function (docString) {
+  assert.equal(this.lastCommand.code, 0, commandFailureMessage(this.lastCommand));
+
+  assert.equal(
+    normalizeMultilineText(this.lastCommand.stdout),
+    normalizeMultilineText(docString)
+  );
+});

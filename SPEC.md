@@ -4,7 +4,7 @@
 
 `qni-cli` は、量子回路を表す JSON ファイルをコマンドラインから安全に更新し、内容を確認し、シミュレーション結果を読むためのツールとする。
 
-MVP では、単一量子ビットゲート `H` / `X` / `Y` / `Z` / `S` / `S†` / `T` / `T†` / `√X` / `P(angle)` / `Rx(angle)` / `Ry(angle)` / `Rz(angle)` と、2 つの target qubit を持つ `SWAP` を任意の `step` と `qubit` に追加する `add` コマンド、角度変数を管理する `variable` コマンド、状態ベクトルを表示する `run` コマンド、Pauli 文字列の期待値を表示する `expect` コマンド、現在の回路ファイルを削除する `clear` コマンドを対象にする。単一量子ビットゲートには `--control` を付けた制御付き追加も含む。
+MVP では、単一量子ビットゲート `H` / `X` / `Y` / `Z` / `S` / `S†` / `T` / `T†` / `√X` / `P(angle)` / `Rx(angle)` / `Ry(angle)` / `Rz(angle)` と、2 つの target qubit を持つ `SWAP` を任意の `step` と `qubit` に追加する `add` コマンド、指定したセルのゲートを取得する `gate` コマンド、角度変数を管理する `variable` コマンド、状態ベクトルを表示する `run` コマンド、Pauli 文字列の期待値を表示する `expect` コマンド、現在の回路ファイルを削除する `clear` コマンドを対象にする。単一量子ビットゲートには `--control` を付けた制御付き追加も含む。
 
 ## 実装言語
 
@@ -124,6 +124,10 @@ qni add SWAP --step <step> --qubit <qubit0>,<qubit1>
 ```
 
 ```bash
+qni gate --step <step> --qubit <qubit>
+```
+
+```bash
 qni expect <pauli_string> [<pauli_string> ...]
 ```
 
@@ -150,14 +154,20 @@ qni variable clear
 ### 引数
 
 - `<gate>`: 追加するゲート種別。MVP では `H` と `X` と `Y` と `Z` と `S` と `S†` と `T` と `T†` と `√X` と `P` と `Rx` と `Ry` と `Rz` と `SWAP` を許可する。`√X` は保存時に `"X^½"` に正規化する。
-- `--step <step>`: 配置先のステップ番号。0-based 整数。
-- `--qubit <qubit>`: 配置先の量子ビット番号。0-based 整数。`SWAP` の場合は `0,1` のようにカンマ区切りで 2 つ指定する。
+- `--step <step>`: 配置先または取得対象のステップ番号。0-based 整数。
+- `--qubit <qubit>`: 配置先または取得対象の量子ビット番号。0-based 整数。`SWAP` の場合は `0,1` のようにカンマ区切りで 2 つ指定する。
 - `--control <control>`: 制御量子ビット番号。カンマ区切りで複数指定できる。`X` と組み合わせた場合は CNOT / 多重制御 X を表す。
 - `<angled_gate>`: `P`, `Rx`, `Ry`, `Rz` のいずれか。
 - `--angle <angle>`: `P`, `Rx`, `Ry`, `Rz` に必須の角度。`π/3`, `pi/3`, `3*pi/4`, `0.5` のような具体角度か、`theta` のような ASCII 識別子を受け付ける。具体角度は保存時に `P(π/3)`, `Rx(π/2)` のような canonical form に正規化し、変数は `Ry(theta)` のようにそのまま保存する。
 - `<pauli_string>`: `I`, `X`, `Y`, `Z` だけで構成された観測量文字列。長さは回路の `qubits` と一致必須。例: `Z`, `ZZ`, `XIX`, `ZZI`。
 - `<name>`: ASCII 識別子。例: `theta`, `phi_1`。
 - `qni variable set` の `<angle>`: 具体角度のみ。`π/4`, `pi/3`, `0.5` を受け付ける。変数参照の入れ子は許可しない。
+
+### `gate` コマンド名
+
+```bash
+qni gate --step <step> --qubit <qubit>
+```
 
 ### `run` コマンド名
 
@@ -189,11 +199,13 @@ qni variable clear
 ### 対象ファイル
 
 - MVP の `add` コマンドは、カレントディレクトリの `./circuit.json` を固定で読み書きする。
+- `gate` コマンドもカレントディレクトリの `./circuit.json` を読み込み対象にする。
 - `clear` コマンドもカレントディレクトリの `./circuit.json` を削除対象にする。
 - `variable` コマンドもカレントディレクトリの `./circuit.json` を対象にする。
 - 更新対象ファイルを引数で切り替える機能は、MVP では持たない。
 - 将来、`--file` のような明示オプションを追加する余地はあるが、初期実装では不要とする。
 - `./circuit.json` が存在しない場合、`add` コマンドはファイルを自動作成してから更新する。
+- `gate` コマンドは `./circuit.json` が存在するときだけ成功する。
 - `qni variable set` は `./circuit.json` が存在するときだけ成功する。
 - `qni variable list`, `qni variable unset`, `qni variable clear` は `./circuit.json` がなくても失敗しない。
 
@@ -220,6 +232,8 @@ qni variable clear
 `qni add <gate> --control ...` は、control に指定した qubit のセルがすべて `1` であることも確認し、同じ列に `"•"` を配置してから target 側に対象ゲートを置く。`P`, `Rx`, `Ry`, `Rz` の場合は target 側に角度付きの canonical form を置く。
 
 `qni add SWAP --qubit 0,1 ...` は、2 つの target qubit が互いに異なり、対象セルがどちらも `1` であることを確認してから、同じ列に `"Swap"` を 2 個配置する。
+
+`qni gate --step <step> --qubit <qubit>` は、既存の `./circuit.json` を読み込み、`cols[step][qubit]` のセル値を標準出力に表示する。例えばセル値が `"H"` なら `H` を表示する。指定セルが存在しない場合は失敗する。
 
 `qni variable set <name> <angle>` は、既存の `./circuit.json` を読み込み、`variables.<name>` に具体角度を保存する。`qni variable unset <name>` はそのキーを削除し、`qni variable clear` は `variables` を空にする。削除後に空になった `variables` は JSON から省略してよい。
 

@@ -5,6 +5,7 @@
 ## What It Can Do
 
 - Add gates with `qni add`
+- Read a gate at a specific step and qubit with `qni gate`
 - Render the circuit as ASCII art with `qni view`
 - Inspect the state vector with `qni run`
 - Show small circuits as ket expressions with `qni run --symbolic`
@@ -51,6 +52,7 @@ Inside this repository, use the checked-out implementation via `bundle exec bin/
 
 ```bash
 bundle exec bin/qni add H --qubit 0 --step 0
+bundle exec bin/qni gate --qubit 0 --step 0
 bundle exec bin/qni add X --control 0 --qubit 1 --step 1
 bundle exec bin/qni view
 bundle exec bin/qni run --symbolic --basis bell
@@ -71,6 +73,14 @@ bundle exec bin/qni add SWAP --qubit 0,1 --step 3
 
 - `step` and `qubit` are 0-based
 - Supported gates are `H`, `X`, `Y`, `Z`, `S`, `S†`, `T`, `T†`, `√X`, `P`, `Rx`, `Ry`, `Rz`, and `SWAP`
+
+### Read one gate
+
+```bash
+bundle exec bin/qni gate --qubit 0 --step 0
+```
+
+`qni gate` prints the serialized `circuit.json` cell value, such as `H`.
 
 ### View the circuit
 

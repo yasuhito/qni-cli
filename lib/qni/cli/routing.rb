@@ -9,6 +9,7 @@ module Qni
       %i[clear_help_request? ClearHelp],
       %i[expect_help_request? ExpectHelp],
       %i[export_help_request? ExportHelp],
+      %i[gate_help_request? GateHelp],
       %i[run_help_request? RunHelp],
       %i[state_help_request? StateHelp],
       %i[variable_help_request? VariableHelp]
@@ -18,6 +19,7 @@ module Qni
       'qni bloch ' => 'qni bloch',
       'qni expect ' => 'qni expect',
       'qni export ' => 'qni export',
+      'qni gate ' => 'qni gate',
       'qni run ' => 'qni run',
       'qni state ' => 'qni state',
       'qni variable ' => 'qni variable'
@@ -39,6 +41,10 @@ module Qni
 
     def export_help_request?(given_args)
       [%w[export], %w[export --help], %w[export -h]].include?(given_args)
+    end
+
+    def gate_help_request?(given_args)
+      [%w[gate], %w[gate --help], %w[gate -h]].include?(given_args)
     end
 
     def run_help_request?(given_args)

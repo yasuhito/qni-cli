@@ -88,6 +88,8 @@ module Qni
         return parsed_value unless parsed_value.negative?
 
         raise Thor::Error, "#{name} must be >= 0"
+      rescue ArgumentError, TypeError
+        raise Thor::Error, "#{name} must be an integer"
       end
     end
   end
