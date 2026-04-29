@@ -3,6 +3,11 @@
 qni-cli のユーザとして、コマンドラインから量子回路を組み立てるために、
 指定した step と qubit に Y ゲートを追加したい。
 
+## Scenario: Y ゲート追加コマンドは成功
+
+- When "qni add Y --qubit 0 --step 0" を実行
+- Then コマンドは成功
+
 ## Scenario: Y ゲートを指定位置から取得
 
 - Given "qni add Y --qubit 0 --step 0" を実行

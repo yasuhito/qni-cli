@@ -3,10 +3,6 @@ Feature: qni add コマンド
   コマンドラインから量子回路を更新するために
   qni add コマンドを実行したい
 
-  Scenario: qni add コマンドは成功
-    When "qni add H --qubit 0 --step 0" を実行
-    Then コマンドは成功
-
   Scenario: qni add H の標準出力は空
     When "qni add H --qubit 0 --step 0" を実行
     Then 標準出力は空
