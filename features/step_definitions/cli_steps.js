@@ -122,6 +122,16 @@ function commandFailureMessage(result) {
   ].join('\n');
 }
 
+function commandSuccessMessage(result) {
+  return [
+    'expected command to fail, but it succeeded',
+    'stdout:',
+    result.stdout,
+    'stderr:',
+    result.stderr
+  ].join('\n');
+}
+
 When('{string} を実行', async function (command) {
   this.lastCommand = await runQniCommand(this.scenarioDir, command);
 });
@@ -151,6 +161,15 @@ Then('標準出力:', function (docString) {
 
   assert.equal(
     normalizeMultilineText(this.lastCommand.stdout),
+    normalizeMultilineText(docString)
+  );
+});
+
+Then('コマンドは失敗して標準エラー:', function (docString) {
+  assert.notEqual(this.lastCommand.code, 0, commandSuccessMessage(this.lastCommand));
+
+  assert.equal(
+    normalizeMultilineText(this.lastCommand.stderr),
     normalizeMultilineText(docString)
   );
 });
