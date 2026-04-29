@@ -8,6 +8,11 @@ qni-cli のユーザとして、コマンドラインから量子回路を組み
 - When "qni add Ry --angle π/2 --qubit 0 --step 0" を実行
 - Then コマンドは成功
 
+## Scenario: Ry ゲート追加コマンドの標準出力は空
+
+- When "qni add Ry --angle π/2 --qubit 0 --step 0" を実行
+- Then 標準出力は空
+
 ## Scenario: Ry ゲートを指定位置から取得
 
 - Given "qni add Ry --angle π/2 --qubit 0 --step 0" を実行
