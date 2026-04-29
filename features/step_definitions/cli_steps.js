@@ -136,6 +136,10 @@ When('{string} を実行', async function (command) {
   this.lastCommand = await runQniCommand(this.scenarioDir, command);
 });
 
+Then('コマンドは成功', function () {
+  assert.equal(this.lastCommand.code, 0, commandFailureMessage(this.lastCommand));
+});
+
 Then('{string} の内容:', function (filePath, docString) {
   assert.equal(this.lastCommand.code, 0, commandFailureMessage(this.lastCommand));
 

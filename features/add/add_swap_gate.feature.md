@@ -3,6 +3,11 @@
 qni-cli のユーザとして、2 つの qubit を入れ替える回路を作るために、
 qni add SWAP を実行したい。
 
+## Scenario: qni add SWAP コマンドは成功
+
+- When "qni add SWAP --qubit 0,1 --step 0" を実行
+- Then コマンドは成功
+
 ## Scenario: qni add SWAP は指定位置から Swap を取得
 
 - Given "qni add SWAP --qubit 0,1 --step 0" を実行

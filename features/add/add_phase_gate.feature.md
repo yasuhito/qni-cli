@@ -3,6 +3,11 @@
 qni-cli のユーザとして、コマンドラインから量子回路を組み立てるために、
 指定した step と qubit に Phase ゲートを追加したい。
 
+## Scenario: Phase ゲート追加コマンドは成功
+
+- When "qni add P --angle π/3 --qubit 0 --step 0" を実行
+- Then コマンドは成功
+
 ## Scenario: Phase ゲートを指定位置から取得
 
 - Given "qni add P --angle π/3 --qubit 0 --step 0" を実行
