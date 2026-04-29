@@ -18,7 +18,7 @@
   - 既存 step だけで書けない場合に限り、2 qubit 準備の補助 step を最小追加する。
 - Verify: `features/qni_expect.feature`
   - controlled gate と `qni expect` の既存振る舞いが回帰していないことを確認する。
-- Verify: `features/add_x_gate.feature`
+- Verify: `features/add/add_x_gate.feature.md`
   - controlled-`X` の基本的な追加フローが回帰していないことを確認する。
 - Reference only: `../oss/QuantumKatas/BasicGates/Tests.qs`
   - `T101_StateFlip` の意図と `DumpDiffOnOneQubit` / `AssertOperationsEqualReferenced` の確認元として読む。
@@ -141,14 +141,14 @@ git commit -m "test: support controlled Task 1.1 verification"
 **Files:**
 - Verify: `features/katas/basic_gates.feature`
 - Verify: `features/qni_expect.feature`
-- Verify: `features/add_x_gate.feature`
+- Verify: `features/add/add_x_gate.feature.md`
 
 - [ ] **Step 1: Run the targeted regression set**
 
 Run:
 
 ```bash
-/home/yasuhito/.local/share/gem/ruby/3.4.0/bin/bundle exec cucumber features/add_x_gate.feature features/qni_expect.feature features/katas/basic_gates.feature
+/home/yasuhito/.local/share/gem/ruby/3.4.0/bin/bundle exec cucumber features/add/add_x_gate.feature.md features/qni_expect.feature features/katas/basic_gates.feature
 ```
 
 Expected:

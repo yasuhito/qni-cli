@@ -18,7 +18,7 @@
   - `0.6|0> + 0.8|1>` を準備できるよう既存 step の `case` を拡張する。
 - Verify: `features/qni_run.feature`
   - `qni run` の既存振る舞いが回帰していないことを確認する。
-- Verify: `features/add_x_gate.feature`
+- Verify: `features/add/add_x_gate.feature.md`
   - `X` ゲート追加が回帰していないことを確認する。
 
 ### Task 1: Add the failing general-state scenario
@@ -116,14 +116,14 @@ git commit -m "test: support general-state Task 1.1 setup"
 **Files:**
 - Verify: `features/katas/basic_gates.feature`
 - Verify: `features/qni_run.feature`
-- Verify: `features/add_x_gate.feature`
+- Verify: `features/add/add_x_gate.feature.md`
 
 - [ ] **Step 1: Run the targeted regression set**
 
 Run:
 
 ```bash
-/home/yasuhito/.local/share/gem/ruby/3.4.0/bin/bundle exec cucumber features/add_x_gate.feature features/qni_run.feature features/katas/basic_gates.feature
+/home/yasuhito/.local/share/gem/ruby/3.4.0/bin/bundle exec cucumber features/add/add_x_gate.feature.md features/qni_run.feature features/katas/basic_gates.feature
 ```
 
 Expected:
