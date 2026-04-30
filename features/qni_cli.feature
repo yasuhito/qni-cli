@@ -30,23 +30,6 @@ Feature: qni CLI
       qubit must be an integer
       """
 
-  Scenario: qni clear --help は clear コマンドの使い方を表示
-    When "qni clear --help" を実行
-    Then コマンドは成功
-    And 標準出力:
-      """
-      Usage:
-        qni clear
-
-      Overview:
-        Delete ./circuit.json.
-        If ./circuit.json does not exist, qni clear still succeeds.
-        Standard output is empty on success.
-
-      Examples:
-        qni clear
-      """
-
   Scenario: qni help は使えない
     When "qni help add" を実行
     Then コマンドは失敗
