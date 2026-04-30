@@ -4,7 +4,7 @@
 
 `qni-cli` は、量子回路を表す JSON ファイルをコマンドラインから安全に更新し、内容を確認し、シミュレーション結果を読むためのツールとする。
 
-MVP では、単一量子ビットゲート `H` / `X` / `Y` / `Z` / `S` / `S†` / `T` / `T†` / `√X` / `P(angle)` / `Rx(angle)` / `Ry(angle)` / `Rz(angle)` と、2 つの target qubit を持つ `SWAP` を任意の `step` と `qubit` に追加する `add` コマンド、指定したセルのゲートを取得する `gate` コマンド、角度変数を管理する `variable` コマンド、状態ベクトルを表示する `run` コマンド、Pauli 文字列の期待値を表示する `expect` コマンド、現在の回路ファイルを削除する `clear` コマンドを対象にする。単一量子ビットゲートには `--control` を付けた制御付き追加も含む。
+MVP では、単一量子ビットゲート `H` / `X` / `Y` / `Z` / `S` / `S†` / `T` / `T†` / `√X` / `P(angle)` / `Rx(angle)` / `Ry(angle)` / `Rz(angle)` と、2 つの target qubit を持つ `SWAP` を任意の `step` と `qubit` に追加する `add` コマンド、指定したセルのゲートを取得する `gate` コマンド、指定したセルのゲート operation を削除する `rm` コマンド、角度変数を管理する `variable` コマンド、状態ベクトルを表示する `run` コマンド、Pauli 文字列の期待値を表示する `expect` コマンド、現在の回路ファイルを削除する `clear` コマンドを対象にする。単一量子ビットゲートには `--control` を付けた制御付き追加も含む。
 
 ## 実装言語
 
@@ -96,6 +96,7 @@ MVP は、以下のトップレベル構造を前提にする。
 ### MVP での編集対象
 
 - `add` コマンドが編集するのはトップレベルの `cols` である。
+- `rm` コマンドが編集するのはトップレベルの `cols` である。
 - `variable` コマンドが編集するのはトップレベルの `variables` である。
 - `run` と `expect` は `cols` と `variables` の両方を読む。
 
@@ -128,6 +129,10 @@ qni gate --step <step> --qubit <qubit>
 ```
 
 ```bash
+qni rm --step <step> --qubit <qubit>
+```
+
+```bash
 qni expect <pauli_string> [<pauli_string> ...]
 ```
 
@@ -154,8 +159,8 @@ qni variable clear
 ### 引数
 
 - `<gate>`: 追加するゲート種別。MVP では `H` と `X` と `Y` と `Z` と `S` と `S†` と `T` と `T†` と `√X` と `P` と `Rx` と `Ry` と `Rz` と `SWAP` を許可する。`√X` は保存時に `"X^½"` に正規化する。
-- `--step <step>`: 配置先または取得対象のステップ番号。0-based 整数。
-- `--qubit <qubit>`: 配置先または取得対象の量子ビット番号。0-based 整数。`SWAP` の場合は `0,1` のようにカンマ区切りで 2 つ指定する。
+- `--step <step>`: 配置先、取得対象、または削除対象のステップ番号。0-based 整数。
+- `--qubit <qubit>`: 配置先、取得対象、または削除対象の量子ビット番号。0-based 整数。`add SWAP` の場合は `0,1` のようにカンマ区切りで 2 つ指定する。
 - `--control <control>`: 制御量子ビット番号。カンマ区切りで複数指定できる。`X` と組み合わせた場合は CNOT / 多重制御 X を表す。
 - `<angled_gate>`: `P`, `Rx`, `Ry`, `Rz` のいずれか。
 - `--angle <angle>`: `P`, `Rx`, `Ry`, `Rz` に必須の角度。`π/3`, `pi/3`, `3*pi/4`, `0.5` のような具体角度か、`theta` のような ASCII 識別子を受け付ける。具体角度は保存時に `P(π/3)`, `Rx(π/2)` のような canonical form に正規化し、変数は `Ry(theta)` のようにそのまま保存する。
@@ -167,6 +172,12 @@ qni variable clear
 
 ```bash
 qni gate --step <step> --qubit <qubit>
+```
+
+### `rm` コマンド名
+
+```bash
+qni rm --step <step> --qubit <qubit>
 ```
 
 ### `run` コマンド名
@@ -200,12 +211,14 @@ qni variable clear
 
 - MVP の `add` コマンドは、カレントディレクトリの `./circuit.json` を固定で読み書きする。
 - `gate` コマンドもカレントディレクトリの `./circuit.json` を読み込み対象にする。
+- `rm` コマンドもカレントディレクトリの `./circuit.json` を読み書き対象にする。
 - `clear` コマンドもカレントディレクトリの `./circuit.json` を削除対象にする。
 - `variable` コマンドもカレントディレクトリの `./circuit.json` を対象にする。
 - 更新対象ファイルを引数で切り替える機能は、MVP では持たない。
 - 将来、`--file` のような明示オプションを追加する余地はあるが、初期実装では不要とする。
 - `./circuit.json` が存在しない場合、`add` コマンドはファイルを自動作成してから更新する。
 - `gate` コマンドは `./circuit.json` が存在するときだけ成功する。
+- `rm` コマンドは `./circuit.json` が存在するときだけ成功する。
 - `qni variable set` は `./circuit.json` が存在するときだけ成功する。
 - `qni variable list`, `qni variable unset`, `qni variable clear` は `./circuit.json` がなくても失敗しない。
 
@@ -234,6 +247,8 @@ qni variable clear
 `qni add SWAP --qubit 0,1 ...` は、2 つの target qubit が互いに異なり、対象セルがどちらも `1` であることを確認してから、同じ列に `"Swap"` を 2 個配置する。
 
 `qni gate --step <step> --qubit <qubit>` は、既存の `./circuit.json` を読み込み、`cols[step][qubit]` のセル値を標準出力に表示する。例えばセル値が `"H"` なら `H` を表示する。指定セルが存在しない場合は失敗する。
+
+`qni rm --step <step> --qubit <qubit>` は、既存の `./circuit.json` を読み込み、`cols[step][qubit]` のセルを削除する。単一量子ビットゲートは指定セルだけを `1` に戻す。制御付きゲートは control または target のどちらを指定しても、同じ operation の control 記号 `"•"` と target ゲートをすべて `1` に戻す。`SWAP` は片方の `"Swap"` セルを指定しても 2 つの `"Swap"` セルをどちらも `1` に戻す。指定セルが存在しない場合、指定セルが `1` の場合、または `./circuit.json` が存在しない場合は失敗する。削除後は circuit auto-shrink を適用する。
 
 `qni variable set <name> <angle>` は、既存の `./circuit.json` を読み込み、`variables.<name>` に具体角度を保存する。`qni variable unset <name>` はそのキーを削除し、`qni variable clear` は `variables` を空にする。削除後に空になった `variables` は JSON から省略してよい。
 
@@ -320,9 +335,9 @@ qni variable clear
 
 この圧縮は先頭の空ステップにだけ適用し、途中や末尾の空ステップは残す。
 
-### 先頭の空 qubit の圧縮
+### 先頭・末尾の空 qubit の圧縮
 
-追加後に回路先頭の qubit がすべてのステップで `1` の場合、その先頭 qubit は自動的に削除する。
+追加または削除後に回路先頭の qubit がすべてのステップで `1` の場合、その空 qubit は自動的に削除する。削除後に回路末尾の qubit がすべてのステップで `1` の場合も、その空 qubit は自動的に削除する。初期状態が明示されている場合は、初期状態の qubit 数を下回る圧縮はしない。
 
 例:
 
@@ -339,7 +354,7 @@ qni variable clear
 }
 ```
 
-この圧縮は先頭の空 qubit にだけ適用し、途中や末尾の空 qubit は残す。
+この圧縮は先頭または末尾の空 qubit に適用し、途中の空 qubit は残す。
 
 ## 衝突時の扱い
 

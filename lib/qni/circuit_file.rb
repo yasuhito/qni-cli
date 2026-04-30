@@ -65,7 +65,15 @@ module Qni
     end
 
     def variables
-      with_domain_errors { existing_circuit&.variables || {} }
+      with_domain_errors { existing_circuit&.to_h&.fetch('variables', {}) || {} }
+    end
+
+    def update_required_circuit
+      with_domain_errors do
+        circuit = existing_circuit || raise(Error, 'circuit.json does not exist')
+        yield circuit
+        write(circuit)
+      end
     end
 
     private
@@ -92,14 +100,6 @@ module Qni
           yield circuit
           write(circuit)
         end
-      end
-    end
-
-    def update_required_circuit
-      with_domain_errors do
-        circuit = existing_circuit || raise(Error, 'circuit.json does not exist')
-        yield circuit
-        write(circuit)
       end
     end
 

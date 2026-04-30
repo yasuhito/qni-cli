@@ -82,6 +82,10 @@ module Qni
       @slots[qubit] = gate
     end
 
+    def clear_gate(qubit)
+      @slots[qubit] = 1
+    end
+
     def empty?
       @slots.all?(1)
     end
@@ -96,6 +100,10 @@ module Qni
 
     def drop_left(count)
       @slots.shift(count)
+    end
+
+    def drop_right(count)
+      @slots.pop(count)
     end
 
     def extend_right(count)

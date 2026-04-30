@@ -347,6 +347,13 @@ When('{string} を実行', async function (command) {
   this.lastCommand = await runQniCommand(this.scenarioDir, command);
 });
 
+Given('次の circuit.json がある:', function (docString) {
+  fs.writeFileSync(
+    path.join(this.scenarioDir, 'circuit.json'),
+    `${JSON.stringify(JSON.parse(docString), null, 2)}\n`
+  );
+});
+
 When('{string} を TTY で実行', async function (command) {
   this.lastCommand = await runQniCommandInTty(this.scenarioDir, command);
 });

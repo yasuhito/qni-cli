@@ -3,6 +3,7 @@
 require_relative 'circuit/controlled_gate'
 require_relative 'circuit/loader'
 require_relative 'circuit/layout_normalizer'
+require_relative 'circuit/operation_removal'
 require_relative 'circuit/slot_position'
 require_relative 'circuit/symbol_placement'
 require_relative 'initial_state'
@@ -56,6 +57,17 @@ module Qni
       add_placement(SymbolPlacement.new(step:, symbols: targets.to_h { |target| [target, SwapGate::SYMBOL] }))
     end
 
+    def remove_gate(step:, qubit:)
+      steps = @state.steps
+      OperationRemoval.new(steps:, step:, qubit:).apply
+      @qubits = LayoutNormalizer.new(
+        steps:,
+        qubits:,
+        minimum_qubits: initial_state&.qubits || 1,
+        qubit_trim: :both
+      ).normalize
+    end
+
     def set_variable(name:, value:)
       @state.variables.set(name:, value:)
     end
@@ -68,21 +80,16 @@ module Qni
       @state.variables.clear
     end
 
-    def variables
-      @state.variables.to_h
-    end
-
     def replace_initial_state(next_initial_state)
       expand_qubits_to(next_initial_state.qubits - 1) if next_initial_state
       @state.initial_state = next_initial_state
     end
 
     def to_h
-      result = { 'qubits' => qubits }
-      result['initial_state'] = initial_state.to_h if initial_state
-      result['cols'] = @state.steps.map(&:to_a)
-      result['variables'] = variables unless @state.variables.empty?
-      result
+      { 'qubits' => qubits, 'cols' => @state.steps.map(&:to_a) }.tap do |result|
+        result['initial_state'] = initial_state.to_h if initial_state
+        @state.variables.then { |variables| result['variables'] = variables.to_h unless variables.empty? }
+      end
     end
 
     private
@@ -91,7 +98,7 @@ module Qni
       steps = @state.steps
       prepare_slots(placement)
       placement.place_on(steps)
-      @qubits = LayoutNormalizer.new(steps:, qubits:).normalize
+      @qubits = LayoutNormalizer.new(steps:, qubits:, minimum_qubits: initial_state&.qubits || 1).normalize
     end
 
     def prepare_slots(placement)
