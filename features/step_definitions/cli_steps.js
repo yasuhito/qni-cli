@@ -382,6 +382,13 @@ Given('空の 1 qubit 回路がある', function () {
   });
 });
 
+Given('空の 2 qubit 回路がある', function () {
+  writeCircuitJson(this.scenarioDir, {
+    qubits: 2,
+    cols: [[1, 1]]
+  });
+});
+
 Given('空の 3 qubit 回路がある', function () {
   writeCircuitJson(this.scenarioDir, {
     qubits: 3,
@@ -479,6 +486,13 @@ Then('標準エラー:', function (docString) {
   assert.equal(
     normalizeMultilineText(this.lastCommand.stderr),
     normalizeMultilineText(docStringContent(docString))
+  );
+});
+
+Then('標準エラー:', function (docString) {
+  assert.equal(
+    normalizeMultilineText(this.lastCommand.stderr),
+    normalizeMultilineText(docString)
   );
 });
 
