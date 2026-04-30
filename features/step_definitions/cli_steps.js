@@ -153,6 +153,10 @@ function normalizeMultilineText(value) {
     .join('\n');
 }
 
+function docStringContent(docString) {
+  return typeof docString === 'string' ? docString : docString.content;
+}
+
 function commandFailureMessage(result) {
   return [
     'expected command to succeed, but it failed',
@@ -392,7 +396,7 @@ When('{string} を実行', async function (command) {
 Given('次の circuit.json がある:', function (docString) {
   fs.writeFileSync(
     path.join(this.scenarioDir, 'circuit.json'),
-    `${JSON.stringify(JSON.parse(docString), null, 2)}\n`
+    `${JSON.stringify(JSON.parse(docStringContent(docString)), null, 2)}\n`
   );
 });
 
@@ -404,17 +408,23 @@ Then('コマンドは成功', function () {
   assert.equal(this.lastCommand.code, 0, commandFailureMessage(this.lastCommand));
 });
 
+Then('コマンドは失敗', function () {
+  assert.notEqual(this.lastCommand.code, 0, commandSuccessMessage(this.lastCommand));
+});
+
 Then('標準出力は空', function () {
   assert.equal(this.lastCommand.stdout, '');
 });
 
 Then('標準出力に次を含む:', function (docString) {
+  const expected = docStringContent(docString);
+
   assert.ok(
-    this.lastCommand.stdout.includes(docString),
+    this.lastCommand.stdout.includes(expected),
     [
       'expected stdout to include',
       'expected:',
-      docString,
+      expected,
       'actual:',
       this.lastCommand.stdout
     ].join('\n')
@@ -422,12 +432,14 @@ Then('標準出力に次を含む:', function (docString) {
 });
 
 Then('標準出力に次を含まない:', function (docString) {
+  const unexpected = docStringContent(docString);
+
   assert.ok(
-    !this.lastCommand.stdout.includes(docString),
+    !this.lastCommand.stdout.includes(unexpected),
     [
       'expected stdout not to include',
       'unexpected:',
-      docString,
+      unexpected,
       'actual:',
       this.lastCommand.stdout
     ].join('\n')
@@ -441,7 +453,7 @@ Then('{string} の内容:', function (filePath, docString) {
   assert.ok(fs.existsSync(actualPath), `expected file to exist: ${filePath}`);
 
   const actual = JSON.parse(fs.readFileSync(actualPath, 'utf8'));
-  const expected = JSON.parse(docString);
+  const expected = JSON.parse(docStringContent(docString));
   assert.deepEqual(actual, expected);
 });
 
@@ -450,7 +462,7 @@ Then('回路図:', function (docString) {
 
   assert.equal(
     normalizeMultilineText(this.lastCommand.stdout),
-    normalizeMultilineText(docString)
+    normalizeMultilineText(docStringContent(docString))
   );
 });
 
@@ -459,7 +471,14 @@ Then('標準出力:', function (docString) {
 
   assert.equal(
     normalizeMultilineText(this.lastCommand.stdout),
-    normalizeMultilineText(docString)
+    normalizeMultilineText(docStringContent(docString))
+  );
+});
+
+Then('標準エラー:', function (docString) {
+  assert.equal(
+    normalizeMultilineText(this.lastCommand.stderr),
+    normalizeMultilineText(docStringContent(docString))
   );
 });
 
@@ -487,7 +506,7 @@ Then('コマンドは失敗して標準エラー:', function (docString) {
 
   assert.equal(
     normalizeMultilineText(this.lastCommand.stderr),
-    normalizeMultilineText(docString)
+    normalizeMultilineText(docStringContent(docString))
   );
 });
 
