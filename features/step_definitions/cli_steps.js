@@ -421,6 +421,15 @@ Then('標準出力:', function (docString) {
   );
 });
 
+Then('コマンドは成功して標準出力:', function (docString) {
+  assert.equal(this.lastCommand.code, 0, commandFailureMessage(this.lastCommand));
+
+  assert.equal(
+    normalizeMultilineText(this.lastCommand.stdout),
+    normalizeMultilineText(docString)
+  );
+});
+
 Then('標準出力に dim 修飾付きラベル {string} を含む', function (label) {
   const chars = [...label];
 
