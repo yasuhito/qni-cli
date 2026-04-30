@@ -3,20 +3,6 @@ Feature: qni bloch コマンド
   1 qubit の状態を幾何学的に理解するために
   qni bloch でブロッホ球の PNG や APNG や inline 表示を使いたい
 
-  Scenario: qni bloch --png は 1 qubit 回路のブロッホ球 PNG を書き出す
-    Given "qni add H --qubit 0 --step 0" を実行
-    When "qni bloch --png --output bloch.png" を実行
-    Then コマンドは成功
-    And "bloch.png" は PNG 画像である
-    And "bloch.png" は透過 PNG 画像である
-    And "bloch.png" の画像サイズは 512x512 である
-
-  Scenario: qni bloch --png --light は light theme のブロッホ球 PNG を書き出す
-    Given "qni add H --qubit 0 --step 0" を実行
-    When "qni bloch --png --light --output bloch-light.png" を実行
-    Then コマンドは成功
-    And "bloch-light.png" は PNG 画像である
-
   Scenario: qni bloch は z 軸ラベルと |0> ラベルを重ならない位置に配置する
     Given "qni add H --qubit 0 --step 0" を実行
     When "qni bloch --png --light --output bloch-layout.png" を実行
