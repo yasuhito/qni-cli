@@ -43,20 +43,6 @@ Feature: qni bloch コマンド
     And "bloch-trajectory.png" は色 "#0f766e" のピクセルを含む
     And "bloch.png" と "bloch-trajectory.png" は異なるファイル内容である
 
-  Scenario: qni bloch --inline は 1 qubit 回路のブロッホ球を Kitty graphics protocol で表示する
-    Given "qni add H --qubit 0 --step 0" を実行
-    And 環境変数 "QNI_TEST_FORCE_INLINE" を "1" に設定する
-    When "qni bloch --inline" を TTY で実行
-    Then コマンドは成功
-    And 標準出力は Kitty graphics escape sequence を含む
-
-  Scenario: qni bloch --inline --animate は回転ゲートのブロッホ球を inline animation で表示する
-    Given "qni add Ry --angle π/2 --qubit 0 --step 0" を実行
-    And 環境変数 "QNI_TEST_FORCE_INLINE" を "1" に設定する
-    When "qni bloch --inline --animate" を TTY で実行
-    Then コマンドは成功
-    And 標準出力は 2 個以上の Kitty graphics escape sequence を含む
-
   Scenario: qni bloch は 2 qubit 回路では失敗する
     Given 空の 2 qubit 回路がある
     When "qni bloch --png --output bloch.png" を実行

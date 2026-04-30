@@ -69,15 +69,16 @@ function splitCommand(command) {
   return words;
 }
 
-function bundlerEnv() {
+function bundlerEnv(extraEnv = {}) {
   return {
     ...process.env,
+    ...extraEnv,
     BUNDLE_GEMFILE: path.join(PROJECT_ROOT, 'Gemfile'),
     MPLCONFIGDIR
   };
 }
 
-function runQniCommand(scenarioDir, command) {
+function runQniCommand(scenarioDir, command, extraEnv = {}) {
   const argv = splitCommand(command);
 
   if (argv[0] !== 'qni') {
@@ -87,7 +88,7 @@ function runQniCommand(scenarioDir, command) {
   return new Promise((resolve, reject) => {
     const child = spawn('bundle', ['exec', QNI_BIN, ...argv.slice(1)], {
       cwd: scenarioDir,
-      env: bundlerEnv()
+      env: bundlerEnv(extraEnv)
     });
 
     const stdout = [];
@@ -111,7 +112,7 @@ function shellQuote(value) {
   return `'${value.replace(/'/gu, "'\\''")}'`;
 }
 
-function runQniCommandInTty(scenarioDir, command) {
+function runQniCommandInTty(scenarioDir, command, extraEnv = {}) {
   const argv = splitCommand(command);
 
   if (argv[0] !== 'qni') {
@@ -125,7 +126,7 @@ function runQniCommandInTty(scenarioDir, command) {
   return new Promise((resolve, reject) => {
     const child = spawn('script', ['-qfec', ttyCommand, '/dev/null'], {
       cwd: scenarioDir,
-      env: bundlerEnv()
+      env: bundlerEnv(extraEnv)
     });
 
     const stdout = [];
@@ -386,7 +387,7 @@ Given('空の 3 qubit 回路がある', function () {
 });
 
 When('{string} を実行', async function (command) {
-  this.lastCommand = await runQniCommand(this.scenarioDir, command);
+  this.lastCommand = await runQniCommand(this.scenarioDir, command, this.commandEnv);
 });
 
 Given('次の circuit.json がある:', function (docString) {
@@ -396,8 +397,13 @@ Given('次の circuit.json がある:', function (docString) {
   );
 });
 
+Given('環境変数 {string} を {string} に設定する', function (name, value) {
+  this.commandEnv ||= {};
+  this.commandEnv[name] = value;
+});
+
 When('{string} を TTY で実行', async function (command) {
-  this.lastCommand = await runQniCommandInTty(this.scenarioDir, command);
+  this.lastCommand = await runQniCommandInTty(this.scenarioDir, command, this.commandEnv);
 });
 
 Then('コマンドは成功', function () {
@@ -430,6 +436,28 @@ Then('標準出力に次を含まない:', function (docString) {
       docString,
       'actual:',
       this.lastCommand.stdout
+    ].join('\n')
+  );
+});
+
+Then('標準出力は Kitty graphics escape sequence を含む', function () {
+  assert.ok(
+    this.lastCommand.stdout.includes('\u001b_G'),
+    [
+      'expected stdout to include Kitty graphics escape sequence',
+      `actual: ${JSON.stringify(this.lastCommand.stdout)}`
+    ].join('\n')
+  );
+});
+
+Then('標準出力は {int} 個以上の Kitty graphics escape sequence を含む', function (minimumCount) {
+  const actualCount = [...this.lastCommand.stdout.matchAll(/\u001b_G/gu)].length;
+
+  assert.ok(
+    actualCount >= minimumCount,
+    [
+      `expected stdout to include at least ${minimumCount} Kitty graphics escape sequences`,
+      `actual: ${actualCount}`
     ].join('\n')
   );
 });
