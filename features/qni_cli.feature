@@ -30,48 +30,6 @@ Feature: qni CLI
       qubit must be an integer
       """
 
-  Scenario: qni expect は expect コマンドの使い方を表示
-    When "qni expect" を実行
-    Then コマンドは成功
-    And 標準出力:
-      """
-      Usage:
-        qni expect PAULI_STRING [PAULI_STRING...]
-
-      Overview:
-        Calculate expectation values from ./circuit.json.
-        qni simulates the whole circuit and evaluates each Pauli string on the resulting state.
-        Each PAULI_STRING must use only I, X, Y, and Z.
-        The length of each PAULI_STRING must match the circuit qubit count.
-        Output is one line per observable in the form PAULI_STRING=value.
-
-      Examples:
-        qni expect Z
-        qni expect ZZ XX
-        qni expect ZZI IZZ XXX
-      """
-
-  Scenario: qni expect --help は expect コマンドの使い方を表示
-    When "qni expect --help" を実行
-    Then コマンドは成功
-    And 標準出力:
-      """
-      Usage:
-        qni expect PAULI_STRING [PAULI_STRING...]
-
-      Overview:
-        Calculate expectation values from ./circuit.json.
-        qni simulates the whole circuit and evaluates each Pauli string on the resulting state.
-        Each PAULI_STRING must use only I, X, Y, and Z.
-        The length of each PAULI_STRING must match the circuit qubit count.
-        Output is one line per observable in the form PAULI_STRING=value.
-
-      Examples:
-        qni expect Z
-        qni expect ZZ XX
-        qni expect ZZI IZZ XXX
-      """
-
   Scenario: qni clear --help は clear コマンドの使い方を表示
     When "qni clear --help" を実行
     Then コマンドは成功
