@@ -203,6 +203,48 @@ function assertPngSignature(actualPath, filePath) {
   assert.deepEqual(signature, pngSignature, `expected file to be a PNG image: ${filePath}`);
 }
 
+function pngChunks(actualPath, filePath) {
+  const png = fs.readFileSync(actualPath);
+  assertPngSignature(actualPath, filePath);
+
+  const chunks = [];
+  let offset = 8;
+
+  while (offset + 8 <= png.length) {
+    const length = png.readUInt32BE(offset);
+    const type = png.toString('ascii', offset + 4, offset + 8);
+    const dataStart = offset + 8;
+    const dataEnd = dataStart + length;
+
+    assert.ok(
+      dataEnd + 4 <= png.length,
+      `expected complete PNG chunk ${type} in: ${filePath}`
+    );
+
+    chunks.push({ type, dataStart, length });
+    offset = dataEnd + 4;
+
+    if (type === 'IEND') {
+      break;
+    }
+  }
+
+  return { png, chunks };
+}
+
+function apngMetadata(actualPath, filePath) {
+  const { png, chunks } = pngChunks(actualPath, filePath);
+  const animationControl = chunks.find((chunk) => chunk.type === 'acTL');
+  const frameChunks = chunks.filter((chunk) => chunk.type === 'fcTL');
+
+  return {
+    animated: animationControl !== undefined,
+    frameCount: animationControl
+      ? png.readUInt32BE(animationControl.dataStart)
+      : frameChunks.length
+  };
+}
+
 function pngMetadata(actualPath) {
   const script = `
 from PIL import Image
@@ -473,6 +515,23 @@ Then('{string} は PNG 画像である', function (filePath) {
 
   assert.ok(fs.existsSync(actualPath), `expected file to exist: ${filePath}`);
   assertPngSignature(actualPath, filePath);
+});
+
+Then('{string} は APNG 画像である', function (filePath) {
+  const actualPath = path.join(this.scenarioDir, filePath);
+
+  assert.ok(fs.existsSync(actualPath), `expected file to exist: ${filePath}`);
+  assert.equal(apngMetadata(actualPath, filePath).animated, true);
+});
+
+Then('{string} は {int} フレーム以上の APNG 画像である', function (filePath, minimumFrames) {
+  const actualPath = path.join(this.scenarioDir, filePath);
+
+  assert.ok(fs.existsSync(actualPath), `expected file to exist: ${filePath}`);
+  assert.ok(
+    apngMetadata(actualPath, filePath).frameCount >= minimumFrames,
+    `expected APNG frame count to be at least ${minimumFrames}: ${filePath}`
+  );
 });
 
 Then('{string} は透過 PNG 画像である', function (filePath) {

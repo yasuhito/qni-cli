@@ -13,7 +13,8 @@ module Qni
       %i[remove_help_request? RemoveHelp],
       %i[run_help_request? RunHelp],
       %i[state_help_request? StateHelp],
-      %i[variable_help_request? VariableHelp]
+      %i[variable_help_request? VariableHelp],
+      %i[view_help_request? ViewHelp]
     ].freeze
     USAGE_SUMMARIES = {
       'qni add ' => 'qni add',
@@ -67,6 +68,10 @@ module Qni
 
     def state_help_request?(given_args)
       [%w[state], %w[state --help], %w[state -h]].include?(given_args)
+    end
+
+    def view_help_request?(given_args)
+      [%w[view --help], %w[view -h]].include?(given_args)
     end
 
     def help_request?(given_args)

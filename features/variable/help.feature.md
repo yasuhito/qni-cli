@@ -1,7 +1,7 @@
 # Feature: qni variable help
 
 qni-cli のユーザとして
-variable コマンドの使い方を知るために
+symbolic angle variable の管理方法を知るために
 qni variable の help を見たい
 
 ## Scenario: qni variable は成功する
