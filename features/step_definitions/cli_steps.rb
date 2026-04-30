@@ -515,6 +515,10 @@ Given('空の 3 qubit 回路がある') do
   write_circuit_json(@scenario_dir, actual)
 end
 
+Given('次の circuit.json がある:') do |doc_string|
+  write_circuit_json(@scenario_dir, JSON.parse(doc_string))
+end
+
 Given('環境変数 {string} を {string} に設定する') do |name, value|
   @command_env ||= {}
   @command_env[name] = value

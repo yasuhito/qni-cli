@@ -3,7 +3,7 @@ const path = require('node:path');
 const { spawn } = require('node:child_process');
 const assert = require('node:assert/strict');
 
-const { Then, When } = require('@cucumber/cucumber');
+const { Given, Then, When } = require('@cucumber/cucumber');
 
 const PROJECT_ROOT = path.resolve(__dirname, '../..');
 const QNI_BIN = path.join(PROJECT_ROOT, 'bin', 'qni');
@@ -134,6 +134,13 @@ function commandSuccessMessage(result) {
 
 When('{string} を実行', async function (command) {
   this.lastCommand = await runQniCommand(this.scenarioDir, command);
+});
+
+Given('次の circuit.json がある:', function (docString) {
+  fs.writeFileSync(
+    path.join(this.scenarioDir, 'circuit.json'),
+    `${JSON.stringify(JSON.parse(docString), null, 2)}\n`
+  );
 });
 
 Then('コマンドは成功', function () {
