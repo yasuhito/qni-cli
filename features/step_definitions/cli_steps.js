@@ -264,6 +264,26 @@ print(json.dumps({
   return pythonJson(script, [actualPath]);
 }
 
+function imageIncludesColor(actualPath, hexColor) {
+  const color = hexColor.replace(/^#/, '');
+  const script = `
+from PIL import Image
+import json
+import sys
+
+image = Image.open(sys.argv[1]).convert("RGBA")
+pixels = image.load()
+width, height = image.size
+target = tuple(int(sys.argv[2][index:index + 2], 16) for index in (0, 2, 4))
+print(json.dumps(any(
+    pixels[x, y][:3] == target and pixels[x, y][3] > 0
+    for y in range(height)
+    for x in range(width)
+)))
+`;
+  return pythonJson(script, [actualPath, color]);
+}
+
 function circleNotationPhaseMetrics(real, imag) {
   const script = `
 import importlib.util
@@ -564,6 +584,16 @@ Then('{string} の画像サイズは {int}x{int} である', function (filePath,
   const metadata = pngMetadata(actualPath);
 
   assert.deepEqual([metadata.width, metadata.height], [width, height]);
+});
+
+Then('{string} は色 {string} のピクセルを含む', function (filePath, hexColor) {
+  const actualPath = path.join(this.scenarioDir, filePath);
+
+  assert.ok(fs.existsSync(actualPath), `expected file to exist: ${filePath}`);
+  assert.ok(
+    imageIncludesColor(actualPath, hexColor),
+    `expected image to include color ${hexColor}: ${filePath}`
+  );
 });
 
 Then('{string} と {string} は異なるファイル内容である', function (lhsPath, rhsPath) {
