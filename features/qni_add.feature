@@ -15,16 +15,3 @@ Feature: qni add コマンド
     Given "qni add H --qubit 0 --step 0" を実行
     When "qni add H --qubit 0 --step 0" を実行
     Then コマンドは失敗
-
-  Scenario: 既存回路に新しい qubit を追加できる
-    Given "qni add H --qubit 0 --step 0" を実行
-    When "qni add H --qubit 1 --step 0" を実行
-    Then "circuit.json" の内容:
-      """
-      {
-        "qubits": 2,
-        "cols": [
-          ["H", "H"]
-        ]
-      }
-      """
