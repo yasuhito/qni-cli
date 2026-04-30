@@ -489,13 +489,6 @@ Then('標準エラー:', function (docString) {
   );
 });
 
-Then('標準エラー:', function (docString) {
-  assert.equal(
-    normalizeMultilineText(this.lastCommand.stderr),
-    normalizeMultilineText(docString)
-  );
-});
-
 Then('標準出力に dim 修飾付きラベル {string} を含む', function (label) {
   const chars = [...label];
 
