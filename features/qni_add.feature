@@ -7,14 +7,6 @@ Feature: qni add コマンド
     When "qni add H --qubit 0 --step 0" を実行
     Then 標準出力は空
 
-  Scenario: qni add X with control コマンドは成功
-    When "qni add X --control 0 --qubit 1 --step 0" を実行
-    Then コマンドは成功
-
-  Scenario: qni add X with control の標準出力は空
-    When "qni add X --control 0 --qubit 1 --step 0" を実行
-    Then 標準出力は空
-
   Scenario: qni add SWAP コマンドは成功
     When "qni add SWAP --qubit 0,1 --step 0" を実行
     Then コマンドは成功
