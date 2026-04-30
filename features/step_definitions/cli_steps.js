@@ -103,6 +103,44 @@ function runQniCommand(scenarioDir, command) {
   });
 }
 
+function shellQuote(value) {
+  return `'${value.replace(/'/gu, "'\\''")}'`;
+}
+
+function runQniCommandInTty(scenarioDir, command) {
+  const argv = splitCommand(command);
+
+  if (argv[0] !== 'qni') {
+    throw new Error(`command must start with qni: ${command}`);
+  }
+
+  const ttyCommand = ['bundle', 'exec', QNI_BIN, ...argv.slice(1)]
+    .map(shellQuote)
+    .join(' ');
+
+  return new Promise((resolve, reject) => {
+    const child = spawn('script', ['-qfec', ttyCommand, '/dev/null'], {
+      cwd: scenarioDir,
+      env: bundlerEnv()
+    });
+
+    const stdout = [];
+    const stderr = [];
+
+    child.stdout.on('data', (chunk) => stdout.push(chunk));
+    child.stderr.on('data', (chunk) => stderr.push(chunk));
+    child.on('error', reject);
+    child.on('close', (code, signal) => {
+      resolve({
+        code,
+        signal,
+        stdout: Buffer.concat(stdout).toString('utf8').replace(/\r\n/gu, '\n'),
+        stderr: Buffer.concat(stderr).toString('utf8')
+      });
+    });
+  });
+}
+
 function normalizeMultilineText(value) {
   return value
     .replace(/\n+$/u, '')
@@ -143,6 +181,10 @@ Given('次の circuit.json がある:', function (docString) {
   );
 });
 
+When('{string} を TTY で実行', async function (command) {
+  this.lastCommand = await runQniCommandInTty(this.scenarioDir, command);
+});
+
 Then('コマンドは成功', function () {
   assert.equal(this.lastCommand.code, 0, commandFailureMessage(this.lastCommand));
 });
@@ -177,6 +219,25 @@ Then('標準出力:', function (docString) {
   assert.equal(
     normalizeMultilineText(this.lastCommand.stdout),
     normalizeMultilineText(docString)
+  );
+});
+
+Then('標準出力に dim 修飾付きラベル {string} を含む', function (label) {
+  const chars = [...label];
+
+  assert.ok(chars.length >= 2, `label must have at least 2 characters: ${label}`);
+
+  const base = chars.slice(0, -1).join('');
+  const suffix = chars.at(-1);
+  const expected = `${base}\u001b[37;2m${suffix}\u001b[0m`;
+
+  assert.ok(
+    this.lastCommand.stdout.includes(expected),
+    [
+      'expected stdout to include dim-decorated label',
+      `expected: ${JSON.stringify(expected)}`,
+      `actual: ${JSON.stringify(this.lastCommand.stdout)}`
+    ].join('\n')
   );
 });
 
