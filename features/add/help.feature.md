@@ -4,10 +4,15 @@ qni-cli のユーザとして
 add コマンドの使い方を知るために
 qni add の help を見たい
 
+## Scenario: qni add は成功する
+
+- When "qni add" を実行
+- Then コマンドは成功
+
 ## Scenario: qni add は add コマンドの使い方を表示
 
 - When "qni add" を実行
-- Then コマンドは成功して標準出力:
+- Then 標準出力:
 
   ```text
   Usage:
@@ -46,10 +51,15 @@ qni add の help を見たい
     qni add SWAP --qubit 0,1 --step 0
   ```
 
+## Scenario: qni add --help は成功する
+
+- When "qni add --help" を実行
+- Then コマンドは成功
+
 ## Scenario: qni add --help は add コマンドの使い方を表示
 
 - When "qni add --help" を実行
-- Then コマンドは成功して標準出力:
+- Then 標準出力:
 
   ```text
   Usage:
