@@ -1,7 +1,8 @@
 # Feature: circuit auto-shrink
 
-qni の回路データとして、空の先頭 step や qubit は自動的に詰めたい。
-これは `qni add` 固有の仕様ではなく、回路全体の auto-shrink 仕様である。
+qni-cli のユーザとして
+回路をできるだけコンパクトに保つために
+空の先頭 step や qubit を自動的に詰めたい。
 将来 gate delete/remove を追加した場合も、削除後の auto-shrink シナリオをここに追加する。
 
 ## Scenario: 空の先頭ステップは自動的に削除される
