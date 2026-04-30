@@ -10,6 +10,13 @@ const PROJECT_ROOT = path.resolve(__dirname, '../..');
 const QNI_BIN = path.join(PROJECT_ROOT, 'bin', 'qni');
 const PYTHON_SYMBOLIC = path.join(PROJECT_ROOT, '.python-symbolic', 'bin', 'python');
 const MPLCONFIGDIR = process.env.MPLCONFIGDIR || path.join(os.tmpdir(), 'qni-cli-matplotlib');
+const TWO_QUBIT_INITIAL_STATE_COLS = new Map([
+  ['|00>', [[1, 1]]],
+  ['|01>', [[1, 'X']]],
+  ['|10>', [['X', 1]]],
+  ['|11>', [['X', 'X']]],
+  ['0.6|00> + 0.8|01>', [[1, 'Ry(1.8545904360032246)']]]
+]);
 
 function splitCommand(command) {
   const words = [];
@@ -184,6 +191,35 @@ function writeCircuitJson(scenarioDir, data) {
     path.join(scenarioDir, 'circuit.json'),
     `${JSON.stringify(data, null, 2)}\n`
   );
+}
+
+function writeAsciiCircuitJson(scenarioDir, asciiArt) {
+  const script = [
+    'circuit = Qni::View::AsciiCircuitParser.new(STDIN.read).parse',
+    'puts JSON.pretty_generate(circuit.to_h)'
+  ].join('\n');
+  const json = execFileSync(
+    'bundle',
+    ['exec', 'ruby', '-Ilib', '-rjson', '-rqni/view/ascii_circuit_parser', '-e', script],
+    {
+      cwd: PROJECT_ROOT,
+      env: bundlerEnv(),
+      input: asciiArt,
+      encoding: 'utf8'
+    }
+  );
+
+  fs.writeFileSync(path.join(scenarioDir, 'circuit.json'), `${json.trim()}\n`);
+}
+
+function twoQubitInitialCols(state) {
+  const cols = TWO_QUBIT_INITIAL_STATE_COLS.get(state);
+
+  if (!cols) {
+    throw new Error(`unsupported 2-qubit initial state: ${state}`);
+  }
+
+  return cols;
 }
 
 function pythonJson(script, args = []) {
@@ -425,6 +461,13 @@ Given('空の 2 qubit 回路がある', function () {
   });
 });
 
+Given('2 qubit の初期状態が {string} である', function (state) {
+  writeCircuitJson(this.scenarioDir, {
+    qubits: 2,
+    cols: twoQubitInitialCols(state)
+  });
+});
+
 Given('空の 3 qubit 回路がある', function () {
   writeCircuitJson(this.scenarioDir, {
     qubits: 3,
@@ -441,6 +484,10 @@ Given('次の circuit.json がある:', function (docString) {
     path.join(this.scenarioDir, 'circuit.json'),
     `${JSON.stringify(JSON.parse(docStringContent(docString)), null, 2)}\n`
   );
+});
+
+Given('次の回路図がある:', function (docString) {
+  writeAsciiCircuitJson(this.scenarioDir, docStringContent(docString));
 });
 
 Given('環境変数 {string} を {string} に設定する', function (name, value) {
