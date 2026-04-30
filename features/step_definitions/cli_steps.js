@@ -378,6 +378,13 @@ Given('空の 1 qubit 回路がある', function () {
   });
 });
 
+Given('空の 2 qubit 回路がある', function () {
+  writeCircuitJson(this.scenarioDir, {
+    qubits: 2,
+    cols: [[1, 1]]
+  });
+});
+
 Given('空の 3 qubit 回路がある', function () {
   writeCircuitJson(this.scenarioDir, {
     qubits: 3,
@@ -402,6 +409,10 @@ When('{string} を TTY で実行', async function (command) {
 
 Then('コマンドは成功', function () {
   assert.equal(this.lastCommand.code, 0, commandFailureMessage(this.lastCommand));
+});
+
+Then('コマンドは失敗', function () {
+  assert.notEqual(this.lastCommand.code, 0, commandSuccessMessage(this.lastCommand));
 });
 
 Then('標準出力は空', function () {
@@ -459,6 +470,13 @@ Then('標準出力:', function (docString) {
 
   assert.equal(
     normalizeMultilineText(this.lastCommand.stdout),
+    normalizeMultilineText(docString)
+  );
+});
+
+Then('標準エラー:', function (docString) {
+  assert.equal(
+    normalizeMultilineText(this.lastCommand.stderr),
     normalizeMultilineText(docString)
   );
 });
