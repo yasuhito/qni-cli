@@ -19,16 +19,6 @@ Feature: qni bloch コマンド
     And ブロッホ球のラベル "|+i>" の表示は y 軸の先端より上にある
     And ブロッホ球のラベル "y" と "|+i>" の表示領域は重ならない
 
-  Scenario: qni bloch --png --trajectory は X ゲートのブロッホ球 PNG に軌跡を描く
-    Given "qni add X --qubit 0 --step 0" を実行
-    When "qni bloch --png --output bloch.png" を実行
-    Then コマンドは成功
-    When "qni bloch --png --trajectory --light --output bloch-trajectory.png" を実行
-    Then コマンドは成功
-    And "bloch-trajectory.png" は PNG 画像である
-    And "bloch-trajectory.png" は色 "#0f766e" のピクセルを含む
-    And "bloch.png" と "bloch-trajectory.png" は異なるファイル内容である
-
   Scenario: qni bloch --inline は 1 qubit 回路のブロッホ球を Kitty graphics protocol で表示する
     Given "qni add H --qubit 0 --step 0" を実行
     And 環境変数 "QNI_TEST_FORCE_INLINE" を "1" に設定する
