@@ -193,6 +193,10 @@ function writeCircuitJson(scenarioDir, data) {
   );
 }
 
+function projectFilePath(filePath) {
+  return path.join(PROJECT_ROOT, filePath);
+}
+
 function readCircuitJson(scenarioDir) {
   return JSON.parse(fs.readFileSync(path.join(scenarioDir, 'circuit.json'), 'utf8'));
 }
@@ -673,6 +677,28 @@ Then('標準エラー:', function (docString) {
 
 Then('読み込みは成功', function () {
   assert.equal(this.lastAsciiParse.ok, true, this.lastAsciiParse.error);
+});
+
+Then('リポジトリファイル {string} は存在する', function (filePath) {
+  assert.ok(
+    fs.existsSync(projectFilePath(filePath)),
+    `expected repository file to exist: ${filePath}`
+  );
+});
+
+Then('リポジトリファイル {string} は {string} を含む', function (filePath, text) {
+  const actualPath = projectFilePath(filePath);
+  assert.ok(fs.existsSync(actualPath), `expected repository file to exist: ${filePath}`);
+
+  const actual = fs.readFileSync(actualPath, 'utf8');
+  assert.ok(
+    actual.includes(text),
+    [
+      'expected repository file to include text',
+      `file: ${filePath}`,
+      `expected: ${text}`
+    ].join('\n')
+  );
 });
 
 Then('標準出力に dim 修飾付きラベル {string} を含む', function (label) {
