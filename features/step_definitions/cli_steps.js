@@ -574,6 +574,12 @@ Then('{string} の内容:', function (filePath, docString) {
   assert.deepEqual(actual, expected);
 });
 
+Then('{string} は存在しない', function (filePath) {
+  const actualPath = path.join(this.scenarioDir, filePath);
+
+  assert.ok(!fs.existsSync(actualPath), `expected file not to exist: ${filePath}`);
+});
+
 Then('回路図:', function (docString) {
   assert.equal(this.lastCommand.code, 0, commandFailureMessage(this.lastCommand));
 
