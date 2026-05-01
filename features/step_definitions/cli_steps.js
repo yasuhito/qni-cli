@@ -490,6 +490,12 @@ Given('次の回路図がある:', function (docString) {
   writeAsciiCircuitJson(this.scenarioDir, docStringContent(docString));
 });
 
+Given('{string} は存在しない', function (filePath) {
+  const actualPath = path.join(this.scenarioDir, filePath);
+
+  assert.equal(fs.existsSync(actualPath), false, `expected file not to exist: ${filePath}`);
+});
+
 Given('環境変数 {string} を {string} に設定する', function (name, value) {
   this.commandEnv ||= {};
   this.commandEnv[name] = value;
