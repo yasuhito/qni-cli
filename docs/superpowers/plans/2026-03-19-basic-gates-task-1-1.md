@@ -16,7 +16,7 @@
   - `BasicGates Task 1.1` の回帰シナリオを持つ。
 - Modify: `features/step_definitions/cli_steps.rb`
   - 1 qubit の `|1⟩` 初期状態を準備する step を追加する。
-- Verify: `features/add/add_x_gate.feature.md`
+- Verify: `features/cli/add/add_x_gate.feature.md`
   - 既存の `X` ゲート追加機能が回帰していないことを確認する。
 - Verify: `features/qni_run.feature`
   - 既存の `qni run` 振る舞いが回帰していないことを確認する。
@@ -137,7 +137,7 @@ git commit -m "test: support BasicGates Task 1.1 state preparation"
 ### Task 3: Verify no product change is required
 
 **Files:**
-- Verify: `features/add/add_x_gate.feature.md`
+- Verify: `features/cli/add/add_x_gate.feature.md`
 - Verify: `features/qni_run.feature`
 - Verify: `features/katas/basic_gates.feature`
 
@@ -146,7 +146,7 @@ git commit -m "test: support BasicGates Task 1.1 state preparation"
 Run:
 
 ```bash
-bundle exec cucumber features/add/add_x_gate.feature.md
+bundle exec cucumber features/cli/add/add_x_gate.feature.md
 ```
 
 Expected:
@@ -182,7 +182,7 @@ Expected:
 Check:
 
 - `features/katas/basic_gates.feature` が green である
-- `features/add/add_x_gate.feature.md` が green である
+- `features/cli/add/add_x_gate.feature.md` が green である
 - `features/qni_run.feature` が green である
 - `lib/` 配下に変更が不要である
 
