@@ -10,6 +10,13 @@ const PROJECT_ROOT = path.resolve(__dirname, '../..');
 const QNI_BIN = path.join(PROJECT_ROOT, 'bin', 'qni');
 const PYTHON_SYMBOLIC = path.join(PROJECT_ROOT, '.python-symbolic', 'bin', 'python');
 const MPLCONFIGDIR = process.env.MPLCONFIGDIR || path.join(os.tmpdir(), 'qni-cli-matplotlib');
+const ONE_QUBIT_INITIAL_STATE_COLS = new Map([
+  ['|0>', [[1]]],
+  ['|1>', [['X']]],
+  ['0.6|0> + 0.8|1>', [['Ry(1.8545904360032246)']]],
+  ['cos(theta/2)|0> + sin(theta/2)|1>', [['Ry(theta)']]],
+  ['cos(θ/2)|0> + sin(θ/2)|1>', [['Ry(theta)']]]
+]);
 const TWO_QUBIT_INITIAL_STATE_COLS = new Map([
   ['|00>', [[1, 1]]],
   ['|01>', [[1, 'X']]],
@@ -256,6 +263,165 @@ function appendAsciiCircuitJson(scenarioDir, asciiArt) {
   }
 
   appendCircuitJson(scenarioDir, result.circuit);
+}
+
+function directInitialState(state) {
+  const script = [
+    'begin',
+    '  initial_state = Qni::InitialState.parse(STDIN.read.sub(/\\n+\\z/, ""))',
+    '  puts JSON.generate(ok: true, qubits: initial_state.qubits, state: initial_state.to_h)',
+    'rescue Qni::InitialState::Error => e',
+    '  puts JSON.generate(ok: false, error: e.message)',
+    'end'
+  ].join('\n');
+
+  const result = JSON.parse(execFileSync(
+    'bundle',
+    ['exec', 'ruby', '-Ilib', '-rjson', '-rqni/initial_state', '-e', script],
+    {
+      cwd: PROJECT_ROOT,
+      env: bundlerEnv(),
+      input: state,
+      encoding: 'utf8'
+    }
+  ));
+
+  return result.ok ? result : undefined;
+}
+
+function initialStateVectorCols(state) {
+  for (const supportedStates of [ONE_QUBIT_INITIAL_STATE_COLS, TWO_QUBIT_INITIAL_STATE_COLS]) {
+    const cols = supportedStates.get(state);
+
+    if (cols) {
+      return cols;
+    }
+  }
+
+  throw new Error(`unsupported initial state: ${state}`);
+}
+
+function writeInitialStateVector(scenarioDir, docString) {
+  const state = normalizeMultilineText(docString);
+  const initialState = directInitialState(state);
+
+  if (initialState) {
+    writeCircuitJson(scenarioDir, {
+      qubits: initialState.qubits,
+      initial_state: initialState.state,
+      cols: [Array(initialState.qubits).fill(1)]
+    });
+    return;
+  }
+
+  const cols = initialStateVectorCols(state);
+
+  writeCircuitJson(scenarioDir, {
+    qubits: cols[0].length,
+    cols
+  });
+}
+
+function compactUnitCoefficients(text) {
+  return text
+    .replace(/^1(?:\.0+)?(?=\|)/u, '')
+    .replace(/^1(?:\.0+)?i(?=\|)/u, 'i')
+    .replace(/(?<= \+ )1(?:\.0+)?(?=\|)/gu, '')
+    .replace(/(?<= \+ )1(?:\.0+)?i(?=\|)/gu, 'i')
+    .replace(/(?<= - )1(?:\.0+)?(?=\|)/gu, '')
+    .replace(/(?<= - )1(?:\.0+)?i(?=\|)/gu, 'i')
+    .replace(/^-1(?:\.0+)?(?=\|)/u, '-')
+    .replace(/(?<= \+ )-1(?:\.0+)?(?=\|)/gu, '-')
+    .replace(/^-1(?:\.0+)?i(?=\|)/u, '-i')
+    .replace(/(?<= \+ )-1(?:\.0+)?i(?=\|)/gu, '-i');
+}
+
+function trimTrailingDecimalZeros(text) {
+  return text.replace(/-?\d+\.\d+/gu, (number) => number
+    .replace(/(\.\d*?[1-9])0+$/u, '$1')
+    .replace(/\.0+$/u, ''));
+}
+
+function normalizeImaginaryUnit(text) {
+  return text
+    .replaceAll('*I', 'i')
+    .replace(/\bI\b/gu, 'i')
+    .replace(/\bi\*(?=[a-zA-Z_])/gu, 'i')
+    .replace(/\b-i\*(?=[a-zA-Z_])/gu, '-i');
+}
+
+function normalizeSymbolicShorthand(text) {
+  return text
+    .replaceAll('|+>', 'sqrt(2)/2|0> + sqrt(2)/2|1>')
+    .replaceAll('|->', 'sqrt(2)/2|0> - sqrt(2)/2|1>');
+}
+
+function normalizeSymbolicAliases(text) {
+  return text
+    .replaceAll('θ', 'theta')
+    .replaceAll('α', 'alpha')
+    .replaceAll('β', 'beta')
+    .replaceAll('π', 'pi')
+    .replaceAll('√2', 'sqrt(2)')
+    .replace(/(\d(?:\.\d+)?)(?=sqrt\(2\))/gu, '$1*');
+}
+
+function normalizePhaseFactorOrder(text) {
+  return text.replace(/exp\(([^)]+)\)([a-zA-Z_][a-zA-Z0-9_]*)/gu, '$2*exp($1)');
+}
+
+function normalizeSymbolicStateVector(stdout) {
+  return compactUnitCoefficients(stdout.replace(/\n+$/u, ''));
+}
+
+function canonicalSymbolicNotation(text) {
+  return trimTrailingDecimalZeros(
+    normalizePhaseFactorOrder(
+      normalizeSymbolicAliases(
+        normalizeImaginaryUnit(
+          normalizeSymbolicShorthand(text)
+        )
+      )
+    )
+  );
+}
+
+function canonicalNamedBasisNotation(text) {
+  return trimTrailingDecimalZeros(
+    text
+      .replaceAll('θ', 'theta')
+      .replaceAll('α', 'alpha')
+      .replaceAll('β', 'beta')
+      .replaceAll('π', 'pi')
+      .replaceAll('√2', 'sqrt(2)')
+      .replace(/(\d(?:\.\d+)?)(?=sqrt\(2\))/gu, '$1*')
+  );
+}
+
+function assertSymbolicStateMatches(stdout, docString) {
+  const actual = canonicalSymbolicNotation(normalizeSymbolicStateVector(stdout));
+  const expected = canonicalSymbolicNotation(docString);
+
+  assert.equal(actual, expected, [
+    'expected symbolic state vector to match',
+    'expected:',
+    expected,
+    'actual:',
+    actual
+  ].join('\n'));
+}
+
+function assertNamedBasisStateMatches(stdout, docString) {
+  const actual = canonicalNamedBasisNotation(normalizeSymbolicStateVector(stdout));
+  const expected = canonicalNamedBasisNotation(docString);
+
+  assert.equal(actual, expected, [
+    'expected named-basis state vector to match',
+    'expected:',
+    expected,
+    'actual:',
+    actual
+  ].join('\n'));
 }
 
 function twoQubitInitialCols(state) {
@@ -514,6 +680,10 @@ Given('2 qubit の初期状態が {string} である', function (state) {
   });
 });
 
+Given('初期状態ベクトルは:', function (docString) {
+  writeInitialStateVector(this.scenarioDir, docStringContent(docString));
+});
+
 Given('空の 3 qubit 回路がある', function () {
   writeCircuitJson(this.scenarioDir, {
     qubits: 3,
@@ -544,6 +714,10 @@ When('次の回路図を適用:', function (docString) {
   appendAsciiCircuitJson(this.scenarioDir, docStringContent(docString));
 });
 
+When('次の回路を適用:', function (docString) {
+  appendAsciiCircuitJson(this.scenarioDir, docStringContent(docString));
+});
+
 Given('{string} は存在しない', function (filePath) {
   const actualPath = path.join(this.scenarioDir, filePath);
 
@@ -569,6 +743,41 @@ Then('コマンドは失敗', function () {
 
 Then('標準出力は空', function () {
   assert.equal(this.lastCommand.stdout, '');
+});
+
+Then('状態ベクトルは:', async function (docString) {
+  const result = await runQniCommand(this.scenarioDir, 'qni run --symbolic');
+
+  assert.equal(result.code, 0, commandFailureMessage(result));
+  assertSymbolicStateMatches(result.stdout, docStringContent(docString));
+});
+
+Then('計算基底での状態ベクトルは:', async function (docString) {
+  const result = await runQniCommand(this.scenarioDir, 'qni run --symbolic');
+
+  assert.equal(result.code, 0, commandFailureMessage(result));
+  assertSymbolicStateMatches(result.stdout, docStringContent(docString));
+});
+
+Then('|+>, |-> 基底での状態ベクトルは:', async function (docString) {
+  const result = await runQniCommand(this.scenarioDir, 'qni run --symbolic --basis x');
+
+  assert.equal(result.code, 0, commandFailureMessage(result));
+  assertNamedBasisStateMatches(result.stdout, docStringContent(docString));
+});
+
+Then('|+i>, |-i> 基底での状態ベクトルは:', async function (docString) {
+  const result = await runQniCommand(this.scenarioDir, 'qni run --symbolic --basis y');
+
+  assert.equal(result.code, 0, commandFailureMessage(result));
+  assertNamedBasisStateMatches(result.stdout, docStringContent(docString));
+});
+
+Then('Bell 基底での状態ベクトルは:', async function (docString) {
+  const result = await runQniCommand(this.scenarioDir, 'qni run --symbolic --basis bell');
+
+  assert.equal(result.code, 0, commandFailureMessage(result));
+  assertNamedBasisStateMatches(result.stdout, docStringContent(docString));
 });
 
 Then('標準出力に次を含む:', function (docString) {
