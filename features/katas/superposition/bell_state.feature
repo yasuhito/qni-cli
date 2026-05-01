@@ -11,7 +11,7 @@ Feature: Quantum Katas Superposition Task 1.6 BellState
   その値を CNOT で 2 個目の qubit にコピーすると、
   2 qubit がもつれた Bell 状態になることを確かめる。
 
-  Scenario: H のあとに CNOT を適用すると |00> は Bell 状態 |Φ+> になる
+  Scenario: H のあとに CNOT を適用すると |00> は計算基底の Bell 重ね合わせになる
     Given 初期状態ベクトルは:
       """
       |00>
@@ -28,7 +28,21 @@ Feature: Quantum Katas Superposition Task 1.6 BellState
       """
       sqrt(2)/2|00> + sqrt(2)/2|11>
       """
-    And Bell 基底での状態ベクトルは:
+
+  Scenario: H のあとに CNOT を適用すると |00> は Bell 基底の |Φ+> になる
+    Given 初期状態ベクトルは:
+      """
+      |00>
+      """
+    When 次の回路を適用:
+      """
+          ┌───┐
+      q0: ┤ H ├──■──
+          └───┘┌─┴─┐
+      q1: ─────┤ X ├
+               └───┘
+      """
+    Then Bell 基底での状態ベクトルは:
       """
       |Φ+>
       """

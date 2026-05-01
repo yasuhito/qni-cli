@@ -16,7 +16,7 @@ Feature: Quantum Katas Superposition Task 1.7 AllBellStates
   そのあと 2 個目の qubit に Z と X を組み合わせて
   4 つの Bell 状態を切り替えられることを確かめる。
 
-  Scenario: index = 0 のとき |Φ+> を作る
+  Scenario: index = 0 のとき計算基底で |Φ+> を作る
     Given 初期状態ベクトルは:
       """
       |00>
@@ -33,12 +33,26 @@ Feature: Quantum Katas Superposition Task 1.7 AllBellStates
       """
       sqrt(2)/2|00> + sqrt(2)/2|11>
       """
-    And Bell 基底での状態ベクトルは:
+
+  Scenario: index = 0 のとき Bell 基底で |Φ+> を作る
+    Given 初期状態ベクトルは:
+      """
+      |00>
+      """
+    When 次の回路を適用:
+      """
+          ┌───┐
+      q0: ┤ H ├──■──
+          └───┘┌─┴─┐
+      q1: ─────┤ X ├
+               └───┘
+      """
+    Then Bell 基底での状態ベクトルは:
       """
       |Φ+>
       """
 
-  Scenario: index = 1 のとき |Φ-> を作る
+  Scenario: index = 1 のとき計算基底で |Φ-> を作る
     Given 初期状態ベクトルは:
       """
       |00>
@@ -55,12 +69,26 @@ Feature: Quantum Katas Superposition Task 1.7 AllBellStates
       """
       sqrt(2)/2|00> - sqrt(2)/2|11>
       """
-    And Bell 基底での状態ベクトルは:
+
+  Scenario: index = 1 のとき Bell 基底で |Φ-> を作る
+    Given 初期状態ベクトルは:
+      """
+      |00>
+      """
+    When 次の回路を適用:
+      """
+          ┌───┐
+      q0: ┤ H ├──■───────
+          └───┘┌─┴─┐┌───┐
+      q1: ─────┤ X ├┤ Z ├
+               └───┘└───┘
+      """
+    Then Bell 基底での状態ベクトルは:
       """
       |Φ->
       """
 
-  Scenario: index = 2 のとき |Ψ+> を作る
+  Scenario: index = 2 のとき計算基底で |Ψ+> を作る
     Given 初期状態ベクトルは:
       """
       |00>
@@ -77,12 +105,26 @@ Feature: Quantum Katas Superposition Task 1.7 AllBellStates
       """
       sqrt(2)/2|01> + sqrt(2)/2|10>
       """
-    And Bell 基底での状態ベクトルは:
+
+  Scenario: index = 2 のとき Bell 基底で |Ψ+> を作る
+    Given 初期状態ベクトルは:
+      """
+      |00>
+      """
+    When 次の回路を適用:
+      """
+          ┌───┐
+      q0: ┤ H ├──■───────
+          └───┘┌─┴─┐┌───┐
+      q1: ─────┤ X ├┤ X ├
+               └───┘└───┘
+      """
+    Then Bell 基底での状態ベクトルは:
       """
       |Ψ+>
       """
 
-  Scenario: index = 3 のとき |Ψ-> を作る
+  Scenario: index = 3 のとき計算基底で |Ψ-> を作る
     Given 初期状態ベクトルは:
       """
       |00>
@@ -99,7 +141,21 @@ Feature: Quantum Katas Superposition Task 1.7 AllBellStates
       """
       sqrt(2)/2|01> - sqrt(2)/2|10>
       """
-    And Bell 基底での状態ベクトルは:
+
+  Scenario: index = 3 のとき Bell 基底で |Ψ-> を作る
+    Given 初期状態ベクトルは:
+      """
+      |00>
+      """
+    When 次の回路を適用:
+      """
+          ┌───┐
+      q0: ┤ H ├──■────────────
+          └───┘┌─┴─┐┌───┐┌───┐
+      q1: ─────┤ X ├┤ Z ├┤ X ├
+               └───┘└───┘└───┘
+      """
+    Then Bell 基底での状態ベクトルは:
       """
       |Ψ->
       """
