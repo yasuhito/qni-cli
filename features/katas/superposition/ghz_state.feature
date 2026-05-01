@@ -11,7 +11,7 @@ Feature: Quantum Katas Superposition Task 1.8 GHZ_State
   その値を残りの qubit に順に CNOT で伝えると、
   GHZ 状態が作れることを小さい N から確かめる。
 
-  Scenario: N = 1 のとき GHZ 状態は |+> になる
+  Scenario: N = 1 のとき GHZ 状態は計算基底の重ね合わせになる
     Given 初期状態ベクトルは:
       """
       |0>
@@ -26,12 +26,24 @@ Feature: Quantum Katas Superposition Task 1.8 GHZ_State
       """
       sqrt(2)/2|0> + sqrt(2)/2|1>
       """
-    And |+>, |-> 基底での状態ベクトルは:
+
+  Scenario: N = 1 のとき GHZ 状態は |+> 基底状態になる
+    Given 初期状態ベクトルは:
+      """
+      |0>
+      """
+    When 次の回路を適用:
+      """
+          ┌───┐
+      q0: ┤ H ├
+          └───┘
+      """
+    Then |+>, |-> 基底での状態ベクトルは:
       """
       |+>
       """
 
-  Scenario: N = 2 のとき GHZ 状態は Bell state |Φ+> になる
+  Scenario: N = 2 のとき GHZ 状態は計算基底の Bell 重ね合わせになる
     Given 初期状態ベクトルは:
       """
       |00>
@@ -48,7 +60,21 @@ Feature: Quantum Katas Superposition Task 1.8 GHZ_State
       """
       sqrt(2)/2|00> + sqrt(2)/2|11>
       """
-    And Bell 基底での状態ベクトルは:
+
+  Scenario: N = 2 のとき GHZ 状態は Bell 基底の |Φ+> になる
+    Given 初期状態ベクトルは:
+      """
+      |00>
+      """
+    When 次の回路を適用:
+      """
+          ┌───┐
+      q0: ┤ H ├──■──
+          └───┘┌─┴─┐
+      q1: ─────┤ X ├
+               └───┘
+      """
+    Then Bell 基底での状態ベクトルは:
       """
       |Φ+>
       """

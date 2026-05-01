@@ -10,7 +10,7 @@ Feature: Quantum Katas Superposition Task 1.2 MinusState
   この task では、X ゲートで |1⟩ を作ってから
   Hadamard ゲート H をかけることで |-⟩ が得られることを確かめる。
 
-  Scenario: X のあとに H を適用すると |0> は |-> に変わる
+  Scenario: X のあとに H を適用すると |0> は計算基底で負の重ね合わせになる
     Given 初期状態ベクトルは:
       """
       |0>
@@ -25,7 +25,19 @@ Feature: Quantum Katas Superposition Task 1.2 MinusState
       """
       sqrt(2)/2|0> - sqrt(2)/2|1>
       """
-    And |+>, |-> 基底での状態ベクトルは:
+
+  Scenario: X のあとに H を適用すると |0> は |-> 基底状態に変わる
+    Given 初期状態ベクトルは:
+      """
+      |0>
+      """
+    When 次の回路を適用:
+      """
+          ┌───┐┌───┐
+      q0: ┤ X ├┤ H ├
+          └───┘└───┘
+      """
+    Then |+>, |-> 基底での状態ベクトルは:
       """
       |->
       """

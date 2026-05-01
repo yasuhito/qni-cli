@@ -10,7 +10,7 @@ Feature: Quantum Katas Superposition Task 1.1 PlusState
   この task では、Hadamard ゲート H が
   計算基底の |0⟩ を x 基底の |+⟩ に変えることを確かめる。
 
-  Scenario: H ゲートは |0> を |+> に変える
+  Scenario: H ゲートは |0> を計算基底の重ね合わせに変える
     Given 初期状態ベクトルは:
       """
       |0>
@@ -25,7 +25,19 @@ Feature: Quantum Katas Superposition Task 1.1 PlusState
       """
       sqrt(2)/2|0> + sqrt(2)/2|1>
       """
-    And |+>, |-> 基底での状態ベクトルは:
+
+  Scenario: H ゲートは |0> を |+> 基底状態に変える
+    Given 初期状態ベクトルは:
+      """
+      |0>
+      """
+    When 次の回路を適用:
+      """
+          ┌───┐
+      q0: ┤ H ├
+          └───┘
+      """
+    Then |+>, |-> 基底での状態ベクトルは:
       """
       |+>
       """
