@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'cucumber/rake/task'
 require 'flay_task'
 require 'flog_task'
 require 'rake/testtask'
@@ -13,11 +12,8 @@ RuboCop::RakeTask.new(:rubocop) do |task|
   task.patterns = ['Rakefile', 'bin/*', 'features/**/*.rb', 'lib/**/*.rb', 'test/**/*.rb']
 end
 
-desc 'Run Ruby Cucumber features'
-Cucumber::Rake::Task.new(:cucumber)
-
 desc 'Run cucumber-js Markdown features'
-task :cucumber_js do
+task :cucumber do
   sh 'npm run cucumber'
 end
 
@@ -42,6 +38,6 @@ Reek::Rake::Task.new(:reek) do |task|
 end
 
 desc 'Run all checks'
-task check: %i[rubocop flog flay reek cucumber cucumber_js test]
+task check: %i[rubocop flog flay reek cucumber test]
 
 task default: :check

@@ -12,9 +12,9 @@ GitHub Actions と共通の rake 入口を整えたい
 
 - Then リポジトリファイル "Rakefile" は "task.patterns = ['Rakefile', 'bin/*', 'features/**/*.rb', 'lib/**/*.rb', 'test/**/*.rb']" を含む
 
-## Scenario: rake check は test task を含む
+## Scenario: rake check は cucumber-js task と test task を含む
 
-- Then リポジトリファイル "Rakefile" は "task check: %i[rubocop flog flay reek cucumber cucumber_js test]" を含む
+- Then リポジトリファイル "Rakefile" は "task check: %i[rubocop flog flay reek cucumber test]" を含む
 
 ## Scenario: GitHub Actions workflow は存在する
 
