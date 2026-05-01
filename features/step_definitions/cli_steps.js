@@ -193,12 +193,36 @@ function writeCircuitJson(scenarioDir, data) {
   );
 }
 
-function writeAsciiCircuitJson(scenarioDir, asciiArt) {
+function readCircuitJson(scenarioDir) {
+  return JSON.parse(fs.readFileSync(path.join(scenarioDir, 'circuit.json'), 'utf8'));
+}
+
+function appendCircuitJson(scenarioDir, data) {
+  const actual = readCircuitJson(scenarioDir);
+  const actualQubits = actual.qubits;
+  const appendedQubits = data.qubits;
+
+  if (actualQubits !== appendedQubits) {
+    throw new Error(`qubit count mismatch: ${actualQubits} != ${appendedQubits}`);
+  }
+
+  writeCircuitJson(scenarioDir, {
+    ...actual,
+    cols: [...actual.cols, ...data.cols]
+  });
+}
+
+function parseAsciiCircuit(asciiArt) {
   const script = [
-    'circuit = Qni::View::AsciiCircuitParser.new(STDIN.read).parse',
-    'puts JSON.pretty_generate(circuit.to_h)'
+    'begin',
+    '  circuit = Qni::View::AsciiCircuitParser.new(STDIN.read).parse',
+    '  puts JSON.generate(ok: true, circuit: circuit.to_h)',
+    'rescue Qni::View::AsciiCircuitParser::Error => e',
+    '  puts JSON.generate(ok: false, error: e.message)',
+    'end'
   ].join('\n');
-  const json = execFileSync(
+
+  return JSON.parse(execFileSync(
     'bundle',
     ['exec', 'ruby', '-Ilib', '-rjson', '-rqni/view/ascii_circuit_parser', '-e', script],
     {
@@ -207,9 +231,27 @@ function writeAsciiCircuitJson(scenarioDir, asciiArt) {
       input: asciiArt,
       encoding: 'utf8'
     }
-  );
+  ));
+}
 
-  fs.writeFileSync(path.join(scenarioDir, 'circuit.json'), `${json.trim()}\n`);
+function writeAsciiCircuitJson(scenarioDir, asciiArt) {
+  const result = parseAsciiCircuit(asciiArt);
+
+  if (!result.ok) {
+    throw new Error(result.error);
+  }
+
+  writeCircuitJson(scenarioDir, result.circuit);
+}
+
+function appendAsciiCircuitJson(scenarioDir, asciiArt) {
+  const result = parseAsciiCircuit(asciiArt);
+
+  if (!result.ok) {
+    throw new Error(result.error);
+  }
+
+  appendCircuitJson(scenarioDir, result.circuit);
 }
 
 function twoQubitInitialCols(state) {
@@ -490,6 +532,14 @@ Given('次の回路図がある:', function (docString) {
   writeAsciiCircuitJson(this.scenarioDir, docStringContent(docString));
 });
 
+When('次の回路図を読み込もうとする:', function (docString) {
+  this.lastAsciiParse = parseAsciiCircuit(docStringContent(docString));
+});
+
+When('次の回路図を適用:', function (docString) {
+  appendAsciiCircuitJson(this.scenarioDir, docStringContent(docString));
+});
+
 Given('{string} は存在しない', function (filePath) {
   const actualPath = path.join(this.scenarioDir, filePath);
 
@@ -580,6 +630,15 @@ Then('{string} の内容:', function (filePath, docString) {
   assert.deepEqual(actual, expected);
 });
 
+Then('{string} の JSON 内容:', function (filePath, docString) {
+  const actualPath = path.join(this.scenarioDir, filePath);
+  assert.ok(fs.existsSync(actualPath), `expected file to exist: ${filePath}`);
+
+  const actual = JSON.parse(fs.readFileSync(actualPath, 'utf8'));
+  const expected = JSON.parse(docStringContent(docString));
+  assert.deepEqual(actual, expected);
+});
+
 Then('回路図:', function (docString) {
   assert.equal(this.lastCommand.code, 0, commandFailureMessage(this.lastCommand));
 
@@ -598,11 +657,22 @@ Then('標準出力:', function (docString) {
   );
 });
 
+Then('標準出力の内容:', function (docString) {
+  assert.equal(
+    normalizeMultilineText(this.lastCommand.stdout),
+    normalizeMultilineText(docStringContent(docString))
+  );
+});
+
 Then('標準エラー:', function (docString) {
   assert.equal(
     normalizeMultilineText(this.lastCommand.stderr),
     normalizeMultilineText(docStringContent(docString))
   );
+});
+
+Then('読み込みは成功', function () {
+  assert.equal(this.lastAsciiParse.ok, true, this.lastAsciiParse.error);
 });
 
 Then('標準出力に dim 修飾付きラベル {string} を含む', function (label) {
