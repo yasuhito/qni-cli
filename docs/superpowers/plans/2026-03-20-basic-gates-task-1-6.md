@@ -14,7 +14,7 @@
 
 - Create: `features/katas/basic_gates/phase_change.feature`
   - `Task 1.6` の問題文、`dumpAlpha = 5π/9` の人間向けシナリオ、`alpha = 0..36` の controlled 走査、symbolic 補助シナリオを追加する。
-- Optionally modify: `features/add/add_phase_gate.feature.md`
+- Optionally modify: `features/cli/add/add_phase_gate.feature.md`
   - controlled `P` を回路に保存できることが未保証なら最小回帰を追加する。
 - Optionally modify: `features/qni_run.feature`
   - `P(alpha)` の symbolic 表示や複素数出力が未保証なら最小回帰を追加する。
@@ -139,7 +139,7 @@ git commit -m "test: add Task 1.6 kata scenarios"
 
 **Files:**
 - Modify: `features/katas/basic_gates/phase_change.feature`
-- Optionally modify: `features/add/add_phase_gate.feature.md`
+- Optionally modify: `features/cli/add/add_phase_gate.feature.md`
 - Optionally modify: `features/qni_run.feature`
 - Optionally modify: `features/qni_expect.feature`
 - Optionally modify: `lib/qni/...`
@@ -159,7 +159,7 @@ git commit -m "test: add Task 1.6 kata scenarios"
 
 例:
 
-- `features/add/add_phase_gate.feature.md`
+- `features/cli/add/add_phase_gate.feature.md`
   - controlled `P` が回路に保存できること
 - `features/qni_run.feature`
   - `P(alpha)` を未束縛変数付きで symbolic 表示できること
@@ -191,7 +191,7 @@ Expected:
 - [ ] **Step 5: 必要な修正をコミットする**
 
 ```bash
-git add features/katas/basic_gates/phase_change.feature features/add/add_phase_gate.feature.md features/qni_run.feature features/qni_expect.feature lib/qni
+git add features/katas/basic_gates/phase_change.feature features/cli/add/add_phase_gate.feature.md features/qni_run.feature features/qni_expect.feature lib/qni
 git commit -m "feat: support Task 1.6 phase change verification"
 ```
 
@@ -200,7 +200,7 @@ git commit -m "feat: support Task 1.6 phase change verification"
 ## Task 3: 近接回帰を確認する
 
 **Files:**
-- Test: `features/add/add_phase_gate.feature.md`
+- Test: `features/cli/add/add_phase_gate.feature.md`
 - Test: `features/qni_run.feature`
 - Test: `features/qni_expect.feature`
 - Test: `features/katas/basic_gates/amplitude_change.feature`
@@ -213,7 +213,7 @@ Run:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/share/gem/ruby/3.4.0/bin/bundle exec cucumber \
-  features/add/add_phase_gate.feature.md \
+  features/cli/add/add_phase_gate.feature.md \
   features/qni_run.feature \
   features/qni_expect.feature \
   features/katas/basic_gates/amplitude_change.feature \
