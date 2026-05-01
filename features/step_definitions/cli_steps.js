@@ -193,6 +193,10 @@ function writeCircuitJson(scenarioDir, data) {
   );
 }
 
+function projectFilePath(filePath) {
+  return path.join(PROJECT_ROOT, filePath);
+}
+
 function writeAsciiCircuitJson(scenarioDir, asciiArt) {
   const script = [
     'circuit = Qni::View::AsciiCircuitParser.new(STDIN.read).parse',
@@ -602,6 +606,28 @@ Then('標準エラー:', function (docString) {
   assert.equal(
     normalizeMultilineText(this.lastCommand.stderr),
     normalizeMultilineText(docStringContent(docString))
+  );
+});
+
+Then('リポジトリファイル {string} は存在する', function (filePath) {
+  assert.ok(
+    fs.existsSync(projectFilePath(filePath)),
+    `expected repository file to exist: ${filePath}`
+  );
+});
+
+Then('リポジトリファイル {string} は {string} を含む', function (filePath, text) {
+  const actualPath = projectFilePath(filePath);
+  assert.ok(fs.existsSync(actualPath), `expected repository file to exist: ${filePath}`);
+
+  const actual = fs.readFileSync(actualPath, 'utf8');
+  assert.ok(
+    actual.includes(text),
+    [
+      'expected repository file to include text',
+      `file: ${filePath}`,
+      `expected: ${text}`
+    ].join('\n')
   );
 });
 
