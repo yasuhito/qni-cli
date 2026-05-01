@@ -165,7 +165,7 @@ scripts/setup_symbolic_python.sh
 bundle exec rake check
 ```
 
-`bundle exec rake check` runs RuboCop, Flog, Flay, Reek, Ruby Cucumber, cucumber-js Markdown features, and Minitest.
+`bundle exec rake check` runs RuboCop, Flog, Flay, Reek, cucumber-js Markdown features, and Minitest.
 Run `npm install` and `scripts/setup_symbolic_python.sh` first so the JavaScript BDD runner and image-related tests have the runtimes they need.
 
 Run individual checks:
