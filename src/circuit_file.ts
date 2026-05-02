@@ -2,9 +2,13 @@ import { readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { AngleExpression, AngleExpressionError, validAngleIdentifier } from './angle_expression';
-import { formatInitialState, zeroInitialStateText } from './initial_state';
+import { formatInitialState, initialStateQubitCount, zeroInitialStateText } from './initial_state';
 
 export class CircuitFileError extends Error {}
+
+const CONTROL_SYMBOL = '•';
+const EMPTY_SLOT = 1;
+const SWAP_SYMBOL = 'Swap';
 
 interface CircuitData {
   cols: unknown[][];
@@ -64,6 +68,23 @@ export class CircuitFile {
     }
 
     return String(col[qubit]);
+  }
+
+  removeGate(step: number, qubit: number): void {
+    const circuit = this.requiredCircuit();
+    const col = existingSlot(circuit, step, qubit);
+    const selectedSlot = col[qubit];
+
+    if (selectedSlot === EMPTY_SLOT) {
+      throw new CircuitFileError(`slot is empty: cols[${step}][${qubit}]`);
+    }
+
+    for (const removableQubit of removableQubits(col, selectedSlot, step, qubit)) {
+      col[removableQubit] = EMPTY_SLOT;
+    }
+
+    normalizeAfterRemoval(circuit);
+    this.write(circuit);
   }
 
   setVariable(name: string, value: unknown): boolean {
@@ -139,6 +160,136 @@ export class CircuitFile {
       rmSync(tempPath, { force: true });
     }
   }
+}
+
+function existingSlot(circuit: CircuitData, step: number, qubit: number): unknown[] {
+  const col = circuit.cols[step];
+
+  if (!col || qubit < 0 || qubit >= col.length) {
+    throw new CircuitFileError(`slot does not exist: cols[${step}][${qubit}]`);
+  }
+
+  return col;
+}
+
+function removableQubits(
+  col: unknown[],
+  selectedSlot: unknown,
+  step: number,
+  qubit: number
+): number[] {
+  if (selectedSlot === SWAP_SYMBOL) {
+    return swapQubits(col, step);
+  }
+
+  if (controlledSlot(col, selectedSlot, qubit)) {
+    return controlledQubits(col, step);
+  }
+
+  return [qubit];
+}
+
+function controlledSlot(col: unknown[], selectedSlot: unknown, qubit: number): boolean {
+  return col.includes(CONTROL_SYMBOL) && (selectedSlot === CONTROL_SYMBOL || targetQubits(col).includes(qubit));
+}
+
+function controlledQubits(col: unknown[], step: number): number[] {
+  const targets = targetQubits(col);
+
+  if (targets.length !== 1) {
+    throw new CircuitFileError(`unsupported controlled step: cols[${step}] = ${JSON.stringify(col)}`);
+  }
+
+  return [...slotIndices(col, CONTROL_SYMBOL), ...targets];
+}
+
+function targetQubits(col: unknown[]): number[] {
+  return col
+    .map((slot, index) => ({ index, slot }))
+    .filter(({ slot }) => slot !== EMPTY_SLOT && slot !== CONTROL_SYMBOL)
+    .map(({ index }) => index);
+}
+
+function swapQubits(col: unknown[], step: number): number[] {
+  const indices = slotIndices(col, SWAP_SYMBOL);
+
+  if (indices.length !== 2) {
+    throw new CircuitFileError(`unsupported swap step: cols[${step}] = ${JSON.stringify(col)}`);
+  }
+
+  return indices;
+}
+
+function slotIndices(col: unknown[], symbol: string): number[] {
+  return col
+    .map((slot, index) => ({ index, slot }))
+    .filter(({ slot }) => slot === symbol)
+    .map(({ index }) => index);
+}
+
+function normalizeAfterRemoval(circuit: CircuitData): void {
+  trimLeadingEmptySteps(circuit);
+  trimLeadingEmptyQubits(circuit);
+  trimTrailingEmptyQubits(circuit);
+}
+
+function trimLeadingEmptySteps(circuit: CircuitData): void {
+  while (circuit.cols.length > 1 && emptyCol(circuit.cols[0])) {
+    circuit.cols.shift();
+  }
+}
+
+function trimLeadingEmptyQubits(circuit: CircuitData): void {
+  const count = leadingEmptyQubitCount(circuit);
+
+  if (count > 0) {
+    circuit.cols.forEach((col) => col.splice(0, count));
+    circuit.qubits -= count;
+  }
+}
+
+function trimTrailingEmptyQubits(circuit: CircuitData): void {
+  const count = trailingEmptyQubitCount(circuit);
+
+  if (count > 0) {
+    circuit.cols.forEach((col) => col.splice(circuit.qubits - count, count));
+    circuit.qubits -= count;
+  }
+}
+
+function leadingEmptyQubitCount(circuit: CircuitData): number {
+  let count = 0;
+
+  while (count < removableQubitsLimit(circuit) && circuit.cols.every((col) => col[count] === EMPTY_SLOT)) {
+    count += 1;
+  }
+
+  return count;
+}
+
+function trailingEmptyQubitCount(circuit: CircuitData): number {
+  let count = 0;
+
+  while (
+    count < removableQubitsLimit(circuit) &&
+    circuit.cols.every((col) => col[circuit.qubits - count - 1] === EMPTY_SLOT)
+  ) {
+    count += 1;
+  }
+
+  return count;
+}
+
+function removableQubitsLimit(circuit: CircuitData): number {
+  return circuit.qubits - minimumQubits(circuit);
+}
+
+function minimumQubits(circuit: CircuitData): number {
+  return circuit.initial_state == null ? 1 : initialStateQubitCount(circuit.initial_state);
+}
+
+function emptyCol(col: unknown[] | undefined): boolean {
+  return Boolean(col?.every((slot) => slot === EMPTY_SLOT));
 }
 
 function validateInitialState(circuit: CircuitData): void {

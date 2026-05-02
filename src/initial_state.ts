@@ -22,6 +22,13 @@ export function formatInitialState(value: unknown): string {
   return formatTerms(loadTerms(value));
 }
 
+export function initialStateQubitCount(value: unknown): number {
+  const terms = loadTerms(value);
+  const basis = terms[0]?.basis;
+
+  return basis ? qubitCount(basis) : 1;
+}
+
 function loadTerms(value: unknown): InitialStateTerm[] {
   if (!isRecord(value)) {
     throw new InitialStateError('initial state must be an object');
