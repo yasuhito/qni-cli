@@ -55,6 +55,17 @@ export class CircuitFile {
     return formatInitialState(circuit.initial_state);
   }
 
+  slotText(step: number, qubit: number): string {
+    const circuit = this.requiredCircuit();
+    const col = circuit.cols[step];
+
+    if (!col || qubit >= col.length) {
+      throw new CircuitFileError(`slot does not exist: cols[${step}][${qubit}]`);
+    }
+
+    return String(col[qubit]);
+  }
+
   setVariable(name: string, value: unknown): boolean {
     const circuit = this.requiredCircuit();
     const variables = circuit.variables ?? {};
