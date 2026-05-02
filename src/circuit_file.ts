@@ -59,7 +59,7 @@ export class CircuitFile {
     const circuit = this.requiredCircuit();
     const col = circuit.cols[step];
 
-    if (!col || qubit >= col.length) {
+    if (!col || qubit < 0 || qubit >= col.length) {
       throw new CircuitFileError(`slot does not exist: cols[${step}][${qubit}]`);
     }
 
