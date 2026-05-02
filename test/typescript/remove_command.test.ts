@@ -137,6 +137,26 @@ describe('rm command TypeScript route', () => {
     });
   });
 
+  it('trims empty trailing steps after removal', async () => {
+    await withTempDir(async (dir) => {
+      const circuitPath = await writeCircuit(dir, {
+        qubits: 2,
+        cols: [
+          ['H', 1],
+          [1, 'X']
+        ]
+      });
+
+      const result = captureDispatcherRun(dir, ['rm', '--qubit', '1', '--step', '1']);
+
+      assert.equal(result.exitStatus, 0);
+      assert.deepEqual(await readCircuit(circuitPath), {
+        qubits: 1,
+        cols: [['H']]
+      });
+    });
+  });
+
   it('reports empty slots without mutating circuit.json', async () => {
     await withTempDir(async (dir) => {
       const originalCircuit = {

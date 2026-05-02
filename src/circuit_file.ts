@@ -231,6 +231,7 @@ function normalizeAfterRemoval(circuit: CircuitData): void {
   trimLeadingEmptySteps(circuit);
   trimLeadingEmptyQubits(circuit);
   trimTrailingEmptyQubits(circuit);
+  trimTrailingEmptySteps(circuit);
 }
 
 function trimLeadingEmptySteps(circuit: CircuitData): void {
@@ -254,6 +255,12 @@ function trimTrailingEmptyQubits(circuit: CircuitData): void {
   if (count > 0) {
     circuit.cols.forEach((col) => col.splice(circuit.qubits - count, count));
     circuit.qubits -= count;
+  }
+}
+
+function trimTrailingEmptySteps(circuit: CircuitData): void {
+  while (circuit.cols.length > 1 && emptyCol(circuit.cols[circuit.cols.length - 1])) {
+    circuit.cols.pop();
   }
 }
 
