@@ -5,6 +5,7 @@
 .cache/
 .python-symbolic/
 node_modules/
+dist/
 __pycache__/
 .codex/
 excalidraw.log
