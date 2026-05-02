@@ -19,3 +19,14 @@ qni state show を使いたい
   ```text
   alpha|0> + beta|1>
   ```
+
+## Scenario: QNI_USE_RUBY=1 の qni state show は現在の初期状態を表示する
+
+- Given 環境変数 "QNI_USE_RUBY" を "1" に設定する
+- Given "qni state set \"alpha|0> + beta|1>\"" を実行
+- When "qni state show" を実行
+- Then 標準出力:
+
+  ```text
+  alpha|0> + beta|1>
+  ```
