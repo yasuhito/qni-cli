@@ -95,6 +95,28 @@ describe('gate command TypeScript route', () => {
     });
   });
 
+  it('accepts plus-prefixed indices like Ruby without invoking Ruby fallback', async () => {
+    await withTempDir(async (dir) => {
+      await writeFile(
+        path.join(dir, 'circuit.json'),
+        `${JSON.stringify(
+          {
+            qubits: 1,
+            cols: [['H']]
+          },
+          null,
+          2
+        )}\n`
+      );
+
+      const result = captureDispatcherRun(dir, ['gate', '--qubit', '+0', '--step', '+0']);
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stdout, 'H\n');
+      assert.equal(result.stderr, '');
+    });
+  });
+
   it('reports Ruby-compatible slot errors without invoking Ruby fallback', async () => {
     await withTempDir(async (dir) => {
       await writeFile(

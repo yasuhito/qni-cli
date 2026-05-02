@@ -68,7 +68,7 @@ function requiredNonNegativeInteger(value: string | undefined, name: string): nu
     throw new CircuitFileError(`${name} is required`);
   }
 
-  if (!/^-?\d+$/u.test(value)) {
+  if (!/^[+-]?\d+$/u.test(value)) {
     throw new CircuitFileError(`${name} must be an integer`);
   }
 
