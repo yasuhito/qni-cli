@@ -56,14 +56,6 @@ GitHub Actions と共通の rake 入口を整えたい
 
 - Then リポジトリファイル ".github/workflows/ci.yml" は "npm ci" を含む
 
-## Scenario: GitHub Actions workflow は Bundler path を workspace-local にする
-
-- Then リポジトリファイル ".github/workflows/ci.yml" は "bundle config set path .bundle/vendor" を含む
-
-## Scenario: GitHub Actions workflow は Ruby dependencies を入れる
-
-- Then リポジトリファイル ".github/workflows/ci.yml" は "bundle install" を含む
-
 ## Scenario: GitHub Actions workflow は symbolic Python を設定する
 
 - Then リポジトリファイル ".github/workflows/ci.yml" は "scripts/setup_symbolic_python.sh" を含む

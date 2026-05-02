@@ -13,11 +13,8 @@ jobs:
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
-
-      - name: Install Ruby dependencies
-        run: |
-          bundle config set path .bundle/vendor
-          bundle install
+        with:
+          bundler-cache: true
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
