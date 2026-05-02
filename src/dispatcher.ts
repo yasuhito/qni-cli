@@ -1,9 +1,13 @@
-import { delegateToRuby } from './ruby_delegate';
+import {
+  chooseCommandImplementation,
+  runRubyFallbackSync
+} from './process/process_compatibility';
 
 export type CommandHandler = (argv: string[]) => number;
 export type RouteTarget = 'ruby' | 'typescript';
 
 export interface DispatcherOptions {
+  cwd: string;
   env: NodeJS.ProcessEnv;
   projectRoot: string;
 }
@@ -20,10 +24,12 @@ export function createDispatcher(options: DispatcherOptions): Dispatcher {
 }
 
 export class Dispatcher {
+  private readonly cwd: string;
   private readonly env: NodeJS.ProcessEnv;
   private readonly projectRoot: string;
 
   constructor(options: DispatcherOptions) {
+    this.cwd = options.cwd;
     this.env = options.env;
     this.projectRoot = options.projectRoot;
   }
@@ -35,35 +41,30 @@ export class Dispatcher {
       return route.handler(argv);
     }
 
-    return delegateToRuby({
+    const result = runRubyFallbackSync({
       argv,
+      cwd: this.cwd,
       env: this.env,
       projectRoot: this.projectRoot
     });
+
+    return result.exitStatus ?? 1;
   }
 
   private routeFor(argv: string[]): CommandRoute {
-    if (this.useRubyOverride()) {
-      return { target: 'ruby' };
-    }
+    const implementation = chooseCommandImplementation({
+      argv,
+      env: this.env,
+      migratedCommands: new Set(TYPESCRIPT_ROUTES.keys())
+    });
 
-    const handler = TYPESCRIPT_ROUTES.get(commandName(argv));
-
-    if (handler) {
+    if (implementation.kind === 'typescript') {
       return {
-        handler,
+        handler: TYPESCRIPT_ROUTES.get(implementation.command),
         target: 'typescript'
       };
     }
 
     return { target: 'ruby' };
   }
-
-  private useRubyOverride(): boolean {
-    return this.env.QNI_USE_RUBY === '1';
-  }
-}
-
-function commandName(argv: string[]): string {
-  return argv[0] ?? '';
 }

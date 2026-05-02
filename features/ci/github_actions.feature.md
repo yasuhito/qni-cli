@@ -14,7 +14,7 @@ GitHub Actions と共通の rake 入口を整えたい
 
 ## Scenario: rake check は cucumber-js task を含む
 
-- Then リポジトリファイル "Rakefile" は "task check: %i[rubocop flog flay reek cucumber" を含む
+- Then リポジトリファイル "Rakefile" は "task check: %i[rubocop flog flay reek typescript cucumber" を含む
 
 ## Scenario: rake check は test task を含む
 

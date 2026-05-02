@@ -17,6 +17,11 @@ task :cucumber do
   sh 'npm run cucumber'
 end
 
+desc 'Run TypeScript tests'
+task :typescript do
+  sh 'npm run test:ts'
+end
+
 desc 'Run Minitest tests'
 Rake::TestTask.new(:test) do |task|
   task.libs << 'test'
@@ -38,6 +43,6 @@ Reek::Rake::Task.new(:reek) do |task|
 end
 
 desc 'Run all checks'
-task check: %i[rubocop flog flay reek cucumber test]
+task check: %i[rubocop flog flay reek typescript cucumber test]
 
 task default: :check

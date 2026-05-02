@@ -1,5 +1,4 @@
-import { spawnSync } from 'node:child_process';
-import path = require('node:path');
+import { runRubyFallbackSync } from './process/process_compatibility';
 
 export interface RubyDelegateOptions {
   argv: string[];
@@ -8,31 +7,12 @@ export interface RubyDelegateOptions {
 }
 
 export function delegateToRuby(options: RubyDelegateOptions): number {
-  const result = spawnSync('bundle', ['exec', rubyEntrypoint(options.projectRoot), ...options.argv], {
+  const result = runRubyFallbackSync({
+    argv: options.argv,
     cwd: process.cwd(),
-    env: rubyEnv(options),
-    stdio: 'inherit'
+    env: options.env,
+    projectRoot: options.projectRoot
   });
 
-  if (result.error) {
-    console.error(result.error.message);
-    return 127;
-  }
-
-  if (result.signal) {
-    return 1;
-  }
-
-  return result.status ?? 1;
-}
-
-function rubyEntrypoint(projectRoot: string): string {
-  return path.join(projectRoot, 'bin', 'qni');
-}
-
-function rubyEnv(options: RubyDelegateOptions): NodeJS.ProcessEnv {
-  return {
-    ...options.env,
-    BUNDLE_GEMFILE: path.join(options.projectRoot, 'Gemfile')
-  };
+  return result.exitStatus ?? 1;
 }
