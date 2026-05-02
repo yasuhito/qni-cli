@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "declaration": false,
+    "outDir": "tmp/typescript-tests",
+    "rootDir": "."
+  },
+  "include": ["src/**/*.ts", "test/typescript/**/*.test.ts"]
+}
