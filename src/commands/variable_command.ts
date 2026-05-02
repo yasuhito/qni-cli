@@ -60,19 +60,23 @@ function executeSubcommand(
 
   switch (subcommand) {
     case 'clear':
+      requireArgumentCount(args, 0);
       return circuitFile.clearVariables() ? '0' : '';
     case 'list':
+      requireArgumentCount(args, 0);
       return Object.entries(circuitFile.variables())
         .sort(([leftName], [rightName]) => compareVariableNames(leftName, rightName))
         .map(([name, value]) => `${name}=${value}`)
         .join('\n');
     case 'set':
+      requireArgumentCount(args, 2);
       circuitFile.setVariable(
         requiredArgument(args[0], 'wrong number of arguments'),
         requiredArgument(args[1], 'wrong number of arguments')
       );
       return '0';
     case 'unset':
+      requireArgumentCount(args, 1);
       return circuitFile.unsetVariable(requiredArgument(args[0], 'wrong number of arguments'))
         ? '0'
         : '';
@@ -101,4 +105,10 @@ function requiredArgument(value: string | undefined, message: string): string {
   }
 
   return value;
+}
+
+function requireArgumentCount(args: string[], expected: number): void {
+  if (args.length !== expected) {
+    throw new CircuitFileError('wrong number of arguments');
+  }
 }

@@ -124,4 +124,50 @@ describe('variable command TypeScript route', () => {
       });
     });
   });
+
+  it('rejects extra arguments before mutating circuit.json', async () => {
+    await withTempDir(async (dir) => {
+      const circuitPath = path.join(dir, 'circuit.json');
+      const originalCircuit = {
+        qubits: 1,
+        cols: [['Ry(theta)']],
+        variables: {
+          theta: 'π/4'
+        }
+      };
+      await writeFile(circuitPath, `${JSON.stringify(originalCircuit, null, 2)}\n`);
+
+      for (const argv of [
+        ['variable', 'clear', 'extra'],
+        ['variable', 'list', 'extra'],
+        ['variable', 'set', 'theta', 'π/4', 'extra'],
+        ['variable', 'unset', 'theta', 'extra']
+      ]) {
+        const result = captureDispatcherRun(dir, argv);
+
+        assert.equal(result.exitStatus, 1, argv.join(' '));
+        assert.equal(result.stdout, '');
+        assert.equal(result.stderr, 'wrong number of arguments\n');
+        assert.deepEqual(JSON.parse(await readFile(circuitPath, 'utf8')), originalCircuit);
+      }
+    });
+  });
+
+  it('rejects malformed cols before mutating circuit.json', async () => {
+    await withTempDir(async (dir) => {
+      const circuitPath = path.join(dir, 'circuit.json');
+      const originalCircuit = {
+        qubits: 1,
+        cols: 'bad'
+      };
+      await writeFile(circuitPath, `${JSON.stringify(originalCircuit)}\n`);
+
+      const result = captureDispatcherRun(dir, ['variable', 'set', 'theta', 'π/4']);
+
+      assert.equal(result.exitStatus, 1);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, 'cols must be an array\n');
+      assert.deepEqual(JSON.parse(await readFile(circuitPath, 'utf8')), originalCircuit);
+    });
+  });
 });

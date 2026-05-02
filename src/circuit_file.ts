@@ -6,9 +6,9 @@ import { AngleExpression, AngleExpressionError, validAngleIdentifier } from './a
 export class CircuitFileError extends Error {}
 
 interface CircuitData {
-  cols: unknown;
+  cols: unknown[][];
   initial_state?: unknown;
-  qubits: unknown;
+  qubits: number;
   variables?: Record<string, string>;
 }
 
@@ -115,12 +115,34 @@ function normalizeCircuit(value: unknown): CircuitData {
     throw new CircuitFileError('circuit must be an object');
   }
 
+  const qubits = normalizeQubits(value.qubits);
+
   return {
-    cols: value.cols,
+    cols: normalizeCols(value.cols, qubits),
     initial_state: value.initial_state,
-    qubits: value.qubits,
+    qubits,
     variables: normalizeVariables(value.variables ?? {})
   };
+}
+
+function normalizeQubits(value: unknown): number {
+  if (typeof value !== 'number' || !Number.isInteger(value) || value <= 0) {
+    throw new CircuitFileError('qubits must be a positive integer');
+  }
+
+  return value;
+}
+
+function normalizeCols(value: unknown, qubits: number): unknown[][] {
+  if (!Array.isArray(value)) {
+    throw new CircuitFileError('cols must be an array');
+  }
+
+  if (!value.every((col) => Array.isArray(col) && col.length === qubits)) {
+    throw new CircuitFileError('each column in cols must have exactly qubits entries');
+  }
+
+  return value.map((col) => [...col]);
 }
 
 function normalizeVariables(value: unknown): Record<string, string> {
