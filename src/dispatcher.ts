@@ -2,6 +2,7 @@ import {
   chooseCommandImplementation,
   runRubyFallbackSync
 } from './process/process_compatibility';
+import { runStateCommand } from './commands/state_command';
 import { runVariableCommand } from './commands/variable_command';
 
 export interface CommandHandlerContext {
@@ -24,7 +25,10 @@ interface CommandRoute {
   target: RouteTarget;
 }
 
-const TYPESCRIPT_ROUTES = new Map<string, CommandHandler>([['variable', runVariableCommand]]);
+const TYPESCRIPT_ROUTES = new Map<string, CommandHandler>([
+  ['state', runStateCommand],
+  ['variable', runVariableCommand]
+]);
 
 export function createDispatcher(options: DispatcherOptions): Dispatcher {
   return new Dispatcher(options);

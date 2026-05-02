@@ -2,6 +2,7 @@ import { readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { AngleExpression, AngleExpressionError, validAngleIdentifier } from './angle_expression';
+import { formatInitialState, zeroInitialStateText } from './initial_state';
 
 export class CircuitFileError extends Error {}
 
@@ -29,6 +30,29 @@ export class CircuitFile {
     }
 
     return false;
+  }
+
+  clearInitialState(): boolean {
+    const circuit = this.existingCircuit();
+
+    if (circuit) {
+      validateInitialState(circuit);
+      delete circuit.initial_state;
+      this.write(circuit);
+      return true;
+    }
+
+    return false;
+  }
+
+  initialStateText(): string {
+    const circuit = this.existingCircuit();
+
+    if (!circuit || circuit.initial_state == null) {
+      return zeroInitialStateText();
+    }
+
+    return formatInitialState(circuit.initial_state);
   }
 
   setVariable(name: string, value: unknown): boolean {
@@ -103,6 +127,12 @@ export class CircuitFile {
     } finally {
       rmSync(tempPath, { force: true });
     }
+  }
+}
+
+function validateInitialState(circuit: CircuitData): void {
+  if (circuit.initial_state != null) {
+    formatInitialState(circuit.initial_state);
   }
 }
 
