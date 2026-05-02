@@ -347,80 +347,101 @@ command. Use a separate cleanup issue so rollback remains simple.
 Create implementation issues in this order:
 
 1. TypeScript tooling and Ruby-delegating dispatcher
+   - Linear title candidate: TypeScript tooling と Ruby 委譲 dispatcher を追加する
    - Acceptance: npm bin can delegate all current commands to Ruby and existing
-     cucumber-js features still pass.
+     cucumber-js features still pass. The cucumber-js step definitions and CI
+     lane can select the Ruby entrypoint, TypeScript npm entrypoint, or
+     comparison mode through an explicit selector such as `QNI_COMMAND` or
+     `QNI_IMPL`.
    - Estimate: M, milestone: M1, precision: rough.
    - Risk/dependency: npm bin delegation must preserve process behavior.
 2. Shared TypeScript process compatibility helpers
+   - Linear title candidate: TypeScript process compatibility helper を整備する
    - Acceptance: subprocess exit status, stdout, stderr, working directory, and
-     env passthrough match Ruby delegation behavior.
+     env passthrough match Ruby delegation behavior. TTY and non-TTY execution
+     use the same selector semantics as the cucumber-js harness so local CLI
+     runs and CI lanes exercise equivalent entrypoints.
    - Estimate: S, milestone: M1, precision: rough.
    - Risk/dependency: required by every command-level migration and CI lane.
 3. TypeScript `circuit.json` loader/writer and variable store
+   - Linear title candidate: TypeScript 版 `circuit.json` loader/writer と variable store を追加する
    - Acceptance: `variable list/set/unset/clear` can run through TypeScript
      with Ruby fallback still available.
    - Estimate: M, milestone: M2, precision: rough.
    - Risk/dependency: JSON formatting and variable validation must match Ruby.
 4. Migrate `state show` and `state clear`
+   - Linear title candidate: `state show` と `state clear` を TypeScript に移行する
    - Acceptance: default state display and state removal match existing
      features; `state set` remains Ruby-backed.
    - Estimate: S, milestone: M2, precision: rough.
    - Risk/dependency: shared loader/writer must already be stable.
 5. Migrate `gate`
+   - Linear title candidate: `gate` を TypeScript に移行する
    - Acceptance: slot reads and slot error messages match existing features.
    - Estimate: S, milestone: M2, precision: rough.
    - Risk/dependency: slot error text must remain compatible.
 6. Migrate `rm`
+   - Linear title candidate: `rm` を TypeScript に移行する
    - Acceptance: operation removal, controlled removal, SWAP removal, and
      auto-shrink behavior match existing features.
    - Estimate: M, milestone: M3, precision: rough.
    - Risk/dependency: layout normalization and operation removal parity.
 7. Migrate fixed-gate `add`
+   - Linear title candidate: 固定 gate の `add` を TypeScript に移行する
    - Acceptance: fixed single-qubit gate addition matches existing features;
      angled, controlled, and SWAP variants still delegate to Ruby.
    - Estimate: M, milestone: M3, precision: rough.
    - Risk/dependency: mixed routing must not split one command's help behavior.
 8. Complete TypeScript circuit model for controlled, SWAP, and angled gates
+   - Linear title candidate: controlled / SWAP / angled gate の circuit model を TypeScript 化する
    - Acceptance: all `add` features pass through TypeScript.
    - Estimate: L, milestone: M4, precision: rough.
    - Risk/dependency: angle parsing, controlled placement, and SWAP semantics.
 9. Migrate numeric `run` and `expect`
+   - Linear title candidate: numeric `run` と `expect` を TypeScript に移行する
    - Acceptance: state-vector CSV and expectation values match Ruby oracle
      samples and cucumber-js features.
    - Estimate: L, milestone: M5, precision: rough.
    - Risk/dependency: state-vector math and complex formatting parity.
 10. Decide symbolic helper strategy
+    - Linear title candidate: symbolic helper の移行または維持方針を決める
     - Acceptance: `run --symbolic` is either TypeScript-owned with a retained
       Python helper boundary or replaced by a new TypeScript symbolic plan.
     - Estimate: M, milestone: M5, precision: rough.
     - Risk/dependency: SymPy behavior and named-basis formatting.
 11. Migrate `view`
+    - Linear title candidate: `view` を TypeScript に移行する
     - Acceptance: ASCII output, color behavior, and parser-supported scenarios
       match current features.
     - Estimate: M, milestone: M6, precision: rough.
     - Risk/dependency: terminal style detection and parser compatibility.
 12. Migrate export and Bloch workflows
+    - Linear title candidate: export と Bloch workflows を TypeScript に移行する
     - Acceptance: LaTeX, PNG/APNG, inline output, and helper error behavior
       match current features or are intentionally split into narrower issues.
     - Estimate: L, milestone: M7, precision: rough.
     - Risk/dependency: external tools, Python helpers, images, and terminal IO.
 13. Update operational documentation for `QNI_USE_RUBY`
+    - Linear title candidate: `QNI_USE_RUBY` の運用ドキュメントを追加する
     - Acceptance: README or troubleshooting guide includes purpose, usage,
       expected effect, risks, and cleanup condition for the override.
     - Owner: migration implementer for the dispatcher issue.
     - Estimate: S, milestone: M1, precision: rough.
     - Risk/dependency: must land with the dispatcher to be useful.
 14. Add ESM migration decision issue
+    - Linear title candidate: ESM 移行判断 issue を追加する
     - Acceptance: triggers, compatibility strategy, and test approach are
       recorded before switching `package.json` away from CommonJS.
     - Estimate: S, milestone: after M2, precision: rough.
     - Risk/dependency: npm package consumption patterns must be known.
 15. Add performance comparison harness
+    - Linear title candidate: Ruby / TypeScript performance comparison harness を追加する
     - Acceptance: representative large circuits can be run against Ruby and
       TypeScript, with wall-clock and peak-memory results stored as artifacts.
     - Estimate: M, milestone: before M5, precision: rough.
     - Risk/dependency: needs stable TypeScript execution for core commands.
 16. Remove Ruby fallback and Ruby runtime dependency
+    - Linear title candidate: Ruby fallback と Ruby runtime dependency を削除する
     - Acceptance: Ruby removal criteria above are met and npm entrypoint is the
       default documented user path.
     - Estimate: M, milestone: final, precision: rough.
