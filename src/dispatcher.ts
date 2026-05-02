@@ -2,8 +2,15 @@ import {
   chooseCommandImplementation,
   runRubyFallbackSync
 } from './process/process_compatibility';
+import { runVariableCommand } from './commands/variable_command';
 
-export type CommandHandler = (argv: string[]) => number;
+export interface CommandHandlerContext {
+  readonly cwd: string;
+  readonly env: NodeJS.ProcessEnv;
+  readonly projectRoot: string;
+}
+
+export type CommandHandler = (argv: string[], context: CommandHandlerContext) => number;
 export type RouteTarget = 'ruby' | 'typescript';
 
 export interface DispatcherOptions {
@@ -17,7 +24,7 @@ interface CommandRoute {
   target: RouteTarget;
 }
 
-const TYPESCRIPT_ROUTES = new Map<string, CommandHandler>();
+const TYPESCRIPT_ROUTES = new Map<string, CommandHandler>([['variable', runVariableCommand]]);
 
 export function createDispatcher(options: DispatcherOptions): Dispatcher {
   return new Dispatcher(options);
@@ -38,7 +45,11 @@ export class Dispatcher {
     const route = this.routeFor(argv);
 
     if (route.target === 'typescript' && route.handler) {
-      return route.handler(argv);
+      return route.handler(argv, {
+        cwd: this.cwd,
+        env: this.env,
+        projectRoot: this.projectRoot
+      });
     }
 
     const result = runRubyFallbackSync({

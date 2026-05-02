@@ -101,7 +101,7 @@ function runQniCommand(scenarioDir, command, extraEnv = {}) {
   }
 
   return new Promise((resolve, reject) => {
-    const child = spawn('bundle', ['exec', QNI_BIN, ...argv.slice(1)], {
+    const child = spawn('node', [NODE_QNI_BIN, ...argv.slice(1)], {
       cwd: scenarioDir,
       env: bundlerEnv(extraEnv)
     });
