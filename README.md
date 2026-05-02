@@ -191,6 +191,10 @@ This is meant to preserve the current Ruby behavior when comparing a release or 
 
 Use it by prefixing one command:
 
+The examples below assume the installed `qni` command. Inside this repository,
+put the variable before `bundle exec bin/qni`, for example
+`QNI_USE_RUBY=1 bundle exec bin/qni run --symbolic`.
+
 ```bash
 QNI_USE_RUBY=1 qni run --symbolic
 QNI_USE_RUBY=1 qni export --png --output circuit.png
