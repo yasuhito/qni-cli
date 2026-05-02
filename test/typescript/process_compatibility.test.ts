@@ -10,6 +10,7 @@ import {
   commandLineArgs,
   createRubyFallbackInvocation,
   runRubyFallback,
+  runRubyFallbackSync,
   runSubprocess
 } from '../../src/process/process_compatibility';
 
@@ -146,6 +147,23 @@ describe('Ruby fallback process compatibility', () => {
       assert.equal(stdout.text(), '');
       assert.equal(stderr.text(), 'Could not find command "__missing_command__".\n');
     });
+  });
+
+  it('supports synchronous Ruby fallback for process.exit based dispatchers', () => {
+    const stdout = new StringSink();
+    const stderr = new StringSink();
+    const result = runRubyFallbackSync({
+      argv: ['clear', '--help'],
+      cwd: process.cwd(),
+      projectRoot: process.cwd(),
+      stderr,
+      stdout
+    });
+
+    assert.equal(result.exitStatus, 0);
+    assert.equal(result.signal, null);
+    assert.match(stdout.text(), /^Usage:\n  qni clear\n/u);
+    assert.equal(stderr.text(), '');
   });
 });
 

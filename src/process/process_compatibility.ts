@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import path from 'node:path';
 import type { Writable } from 'node:stream';
 
@@ -31,6 +31,11 @@ export interface RubyFallbackOptions {
 }
 
 export interface RunRubyFallbackOptions extends RubyFallbackOptions {
+  readonly stdout?: Writable;
+  readonly stderr?: Writable;
+}
+
+export interface RunRubyFallbackSyncOptions extends RubyFallbackOptions {
   readonly stdout?: Writable;
   readonly stderr?: Writable;
 }
@@ -122,4 +127,26 @@ export function runRubyFallback(options: RunRubyFallbackOptions): Promise<Subpro
     stderr: options.stderr,
     stdout: options.stdout
   });
+}
+
+export function runRubyFallbackSync(options: RunRubyFallbackSyncOptions): SubprocessResult {
+  const invocation = createRubyFallbackInvocation(options);
+  const result = spawnSync(invocation.command, [...invocation.args], {
+    cwd: invocation.cwd,
+    env: invocation.env,
+    stdio: ['ignore', 'pipe', 'pipe']
+  });
+
+  if (result.error) {
+    (options.stderr ?? process.stderr).write(`${result.error.message}\n`);
+    return { exitStatus: 127, signal: null };
+  }
+
+  (options.stdout ?? process.stdout).write(result.stdout);
+  (options.stderr ?? process.stderr).write(result.stderr);
+
+  return {
+    exitStatus: result.status,
+    signal: result.signal
+  };
 }

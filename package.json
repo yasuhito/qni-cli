@@ -2,9 +2,13 @@
   "name": "qni-cli",
   "private": true,
   "type": "commonjs",
+  "bin": {
+    "qni": "./dist/bin/qni.js"
+  },
   "scripts": {
-    "build:ts": "tsc -p tsconfig.json",
-    "cucumber": "cucumber-js --config cucumber-js.mjs --require \"features/support/**/*.js\" --require \"features/step_definitions/**/*.js\" --format progress \"features/**/*.feature.md\"",
+    "build": "tsc",
+    "build:ts": "npm run build",
+    "cucumber": "npm run build && cucumber-js --config cucumber-js.mjs --require \"features/support/**/*.js\" --require \"features/step_definitions/**/*.js\" --format progress \"features/**/*.feature.md\"",
     "test:ts": "tsc -p tsconfig.test.json && node --test \"tmp/typescript-tests/test/typescript/**/*.test.js\""
   },
   "devDependencies": {
