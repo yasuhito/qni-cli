@@ -180,6 +180,42 @@ bundle exec rake flay
 bundle exec rake reek
 ```
 
+### TypeScript migration Ruby override
+
+`QNI_USE_RUBY=1` is an operational override for the TypeScript migration period.
+It exists for emergency rollback and release difference analysis while the
+TypeScript dispatcher and Ruby fallback are both present.
+
+When it is set, the dispatcher must bypass TypeScript routing and execute the Ruby fallback path for every `qni` command.
+This is meant to preserve the current Ruby behavior when comparing a release or temporarily avoiding a TypeScript-backed command regression.
+
+Use it by prefixing one command:
+
+The examples below assume the installed `qni` command. Inside this repository,
+put the variable before `bundle exec bin/qni`, for example
+`QNI_USE_RUBY=1 bundle exec bin/qni run --symbolic`.
+
+```bash
+QNI_USE_RUBY=1 qni run --symbolic
+QNI_USE_RUBY=1 qni export --png --output circuit.png
+```
+
+For a longer comparison session, export it in the shell and unset it as soon as
+the comparison is complete:
+
+```bash
+export QNI_USE_RUBY=1
+qni view
+qni run
+unset QNI_USE_RUBY
+```
+
+Do not use this override in normal TypeScript regression checks.
+It can hide TypeScript regressions by forcing every command through Ruby.
+The TypeScript compatibility lane in CI must fail fast if `QNI_USE_RUBY` is set.
+
+Keep this section until the final Ruby fallback removal issue deletes the dispatcher fallback and Ruby runtime dependency.
+
 ## Notes
 
 - `qni view` can appear misaligned depending on the terminal and font rendering
