@@ -13,8 +13,19 @@ jobs:
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
+
+      - name: Cache Ruby dependencies
+        uses: actions/cache@v4
         with:
-          bundler-cache: true
+          path: .bundle/vendor
+          key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-gems-
+
+      - name: Install Ruby dependencies
+        run: |
+          bundle config set path .bundle/vendor
+          bundle install
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
