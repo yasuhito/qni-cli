@@ -8,6 +8,7 @@ const { Given, Then, When } = require('@cucumber/cucumber');
 
 const PROJECT_ROOT = path.resolve(__dirname, '../..');
 const QNI_BIN = path.join(PROJECT_ROOT, 'bin', 'qni');
+const NODE_QNI_BIN = path.join(PROJECT_ROOT, 'dist', 'bin', 'qni.js');
 const PYTHON_SYMBOLIC = path.join(PROJECT_ROOT, '.python-symbolic', 'bin', 'python');
 const MPLCONFIGDIR = process.env.MPLCONFIGDIR || path.join(os.tmpdir(), 'qni-cli-matplotlib');
 const ONE_QUBIT_INITIAL_STATE_COLS = new Map([
@@ -101,6 +102,36 @@ function runQniCommand(scenarioDir, command, extraEnv = {}) {
 
   return new Promise((resolve, reject) => {
     const child = spawn('bundle', ['exec', QNI_BIN, ...argv.slice(1)], {
+      cwd: scenarioDir,
+      env: bundlerEnv(extraEnv)
+    });
+
+    const stdout = [];
+    const stderr = [];
+
+    child.stdout.on('data', (chunk) => stdout.push(chunk));
+    child.stderr.on('data', (chunk) => stderr.push(chunk));
+    child.on('error', reject);
+    child.on('close', (code, signal) => {
+      resolve({
+        code,
+        signal,
+        stdout: Buffer.concat(stdout).toString('utf8'),
+        stderr: Buffer.concat(stderr).toString('utf8')
+      });
+    });
+  });
+}
+
+function runNodeDispatcherCommand(scenarioDir, command, extraEnv = {}) {
+  const argv = splitCommand(command);
+
+  if (argv[0] !== 'qni') {
+    throw new Error(`command must start with qni: ${command}`);
+  }
+
+  return new Promise((resolve, reject) => {
+    const child = spawn('node', [NODE_QNI_BIN, ...argv.slice(1)], {
       cwd: scenarioDir,
       env: bundlerEnv(extraEnv)
     });
@@ -693,6 +724,10 @@ Given('空の 3 qubit 回路がある', function () {
 
 When('{string} を実行', async function (command) {
   this.lastCommand = await runQniCommand(this.scenarioDir, command, this.commandEnv);
+});
+
+When('Node dispatcher で {string} を実行', async function (command) {
+  this.lastCommand = await runNodeDispatcherCommand(this.scenarioDir, command, this.commandEnv);
 });
 
 Given('次の circuit.json がある:', function (docString) {
