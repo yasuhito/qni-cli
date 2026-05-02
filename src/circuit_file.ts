@@ -142,7 +142,7 @@ function serializedCircuit(circuit: CircuitData): Record<string, unknown> {
     cols: circuit.cols
   };
 
-  if (circuit.initial_state) {
+  if (circuit.initial_state != null) {
     result.initial_state = circuit.initial_state;
   }
 

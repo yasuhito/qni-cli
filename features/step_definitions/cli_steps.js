@@ -94,36 +94,14 @@ function bundlerEnv(extraEnv = {}) {
 }
 
 function runQniCommand(scenarioDir, command, extraEnv = {}) {
-  const argv = splitCommand(command);
-
-  if (argv[0] !== 'qni') {
-    throw new Error(`command must start with qni: ${command}`);
-  }
-
-  return new Promise((resolve, reject) => {
-    const child = spawn('node', [NODE_QNI_BIN, ...argv.slice(1)], {
-      cwd: scenarioDir,
-      env: bundlerEnv(extraEnv)
-    });
-
-    const stdout = [];
-    const stderr = [];
-
-    child.stdout.on('data', (chunk) => stdout.push(chunk));
-    child.stderr.on('data', (chunk) => stderr.push(chunk));
-    child.on('error', reject);
-    child.on('close', (code, signal) => {
-      resolve({
-        code,
-        signal,
-        stdout: Buffer.concat(stdout).toString('utf8'),
-        stderr: Buffer.concat(stderr).toString('utf8')
-      });
-    });
-  });
+  return runNodeQniCommand(scenarioDir, command, extraEnv);
 }
 
 function runNodeDispatcherCommand(scenarioDir, command, extraEnv = {}) {
+  return runNodeQniCommand(scenarioDir, command, extraEnv);
+}
+
+function runNodeQniCommand(scenarioDir, command, extraEnv = {}) {
   const argv = splitCommand(command);
 
   if (argv[0] !== 'qni') {
