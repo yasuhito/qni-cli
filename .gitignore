@@ -6,3 +6,5 @@
 .python-symbolic/
 node_modules/
 __pycache__/
+.codex/
+excalidraw.log
