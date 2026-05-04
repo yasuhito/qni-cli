@@ -161,33 +161,220 @@ describe('add command TypeScript route', () => {
     });
   });
 
-  it('leaves angled gates on Ruby fallback', async () => {
-    await withTempDir(async (dir) => {
-      const result = captureDispatcherRun(dir, ['add', 'Ry', '--angle', 'theta', '--qubit', '0', '--step', '0']);
+  it('adds angled gates without invoking Ruby fallback', async () => {
+    const examples = [
+      ['P', 'π/3', 'P(π/3)'],
+      ['Rx', 'pi/4', 'Rx(π/4)'],
+      ['Ry', 'theta', 'Ry(theta)'],
+      ['Rz', '2*alpha', 'Rz(2*alpha)']
+    ];
 
-      assert.equal(result.exitStatus, 127);
-      assert.equal(result.stdout, '');
-      assert.equal(result.stderr, 'spawnSync bundle ENOENT\n');
-    });
+    for (const [gate, angle, storedGate] of examples) {
+      await withTempDir(async (dir) => {
+        const result = captureDispatcherRun(dir, [
+          'add',
+          gate,
+          '--angle',
+          angle,
+          '--qubit',
+          '0',
+          '--step',
+          '0'
+        ]);
+
+        assert.equal(result.exitStatus, 0);
+        assert.equal(result.stdout, '');
+        assert.equal(result.stderr, '');
+        assert.deepEqual(await readCircuit(path.join(dir, 'circuit.json')), {
+          qubits: 1,
+          cols: [[storedGate]]
+        });
+      });
+    }
   });
 
-  it('leaves controlled gates on Ruby fallback', async () => {
+  it('adds controlled gates without invoking Ruby fallback', async () => {
     await withTempDir(async (dir) => {
       const result = captureDispatcherRun(dir, ['add', 'X', '--control', '0', '--qubit', '1', '--step', '0']);
 
-      assert.equal(result.exitStatus, 127);
+      assert.equal(result.exitStatus, 0);
       assert.equal(result.stdout, '');
-      assert.equal(result.stderr, 'spawnSync bundle ENOENT\n');
+      assert.equal(result.stderr, '');
+      assert.deepEqual(await readCircuit(path.join(dir, 'circuit.json')), {
+        qubits: 2,
+        cols: [['•', 'X']]
+      });
     });
   });
 
-  it('leaves SWAP on Ruby fallback', async () => {
+  it('adds multi-control gates without invoking Ruby fallback', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, ['add', 'X', '--control', '0,1', '--qubit', '2', '--step', '0']);
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, '');
+      assert.deepEqual(await readCircuit(path.join(dir, 'circuit.json')), {
+        qubits: 3,
+        cols: [['•', '•', 'X']]
+      });
+    });
+  });
+
+  it('adds controlled angled gates without invoking Ruby fallback', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, [
+        'add',
+        'Rz',
+        '--angle',
+        'pi/4',
+        '--control',
+        '0',
+        '--qubit',
+        '1',
+        '--step',
+        '0'
+      ]);
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, '');
+      assert.deepEqual(await readCircuit(path.join(dir, 'circuit.json')), {
+        qubits: 2,
+        cols: [['•', 'Rz(π/4)']]
+      });
+    });
+  });
+
+  it('adds SWAP without invoking Ruby fallback', async () => {
     await withTempDir(async (dir) => {
       const result = captureDispatcherRun(dir, ['add', 'SWAP', '--qubit', '0,1', '--step', '0']);
 
-      assert.equal(result.exitStatus, 127);
+      assert.equal(result.exitStatus, 0);
       assert.equal(result.stdout, '');
-      assert.equal(result.stderr, 'spawnSync bundle ENOENT\n');
+      assert.equal(result.stderr, '');
+      assert.deepEqual(await readCircuit(path.join(dir, 'circuit.json')), {
+        qubits: 2,
+        cols: [['Swap', 'Swap']]
+      });
+    });
+  });
+
+  it('accepts decimal numeric step values like Ruby for migrated gate variants', async () => {
+    const examples = [
+      {
+        argv: ['add', 'SWAP', '--qubit', '0,1', '--step', '0.0'],
+        circuit: {
+          qubits: 2,
+          cols: [['Swap', 'Swap']]
+        }
+      },
+      {
+        argv: ['add', 'Rx', '--angle', 'pi/2', '--qubit', '0', '--step', '0.0'],
+        circuit: {
+          qubits: 1,
+          cols: [['Rx(π/2)']]
+        }
+      },
+      {
+        argv: ['add', 'X', '--control', '0', '--qubit', '1', '--step', '0.0'],
+        circuit: {
+          qubits: 2,
+          cols: [['•', 'X']]
+        }
+      }
+    ];
+
+    for (const example of examples) {
+      await withTempDir(async (dir) => {
+        const result = captureDispatcherRun(dir, example.argv);
+
+        assert.equal(result.exitStatus, 0);
+        assert.equal(result.stdout, '');
+        assert.equal(result.stderr, '');
+        assert.deepEqual(await readCircuit(path.join(dir, 'circuit.json')), example.circuit);
+      });
+    }
+  });
+
+  it('rejects invalid controlled gate placement without invoking Ruby fallback', async () => {
+    await withTempDir(async (dir) => {
+      const duplicateControl = captureDispatcherRun(dir, [
+        'add',
+        'X',
+        '--control',
+        '0,0',
+        '--qubit',
+        '1',
+        '--step',
+        '0'
+      ]);
+
+      assert.equal(duplicateControl.exitStatus, 1);
+      assert.equal(duplicateControl.stdout, '');
+      assert.equal(duplicateControl.stderr, 'control must not contain duplicates\n');
+
+      const overlappingTarget = captureDispatcherRun(dir, [
+        'add',
+        'X',
+        '--control',
+        '0',
+        '--qubit',
+        '0',
+        '--step',
+        '0'
+      ]);
+
+      assert.equal(overlappingTarget.exitStatus, 1);
+      assert.equal(overlappingTarget.stdout, '');
+      assert.equal(overlappingTarget.stderr, 'control and target must be different\n');
+    });
+  });
+
+  it('rejects invalid SWAP targets without invoking Ruby fallback', async () => {
+    await withTempDir(async (dir) => {
+      const missingTargets = captureDispatcherRun(dir, ['add', 'SWAP', '--step', '0']);
+
+      assert.equal(missingTargets.exitStatus, 1);
+      assert.equal(missingTargets.stdout, '');
+      assert.equal(missingTargets.stderr, "No value provided for required options '--qubit'\n");
+
+      const tooFewTargets = captureDispatcherRun(dir, ['add', 'SWAP', '--qubit', '0', '--step', '0']);
+
+      assert.equal(tooFewTargets.exitStatus, 1);
+      assert.equal(tooFewTargets.stdout, '');
+      assert.equal(tooFewTargets.stderr, 'SWAP requires exactly 2 target qubits\n');
+
+      const duplicatedTargets = captureDispatcherRun(dir, ['add', 'SWAP', '--qubit', '0,0', '--step', '0']);
+
+      assert.equal(duplicatedTargets.exitStatus, 1);
+      assert.equal(duplicatedTargets.stdout, '');
+      assert.equal(duplicatedTargets.stderr, 'SWAP target qubits must be different\n');
+    });
+  });
+
+  it('rejects invalid angle usage without invoking Ruby fallback', async () => {
+    await withTempDir(async (dir) => {
+      const missingAngle = captureDispatcherRun(dir, ['add', 'Rx', '--qubit', '0', '--step', '0']);
+
+      assert.equal(missingAngle.exitStatus, 1);
+      assert.equal(missingAngle.stdout, '');
+      assert.equal(missingAngle.stderr, 'angle is required for Rx\n');
+
+      const unsupportedAngle = captureDispatcherRun(dir, [
+        'add',
+        'H',
+        '--angle',
+        'π/2',
+        '--qubit',
+        '0',
+        '--step',
+        '0'
+      ]);
+
+      assert.equal(unsupportedAngle.exitStatus, 1);
+      assert.equal(unsupportedAngle.stdout, '');
+      assert.equal(unsupportedAngle.stderr, 'angle is only supported for P, Rx, Ry, and Rz\n');
     });
   });
 

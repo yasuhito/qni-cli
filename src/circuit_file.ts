@@ -61,6 +61,23 @@ export class CircuitFile {
     this.write(circuit);
   }
 
+  addControlledGate(gate: string, step: number, controls: number[], target: number): void {
+    validateControls(controls, target);
+    this.addPlacement(step, new Map([...controls.map((control) => [control, CONTROL_SYMBOL] as const), [target, gate]]));
+  }
+
+  addSwapGate(step: number, targets: number[]): void {
+    if (targets.length !== 2) {
+      throw new CircuitFileError('SWAP requires exactly 2 target qubits');
+    }
+
+    if (new Set(targets).size !== targets.length) {
+      throw new CircuitFileError('SWAP target qubits must be different');
+    }
+
+    this.addPlacement(step, new Map(targets.map((target) => [target, SWAP_SYMBOL] as const)));
+  }
+
   initialStateText(): string {
     const circuit = this.existingCircuit();
 
@@ -172,6 +189,25 @@ export class CircuitFile {
       rmSync(tempPath, { force: true });
     }
   }
+
+  private addPlacement(step: number, symbols: Map<number, string>): void {
+    const maxQubit = Math.max(...symbols.keys());
+    const circuit = this.existingCircuit() ?? emptyCircuit(step, maxQubit);
+
+    expandQubitsTo(circuit, maxQubit);
+    expandStepsTo(circuit, step);
+
+    for (const qubit of symbols.keys()) {
+      ensureAddSlotAvailable(circuit, step, qubit);
+    }
+
+    for (const [qubit, symbol] of symbols.entries()) {
+      circuit.cols[step][qubit] = symbol;
+    }
+
+    normalizeAfterAdd(circuit);
+    this.write(circuit);
+  }
 }
 
 function emptyCircuit(step: number, qubit: number): CircuitData {
@@ -208,6 +244,20 @@ function ensureAddSlotAvailable(circuit: CircuitData, step: number, qubit: numbe
 
   if (slot !== EMPTY_SLOT) {
     throw new CircuitFileError(`target slot is occupied: cols[${step}][${qubit}] = ${JSON.stringify(slot)}`);
+  }
+}
+
+function validateControls(controls: number[], target: number): void {
+  if (controls.length === 0) {
+    throw new CircuitFileError('control must not be empty');
+  }
+
+  if (new Set(controls).size !== controls.length) {
+    throw new CircuitFileError('control must not contain duplicates');
+  }
+
+  if (controls.includes(target)) {
+    throw new CircuitFileError('control and target must be different');
   }
 }
 
