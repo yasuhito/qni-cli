@@ -207,6 +207,20 @@ describe('add command TypeScript route', () => {
     });
   });
 
+  it('adds multi-control gates without invoking Ruby fallback', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, ['add', 'X', '--control', '0,1', '--qubit', '2', '--step', '0']);
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, '');
+      assert.deepEqual(await readCircuit(path.join(dir, 'circuit.json')), {
+        qubits: 3,
+        cols: [['•', '•', 'X']]
+      });
+    });
+  });
+
   it('adds controlled angled gates without invoking Ruby fallback', async () => {
     await withTempDir(async (dir) => {
       const result = captureDispatcherRun(dir, [
