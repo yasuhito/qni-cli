@@ -1,8 +1,9 @@
+import { AngleExpression, AngleExpressionError } from '../angle_expression';
 import { CircuitFileError, currentCircuitFile } from '../circuit_file';
 import type { CommandHandlerContext } from '../dispatcher';
 import { runRubyFallbackSync } from '../process/process_compatibility';
 
-const FIXED_SINGLE_QUBIT_GATES = new Map<string, string>([
+const FIXED_GATES = new Map<string, string>([
   ['H', 'H'],
   ['S', 'S'],
   ['S†', 'S†'],
@@ -15,13 +16,24 @@ const FIXED_SINGLE_QUBIT_GATES = new Map<string, string>([
   ['√X', 'X^½']
 ]);
 
+const ANGLED_GATES = new Map<string, string>([
+  ['P', 'P'],
+  ['RX', 'Rx'],
+  ['RY', 'Ry'],
+  ['RZ', 'Rz']
+]);
+const ANGLED_GATE_SYMBOLS = new Set(ANGLED_GATES.values());
+const SWAP_GATE = 'Swap';
+
 interface AddOptions {
-  readonly qubit: number;
+  readonly angle?: string;
+  readonly controls: number[];
+  readonly qubits: number[];
   readonly step: number;
 }
 
 export function runAddCommand(argv: string[], context: CommandHandlerContext): number {
-  if (!fixedSingleQubitAdd(argv)) {
+  if (!typeScriptAdd(argv)) {
     return runRubyFallbackSync({
       argv,
       cwd: context.cwd,
@@ -31,10 +43,23 @@ export function runAddCommand(argv: string[], context: CommandHandlerContext): n
   }
 
   try {
-    const gate = normalizedFixedGate(argv[1]);
+    const gate = normalizedSupportedGate(argv[1]);
     const options = parseAddOptions(argv.slice(2));
+    validateAngleUsage(gate, options);
+    const circuitFile = currentCircuitFile(context.cwd);
 
-    currentCircuitFile(context.cwd).addGate(gate, options.step, options.qubit);
+    if (gate === SWAP_GATE) {
+      if (controlled(options)) {
+        throw new CircuitFileError('SWAP does not support --control yet');
+      }
+
+      circuitFile.addSwapGate(options.step, options.qubits);
+    } else if (controlled(options)) {
+      circuitFile.addControlledGate(serializedGate(gate, options), options.step, options.controls, singleQubit(options));
+    } else {
+      circuitFile.addGate(serializedGate(gate, options), options.step, singleQubit(options));
+    }
+
     return 0;
   } catch (error) {
     process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
@@ -42,7 +67,7 @@ export function runAddCommand(argv: string[], context: CommandHandlerContext): n
   }
 }
 
-function fixedSingleQubitAdd(argv: string[]): boolean {
+function typeScriptAdd(argv: string[]): boolean {
   if (argv.length < 2) {
     return false;
   }
@@ -51,15 +76,16 @@ function fixedSingleQubitAdd(argv: string[]): boolean {
     return false;
   }
 
-  if (!FIXED_SINGLE_QUBIT_GATES.has(normalizedGateName(argv[1]))) {
+  if (!supportedGateName(argv[1])) {
     return false;
   }
 
-  return fixedAddOptionsOnly(argv.slice(2));
+  return knownAddOptionsOnly(argv.slice(2));
 }
 
-function normalizedFixedGate(gate: string): string {
-  const normalizedGate = FIXED_SINGLE_QUBIT_GATES.get(normalizedGateName(gate));
+function normalizedSupportedGate(gate: string): string {
+  const normalizedName = normalizedGateName(gate);
+  const normalizedGate = normalizedGateSymbol(normalizedName);
 
   if (!normalizedGate) {
     throw new CircuitFileError(`unsupported gate: ${gate}`);
@@ -68,14 +94,28 @@ function normalizedFixedGate(gate: string): string {
   return normalizedGate;
 }
 
+function normalizedGateSymbol(normalizedName: string): string | undefined {
+  return FIXED_GATES.get(normalizedName) ?? ANGLED_GATES.get(normalizedName) ?? swapGateSymbol(normalizedName);
+}
+
+function swapGateSymbol(normalizedName: string): string | undefined {
+  return normalizedName === 'SWAP' ? SWAP_GATE : undefined;
+}
+
 function normalizedGateName(gate: string): string {
   return gate.toUpperCase();
 }
 
-function fixedAddOptionsOnly(args: string[]): boolean {
+function supportedGateName(gate: string): boolean {
+  const normalizedName = normalizedGateName(gate);
+
+  return FIXED_GATES.has(normalizedName) || ANGLED_GATES.has(normalizedName) || normalizedName === 'SWAP';
+}
+
+function knownAddOptionsOnly(args: string[]): boolean {
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
-    const match = /^--(?<name>qubit|step)(?:=.*)?$/u.exec(arg);
+    const match = /^--(?<name>angle|control|qubit|step)(?:=.*)?$/u.exec(arg);
 
     if (arg.startsWith('--') && !match?.groups) {
       return false;
@@ -94,7 +134,7 @@ function parseAddOptions(args: string[]): AddOptions {
 
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
-    const match = /^--(?<name>qubit|step)(?:=(?<value>.*))?$/u.exec(arg);
+    const match = /^--(?<name>angle|control|qubit|step)(?:=(?<value>.*))?$/u.exec(arg);
 
     if (!match?.groups) {
       throw new CircuitFileError(`unknown option: ${arg}`);
@@ -110,31 +150,85 @@ function parseAddOptions(args: string[]): AddOptions {
   }
 
   return {
-    qubit: requiredSingleNonNegativeInteger(values.get('qubit'), 'qubit'),
+    angle: values.get('angle'),
+    controls: optionalNonNegativeIntegers(values.get('control'), 'control'),
+    qubits: requiredNonNegativeIntegers(values.get('qubit'), 'qubit'),
     step: requiredNonNegativeInteger(values.get('step'), 'step')
   };
 }
 
-function requiredSingleNonNegativeInteger(value: string | undefined, name: string): number {
+function singleQubit(options: AddOptions): number {
+  if (options.qubits.length !== 1) {
+    throw new CircuitFileError('qubit must contain exactly 1 index');
+  }
+
+  return options.qubits[0];
+}
+
+function controlled(options: AddOptions): boolean {
+  return options.controls.length > 0;
+}
+
+function serializedGate(gate: string, options: AddOptions): string {
+  if (!angledGate(gate)) {
+    return gate;
+  }
+
+  try {
+    return `${gate}(${new AngleExpression(requiredAngle(options, gate)).toString()})`;
+  } catch (error) {
+    if (error instanceof AngleExpressionError) {
+      throw new CircuitFileError(error.message);
+    }
+
+    throw error;
+  }
+}
+
+function validateAngleUsage(gate: string, options: AddOptions): void {
+  if (options.angle && !angledGate(gate)) {
+    throw new CircuitFileError('angle is only supported for P, Rx, Ry, and Rz');
+  }
+}
+
+function requiredAngle(options: AddOptions, gate: string): string {
+  if (!options.angle) {
+    throw new CircuitFileError(`angle is required for ${gate}`);
+  }
+
+  return options.angle;
+}
+
+function angledGate(gate: string): boolean {
+  return ANGLED_GATE_SYMBOLS.has(gate);
+}
+
+function requiredNonNegativeIntegers(value: string | undefined, name: string): number[] {
   if (!value) {
-    throw new CircuitFileError(`${name} is required`);
+    throw new CircuitFileError(requiredOptionMessage(name));
   }
 
-  const values = value.split(',');
+  return value.split(',').map((entry) => parseNonNegativeInteger(entry, name));
+}
 
-  if (values.length !== 1) {
-    throw new CircuitFileError(`${name} must contain exactly 1 index`);
+function optionalNonNegativeIntegers(value: string | undefined, name: string): number[] {
+  if (!value) {
+    return [];
   }
 
-  return parseNonNegativeInteger(values[0], name);
+  return value.split(',').map((entry) => parseNonNegativeInteger(entry, name));
 }
 
 function requiredNonNegativeInteger(value: string | undefined, name: string): number {
   if (!value) {
-    throw new CircuitFileError(`${name} is required`);
+    throw new CircuitFileError(requiredOptionMessage(name));
   }
 
   return parseNonNegativeInteger(value, name);
+}
+
+function requiredOptionMessage(name: string): string {
+  return `No value provided for required options '--${name}'`;
 }
 
 function parseNonNegativeInteger(value: string, name: string): number {
