@@ -77,11 +77,11 @@ function fixedAddOptionsOnly(args: string[]): boolean {
     const arg = args[index];
     const match = /^--(?<name>qubit|step)(?:=.*)?$/u.exec(arg);
 
-    if (!match?.groups) {
+    if (arg.startsWith('--') && !match?.groups) {
       return false;
     }
 
-    if (!arg.includes('=')) {
+    if (match?.groups && !arg.includes('=')) {
       index += 1;
     }
   }

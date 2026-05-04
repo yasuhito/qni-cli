@@ -201,6 +201,16 @@ describe('add command TypeScript route', () => {
     });
   });
 
+  it('rejects malformed fixed gate options without invoking Ruby fallback', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, ['add', 'H', '--qubit', '--step', '0']);
+
+      assert.equal(result.exitStatus, 1);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, 'unknown option: 0\n');
+    });
+  });
+
   it('honors QNI_USE_RUBY for add', async () => {
     await withTempDir(async (dir) => {
       const result = captureDispatcherRun(dir, ['add', 'H', '--qubit', '0', '--step', '0'], {

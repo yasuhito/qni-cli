@@ -49,6 +49,12 @@ qni-cli のユーザとして、コマンドラインから量子回路を組み
   }
   ```
 
+## Scenario: QNI_USE_RUBY=1 の H ゲート追加コマンドは成功
+
+- Given 環境変数 "QNI_USE_RUBY" を "1" に設定する
+- When "qni add H --qubit 0 --step 0" を実行
+- Then コマンドは成功
+
 ## Scenario: QNI_USE_RUBY=1 の H ゲート追加は Ruby fallback で circuit.json を作成
 
 - Given 環境変数 "QNI_USE_RUBY" を "1" に設定する
