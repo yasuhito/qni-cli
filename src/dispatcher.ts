@@ -2,6 +2,7 @@ import {
   chooseCommandImplementation,
   runRubyFallbackSync
 } from './process/process_compatibility';
+import { runAddCommand } from './commands/add_command';
 import { runGateCommand } from './commands/gate_command';
 import { runRemoveCommand } from './commands/remove_command';
 import { runStateCommand } from './commands/state_command';
@@ -28,6 +29,7 @@ interface CommandRoute {
 }
 
 const TYPESCRIPT_ROUTES = new Map<string, CommandHandler>([
+  ['add', runAddCommand],
   ['gate', runGateCommand],
   ['rm', runRemoveCommand],
   ['state', runStateCommand],

@@ -49,6 +49,18 @@ export class CircuitFile {
     return false;
   }
 
+  addGate(gate: string, step: number, qubit: number): void {
+    const circuit = this.existingCircuit() ?? emptyCircuit(step, qubit);
+
+    expandQubitsTo(circuit, qubit);
+    expandStepsTo(circuit, step);
+    ensureAddSlotAvailable(circuit, step, qubit);
+
+    circuit.cols[step][qubit] = gate;
+    normalizeAfterAdd(circuit);
+    this.write(circuit);
+  }
+
   initialStateText(): string {
     const circuit = this.existingCircuit();
 
@@ -162,6 +174,43 @@ export class CircuitFile {
   }
 }
 
+function emptyCircuit(step: number, qubit: number): CircuitData {
+  const qubits = qubit + 1;
+
+  return {
+    cols: Array.from({ length: step + 1 }, () => Array.from({ length: qubits }, () => EMPTY_SLOT)),
+    qubits
+  };
+}
+
+function expandQubitsTo(circuit: CircuitData, qubit: number): void {
+  if (qubit < circuit.qubits) {
+    return;
+  }
+
+  const count = qubit - circuit.qubits + 1;
+
+  for (const col of circuit.cols) {
+    col.push(...Array.from({ length: count }, () => EMPTY_SLOT));
+  }
+
+  circuit.qubits += count;
+}
+
+function expandStepsTo(circuit: CircuitData, step: number): void {
+  while (circuit.cols.length <= step) {
+    circuit.cols.push(Array.from({ length: circuit.qubits }, () => EMPTY_SLOT));
+  }
+}
+
+function ensureAddSlotAvailable(circuit: CircuitData, step: number, qubit: number): void {
+  const slot = circuit.cols[step]?.[qubit];
+
+  if (slot !== EMPTY_SLOT) {
+    throw new CircuitFileError(`target slot is occupied: cols[${step}][${qubit}] = ${JSON.stringify(slot)}`);
+  }
+}
+
 function existingSlot(circuit: CircuitData, step: number, qubit: number): unknown[] {
   const col = circuit.cols[step];
 
@@ -232,6 +281,11 @@ function normalizeAfterRemoval(circuit: CircuitData): void {
   trimLeadingEmptyQubits(circuit);
   trimTrailingEmptyQubits(circuit);
   trimTrailingEmptySteps(circuit);
+}
+
+function normalizeAfterAdd(circuit: CircuitData): void {
+  trimLeadingEmptySteps(circuit);
+  trimLeadingEmptyQubits(circuit);
 }
 
 function trimLeadingEmptySteps(circuit: CircuitData): void {
