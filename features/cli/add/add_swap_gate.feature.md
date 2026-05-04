@@ -49,6 +49,20 @@ qni add SWAP を実行したい。
   }
   ```
 
+## Scenario: qni add SWAP は decimal step でも circuit.json に Swap を 2 つ追加
+
+- When "qni add SWAP --qubit 0,1 --step 0.0" を実行
+- Then "circuit.json" の内容:
+
+  ```json
+  {
+    "qubits": 2,
+    "cols": [
+      ["Swap", "Swap"]
+    ]
+  }
+  ```
+
 ## Scenario: qni add SWAP は target qubit が 1 つだと失敗
 
 - When "qni add SWAP --qubit 0 --step 0" を実行

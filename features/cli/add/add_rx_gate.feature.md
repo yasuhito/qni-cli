@@ -50,6 +50,20 @@ qni-cli のユーザとして、コマンドラインから量子回路を組み
   }
   ```
 
+## Scenario: Rx ゲートは decimal step でも circuit.json を作成
+
+- When "qni add Rx --angle π/2 --qubit 0 --step 0.0" を実行
+- Then "circuit.json" の内容:
+
+  ```json
+  {
+    "qubits": 1,
+    "cols": [
+      ["Rx(π/2)"]
+    ]
+  }
+  ```
+
 ## Scenario: Rx ゲートは angle がないと追加できない
 
 - When "qni add Rx --qubit 0 --step 0" を実行

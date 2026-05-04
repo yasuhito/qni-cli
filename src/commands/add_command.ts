@@ -153,7 +153,7 @@ function parseAddOptions(args: string[]): AddOptions {
     angle: values.get('angle'),
     controls: optionalNonNegativeIntegers(values.get('control'), 'control'),
     qubits: requiredNonNegativeIntegers(values.get('qubit'), 'qubit'),
-    step: requiredNonNegativeInteger(values.get('step'), 'step')
+    step: requiredNonNegativeStep(values.get('step'))
   };
 }
 
@@ -227,6 +227,14 @@ function requiredNonNegativeInteger(value: string | undefined, name: string): nu
   return parseNonNegativeInteger(value, name);
 }
 
+function requiredNonNegativeStep(value: string | undefined): number {
+  if (!value) {
+    throw new CircuitFileError(requiredOptionMessage('step'));
+  }
+
+  return parseNonNegativeNumericStep(value);
+}
+
 function requiredOptionMessage(name: string): string {
   return `No value provided for required options '--${name}'`;
 }
@@ -240,6 +248,20 @@ function parseNonNegativeInteger(value: string, name: string): number {
 
   if (parsedValue < 0) {
     throw new CircuitFileError(`${name} must be >= 0`);
+  }
+
+  return parsedValue;
+}
+
+function parseNonNegativeNumericStep(value: string): number {
+  if (!/^[+-]?(?:\d+|\d+\.\d+|\.\d+)$/u.test(value)) {
+    throw new CircuitFileError(`Expected numeric value for '--step'; got "${value}"`);
+  }
+
+  const parsedValue = Math.trunc(Number(value));
+
+  if (parsedValue < 0) {
+    throw new CircuitFileError('step must be >= 0');
   }
 
   return parsedValue;

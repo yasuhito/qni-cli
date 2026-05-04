@@ -260,6 +260,43 @@ describe('add command TypeScript route', () => {
     });
   });
 
+  it('accepts decimal numeric step values like Ruby for migrated gate variants', async () => {
+    const examples = [
+      {
+        argv: ['add', 'SWAP', '--qubit', '0,1', '--step', '0.0'],
+        circuit: {
+          qubits: 2,
+          cols: [['Swap', 'Swap']]
+        }
+      },
+      {
+        argv: ['add', 'Rx', '--angle', 'pi/2', '--qubit', '0', '--step', '0.0'],
+        circuit: {
+          qubits: 1,
+          cols: [['Rx(π/2)']]
+        }
+      },
+      {
+        argv: ['add', 'X', '--control', '0', '--qubit', '1', '--step', '0.0'],
+        circuit: {
+          qubits: 2,
+          cols: [['•', 'X']]
+        }
+      }
+    ];
+
+    for (const example of examples) {
+      await withTempDir(async (dir) => {
+        const result = captureDispatcherRun(dir, example.argv);
+
+        assert.equal(result.exitStatus, 0);
+        assert.equal(result.stdout, '');
+        assert.equal(result.stderr, '');
+        assert.deepEqual(await readCircuit(path.join(dir, 'circuit.json')), example.circuit);
+      });
+    }
+  });
+
   it('rejects invalid controlled gate placement without invoking Ruby fallback', async () => {
     await withTempDir(async (dir) => {
       const duplicateControl = captureDispatcherRun(dir, [
