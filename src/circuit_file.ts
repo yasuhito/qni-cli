@@ -2,7 +2,12 @@ import { readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { AngleExpression, AngleExpressionError, validAngleIdentifier } from './angle_expression';
-import { formatInitialState, initialStateQubitCount, zeroInitialStateText } from './initial_state';
+import {
+  formatInitialState,
+  initialStateQubitCount,
+  parseInitialState,
+  zeroInitialStateText
+} from './initial_state';
 
 export class CircuitFileError extends Error {}
 
@@ -114,6 +119,16 @@ export class CircuitFile {
 
     normalizeAfterRemoval(circuit);
     this.write(circuit);
+  }
+
+  setInitialState(expression: unknown): boolean {
+    const initialState = parseInitialState(expression);
+    const circuit = this.existingCircuit() ?? emptyCircuit(0, 0);
+
+    expandQubitsTo(circuit, initialStateQubitCount(initialState) - 1);
+    circuit.initial_state = initialState;
+    this.write(circuit);
+    return true;
   }
 
   setVariable(name: string, value: unknown): boolean {

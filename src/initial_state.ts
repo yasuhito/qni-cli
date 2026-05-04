@@ -14,8 +14,38 @@ interface InitialStateTerm {
   readonly coefficient: string;
 }
 
+interface InitialStateData {
+  readonly format: typeof FORMAT;
+  readonly terms: InitialStateTerm[];
+}
+
+const ONE_QUBIT_SPECIAL_STATES = new Map<string, string>([
+  ['|+>', SQRT_HALF_TEXT],
+  ['|->', `-${SQRT_HALF_TEXT}`],
+  ['|+i>', `${SQRT_HALF_TEXT}i`],
+  ['|-i>', `-${SQRT_HALF_TEXT}i`]
+]);
+
+const BELL_SHORTHANDS = new Map<string, string>([
+  ['|Φ+>', 'Φ+'],
+  ['|Φ->', 'Φ-'],
+  ['|Ψ+>', 'Ψ+'],
+  ['|Ψ->', 'Ψ-']
+]);
+
+const BELL_PLACEHOLDERS = new Map<string, string>([
+  ['Φ+', '__QNI_BELL_PHI_PLUS__'],
+  ['Φ-', '__QNI_BELL_PHI_MINUS__'],
+  ['Ψ+', '__QNI_BELL_PSI_PLUS__'],
+  ['Ψ-', '__QNI_BELL_PSI_MINUS__']
+]);
+
 export function zeroInitialStateText(): string {
   return '1|0>';
+}
+
+export function parseInitialState(rawValue: unknown): InitialStateData {
+  return specialInitialState(rawValue) ?? parseKetSum(rawValue);
 }
 
 export function formatInitialState(value: unknown): string {
@@ -54,6 +84,84 @@ function loadTerm(value: unknown): InitialStateTerm {
     basis: validatedBasis(value.basis),
     coefficient: validatedCoefficient(value.coefficient)
   };
+}
+
+function parseKetSum(rawValue: unknown): InitialStateData {
+  const normalized = normalizedText(rawValue);
+
+  if (normalized.length === 0) {
+    throw new InitialStateError('initial state is required');
+  }
+
+  return {
+    format: FORMAT,
+    terms: normalizedTerms(normalized.split(' + ').map(parseTerm))
+  };
+}
+
+function parseTerm(rawValue: string): InitialStateTerm {
+  const match = /^(?<coefficient>.+)\|(?<basis>[^>]+)>$/u.exec(rawValue);
+
+  if (!match?.groups) {
+    throw new InitialStateError(`invalid initial state term: ${rawValue}`);
+  }
+
+  return {
+    basis: validatedBasis(match.groups.basis),
+    coefficient: validatedCoefficient(match.groups.coefficient)
+  };
+}
+
+function specialInitialState(rawValue: unknown): InitialStateData | undefined {
+  const text = String(rawValue).trim();
+  const oneQubitCoefficient = ONE_QUBIT_SPECIAL_STATES.get(text);
+
+  if (oneQubitCoefficient) {
+    return {
+      format: FORMAT,
+      terms: [
+        { basis: '0', coefficient: SQRT_HALF_TEXT },
+        { basis: '1', coefficient: oneQubitCoefficient }
+      ]
+    };
+  }
+
+  const bellBasis = BELL_SHORTHANDS.get(text);
+
+  if (bellBasis) {
+    return {
+      format: FORMAT,
+      terms: [{ basis: bellBasis, coefficient: '1' }]
+    };
+  }
+
+  return undefined;
+}
+
+function normalizedText(rawValue: unknown): string {
+  return restoreBellShorthands(
+    protectBellShorthands(String(rawValue))
+      .replaceAll('α', 'alpha')
+      .replaceAll('β', 'beta')
+      .trim()
+      .replace(/\s+/gu, ' ')
+      .replace(/\s*-\s*/gu, ' + -')
+      .replace(/\s*\+\s*/gu, ' + ')
+  );
+}
+
+function protectBellShorthands(text: string): string {
+  return [...BELL_PLACEHOLDERS].reduce(
+    (current, [basis, placeholder]) => current.replaceAll(`|${basis}>`, placeholder),
+    text
+  );
+}
+
+function restoreBellShorthands(text: string): string {
+  return [...BELL_PLACEHOLDERS].reduce(
+    (current, [basis, placeholder]) => current.replaceAll(placeholder, `|${basis}>`),
+    text
+  );
 }
 
 function normalizedTerms(terms: InitialStateTerm[]): InitialStateTerm[] {
