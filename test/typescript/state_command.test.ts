@@ -73,6 +73,86 @@ function captureDispatcherRun(
 }
 
 describe('state command TypeScript route', () => {
+  it('sets a ket-sum initial state without invoking Ruby fallback', async () => {
+    await withTempDir(async (dir) => {
+      const circuitPath = path.join(dir, 'circuit.json');
+      const result = captureDispatcherRun(dir, ['state', 'set', 'alpha|0> + beta|1>']);
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stdout, '0\n');
+      assert.equal(result.stderr, '');
+      assert.deepEqual(JSON.parse(await readFile(circuitPath, 'utf8')), {
+        qubits: 1,
+        cols: [[1]],
+        initial_state: {
+          format: 'ket_sum_v1',
+          terms: [
+            { basis: '0', coefficient: 'alpha' },
+            { basis: '1', coefficient: 'beta' }
+          ]
+        }
+      });
+    });
+  });
+
+  it('round-trips one-qubit shorthand through state show', async () => {
+    await withTempDir(async (dir) => {
+      const circuitPath = path.join(dir, 'circuit.json');
+      const setResult = captureDispatcherRun(dir, ['state', 'set', '|+>']);
+      const showResult = captureDispatcherRun(dir, ['state', 'show']);
+
+      assert.equal(setResult.exitStatus, 0);
+      assert.equal(setResult.stdout, '0\n');
+      assert.equal(setResult.stderr, '');
+      assert.equal(showResult.exitStatus, 0);
+      assert.equal(showResult.stdout, '|+>\n');
+      assert.equal(showResult.stderr, '');
+      assert.deepEqual(JSON.parse(await readFile(circuitPath, 'utf8')), {
+        qubits: 1,
+        cols: [[1]],
+        initial_state: {
+          format: 'ket_sum_v1',
+          terms: [
+            { basis: '0', coefficient: Math.sqrt(0.5).toString() },
+            { basis: '1', coefficient: Math.sqrt(0.5).toString() }
+          ]
+        }
+      });
+    });
+  });
+
+  it('sets Bell-basis shorthand with Ruby-compatible coefficient normalization', async () => {
+    await withTempDir(async (dir) => {
+      const circuitPath = path.join(dir, 'circuit.json');
+      const result = captureDispatcherRun(dir, ['state', 'set', 'α|Φ+> + β|Φ->']);
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stdout, '0\n');
+      assert.equal(result.stderr, '');
+      assert.deepEqual(JSON.parse(await readFile(circuitPath, 'utf8')), {
+        qubits: 2,
+        cols: [[1, 1]],
+        initial_state: {
+          format: 'ket_sum_v1',
+          terms: [
+            { basis: 'Φ+', coefficient: 'alpha' },
+            { basis: 'Φ-', coefficient: 'beta' }
+          ]
+        }
+      });
+    });
+  });
+
+  it('rejects invalid state expressions with the Ruby oracle message', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, ['state', 'set', 'foo']);
+
+      assert.equal(result.exitStatus, 1);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, 'invalid initial state term: foo\n');
+    });
+  });
+
   it('shows a stored initial state without invoking Ruby fallback', async () => {
     await withTempDir(async (dir) => {
       await writeFile(
@@ -142,9 +222,9 @@ describe('state command TypeScript route', () => {
     });
   });
 
-  it('keeps state set on the Ruby fallback route', async () => {
+  it('honors QNI_USE_RUBY for state set', async () => {
     await withTempDir(async (dir) => {
-      const result = captureDispatcherRun(dir, ['state', 'set', '1|0>']);
+      const result = captureDispatcherRun(dir, ['state', 'set', '1|0>'], { PATH: '', QNI_USE_RUBY: '1' });
 
       assert.equal(result.exitStatus, 127);
       assert.equal(result.stdout, '');

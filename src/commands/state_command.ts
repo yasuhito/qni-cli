@@ -1,6 +1,5 @@
 import { CircuitFileError, currentCircuitFile } from '../circuit_file';
 import type { CommandHandlerContext } from '../dispatcher';
-import { runRubyFallbackSync } from '../process/process_compatibility';
 
 const HELP_TEXT = `Usage:
   qni state set "alpha|0> + beta|1>"
@@ -19,9 +18,9 @@ Examples:
   qni state clear`;
 
 type StateSubcommand = 'clear' | 'set' | 'show';
-type TypeScriptStateSubcommand = Exclude<StateSubcommand, 'set'>;
+type TypeScriptStateSubcommand = StateSubcommand;
 
-const TYPESCRIPT_SUBCOMMANDS = new Set<TypeScriptStateSubcommand>(['clear', 'show']);
+const TYPESCRIPT_SUBCOMMANDS = new Set<TypeScriptStateSubcommand>(['clear', 'set', 'show']);
 
 export function runStateCommand(argv: string[], context: CommandHandlerContext): number {
   const subcommand = argv[1];
@@ -29,15 +28,6 @@ export function runStateCommand(argv: string[], context: CommandHandlerContext):
   if (!subcommand || subcommand === '--help' || subcommand === '-h') {
     process.stdout.write(`${HELP_TEXT}\n`);
     return 0;
-  }
-
-  if (subcommand === 'set') {
-    return runRubyFallbackSync({
-      argv,
-      cwd: context.cwd,
-      env: context.env,
-      projectRoot: context.projectRoot
-    }).exitStatus ?? 1;
   }
 
   try {
@@ -63,13 +53,17 @@ function executeSubcommand(
   args: string[],
   context: CommandHandlerContext
 ): string {
-  requireArgumentCount(args, 0);
   const circuitFile = currentCircuitFile(context.cwd);
 
   switch (subcommand) {
     case 'clear':
+      requireArgumentCount(args, 0);
       return circuitFile.clearInitialState() ? '0' : '';
+    case 'set':
+      requireArgumentCount(args, 1);
+      return circuitFile.setInitialState(args[0]) ? '0' : '';
     case 'show':
+      requireArgumentCount(args, 0);
       return circuitFile.initialStateText();
   }
 }
