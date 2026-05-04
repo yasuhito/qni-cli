@@ -48,3 +48,19 @@ gate remove 後の auto-shrink シナリオもここで扱う。
     ]
   }
   ```
+
+## Scenario: 空の末尾 step は自動的に削除される
+
+- Given "qni add H --qubit 0 --step 0" を実行
+- And "qni add X --qubit 1 --step 1" を実行
+- When "qni rm --qubit 1 --step 1" を実行
+- Then "circuit.json" の内容:
+
+  ```json
+  {
+    "qubits": 1,
+    "cols": [
+      ["H"]
+    ]
+  }
+  ```
