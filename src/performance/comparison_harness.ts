@@ -291,6 +291,10 @@ function residentMemoryBytes(pid: number | undefined): number {
     return 0;
   }
 
+  if (process.platform !== 'linux') {
+    return psResidentMemoryBytes(pid);
+  }
+
   try {
     const status = readFileSync(`/proc/${pid}/status`, 'utf8');
     const peak = status.match(/^VmHWM:\s+(\d+)\s+kB/mu);
@@ -301,6 +305,20 @@ function residentMemoryBytes(pid: number | undefined): number {
   } catch {
     return 0;
   }
+}
+
+function psResidentMemoryBytes(pid: number): number {
+  const result = spawnSync('ps', ['-o', 'rss=', '-p', String(pid)], {
+    encoding: 'utf8'
+  });
+
+  if (result.status !== 0) {
+    return 0;
+  }
+
+  const kilobytes = Number(result.stdout.trim());
+
+  return Number.isFinite(kilobytes) ? kilobytes * 1024 : 0;
 }
 
 function compareImplementations(
@@ -383,7 +401,9 @@ function qniCommandLine(command: readonly string[]): string {
 
 function ensureCommandSucceeded(commandLine: string, run: MeasuredRun): void {
   if (run.exit_status !== 0) {
-    throw new Error(`command failed (${run.exit_status}): ${commandLine}`);
+    const reason = run.signal === null ? `exit ${run.exit_status}` : `killed by signal ${run.signal}`;
+
+    throw new Error(`command failed (${reason}): ${commandLine}`);
   }
 }
 
