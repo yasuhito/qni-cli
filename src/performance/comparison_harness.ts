@@ -93,14 +93,18 @@ const DEFAULT_REPEAT = 5;
 const DEFAULT_THRESHOLD_RATIO = 1.2;
 const DEFAULT_WARM_UP = 1;
 const IDENTITY = 1;
+const MEMORY_SAMPLING_INTERVAL_MS = process.platform === 'linux' ? 5 : 50;
 
 export async function writePerformanceComparison(argv: readonly string[]): Promise<PerformanceReport> {
   const args = parseHarnessArgs(argv);
   ensureTypeScriptDispatcher(args.projectRoot);
 
-  const workloads = await Promise.all(
-    args.workloads.map(async (workloadPath) => runWorkload(workloadPath, args))
-  );
+  const workloads: WorkloadReport[] = [];
+
+  for (const workloadPath of args.workloads) {
+    workloads.push(await runWorkload(workloadPath, args));
+  }
+
   const investigations = workloads
     .filter((workload) => workload.comparison.investigation_required)
     .map((workload) => workload.name);
@@ -258,7 +262,7 @@ function runMeasuredCommand(command: CommandSpec, cwd: string): Promise<Measured
     const sampleMemory = (): void => {
       peakMemoryBytes = Math.max(peakMemoryBytes, residentMemoryBytes(child.pid));
     };
-    const sampler = setInterval(sampleMemory, 5);
+    const sampler = setInterval(sampleMemory, MEMORY_SAMPLING_INTERVAL_MS);
 
     sampler.unref();
     sampleMemory();
@@ -348,8 +352,21 @@ function compareImplementations(
 
 function parseWorkload(json: string, workloadPath: string): WorkloadFile {
   const parsed = JSON.parse(json) as Partial<WorkloadFile>;
+  const input = parsed.input;
 
-  if (!parsed.name || !Array.isArray(parsed.command) || parsed.input?.kind !== 'generated-circuit') {
+  if (
+    !parsed.name ||
+    !Array.isArray(parsed.command) ||
+    parsed.command.some((part) => typeof part !== 'string') ||
+    input?.kind !== 'generated-circuit' ||
+    !Number.isInteger(input.depth) ||
+    input.depth <= 0 ||
+    !Number.isInteger(input.qubits) ||
+    input.qubits <= 0 ||
+    !Array.isArray(input.pattern) ||
+    input.pattern.length === 0 ||
+    input.pattern.some((gate) => typeof gate !== 'string')
+  ) {
     throw new Error(`invalid performance workload: ${workloadPath}`);
   }
 
