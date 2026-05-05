@@ -153,6 +153,32 @@ describe('state command TypeScript route', () => {
     });
   });
 
+  it('validates the existing initial state before replacing it', async () => {
+    await withTempDir(async (dir) => {
+      const circuitPath = path.join(dir, 'circuit.json');
+      const originalCircuit = `${JSON.stringify(
+        {
+          qubits: 1,
+          cols: [[1]],
+          initial_state: {
+            format: 'bad',
+            terms: [{ basis: '0', coefficient: '1' }]
+          }
+        },
+        null,
+        2
+      )}\n`;
+      await writeFile(circuitPath, originalCircuit);
+
+      const result = captureDispatcherRun(dir, ['state', 'set', 'alpha|0> + beta|1>']);
+
+      assert.equal(result.exitStatus, 1);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, 'unsupported initial state format: bad\n');
+      assert.equal(await readFile(circuitPath, 'utf8'), originalCircuit);
+    });
+  });
+
   it('shows a stored initial state without invoking Ruby fallback', async () => {
     await withTempDir(async (dir) => {
       await writeFile(

@@ -122,9 +122,10 @@ export class CircuitFile {
   }
 
   setInitialState(expression: unknown): boolean {
-    const initialState = parseInitialState(expression);
     const circuit = this.existingCircuit() ?? emptyCircuit(0, 0);
 
+    validateInitialState(circuit);
+    const initialState = parseInitialState(expression);
     expandQubitsTo(circuit, initialStateQubitCount(initialState) - 1);
     circuit.initial_state = initialState;
     this.write(circuit);
