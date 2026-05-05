@@ -31,11 +31,13 @@ function splitCommand(command) {
   let current = '';
   let quote = null;
   let escaping = false;
+  let tokenStarted = false;
 
   for (const char of command) {
     if (escaping) {
       current += char;
       escaping = false;
+      tokenStarted = true;
       continue;
     }
 
@@ -55,29 +57,33 @@ function splitCommand(command) {
 
     if (char === "'" || char === '"') {
       quote = char;
+      tokenStarted = true;
       continue;
     }
 
     if (/\s/.test(char)) {
-      if (current.length > 0) {
+      if (tokenStarted) {
         words.push(current);
         current = '';
+        tokenStarted = false;
       }
       continue;
     }
 
     current += char;
+    tokenStarted = true;
   }
 
   if (escaping) {
     current += '\\';
+    tokenStarted = true;
   }
 
   if (quote) {
     throw new Error(`unterminated quote in command: ${command}`);
   }
 
-  if (current.length > 0) {
+  if (tokenStarted) {
     words.push(current);
   }
 
