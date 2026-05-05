@@ -388,10 +388,7 @@ function typeScriptCommand(workload: WorkloadFile, projectRoot: string): Command
     args: [path.join(projectRoot, 'dist', 'bin', 'qni.js'), ...workload.command],
     command: process.execPath,
     commandLine: ['node', 'dist/bin/qni.js', ...workload.command].join(' '),
-    env: {
-      ...process.env,
-      BUNDLE_GEMFILE: path.join(projectRoot, 'Gemfile')
-    }
+    env: process.env
   };
 }
 
