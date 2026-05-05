@@ -37,3 +37,17 @@ qni state set を使いたい
     ]
   }
   ```
+
+## Scenario: qni state set は空文字の初期状態で失敗する
+
+- When "qni state set \"\"" を実行
+- Then コマンドは失敗
+
+## Scenario: qni state set は空文字の初期状態でエラーを表示する
+
+- When "qni state set \"\"" を実行
+- Then 標準エラー:
+
+  ```text
+  initial state expression is required
+  ```

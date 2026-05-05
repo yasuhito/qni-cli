@@ -153,6 +153,16 @@ describe('state command TypeScript route', () => {
     });
   });
 
+  it('rejects an empty state expression before parsing with the Ruby oracle message', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, ['state', 'set', '']);
+
+      assert.equal(result.exitStatus, 1);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, 'initial state expression is required\n');
+    });
+  });
+
   it('validates the existing initial state before replacing it', async () => {
     await withTempDir(async (dir) => {
       const circuitPath = path.join(dir, 'circuit.json');

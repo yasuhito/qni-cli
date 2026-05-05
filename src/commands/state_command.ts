@@ -61,6 +61,7 @@ function executeSubcommand(
       return circuitFile.clearInitialState() ? '0' : '';
     case 'set':
       requireArgumentCount(args, 1);
+      requireStateExpression(args[0]);
       return circuitFile.setInitialState(args[0]) ? '0' : '';
     case 'show':
       requireArgumentCount(args, 0);
@@ -75,5 +76,11 @@ function isTypeScriptStateSubcommand(value: string): value is TypeScriptStateSub
 function requireArgumentCount(args: string[], expected: number): void {
   if (args.length !== expected) {
     throw new CircuitFileError('wrong number of arguments');
+  }
+}
+
+function requireStateExpression(value: string): void {
+  if (value.length === 0) {
+    throw new CircuitFileError('initial state expression is required');
   }
 }
