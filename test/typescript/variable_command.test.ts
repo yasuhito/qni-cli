@@ -153,6 +153,16 @@ describe('variable command TypeScript route', () => {
     });
   });
 
+  it('rejects unsupported subcommands before reading circuit.json', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, ['variable', 'wat']);
+
+      assert.equal(result.exitStatus, 1);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, 'unsupported variable subcommand: wat\n');
+    });
+  });
+
   it('rejects malformed cols before mutating circuit.json', async () => {
     await withTempDir(async (dir) => {
       const circuitPath = path.join(dir, 'circuit.json');

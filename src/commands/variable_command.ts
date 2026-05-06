@@ -1,5 +1,6 @@
-import { CircuitFileError, currentCircuitFile } from '../circuit_file';
+import { currentCircuitFile } from '../circuit_file';
 import type { CommandHandlerContext } from '../dispatcher';
+import { CommandError } from './command_error';
 
 const HELP_TEXT = `Usage:
   qni variable set NAME ANGLE
@@ -35,7 +36,7 @@ export function runVariableCommand(argv: string[], context: CommandHandlerContex
     }
 
     if (!isVariableSubcommand(subcommand)) {
-      throw new CircuitFileError(`unsupported variable subcommand: ${subcommand}`);
+      throw new CommandError(`unsupported variable subcommand: ${subcommand}`);
     }
 
     const output = executeSubcommand(subcommand, argv.slice(2), context);
@@ -101,7 +102,7 @@ function isVariableSubcommand(value: string): value is VariableSubcommand {
 
 function requiredArgument(value: string | undefined, message: string): string {
   if (value === undefined) {
-    throw new CircuitFileError(message);
+    throw new CommandError(message);
   }
 
   return value;
@@ -109,6 +110,6 @@ function requiredArgument(value: string | undefined, message: string): string {
 
 function requireArgumentCount(args: string[], expected: number): void {
   if (args.length !== expected) {
-    throw new CircuitFileError('wrong number of arguments');
+    throw new CommandError('wrong number of arguments');
   }
 }

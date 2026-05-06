@@ -1,5 +1,6 @@
-import { CircuitFileError, currentCircuitFile } from '../circuit_file';
+import { currentCircuitFile } from '../circuit_file';
 import type { CommandHandlerContext } from '../dispatcher';
+import { CommandError } from './command_error';
 
 const HELP_TEXT = `Usage:
   qni gate --qubit=N --step=N
@@ -45,7 +46,7 @@ function parseGateOptions(args: string[]): GateOptions {
     const match = /^--(?<name>qubit|step)(?:=(?<value>.*))?$/u.exec(arg);
 
     if (!match?.groups) {
-      throw new CircuitFileError(`unknown option: ${arg}`);
+      throw new CommandError(`unknown option: ${arg}`);
     }
 
     const value = match.groups.value ?? args[index + 1];
@@ -65,17 +66,17 @@ function parseGateOptions(args: string[]): GateOptions {
 
 function requiredNonNegativeInteger(value: string | undefined, name: string): number {
   if (!value) {
-    throw new CircuitFileError(`${name} is required`);
+    throw new CommandError(`${name} is required`);
   }
 
   if (!/^[+-]?\d+$/u.test(value)) {
-    throw new CircuitFileError(`${name} must be an integer`);
+    throw new CommandError(`${name} must be an integer`);
   }
 
   const parsedValue = Number.parseInt(value, 10);
 
   if (parsedValue < 0) {
-    throw new CircuitFileError(`${name} must be >= 0`);
+    throw new CommandError(`${name} must be >= 0`);
   }
 
   return parsedValue;

@@ -163,6 +163,16 @@ describe('state command TypeScript route', () => {
     });
   });
 
+  it('rejects unsupported subcommands before reading circuit.json', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, ['state', 'wat']);
+
+      assert.equal(result.exitStatus, 1);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, 'unsupported state subcommand: wat\n');
+    });
+  });
+
   it('validates the existing initial state before replacing it', async () => {
     await withTempDir(async (dir) => {
       const circuitPath = path.join(dir, 'circuit.json');

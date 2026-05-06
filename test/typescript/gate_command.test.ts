@@ -161,6 +161,16 @@ describe('gate command TypeScript route', () => {
     });
   });
 
+  it('rejects unknown CLI options before reading circuit.json', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, ['gate', '--wat']);
+
+      assert.equal(result.exitStatus, 1);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, 'unknown option: --wat\n');
+    });
+  });
+
   it('honors QNI_USE_RUBY for gate', async () => {
     await withTempDir(async (dir) => {
       const result = captureDispatcherRun(dir, ['gate', '--qubit', '0', '--step', '0'], {
