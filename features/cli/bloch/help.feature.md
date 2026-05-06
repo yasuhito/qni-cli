@@ -1,8 +1,8 @@
-# Feature: qni bloch help
+# Feature: qni bloch のヘルプ
 
-qni-cli のユーザとして
+qni-cli のユーザーとして
 ブロッホ球出力の使い方を迷わず選べるように
-qni bloch の help で利用できる出力形式と option を確認したい。
+qni bloch のヘルプで利用できる出力形式とオプションを確認したい。
 
 ## Scenario: qni bloch --help は成功する
 
@@ -53,7 +53,7 @@ qni bloch の help で利用できる出力形式と option を確認したい�
 - When "qni bloch" を実行
 - Then コマンドは成功
 
-## Scenario: qni bloch は bare command help を表示
+## Scenario: qni bloch は引数なしでもヘルプを表示
 
 - When "qni bloch" を実行
 - Then 標準出力:
