@@ -250,7 +250,7 @@ git commit --allow-empty -m "test: verify symbolic runtime stabilization"
 
 - [ ] **手順 1: コードレビューを依頼する**
 
-`superpowers:requesting-code-review` を使い、実行環境安定化の diff に対してレビューを取る。
+`superpowers:requesting-code-review` を使い、実行環境安定化の差分に対してレビューを取る。
 
 - [ ] **手順 2: 指摘があれば修正して再検証する**
 
