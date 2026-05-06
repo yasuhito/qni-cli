@@ -157,7 +157,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber \
 
 期待結果:
 
-- 4 シナリオが PASS
+- 4 シナリオが成功する
 - 記号式の一般式が `(αcos(θ) - βsin(θ))|0> + (αsin(θ) + βcos(θ))|1>` と一致する
 
 - [ ] **手順 4: ステップ実装をコミットする**
@@ -189,7 +189,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber \
 
 期待結果:
 
-- PASS
+- 成功する
 - 課題 1.1 から 1.4 までが同じ DSL の流れで成功する
 
 - [ ] **手順 2: ステップ文言が崩れていないことを確認する**
@@ -235,10 +235,10 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec rake check
 
 期待結果:
 
-- RuboCop PASS
-- reek PASS
-- cucumber PASS
-- flog / flay PASS
+- RuboCop が成功する
+- reek が成功する
+- cucumber が成功する
+- flog / flay が成功する
 
 - [ ] **手順 3: 最終差分を確認する**
 
