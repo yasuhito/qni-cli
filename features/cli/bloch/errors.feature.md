@@ -2,7 +2,7 @@
 
 qni-cli の利用者として
 誤った `qni bloch` の使い方をすぐ直せるように
-qni bloch が明確なエラーを返してほしい。
+`qni bloch` が明確なエラーを返してほしい。
 
 ## Scenario: qni bloch は対応外の量子ビット数では失敗する
 
