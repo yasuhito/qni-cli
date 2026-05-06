@@ -49,6 +49,7 @@ Usage:
 
 ```ruby
 Then('{string} は GIF 画像である') do |path|
+  actual_path = File.join(@scenario_dir, path)
   signature = File.binread(actual_path, 6)
   expect(signature).to eq("GIF89a".b).or eq("GIF87a".b)
 end
@@ -290,6 +291,7 @@ GIF では次を行う。
 ImageMagick で複数フレーム GIF を確認する小さなヘルパーを追加する。例:
 
 ```ruby
+actual_path = File.join(@scenario_dir, path)
 output, status = Open3.capture2('identify', '-format', '%n', actual_path)
 ```
 
