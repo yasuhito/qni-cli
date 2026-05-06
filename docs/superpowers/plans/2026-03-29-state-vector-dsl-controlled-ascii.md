@@ -75,7 +75,7 @@ Scenario: 2 量子ビットの制御付き X 回路を ASCII アートから作�
     q1: ┤ X ├
         └───┘
     """
-  Given 2 量子ビットの初期状態が "|10>" である
+  Given 2 qubit の初期状態が "|10>" である
   When "qni run" を実行
   Then 標準出力:
     """
@@ -241,8 +241,8 @@ bundle exec cucumber features/ascii_circuit_parser.feature
 
 期待結果:
 
-- 制御付き X の単体テストが PASS
-- 2 量子ビット制御付き ASCII の機能仕様が PASS
+- 制御付き X の単体テストが成功する
+- 2 量子ビット制御付き ASCII の機能仕様が成功する
 
 - [ ] **ステップ 4: パーサー基盤変更をコミットする**
 
@@ -291,7 +291,7 @@ bundle exec cucumber features/katas/basic_gates/state_flip.feature
 
 期待結果:
 
-- `state_flip.feature` の全シナリオが PASS
+- `state_flip.feature` の全シナリオが成功する
 
 - [ ] **ステップ 4: 制御付きシナリオの緑をコミットする**
 
@@ -358,7 +358,7 @@ bundle exec cucumber features/ascii_circuit_parser.feature
 
 期待結果:
 
-- `Ry(π/2)` の単体テスト / 受け入れ仕様が PASS
+- `Ry(π/2)` の単体テスト / 受け入れ仕様が成功する
 - 既存の 1 量子ビット / 2 量子ビット制御付きパーサーが回帰していない
 
 - [ ] **ステップ 4: 角度付きゲート ASCII 拡張をコミットする**
@@ -399,7 +399,7 @@ bundle exec rubocop \
 
 期待結果:
 
-- 対象を絞ったテストと RuboCop が PASS
+- 対象を絞ったテストと RuboCop が成功する
 
 - [ ] **ステップ 2: リポジトリ全体の確認を実行する**
 
@@ -411,7 +411,7 @@ bundle exec rake check
 
 期待結果:
 
-- RuboCop, Cucumber, Reek, Flog, Flay を含む既存チェックが PASS
+- RuboCop, Cucumber, Reek, Flog, Flay を含む既存チェックがすべて成功する
 
 - [ ] **ステップ 3: 最終確認コミットを作る**
 
