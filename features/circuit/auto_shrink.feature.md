@@ -1,4 +1,4 @@
-# Feature: circuit auto-shrink
+# Feature: 回路の自動縮小
 
 qni-cli の利用者として
 回路をできるだけコンパクトに保つために
