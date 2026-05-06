@@ -1,7 +1,7 @@
 # Feature: Rx ゲートを追加
 
 qni-cli のユーザとして、コマンドラインから量子回路を組み立てるために、
-指定した step と qubit に Rx ゲートを追加したい。
+指定したステップと量子ビットに Rx ゲートを追加したい。
 
 ## Scenario: Rx ゲート追加コマンドは成功
 
@@ -50,7 +50,7 @@ qni-cli のユーザとして、コマンドラインから量子回路を組み
   }
   ```
 
-## Scenario: Rx ゲートは decimal step でも circuit.json を作成
+## Scenario: Rx ゲートは小数のステップでも circuit.json を作成
 
 - When "qni add Rx --angle π/2 --qubit 0 --step 0.0" を実行
 - Then "circuit.json" の内容:
@@ -64,7 +64,7 @@ qni-cli のユーザとして、コマンドラインから量子回路を組み
   }
   ```
 
-## Scenario: Rx ゲートは angle がないと追加できない
+## Scenario: Rx ゲートは角度がないと追加できない
 
 - When "qni add Rx --qubit 0 --step 0" を実行
 - Then コマンドは失敗して標準エラー:
