@@ -283,7 +283,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec ruby -Itest t
 
 期待結果:
 
-- PASS
+- 成功する
 
 - [ ] **手順 5: `InitialState` モデルをコミットする**
 
@@ -424,8 +424,8 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber \
 
 期待結果:
 
-- `qni state set/show/clear` が PASS
-- ヘルプシナリオが PASS
+- `qni state set/show/clear` が成功する
+- ヘルプシナリオが成功する
 
 - [ ] **手順 6: CLI 実装をコミットする**
 
@@ -489,8 +489,8 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber feat
 
 期待結果:
 
-- 変数解決後の数値実行が PASS
-- 未束縛 / 非正規化エラーが PASS
+- 変数解決後の数値実行が成功する
+- 未束縛 / 非正規化エラーが成功する
 
 - [ ] **手順 5: 数値実行対応をコミットする**
 
@@ -543,7 +543,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber feat
 
 期待結果:
 
-- `beta|0> + alpha|1>` シナリオが PASS
+- `beta|0> + alpha|1>` シナリオが成功する
 - 既存の記号実行シナリオが回帰していない
 
 - [ ] **手順 5: 記号実行対応をコミットする**
@@ -601,8 +601,8 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber feat
 
 期待結果:
 
-- 既存 4 シナリオが PASS
-- 追加した `alpha|0> + beta|1>` シナリオも PASS
+- 既存 4 シナリオが成功する
+- 追加した `alpha|0> + beta|1>` シナリオも成功する
 
 - [ ] **手順 4: DSL 接続をコミットする**
 
@@ -644,7 +644,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber \
 
 期待結果:
 
-- すべて PASS
+- すべて成功する
 
 - [ ] **手順 3: lint を実行する**
 
@@ -679,7 +679,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec rake check
 
 期待結果:
 
-- PASS
+- 成功する
 
 - [ ] **手順 5: 最終コミットを行う**
 
