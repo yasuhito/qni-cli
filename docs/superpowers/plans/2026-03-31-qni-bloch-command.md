@@ -1,31 +1,31 @@
-# qni bloch PNG/GIF Implementation Plan
+# qni bloch PNG/GIF 実装計画
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **エージェント作業者向け:** 必須: この計画を実装するときは、サブエージェントが利用できる場合は superpowers:subagent-driven-development を、利用できない場合は superpowers:executing-plans を使う。手順は進捗管理のためチェックボックス（`- [ ]`）形式にしている。
 
-**Goal:** Add `qni bloch` so the current 1-qubit state can be exported as a Bloch-sphere PNG or GIF.
+**目的:** 現在の 1 量子ビット状態を Bloch 球の PNG または GIF として出力できるように `qni bloch` を追加する。
 
-**Architecture:** Add a dedicated `qni bloch` command rather than extending `qni export`. Ruby will validate CLI options, load the circuit, numerically sample 1-qubit state evolution, convert those samples into Bloch coordinates via expectation values, and pass a compact JSON payload to a new Python renderer. Python will use `matplotlib` to render either a single PNG frame or an animated GIF.
+**構成:** `qni export` を拡張するのではなく、専用の `qni bloch` コマンドを追加する。Ruby は CLI オプションを検証し、回路を読み込み、1 量子ビット状態の変化を数値的にサンプリングし、期待値から Bloch 座標へ変換して、コンパクトな JSON ペイロードを新しい Python レンダラーへ渡す。Python は `matplotlib` を使って、単一の PNG フレームまたはアニメーション GIF を描画する。
 
-**Tech Stack:** Ruby, Thor, Cucumber, Minitest, Python, matplotlib, Pillow, existing `StateVector` / `Simulator` infrastructure
+**技術構成:** Ruby, Thor, Cucumber, Minitest, Python, matplotlib, Pillow, 既存の `StateVector` / `Simulator` 基盤
 
 ---
 
-### Task 1: Add failing acceptance coverage for the new command
+### タスク 1: 新しいコマンドの失敗する受け入れテストを追加する
 
-**Files:**
-- Create: `features/qni_bloch.feature`
-- Modify: `features/qni_cli.feature`
-- Modify: `features/step_definitions/cli_steps.rb`
+**対象ファイル:**
+- 作成: `features/qni_bloch.feature`
+- 変更: `features/qni_cli.feature`
+- 変更: `features/step_definitions/cli_steps.rb`
 
-- [ ] **Step 1: Add `qni bloch` help coverage**
+- [ ] **手順 1: `qni bloch` のヘルプを検証する**
 
-Add a new scenario to `features/qni_cli.feature` that expects the top-level `qni` help to list:
+`features/qni_cli.feature` に新しいシナリオを追加し、最上位の `qni` ヘルプに次の行が表示されることを確認する。
 
 ```text
 qni bloch    # Render the current 1-qubit state on the Bloch sphere
 ```
 
-and a scenario for `qni bloch --help` that expects usage along these lines:
+また、`qni bloch --help` について、次のような使用方法が表示されるシナリオを追加する。
 
 ```text
 Usage:
@@ -33,19 +33,19 @@ Usage:
   qni bloch --gif --output bloch.gif
 ```
 
-- [ ] **Step 2: Add behavior scenarios to `features/qni_bloch.feature`**
+- [ ] **手順 2: `features/qni_bloch.feature` に動作シナリオを追加する**
 
-Add scenarios for:
-- `qni bloch --png --output bloch.png` succeeds for a 1-qubit circuit and writes a PNG
-- `qni bloch --gif --output bloch.gif` succeeds for a 1-qubit rotation circuit and writes a GIF
-- `qni bloch --light` also writes an image successfully
-- 2-qubit circuits fail with a clear `bloch currently supports only 1-qubit circuits` message
-- unresolved angle variables fail with a clear numeric-resolution error
-- `--png` and `--gif` together fail
+次のシナリオを追加する。
+- `qni bloch --png --output bloch.png` が 1 量子ビット回路で成功し、PNG を書き出す
+- `qni bloch --gif --output bloch.gif` が 1 量子ビットの回転回路で成功し、GIF を書き出す
+- `qni bloch --light` でも画像の書き出しに成功する
+- 2 量子ビット回路では、明確な `bloch currently supports only 1-qubit circuits` メッセージで失敗する
+- 未解決の角度変数では、明確な数値解決エラーで失敗する
+- `--png` と `--gif` を同時に指定すると失敗する
 
-- [ ] **Step 3: Add a GIF assertion helper**
+- [ ] **手順 3: GIF 検証ヘルパーを追加する**
 
-Extend `features/step_definitions/cli_steps.rb` with a step like:
+`features/step_definitions/cli_steps.rb` を拡張し、次のようなステップを追加する。
 
 ```ruby
 Then('{string} は GIF 画像である') do |path|
@@ -54,24 +54,24 @@ Then('{string} は GIF 画像である') do |path|
 end
 ```
 
-Keep it parallel to the existing PNG assertions.
+既存の PNG 検証と並ぶ形にする。
 
-- [ ] **Step 4: Run focused cucumber and confirm failure**
+- [ ] **手順 4: 絞り込んだ cucumber を実行し、失敗を確認する**
 
-Run: `BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber features/qni_bloch.feature features/qni_cli.feature`
+実行するコマンド: `BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber features/qni_bloch.feature features/qni_cli.feature`
 
-Expected: FAIL because the `qni bloch` command and GIF support do not exist yet.
+期待結果: `qni bloch` コマンドと GIF 対応がまだ存在しないため失敗する。
 
-### Task 2: Add the CLI surface for `qni bloch`
+### タスク 2: `qni bloch` の CLI 外部仕様を追加する
 
-**Files:**
-- Modify: `lib/qni/cli.rb`
-- Create: `lib/qni/cli/bloch_command.rb`
-- Create: `lib/qni/cli/bloch_help.rb`
+**対象ファイル:**
+- 変更: `lib/qni/cli.rb`
+- 作成: `lib/qni/cli/bloch_command.rb`
+- 作成: `lib/qni/cli/bloch_help.rb`
 
-- [ ] **Step 1: Add the Thor entrypoint**
+- [ ] **手順 1: Thor のエントリーポイントを追加する**
 
-In `lib/qni/cli.rb`, add:
+`lib/qni/cli.rb` に次を追加する。
 
 ```ruby
 desc 'bloch', 'Render the current 1-qubit state on the Bloch sphere'
@@ -86,50 +86,50 @@ def bloch
 end
 ```
 
-- [ ] **Step 2: Add shared help text**
+- [ ] **手順 2: 共通ヘルプ文を追加する**
 
-Create `lib/qni/cli/bloch_help.rb` mirroring `export_help.rb` / `state_help.rb`, with:
-- usage
-- overview
-- options
-- examples for both PNG and GIF
+`export_help.rb` / `state_help.rb` と同じ方針で `lib/qni/cli/bloch_help.rb` を作成し、次を含める。
+- 使用方法
+- 概要
+- オプション
+- PNG と GIF の例
 
-- [ ] **Step 3: Add option validation**
+- [ ] **手順 3: オプション検証を追加する**
 
-Create `lib/qni/cli/bloch_command.rb` with validation rules:
-- exactly one of `--png` / `--gif`
-- `--output` is required
-- at most one of `--dark` / `--light`
+`lib/qni/cli/bloch_command.rb` を作成し、次の検証ルールを実装する。
+- `--png` / `--gif` はどちらか一方だけを指定する
+- `--output` は必須
+- `--dark` / `--light` は同時に指定できない
 
-Raise `Thor::Error` messages that match the feature text exactly.
+機能仕様の文面と完全に一致する `Thor::Error` メッセージを発生させる。
 
-- [ ] **Step 4: Return a clear placeholder failure for unimplemented rendering**
+- [ ] **手順 4: 未実装の描画処理には明確な一時エラーを返す**
 
-For now, make `BlochCommand#execute` fail with a temporary message like:
+この時点では、`BlochCommand#execute` が次のような一時メッセージで失敗するようにする。
 
 ```ruby
 raise Thor::Error, 'bloch rendering is not implemented yet'
 ```
 
-This keeps the CLI shape stable while the next tasks fill in the renderer.
+これにより、次のタスクでレンダラーを埋めるまで CLI の形を安定させる。
 
-- [ ] **Step 5: Run focused cucumber again**
+- [ ] **手順 5: 絞り込んだ cucumber を再実行する**
 
-Run: `BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber features/qni_bloch.feature features/qni_cli.feature`
+実行するコマンド: `BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber features/qni_bloch.feature features/qni_cli.feature`
 
-Expected: help scenarios pass; rendering scenarios still fail on the placeholder.
+期待結果: ヘルプのシナリオは成功し、描画のシナリオは一時エラーでまだ失敗する。
 
-### Task 3: Add Ruby-side Bloch sampling for 1-qubit circuits
+### タスク 3: Ruby 側に 1 量子ビット回路の Bloch サンプリングを追加する
 
-**Files:**
-- Create: `lib/qni/bloch_sampler.rb`
-- Modify: `lib/qni/simulator.rb`
-- Modify: `lib/qni/state_vector.rb`
-- Test: `test/qni/bloch_sampler_test.rb`
+**対象ファイル:**
+- 作成: `lib/qni/bloch_sampler.rb`
+- 変更: `lib/qni/simulator.rb`
+- 変更: `lib/qni/state_vector.rb`
+- テスト: `test/qni/bloch_sampler_test.rb`
 
-- [ ] **Step 1: Add a failing unit test for static sampling**
+- [ ] **手順 1: 静的サンプリングの失敗する単体テストを追加する**
 
-Create `test/qni/bloch_sampler_test.rb` with tests such as:
+`test/qni/bloch_sampler_test.rb` を作成し、次のようなテストを追加する。
 
 ```ruby
 def test_zero_state_maps_to_positive_z
@@ -139,7 +139,7 @@ def test_zero_state_maps_to_positive_z
 end
 ```
 
-and:
+および次のようなテストを追加する。
 
 ```ruby
 def test_h_gate_ends_at_positive_x
@@ -148,13 +148,13 @@ def test_h_gate_ends_at_positive_x
 end
 ```
 
-- [ ] **Step 2: Add a failing unit test for rotation interpolation**
+- [ ] **手順 2: 回転の補間に対する失敗する単体テストを追加する**
 
-Add a test that `Ry(theta)` or `Ry(pi/2)` produces more than two frames and that the final vector matches the expected endpoint.
+`Ry(theta)` または `Ry(pi/2)` が 2 フレームより多く生成し、最後のベクトルが期待される終点と一致することを確認するテストを追加する。
 
-- [ ] **Step 3: Expose the state data needed for Bloch coordinates**
+- [ ] **手順 3: Bloch 座標に必要な状態データを公開する**
 
-Choose the smallest change that keeps `StateVector` encapsulated. Prefer adding a focused helper like:
+`StateVector` のカプセル化を保てる最小の変更を選ぶ。生の振幅を広く公開するより、次のような限定的なヘルパーを追加することを優先する。
 
 ```ruby
 def bloch_coordinates
@@ -166,38 +166,36 @@ def bloch_coordinates
 end
 ```
 
-instead of exposing raw amplitudes broadly.
+- [ ] **手順 4: `Qni::BlochSampler` を実装する**
 
-- [ ] **Step 4: Implement `Qni::BlochSampler`**
+`BlochSampler` は次を行う。
+- 1 量子ビット以外の回路を拒否する
+- 開始時点の数値 `StateVector` を構築する
+- 初期状態をサンプリングする
+- 各ステップの結果をサンプリングする
+- 角度付きゲート `P`, `Rx`, `Ry`, `Rz` では、ゲート角度を 12 などの小さな固定数へ分割して中間状態を追加する
 
-`BlochSampler` should:
-- reject non-1-qubit circuits
-- build the starting numeric `StateVector`
-- sample the initial state
-- sample each step result
-- for angled gates `P`, `Rx`, `Ry`, `Rz`, add intermediate states by subdividing the gate angle into a small fixed number of samples, such as 12
+最初の版は単純に保つ。
+- 固定ゲートはステップ境界のフレームだけを生成する
+- 1 量子ビット回路だけに対応する
+- `Simulator` と同じ数値角度解決ルールを使う
 
-Keep the first version simple:
-- fixed gates only contribute step-boundary frames
-- one-qubit circuits only
-- use the same numeric angle resolution rules as `Simulator`
+- [ ] **手順 5: 単体テストを実行し、成功させる**
 
-- [ ] **Step 5: Run the unit test and make it pass**
+実行するコマンド: `BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec ruby -Itest test/qni/bloch_sampler_test.rb`
 
-Run: `BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec ruby -Itest test/qni/bloch_sampler_test.rb`
+期待結果: 成功する。
 
-Expected: PASS
+### タスク 4: Python レンダラーと依存関係の準備を追加する
 
-### Task 4: Add the Python renderer and dependency setup
+**対象ファイル:**
+- 作成: `libexec/qni_bloch_render.py`
+- 変更: `scripts/setup_symbolic_python.sh`
+- テスト: `test/qni/bloch_sampler_test.rb`
 
-**Files:**
-- Create: `libexec/qni_bloch_render.py`
-- Modify: `scripts/setup_symbolic_python.sh`
-- Test: `test/qni/bloch_sampler_test.rb`
+- [ ] **手順 1: Python 環境の準備処理を拡張する**
 
-- [ ] **Step 1: Extend the Python environment bootstrap**
-
-Modify `scripts/setup_symbolic_python.sh` so the venv ensures:
+`scripts/setup_symbolic_python.sh` を変更し、venv で次が確実に用意されるようにする。
 
 ```text
 sympy==1.14.0
@@ -205,112 +203,112 @@ matplotlib==<pinned version>
 pillow==<pinned version>
 ```
 
-Keep the script idempotent, just like today.
+既存と同じく、スクリプトは何度実行しても同じ結果になるように保つ。
 
-- [ ] **Step 2: Add a small renderer contract test on the Ruby side**
+- [ ] **手順 2: Ruby 側に小さなレンダラー契約テストを追加する**
 
-Extend `test/qni/bloch_sampler_test.rb` or add a new test file that verifies the JSON payload shape sent to Python, for example:
+`test/qni/bloch_sampler_test.rb` を拡張するか新しいテストファイルを追加し、Python へ送る JSON ペイロードの形を検証する。例:
 
 ```ruby
 assert_equal 'png', payload.fetch('format')
 assert_equal [0.0, 0.0, 1.0], payload.fetch('frames').first.fetch('vector')
 ```
 
-This keeps the Ruby/Python boundary explicit.
+これにより Ruby/Python 境界を明確にする。
 
-- [ ] **Step 3: Implement `libexec/qni_bloch_render.py`**
+- [ ] **手順 3: `libexec/qni_bloch_render.py` を実装する**
 
-The script should:
-- read a JSON payload from stdin
-- render a Bloch sphere with `matplotlib`
-- write either PNG or GIF to the requested output path
-- use transparent background
-- theme labels/axes based on `dark` vs `light`
+このスクリプトは次を行う。
+- stdin から JSON ペイロードを読む
+- `matplotlib` で Bloch 球を描画する
+- 指定された出力先へ PNG または GIF を書き出す
+- 背景を透明にする
+- `dark` と `light` に応じてラベルと軸の色を変える
 
-For GIF:
-- reuse the provided frame list
-- animate the state vector and optional trail
-- save with Pillow-based animation support
+GIF では次を行う。
+- 渡されたフレーム一覧を再利用する
+- 状態ベクトルと必要に応じて軌跡をアニメーションにする
+- Pillow ベースのアニメーション対応を使って保存する
 
-- [ ] **Step 4: Verify Python syntax**
+- [ ] **手順 4: Python 構文を検証する**
 
-Run: `python3 -m py_compile libexec/qni_bloch_render.py`
+実行するコマンド: `python3 -m py_compile libexec/qni_bloch_render.py`
 
-Expected: exit 0
+期待結果: 終了コード 0。
 
-### Task 5: Wire the command to the renderer
+### タスク 5: コマンドをレンダラーへつなぐ
 
-**Files:**
-- Modify: `lib/qni/cli/bloch_command.rb`
-- Create: `lib/qni/bloch_renderer.rb`
-- Modify: `lib/qni/cli.rb`
+**対象ファイル:**
+- 変更: `lib/qni/cli/bloch_command.rb`
+- 作成: `lib/qni/bloch_renderer.rb`
+- 変更: `lib/qni/cli.rb`
 
-- [ ] **Step 1: Add a dedicated Ruby renderer wrapper**
+- [ ] **手順 1: 専用の Ruby レンダラーラッパーを追加する**
 
-Create `lib/qni/bloch_renderer.rb` responsible only for:
-- choosing the Python executable from `.python-symbolic`
-- serializing the payload
-- calling `libexec/qni_bloch_render.py`
-- surfacing stdout/stderr failures as Ruby errors
+`lib/qni/bloch_renderer.rb` を作成し、次だけを担当させる。
+- `.python-symbolic` から Python 実行ファイルを選ぶ
+- ペイロードを直列化する
+- `libexec/qni_bloch_render.py` を呼び出す
+- stdout/stderr の失敗を Ruby エラーとして表面化する
 
-- [ ] **Step 2: Finish `BlochCommand#execute`**
+- [ ] **手順 2: `BlochCommand#execute` を完成させる**
 
-Replace the placeholder with real behavior:
-- load `circuit.json`
-- build frames through `Qni::BlochSampler`
-- pass theme / format / output path into `Qni::BlochRenderer`
+一時実装を実際の動作に置き換える。
+- `circuit.json` を読み込む
+- `Qni::BlochSampler` でフレームを構築する
+- テーマ、形式、出力先のパスを `Qni::BlochRenderer` へ渡す
 
-- [ ] **Step 3: Ensure unresolved variables fail clearly**
+- [ ] **手順 3: 未解決の変数が明確に失敗することを保証する**
 
-If numeric resolution fails, surface the same underlying angle-resolution error rather than inventing a second wording. Keep the feature text aligned to the existing error if practical.
+数値解決が失敗した場合は、別の文言を作るのではなく、元の角度解決エラーをそのまま表面化する。実用上問題がなければ、機能仕様の文面を既存エラーに合わせる。
 
-- [ ] **Step 4: Re-run focused cucumber**
+- [ ] **手順 4: 絞り込んだ cucumber を再実行する**
 
-Run: `bash scripts/setup_symbolic_python.sh`
+実行するコマンド: `bash scripts/setup_symbolic_python.sh`
 
-Then run: `BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber features/qni_bloch.feature features/qni_cli.feature`
+次に実行するコマンド: `BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber features/qni_bloch.feature features/qni_cli.feature`
 
-Expected: PASS
+期待結果: 成功する。
 
-### Task 6: Tighten image assertions and regression coverage
+### タスク 6: 画像検証と回帰テストを強化する
 
-**Files:**
-- Modify: `features/qni_bloch.feature`
-- Modify: `features/step_definitions/cli_steps.rb`
-- Modify: touched files only if cleanup is needed
+**対象ファイル:**
+- 変更: `features/qni_bloch.feature`
+- 変更: `features/step_definitions/cli_steps.rb`
+- 変更: 必要な整理がある場合は、触ったファイルのみ
 
-- [ ] **Step 1: Add at least one stronger PNG assertion**
+- [ ] **手順 1: PNG 検証を少なくとも 1 つ強化する**
 
-Add one more acceptance check beyond file existence, such as:
-- PNG size is `512x512`
-- GIF file differs from a PNG file for the same circuit
+ファイル存在以外に、次のような受け入れ確認を 1 つ追加する。
+- PNG サイズが `512x512` である
+- 同じ回路から作った GIF ファイルが PNG ファイルと異なる
 
-Reuse `identify`-based assertions where possible.
+可能な場合は `identify` ベースの検証を再利用する。
 
-- [ ] **Step 2: Add at least one stronger GIF assertion**
+- [ ] **手順 2: GIF 検証を少なくとも 1 つ強化する**
 
-Add a small helper that checks multi-frame GIFs with ImageMagick, for example:
+ImageMagick で複数フレーム GIF を確認する小さなヘルパーを追加する。例:
 
 ```ruby
 output, status = Open3.capture2('identify', '-format', '%n', actual_path)
 ```
 
-and assert the frame count is greater than 1 for a rotation GIF.
+そして回転 GIF のフレーム数が 1 より大きいことを検証する。
 
-- [ ] **Step 3: Re-run the focused feature set**
+- [ ] **手順 3: 絞り込んだ機能仕様群を再実行する**
 
-Run: `BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber features/qni_bloch.feature`
+実行するコマンド: `BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber features/qni_bloch.feature`
 
-Expected: PASS
+期待結果: 成功する。
 
-### Task 7: Run the full affected verification set
+### タスク 7: 影響範囲全体を検証する
 
-**Files:**
-- Modify: touched files only if cleanup is needed
+**対象ファイル:**
+- 変更: 必要な整理がある場合は、触ったファイルのみ
 
-- [ ] **Step 1: Run focused Ruby lint**
+- [ ] **手順 1: Ruby の絞り込んだ lint を実行する**
 
-Run:
+実行するコマンド:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec rubocop \
@@ -325,11 +323,11 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec rubocop \
   test/qni/bloch_sampler_test.rb
 ```
 
-Expected: no offenses
+期待結果: 違反なし。
 
-- [ ] **Step 2: Run focused tests**
+- [ ] **手順 2: 絞り込んだテストを実行する**
 
-Run:
+実行するコマンド:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec ruby -Itest test/qni/bloch_sampler_test.rb
@@ -341,20 +339,20 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber \
   features/katas/basic_gates/amplitude_change.feature
 ```
 
-Expected: PASS
+期待結果: 成功する。
 
-- [ ] **Step 3: Run the full project check**
+- [ ] **手順 3: プロジェクト全体のチェックを実行する**
 
-Run:
+実行するコマンド:
 
 ```bash
 bash scripts/setup_symbolic_python.sh
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec rake check
 ```
 
-Expected: PASS
+期待結果: 成功する。
 
-- [ ] **Step 4: Commit**
+- [ ] **手順 4: コミットする**
 
 ```bash
 git add features/qni_bloch.feature features/qni_cli.feature features/step_definitions/cli_steps.rb \
