@@ -1,43 +1,43 @@
-# Global Phase Change High-Level DSL Implementation Plan
+# グローバル位相変化を高レベル DSL にする実装計画
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **エージェント作業者向け:** 必須: サブエージェントが利用可能なら superpowers:subagent-driven-development、利用できない場合は superpowers:executing-plans を使ってこの計画を実装する。手順は進捗管理用にチェックボックス (`- [ ]`) 形式で書いている。
 
-**Goal:** `global_phase_change.feature` を Task 1.1〜1.6 と同じ高レベル DSL に書き換え、Task 1.7 の本質である「状態全体に -1 を掛ける」を scenario からそのまま読めるようにする。
+**目的:** `global_phase_change.feature` をタスク 1.1〜1.6 と同じ高レベル DSL に書き換え、タスク 1.7 の本質である「状態全体に -1 を掛ける」をシナリオからそのまま読めるようにする。
 
-**Architecture:** 先に [global_phase_change.feature](/home/yasuhito/Work/qni-cli/.worktrees/codex-global-phase-rewrite/features/katas/basic_gates/global_phase_change.feature) を high-level scenario へ赤く書き換え、controlled 検証を削る。次に既存の `Given 初期状態ベクトルは:`、`When 次の回路を適用:`、`Then 状態ベクトルは:` だけで green にできるかを確認し、追加実装が本当に不要かを focused cucumber で証明する。
+**構成方針:** 先に [global_phase_change.feature](/home/yasuhito/Work/qni-cli/.worktrees/codex-global-phase-rewrite/features/katas/basic_gates/global_phase_change.feature) を高レベルのシナリオへ失敗する形で書き換え、制御付き検証を削る。次に既存の `Given 初期状態ベクトルは:`、`When 次の回路を適用:`、`Then 状態ベクトルは:` だけで成功させられるかを確認し、追加実装が本当に不要かを対象を絞った Cucumber で証明する。
 
-**Tech Stack:** Ruby, Cucumber, Bundler, existing high-level kata DSL, `qni run --symbolic`, `Rz(2π)`
+**技術構成:** Ruby, Cucumber, Bundler, 既存の高レベル kata DSL, `qni run --symbolic`, `Rz(2π)`
 
 ---
 
-## File Structure
+## ファイル構成
 
-- Modify: `features/katas/basic_gates/global_phase_change.feature`
-  - low-level な controlled 検証回路と `qni expect ZI` を、高レベル DSL の 1-qubit scenario へ置き換える。
-- Verify: `features/step_definitions/cli_steps.rb`
-  - 既存の `Then 状態ベクトルは:` 比較 helper だけで `-|0>`, `-α|0> - β|1>` が通ることを確認する。
-- Verify: `features/katas/basic_gates/phase_change.feature`
-  - Task 1.6 の一般位相回転と Task 1.7 のグローバル位相変化が連続した教材として読めることを確認する。
-- Verify: `features/katas/basic_gates/phase_flip.feature`
-  - Task 1.5 の固定角位相変化が回帰していないことを確認する。
+- 変更: `features/katas/basic_gates/global_phase_change.feature`
+  - 低レベルな制御付き検証回路と `qni expect ZI` を、高レベル DSL の 1 量子ビットのシナリオへ置き換える。
+- 確認: `features/step_definitions/cli_steps.rb`
+  - 既存の `Then 状態ベクトルは:` 比較ヘルパーだけで `-|0>`, `-α|0> - β|1>` が通ることを確認する。
+- 確認: `features/katas/basic_gates/phase_change.feature`
+  - タスク 1.6 の一般位相回転とタスク 1.7 のグローバル位相変化が連続した教材として読めることを確認する。
+- 確認: `features/katas/basic_gates/phase_flip.feature`
+  - タスク 1.5 の固定角位相変化が回帰していないことを確認する。
 
-## Task 1: `global_phase_change.feature` を高レベル DSL に先に書き換えて赤くする
+## タスク 1: `global_phase_change.feature` を高レベル DSL に先に書き換えて失敗する状態にする
 
-**Files:**
-- Modify: `features/katas/basic_gates/global_phase_change.feature`
-- Test: `features/katas/basic_gates/global_phase_change.feature`
+**ファイル:**
+- 変更: `features/katas/basic_gates/global_phase_change.feature`
+- テスト: `features/katas/basic_gates/global_phase_change.feature`
 
-- [ ] **Step 1: feature header を Task 1.7 の数学に合わせて整理する**
+- [ ] **手順 1: 機能ファイルの導入文をタスク 1.7 の数学に合わせて整理する**
 
 `features/katas/basic_gates/global_phase_change.feature` の導入文を、少なくとも次の内容へ寄せる。
 
 - 入力状態は `|ψ⟩ = α|0⟩ + β|1⟩`
 - 目標は `-α|0⟩ - β|1⟩`
-- 単独 qubit では観測できないが、`qni` の symbolic 表示では読める
+- 単独量子ビットでは観測できないが、`qni` の記号式表示では読める
 
-- [ ] **Step 2: low-level scenario を high-level scenario に置き換える**
+- [ ] **手順 2: 低レベルのシナリオを高レベルのシナリオに置き換える**
 
-feature を次の方向へ更新する。
+機能ファイルを次の方向へ更新する。
 
 ```gherkin
 Scenario: グローバル位相変化は |0> を -|0> に変える
@@ -92,71 +92,71 @@ Scenario: グローバル位相変化は α|0> + β|1> を -α|0> - β|1> に変
     """
 ```
 
-この task で controlled 検証 scenario は削除する。
+このタスクで制御付き検証シナリオは削除する。
 
-- [ ] **Step 3: focused cucumber で red を確認する**
+- [ ] **手順 3: 対象を絞った Cucumber で失敗を確認する**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber \
   features/katas/basic_gates/global_phase_change.feature
 ```
 
-Expected:
+期待結果:
 
-- もし既存 helper だけで通るなら、その場で green でもよい
-- fail する場合は `-|0>` や `-α|0> - β|1>` の比較差だけに理由が絞れている
+- もし既存ヘルパーだけで通るなら、その場で成功でもよい
+- 失敗する場合は `-|0>` や `-α|0> - β|1>` の比較差だけに理由が絞れている
 
-- [ ] **Step 4: failing feature をコミットする**
+- [ ] **手順 4: 失敗する機能ファイルをコミットする**
 
 ```bash
 git add features/katas/basic_gates/global_phase_change.feature
 git commit -m "test: rewrite global phase change scenarios"
 ```
 
-## Task 2: 追加実装が必要かを見極めて最小で green にする
+## タスク 2: 追加実装が必要かを見極めて最小で成功させる
 
-**Files:**
-- Modify only if needed: `features/step_definitions/cli_steps.rb`
-- Test: `features/katas/basic_gates/global_phase_change.feature`
+**ファイル:**
+- 必要な場合のみ変更: `features/step_definitions/cli_steps.rb`
+- テスト: `features/katas/basic_gates/global_phase_change.feature`
 
-- [ ] **Step 1: focused feature の失敗理由を確認する**
+- [ ] **手順 1: 対象を絞った機能ファイルの失敗理由を確認する**
 
-Task 1 の結果を見て、次のどちらかに分岐する。
+タスク 1 の結果を見て、次のどちらかに分岐する。
 
-- green の場合:
-  既存 DSL と比較 helper がそのまま Task 1.7 を支えられているので、この task は「追加実装不要」を確認するだけでよい。
-- red の場合:
+- 成功した場合:
+  既存 DSL と比較ヘルパーがそのままタスク 1.7 を支えられているので、このタスクは「追加実装不要」を確認するだけでよい。
+- 失敗した場合:
   失敗理由を 1 つの比較差へ絞る。
 
-- [ ] **Step 2: 必要なら比較 helper を最小修正する**
+- [ ] **手順 2: 必要なら比較ヘルパーを最小修正する**
 
-もし fail するなら、`features/step_definitions/cli_steps.rb` に最小限の canonicalization を追加して、
+もし失敗するなら、`features/step_definitions/cli_steps.rb` に最小限の正規化を追加して、
 
 - `-|0>`
 - `-0.6|0> - 0.8|1>`
 - `-α|0> - β|1>`
 
-を既存の symbolic 出力と同値に扱えるようにする。
+を既存の記号式出力と同値に扱えるようにする。
 
-この task では YAGNI でよい。Task 1.7 で使う形だけを通せれば十分。
+このタスクでは YAGNI でよい。タスク 1.7 で使う形だけを通せれば十分。
 
-- [ ] **Step 3: focused feature を green にする**
+- [ ] **手順 3: 対象を絞った機能ファイルを成功させる**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber \
   features/katas/basic_gates/global_phase_change.feature
 ```
 
-Expected:
+期待結果:
 
-- 3 scenario が PASS
+- 3 シナリオが成功する
 - `Rz(2π)` による全体 `-1` が高レベル DSL で読める
 
-- [ ] **Step 4: 実装結果をコミットする**
+- [ ] **手順 4: 実装結果をコミットする**
 
 追加実装があった場合:
 
@@ -172,16 +172,16 @@ git add features/katas/basic_gates/global_phase_change.feature
 git commit -m "test: support high-level global phase change DSL"
 ```
 
-## Task 3: 近接 kata の読み口と回帰を確認する
+## タスク 3: 近接 kata の読み口と回帰を確認する
 
-**Files:**
-- Verify: `features/katas/basic_gates/phase_flip.feature`
-- Verify: `features/katas/basic_gates/phase_change.feature`
-- Verify: `features/katas/basic_gates/global_phase_change.feature`
+**ファイル:**
+- 確認: `features/katas/basic_gates/phase_flip.feature`
+- 確認: `features/katas/basic_gates/phase_change.feature`
+- 確認: `features/katas/basic_gates/global_phase_change.feature`
 
-- [ ] **Step 1: phase 系 kata をまとめて実行する**
+- [ ] **手順 1: 位相系 kata をまとめて実行する**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber \
@@ -190,77 +190,77 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber \
   features/katas/basic_gates/global_phase_change.feature
 ```
 
-Expected:
+期待結果:
 
-- PASS
-- Task 1.5 の固定角位相
-- Task 1.6 の一般角位相
-- Task 1.7 のグローバル位相
+- 成功する
+- タスク 1.5 の固定角位相
+- タスク 1.6 の一般角位相
+- タスク 1.7 のグローバル位相
 
 が連続した教材として読める
 
-- [ ] **Step 2: scenario 名と step の視点が揃っていることを目視確認する**
+- [ ] **手順 2: シナリオ名とステップの視点が揃っていることを目視確認する**
 
-Check:
+確認:
 
-- `phase_flip.feature` は `S`
+- `phase_flip.feature` は `S` ゲートの固定角位相変化を確認する
 - `phase_change.feature` は「位相回転」
 - `global_phase_change.feature` は「グローバル位相変化」
 - どれも `When 次の回路を適用:` を使っている
 
-- [ ] **Step 3: 回帰確認をコミットする**
+- [ ] **手順 3: 回帰確認をコミットする**
 
 ```bash
 git add features/katas/basic_gates/global_phase_change.feature
 git commit -m "test: verify global phase kata progression"
 ```
 
-## Task 4: full check を fresh に通す
+## タスク 4: 全体チェックを最新状態で通す
 
-**Files:**
-- Verify: repo-wide checks
+**ファイル:**
+- 確認: リポジトリ全体のチェック
 
-- [ ] **Step 1: symbolic runtime を先に整える**
+- [ ] **手順 1: 記号式実行環境を先に整える**
 
-Run:
+実行:
 
 ```bash
 bash scripts/setup_symbolic_python.sh
 ```
 
-Expected:
+期待結果:
 
-- SymPy version が表示される
+- SymPy のバージョンが表示される
 
-- [ ] **Step 2: repo 全体の品質チェックを実行する**
+- [ ] **手順 2: リポジトリ全体の品質チェックを実行する**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec rake check
 ```
 
-Expected:
+期待結果:
 
-- cucumber PASS
-- RuboCop PASS
-- reek PASS
-- flog / flay PASS
+- cucumber が成功する
+- RuboCop が成功する
+- reek が成功する
+- flog / flay が成功する
 
-- [ ] **Step 3: 最終差分を確認する**
+- [ ] **手順 3: 最終差分を確認する**
 
-Check:
+確認:
 
 - 変更が `global_phase_change.feature` 中心に収まっている
-- helper を触った場合も、その変更が Task 1.7 に必要な最小範囲に収まっている
+- ヘルパーを触った場合も、その変更がタスク 1.7 に必要な最小範囲に収まっている
 
-- [ ] **Step 4: 最終 commit を追加する**
+- [ ] **手順 4: 最終コミットを追加する**
 
 ```bash
 git add features/katas/basic_gates/global_phase_change.feature features/step_definitions/cli_steps.rb
 git commit -m "test: complete global phase change high-level DSL"
 ```
 
-- [ ] **Step 5: integration handoff**
+- [ ] **手順 5: 統合へ引き渡す**
 
-If the branch is clean and `rake check` passed, merge or prepare PR using the repo’s usual completion flow.
+ブランチに未コミットの変更がなく `rake check` が成功している場合は、リポジトリの通常の完了手順に従ってマージまたは PR 準備を行う。
