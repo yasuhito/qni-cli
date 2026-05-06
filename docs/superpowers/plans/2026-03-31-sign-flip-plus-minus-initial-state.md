@@ -262,7 +262,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber \
 
 期待結果: PASS
 
-- [ ] **ステップ 4: 互換性を局所確認する**
+- [ ] **ステップ 4: 互換性を抜き取りで確認する**
 
 `|+>, |->` 省略記法が既存の機能仕様を壊していないことを確認するため、次も流す。
 
@@ -316,7 +316,7 @@ git status --short
 - 機能仕様先行の赤いコミット
 - 省略記法の実装コミット
 - 高レベル SignFlip コミット
-- 作業木は clean
+- 作業ツリーはクリーン
 
 - [ ] **ステップ 3: 完了報告**
 
