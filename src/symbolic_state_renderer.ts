@@ -25,10 +25,7 @@ interface ResolvedSymbolicStateRenderOptions extends SymbolicStateRenderOptions 
   readonly format: SymbolicOutputFormat;
 }
 
-type SpawnSync = typeof childProcess.spawnSync;
-
 const SETUP_MESSAGE = 'symbolic run requires SymPy runtime; run scripts/setup_symbolic_python.sh';
-let rendererSpawnSync: SpawnSync = childProcess.spawnSync;
 
 export function renderSymbolicStateVector(options: SymbolicStateRenderOptions): string {
   validateSymbolicBasis({ basis: options.basis, qubits: options.circuit.qubits });
@@ -37,15 +34,6 @@ export function renderSymbolicStateVector(options: SymbolicStateRenderOptions): 
     ...options,
     format: options.format ?? 'text'
   });
-}
-
-export function setSymbolicStateRendererSpawnSyncForTest(spawnSync: SpawnSync): () => void {
-  const originalSpawnSync = rendererSpawnSync;
-  rendererSpawnSync = spawnSync;
-
-  return () => {
-    rendererSpawnSync = originalSpawnSync;
-  };
 }
 
 function validateSymbolicBasis(options: { basis?: string; qubits: number }): void {
@@ -97,7 +85,7 @@ function helperCommands(options: ResolvedSymbolicStateRenderOptions): HelperComm
 }
 
 function renderWithHelper(command: HelperCommand, options: ResolvedSymbolicStateRenderOptions): string | undefined {
-  const result = rendererSpawnSync(command.command, [...command.args], {
+  const result = childProcess.spawnSync(command.command, [...command.args], {
     encoding: 'utf8',
     env: {
       ...process.env,

@@ -1,14 +1,14 @@
 import assert from 'node:assert/strict';
 import * as childProcess from 'node:child_process';
 import { chmod, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { describe, it } from 'node:test';
+import { describe, it, mock } from 'node:test';
 
 import { createDispatcher } from '../../src/dispatcher';
 import {
   renderSymbolicStateVector,
-  setSymbolicStateRendererSpawnSyncForTest,
   SymbolicStateRendererError
 } from '../../src/symbolic_state_renderer';
 
@@ -17,6 +17,8 @@ interface CapturedRun {
   readonly stderr: string;
   readonly stdout: string;
 }
+
+const childProcessForMock = createRequire(__filename)('node:child_process') as typeof childProcess;
 
 function spawnResult(
   overrides: Partial<childProcess.SpawnSyncReturns<string>>
@@ -185,30 +187,34 @@ describe('TypeScript symbolic state renderer boundary', () => {
     missingRuntime.code = 'ENOENT';
     brokenPipe.code = 'EPIPE';
 
-    const restoreSpawnSync = setSymbolicStateRendererSpawnSyncForTest(((command: string) => {
-      calls.push(command);
+    const spawnMock = mock.method(
+      childProcessForMock,
+      'spawnSync',
+      ((command: string) => {
+        calls.push(command);
 
-      if (command.endsWith('/.python-symbolic/bin/python')) {
-        return spawnResult({ error: missingRuntime, status: null });
-      }
+        if (command.endsWith('/.python-symbolic/bin/python')) {
+          return spawnResult({ error: missingRuntime, status: null });
+        }
 
-      if (command === 'python3') {
+        if (command === 'python3') {
+          return spawnResult({
+            error: brokenPipe,
+            status: 1,
+            stderr: "ModuleNotFoundError: No module named 'sympy'\n"
+          });
+        }
+
+        if (command === 'uv') {
+          return spawnResult({ stdout: 'uv-success\n' });
+        }
+
         return spawnResult({
-          error: brokenPipe,
-          status: 1,
-          stderr: "ModuleNotFoundError: No module named 'sympy'\n"
+          status: 127,
+          stderr: `unexpected command: ${command}`
         });
-      }
-
-      if (command === 'uv') {
-        return spawnResult({ stdout: 'uv-success\n' });
-      }
-
-      return spawnResult({
-        status: 127,
-        stderr: `unexpected command: ${command}`
-      });
-    }) as typeof childProcess.spawnSync);
+      }) as unknown as typeof childProcess.spawnSync
+    );
 
     try {
       assert.equal(
@@ -224,7 +230,38 @@ describe('TypeScript symbolic state renderer boundary', () => {
       );
       assert.deepEqual(calls, ['/project/.python-symbolic/bin/python', 'python3', 'uv']);
     } finally {
-      restoreSpawnSync();
+      spawnMock.mock.restore();
+    }
+  });
+
+  it('returns stdout when an EPIPE helper result reports success', () => {
+    const brokenPipe = new Error('write EPIPE') as NodeJS.ErrnoException;
+    brokenPipe.code = 'EPIPE';
+    const spawnMock = mock.method(
+      childProcessForMock,
+      'spawnSync',
+      (() =>
+        spawnResult({
+          error: brokenPipe,
+          status: 0,
+          stdout: 'python-success\n'
+        })) as unknown as typeof childProcess.spawnSync
+    );
+
+    try {
+      assert.equal(
+        renderSymbolicStateVector({
+          circuit: {
+            cols: [[1]],
+            qubits: 1
+          },
+          env: { PATH: '' },
+          projectRoot: '/project'
+        }),
+        'python-success'
+      );
+    } finally {
+      spawnMock.mock.restore();
     }
   });
 
