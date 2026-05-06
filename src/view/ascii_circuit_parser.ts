@@ -180,7 +180,11 @@ class LineSet {
 
   private wireSegmentFor(line: string): string {
     if (!line.startsWith(this.wirePrefix())) {
-      throw new AsciiCircuitParserError('ASCII parser lines must align to whole step cells');
+      throw new AsciiCircuitParserError(
+        `ASCII parser wire label width/padding mismatch: expected prefix ${JSON.stringify(
+          this.wirePrefix()
+        )}, got ${JSON.stringify(line.slice(0, this.wirePrefix().length))}`
+      );
     }
 
     return line.slice(this.wirePrefix().length);
@@ -246,6 +250,7 @@ class WireRow {
 
 class AsciiWireLayout {
   private readonly asciiArt: string;
+  private lineSetCache?: LineSet;
 
   constructor(asciiArt: string) {
     this.asciiArt = asciiArt;
@@ -284,7 +289,9 @@ class AsciiWireLayout {
   }
 
   private lineSet(): LineSet {
-    return new LineSet(this.asciiArt);
+    this.lineSetCache ??= new LineSet(this.asciiArt);
+
+    return this.lineSetCache;
   }
 
   private paddedWireSegment(segment: string | undefined): string {
