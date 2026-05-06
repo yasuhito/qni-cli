@@ -1,39 +1,39 @@
-# State Vector DSL Controlled ASCII Design
+# 状態ベクトル DSL 制御付き ASCII 設計
 
-## Problem
+## 問題
 
-`features/katas/basic_gates/state_flip.feature` の先頭 4 scenario は、`初期状態ベクトルは:` / `次の回路を適用:` / `状態ベクトルは:` の高レベル DSL で読めるようになった。一方、最後の controlled 検証 scenario はまだ `qni add ...` と `qni expect ZI` の列挙に依存していて、feature 全体の読み味がそろっていない。
+`features/katas/basic_gates/state_flip.feature` の先頭 4 つのシナリオは、`初期状態ベクトルは:` / `次の回路を適用:` / `状態ベクトルは:` の高レベル DSL で読めるようになった。一方、最後の制御付き検証シナリオはまだ `qni add ...` と `qni expect ZI` の列挙に依存していて、機能ファイル全体の読み味がそろっていない。
 
-さらに、現在の `AsciiCircuitParser` は 1 qubit の固定ゲート box しか読めない。`state_flip.feature` の controlled scenario を高レベル DSL に寄せるには、少なくとも 2 qubit の fixed gate / control / swap を含む ASCII 回路を読める必要がある。
+さらに、現在の `AsciiCircuitParser` は 1 量子ビットの固定ゲートの箱しか読めない。`state_flip.feature` の制御付きシナリオを高レベル DSL に寄せるには、少なくとも 2 量子ビットの固定ゲート / 制御点 / 交換ゲートを含む ASCII 回路を読める必要がある。
 
 ただし、現在の `qni view` は `Ry` の角度を表示しない。したがって「いまの表示をそのまま逆変換する」だけでは `Ry(1.8545904360032246)` のような回路は復元できない。
 
-## Goal
+## 目標
 
-- `state_flip.feature` の controlled 検証 scenario を、ほかの scenario と同じ state-vector DSL にそろえる。
-- `Given 初期状態ベクトルは:` を 2 qubit の必要状態まで広げる。
-- `When 次の回路を適用:` が 2 qubit の controlled ASCII 回路を読めるようにする。
-- ASCII DSL は `qni view` 互換を基本にしつつ、角度付きゲートだけは parser 拡張表記を許す。
+- `state_flip.feature` の制御付き検証シナリオを、ほかのシナリオと同じ状態ベクトル DSL にそろえる。
+- `Given 初期状態ベクトルは:` を 2 量子ビットの必要状態まで広げる。
+- `When 次の回路を適用:` が 2 量子ビットの制御付き ASCII 回路を読めるようにする。
+- ASCII DSL は `qni view` 互換を基本にしつつ、角度付きゲートだけはパーサー拡張表記を許す。
 
-## Non-Goals
+## 非目標
 
 - `qni view` の表示仕様を変更して角度を常時表示すること
-- 任意の qubit 数、任意の gate、任意の交差配線を一度に parser 対応すること
-- `state_flip.feature` 以外の kata feature を同時に全面書き換えすること
-- symbolic renderer や simulator 本体の数値計算ロジックを変更すること
+- 任意の量子ビット数、任意のゲート、任意の交差配線を一度にパーサー対応すること
+- `state_flip.feature` 以外の Kata の機能ファイルを同時に全面書き換えすること
+- 記号レンダラーやシミュレーター本体の数値計算ロジックを変更すること
 
-## Decisions
+## 決定事項
 
-- controlled scenario の理想形は、「初期 2 qubit 状態に回路を適用した結果、同じ状態へ戻る」として書く。
-- この scenario では `Ry(1.8545904360032246)` を ASCII に埋め込まない。代わりに、初期状態を `0.6|00> + 0.8|01>` として直接与える。
-- ASCII parser は、`qni view` がそのまま出す固定ゲート・control・swap をまず読めるようにする。
-- 角度付きゲートは round-trip 互換ではなく「DSL 拡張」として `Ry(π/2)` のような表記を追加で受け入れる。
-- `Ry` のように角度が省略された表示は、parser では復元不能なため fixed gate と同列には扱わない。
+- 制御付きシナリオの理想形は、「初期 2 量子ビット状態に回路を適用した結果、同じ状態へ戻る」として書く。
+- このシナリオでは `Ry(1.8545904360032246)` を ASCII に埋め込まない。代わりに、初期状態を `0.6|00> + 0.8|01>` として直接与える。
+- ASCII パーサーは、`qni view` がそのまま出す固定ゲート・制御点・交換ゲートをまず読めるようにする。
+- 角度付きゲートは往復変換互換ではなく「DSL 拡張」として `Ry(π/2)` のような表記を追加で受け入れる。
+- `Ry` のように角度が省略された表示は、パーサーでは復元不能なため固定ゲートと同列には扱わない。
 
-## Ideal Scenario
+## 理想シナリオ
 
 ```gherkin
-Scenario: controlled な X 検証回路は control qubit を |0> に戻す
+Scenario: 制御付き X 検証回路は制御量子ビットを |0> に戻す
   Given 初期状態ベクトルは:
     """
     0.6|00> + 0.8|01>
@@ -52,59 +52,59 @@ Scenario: controlled な X 検証回路は control qubit を |0> に戻す
     """
 ```
 
-この scenario は、元の `qni expect ZI` 検証よりユーザーの意図が直接読める。`control qubit を |0> に戻す` という意味を、最終状態ベクトルが入力状態と一致することで高レベルに表せる。
+このシナリオは、元の `qni expect ZI` 検証よりユーザーの意図が直接読める。`制御量子ビットを |0> に戻す` という意味を、最終状態ベクトルが入力状態と一致することで高レベルに表せる。
 
-## Design
+## 設計
 
-### State Vector DSL
+### 状態ベクトル DSL
 
-- `Given 初期状態ベクトルは:` は 1 qubit に加えて 2 qubit の必要状態を受け付ける。
+- `Given 初期状態ベクトルは:` は 1 量子ビットに加えて 2 量子ビットの必要状態を受け付ける。
 - 最低限サポートする文字列は `|00>`, `|01>`, `|10>`, `|11>`, `0.6|00> + 0.8|01>` とする。
 - 実装は既存の `1 qubit の初期状態が ...` / `2 qubit の初期状態が ...` と同じく、「その状態を準備する列を `circuit.json` へ直接書く」方式を保つ。
 - `Then 状態ベクトルは:` は引き続き `qni run --symbolic` を内部実行して比較する。
 
-### ASCII Parser Scope
+### ASCII パーサーの範囲
 
-- 対応対象は 2 qubit までとする。
+- 対応対象は 2 量子ビットまでとする。
 - 対応する要素は次の 4 つとする。
-  - 空 wire
-  - fixed single-qubit gate box
-  - control + target からなる controlled single-qubit gate
-  - swap
-- fixed gate は `H`, `X`, `Y`, `Z`, `S`, `S†`, `T`, `T†`, `√X` を維持する。
-- 2 qubit 対応では、上下 2 本の wire を step ごとにまとめて読み、1 step ごとの記号配置から `Circuit` へ反映する。
+  - 空の配線
+  - 固定 1 量子ビットゲートの箱
+  - 制御点 + 標的からなる制御付き 1 量子ビットゲート
+  - 交換ゲート
+- 固定ゲートは `H`, `X`, `Y`, `Z`, `S`, `S†`, `T`, `T†`, `√X` を維持する。
+- 2 量子ビット対応では、上下 2 本の配線をステップごとにまとめて読み、1 ステップごとの記号配置から `Circuit` へ反映する。
 
-### Controlled Gate Parsing
+### 制御付きゲートの解析
 
 - `qni view` と同じ見た目を基本入力とする。
-- control は `■`、target は boxed gate、間の縦配線は `│` / `┴` / `┬` の組み合わせとして読む。
-- parser は 1 step の中で「control が 1 個、target が 1 個」の形をまずサポートする。
-- `state_flip.feature` で必要なのは `■` + `X` の CNOT なので、最初の実装は controlled `X` を確実に通すことを優先する。
-- その後の設計余地として、target box 側のラベルを fixed gate 一般へ広げられる構造にする。
+- 制御点は `■`、標的は箱で囲まれたゲート、間の縦配線は `│` / `┴` / `┬` の組み合わせとして読む。
+- パーサーは 1 ステップの中で「制御点が 1 個、標的が 1 個」の形をまずサポートする。
+- `state_flip.feature` で必要なのは `■` + `X` の CNOT なので、最初の実装は制御付き `X` を確実に通すことを優先する。
+- その後の設計余地として、標的の箱側のラベルを固定ゲート一般へ広げられる構造にする。
 
-### Angled Gate Extension
+### 角度付きゲート拡張
 
-- `qni view` 互換入力では `Ry` の角度が失われるため、parser だけの拡張入力として `Ry(π/2)` のような表記を許す。
+- `qni view` 互換入力では `Ry` の角度が失われるため、パーサーだけの拡張入力として `Ry(π/2)` のような表記を許す。
 - 許可する記法は既存の `AngleExpression` が読める範囲に合わせる。
 - 例:
   - `P(π/3)`
   - `Rx(-π/4)`
   - `Ry(theta)`
   - `Rz(2*alpha)`
-- 角度付き gate は「ASCII parser が理解する DSL 拡張」であり、現時点では `qni view` の round-trip 互換ではないことを明記する。
+- 角度付きゲートは「ASCII パーサーが理解する DSL 拡張」であり、現時点では `qni view` の往復変換互換ではないことを明記する。
 
-### Parser Architecture
+### パーサー構成
 
-- 現在の `AsciiCircuitParser` は 1 本の qubit line を固定幅 5 文字セルへ分割している。
-- 2 qubit 対応では、単純に `qubit line を増やす` だけでなく、「同じ step に属する複数 wire のセル集合」をまとめて解釈する必要がある。
+- 現在の `AsciiCircuitParser` は 1 本の量子ビット行を固定幅 5 文字セルへ分割している。
+- 2 量子ビット対応では、単純に「量子ビット行を増やす」だけでなく、「同じステップに属する複数配線のセル集合」をまとめて解釈する必要がある。
 - そのため、内部責務は次のように分ける。
-  - 複数 wire の 3 行セットを step 単位へ分割する責務
-  - 1 step の複数 qubit セルから placement を判定する責務
-  - placement を `Circuit#add_gate`, `#add_controlled_gate`, `#add_swap_gate` へ反映する責務
-- `state_flip.feature` では 5 文字幅の固定 gate と control bridge が中心なので、最初の 2 qubit 対応でも fixed-width 基盤は維持してよい。
-- ただし `Ry(π/2)` などの angled gate 拡張では可変幅 box が必要になるため、`cell width = 5` の前提は「fixed gate path のみ」で閉じるように整理する。
+  - 複数配線の 3 行セットをステップ単位へ分割する責務
+  - 1 ステップの複数量子ビットセルから配置を判定する責務
+  - 配置を `Circuit#add_gate`, `#add_controlled_gate`, `#add_swap_gate` へ反映する責務
+- `state_flip.feature` では 5 文字幅の固定ゲートと制御ブリッジが中心なので、最初の 2 量子ビット対応でも固定幅基盤は維持してよい。
+- ただし `Ry(π/2)` などの角度付きゲート拡張では可変幅の箱が必要になるため、`cell width = 5` の前提は「固定ゲート経路のみ」で閉じるように整理する。
 
-## Impacted Areas
+## 影響範囲
 
 - `features/katas/basic_gates/state_flip.feature`
 - `features/ascii_circuit_parser.feature`
@@ -113,16 +113,16 @@ Scenario: controlled な X 検証回路は control qubit を |0> に戻す
 - `lib/qni/view/ascii_circuit_parser.rb`
 - 必要なら `lib/qni/view/ascii_step_cell.rb`, `lib/qni/view/ascii_step_rows.rb` の責務分割見直し
 
-## Validation
+## 検証
 
-- `state_flip.feature` の controlled scenario が新 DSL で通ること
-- `features/ascii_circuit_parser.feature` に 2 qubit controlled ASCII を読む scenario を追加すること
-- `test/qni/view/ascii_circuit_parser_test.rb` に 2 qubit controlled gate と、将来の angled gate 拡張の最小ケースを追加すること
-- touched files への focused RuboCop / Reek を通すこと
+- `state_flip.feature` の制御付きシナリオが新 DSL で通ること
+- `features/ascii_circuit_parser.feature` に 2 量子ビットの制御付き ASCII を読むシナリオを追加すること
+- `test/qni/view/ascii_circuit_parser_test.rb` に 2 量子ビットの制御付きゲートと、将来の角度付きゲート拡張の最小ケースを追加すること
+- 変更ファイルに対して対象を絞った RuboCop / Reek を通すこと
 - 最後に `bundle exec rake check` を通すこと
 
-## Open Notes
+## 未決メモ
 
-- `state_flip.feature` の controlled scenario を高レベル化する目的では、angled gate parser 拡張は必須ではない。必須なのは 2 qubit initial state と controlled ASCII parsing である。
-- それでも angled gate 拡張の設計を spec に含めるのは、今後 `Ry(π/2)` などを feature へ自然に書けるようにするためである。
-- 実装は、まず controlled scenario を通す最小差分を優先し、その後に angled gate DSL を追加する順序が安全である。
+- `state_flip.feature` の制御付きシナリオを高レベル化する目的では、角度付きゲートのパーサー拡張は必須ではない。必須なのは 2 量子ビット初期状態と制御付き ASCII 解析である。
+- それでも角度付きゲート拡張の設計を仕様に含めるのは、今後 `Ry(π/2)` などを機能ファイルへ自然に書けるようにするためである。
+- 実装は、まず制御付きシナリオを通す最小差分を優先し、その後に角度付きゲート DSL を追加する順序が安全である。
