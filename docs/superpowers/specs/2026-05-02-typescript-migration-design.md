@@ -231,6 +231,59 @@ Move simulation after the circuit model is stable:
 `run --symbolic` should remain Ruby/Python-backed until there is a dedicated
 plan for replacing or retaining `libexec/qni_symbolic_run.py`.
 
+### Symbolic Helper Strategy
+
+Retain `libexec/qni_symbolic_run.py` as the symbolic math owner during the
+TypeScript migration. TypeScript should own command routing, option validation
+parity, `circuit.json` loading, process execution, and error translation for
+`run --symbolic`, but it should invoke the Python/SymPy helper for symbolic
+state construction, simplification, named-basis conversion, and text/LaTeX
+rendering.
+
+The current symbolic behavior covered by features includes:
+
+- computational-basis ket output for 1-, 2-, and 3-qubit circuits;
+- symbolic initial-state coefficients such as `alpha|0> + beta|1>`;
+- exact SymPy simplification for angle expressions such as `Ry(2*alpha)` and
+  concrete pi terms such as `Ry(π/2)`;
+- pure-imaginary coefficient rendering, including the current `1.0i` form for
+  the `Y` gate path;
+- named-basis text output for `--basis x` and `--basis y` on 1-qubit circuits;
+- Bell-basis text output for `--basis bell` on 2-qubit circuits;
+- basis-specific unsupported-qubit error messages.
+
+The TypeScript subprocess boundary should mirror the current Ruby boundary:
+
+- read the normalized circuit object and pass it to the helper as JSON on
+  `stdin`;
+- pass `--format text` or `--format latex`;
+- pass `--basis x`, `--basis y`, or `--basis bell` only when the user supplied a
+  symbolic basis;
+- preserve helper stdout exactly, including trailing newline behavior at the CLI
+  boundary;
+- surface helper stderr as the command error message when the helper exits
+  non-zero;
+- retry only for dependency/bootstrap failures that are equivalent to the
+  current Ruby fallback behavior;
+- keep the same helper discovery order in spirit: repository-local symbolic
+  Python runtime first, then a system/runtime fallback that can provide SymPy.
+
+Replacing the helper with TypeScript should be a separate decision after the
+numeric runtime is stable. A replacement would need a SymPy-equivalent story for
+symbolic matrices, trigonometric simplification, exact square roots, pi parsing,
+complex coefficients, LaTeX output, and deterministic string formatting. The
+named-basis renderers are not just basis labels: `x`, `y`, and `bell` each
+perform exact symbolic basis transforms before formatting. Reimplementing those
+transforms in TypeScript risks subtle output drift, especially term ordering,
+coefficient normalization, Unicode basis labels, and simplification choices such
+as `sqrt(2)/2` vs equivalent algebraic forms.
+
+Therefore existing symbolic features should continue through the retained Python
+helper path while `run` numeric behavior moves to TypeScript. Add a follow-up
+implementation issue for the TypeScript `run --symbolic` subprocess boundary,
+and keep a later optional replacement issue out of scope until packaging and
+symbolic-algebra library constraints are known.
+
 ### Phase 5: Rendering and Export Migration
 
 Move rendering only after core state behavior is TypeScript-backed:
@@ -403,12 +456,15 @@ Create implementation issues in this order:
      samples and cucumber-js features.
    - Estimate: L, milestone: M5, precision: rough.
    - Risk/dependency: state-vector math and complex formatting parity.
-10. Decide symbolic helper strategy
-    - Linear title candidate: symbolic helper の移行または維持方針を決める
-    - Acceptance: `run --symbolic` is either TypeScript-owned with a retained
-      Python helper boundary or replaced by a new TypeScript symbolic plan.
+10. Implement retained symbolic helper boundary for TypeScript `run --symbolic`
+    - Linear title candidate: TypeScript `run --symbolic` から symbolic helper を呼び出す
+    - Acceptance: `run --symbolic`, `--basis x`, `--basis y`, `--basis bell`,
+      symbolic angle simplification, LaTeX state-vector export, and
+      unsupported-basis errors match the Ruby/Python oracle through the
+      TypeScript subprocess path.
     - Estimate: M, milestone: M5, precision: rough.
-    - Risk/dependency: SymPy behavior and named-basis formatting.
+    - Risk/dependency: SymPy runtime discovery, subprocess stderr mapping,
+      named-basis formatting, and exact string compatibility.
 11. Migrate `view`
     - Linear title candidate: `view` を TypeScript に移行する
     - Acceptance: ASCII output, color behavior, and parser-supported scenarios
