@@ -1,36 +1,36 @@
-# BasicGates Task 1.1 Symbolic Scenario Implementation Plan
+# BasicGates Task 1.1 記号表示シナリオ実装計画
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **エージェント作業者向け:** 必須: この計画を実装するときは superpowers:subagent-driven-development (サブエージェントが利用可能な場合) または superpowers:executing-plans を使う。手順は進捗管理のためチェックボックス (`- [ ]`) 記法を使う。
 
-**Goal:** `BasicGates Task 1.1 StateFlip` に `qni run --symbolic` を使った説明用シナリオを 1 本追加し、一般式 `α|0> + β|1> -> α|1> + β|0>` を kata feature 上で直接読めるようにする。
+**目的:** `BasicGates Task 1.1 StateFlip` に `qni run --symbolic` を使った説明用シナリオを 1 本追加し、一般式 `α|0> + β|1> -> α|1> + β|0>` を Kata の機能ファイル上で直接読めるようにする。
 
-**Architecture:** 既存の数値シナリオと controlled 検証シナリオは残し、`features/katas/basic_gates.feature` にだけ symbolic 回帰ケースを追加する。product code はすでに `qni run --symbolic` を持っているため、今回は feature 追加だけで閉じる前提で進め、回帰確認は `qni_run` と kata feature に限定する。
+**構成方針:** 既存の数値シナリオと制御ゲート検証シナリオは残し、`features/katas/basic_gates.feature` にだけ記号表示の回帰ケースを追加する。製品コードはすでに `qni run --symbolic` を持っているため、今回は機能ファイルの追加だけで閉じる前提で進め、回帰確認は `qni_run` と Kata の機能ファイルに限定する。
 
-**Tech Stack:** Ruby, Cucumber, Bundler, `qni-cli`
+**使用技術:** Ruby, Cucumber, Bundler, `qni-cli`
 
 ---
 
-## File Structure
+## ファイル構成
 
-- Modify: `features/katas/basic_gates.feature`
-  - `Task 1.1` の説明用 symbolic シナリオを 1 本追加する。
-- Verify: `features/qni_run.feature`
+- 変更: `features/katas/basic_gates.feature`
+  - `Task 1.1` の説明用記号表示シナリオを 1 本追加する。
+- 検証: `features/qni_run.feature`
   - `qni run --symbolic` の既存振る舞いが回帰していないことを確認する。
-- Verify: `features/katas/basic_gates.feature`
-  - 既存の数値ケース、controlled 検証、追加した symbolic ケースが共存して green であることを確認する。
+- 検証: `features/katas/basic_gates.feature`
+  - 既存の数値ケース、制御ゲート検証、追加した記号表示ケースが共存して成功することを確認する。
 
-## Task 1: Add the failing symbolic kata scenario first
+## タスク 1: 失敗する記号表示 Kata シナリオを先に追加する
 
-**Files:**
-- Modify: `features/katas/basic_gates.feature`
-- Test: `features/katas/basic_gates.feature`
+**対象ファイル:**
+- 変更: `features/katas/basic_gates.feature`
+- テスト: `features/katas/basic_gates.feature`
 
-- [ ] **Step 1: Write the new symbolic scenario**
+- [ ] **手順 1: 新しい記号表示シナリオを書く**
 
 `features/katas/basic_gates.feature` に次のシナリオを追加する。
 
 ```gherkin
-  シナリオ: Task 1.1 は symbolic 表示で一般式の反転を示す
+  シナリオ: Task 1.1 は記号表示で一般式の反転を示す
     前提 "qni add Ry --angle theta --qubit 0 --step 0" を実行
     かつ "qni add X --qubit 0 --step 1" を実行
     もし "qni run --symbolic" を実行
@@ -40,110 +40,110 @@
       """
 ```
 
-- [ ] **Step 2: Run the focused kata feature and verify it fails for the right reason**
+- [ ] **手順 2: 対象の Kata 機能ファイルだけを実行し、正しい理由で失敗することを確認する**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/share/gem/ruby/3.4.0/bin/bundle exec cucumber features/katas/basic_gates.feature
 ```
 
-Expected:
+期待結果:
 
-- 新規 symbolic シナリオだけが失敗する
+- 新規の記号表示シナリオだけが失敗する
 - 失敗理由は期待文字列不一致か、`qni run --symbolic` の実際の出力との差にある
-- 既存の数値シナリオと controlled シナリオは引き続き green
+- 既存の数値シナリオと制御ゲートシナリオは引き続き成功する
 
-- [ ] **Step 3: Commit the failing feature**
+- [ ] **手順 3: 失敗する機能ファイルをコミットする**
 
 ```bash
 git add features/katas/basic_gates.feature
 git commit -m "test: add symbolic Task 1.1 scenario"
 ```
 
-## Task 2: Adjust the kata feature minimally until it matches real symbolic output
+## タスク 2: 実際の記号表示出力に合うまで Kata 機能ファイルを最小限調整する
 
-**Files:**
-- Modify: `features/katas/basic_gates.feature`
-- Test: `features/katas/basic_gates.feature`
+**対象ファイル:**
+- 変更: `features/katas/basic_gates.feature`
+- テスト: `features/katas/basic_gates.feature`
 
-- [ ] **Step 1: Re-run only the failing scenario to inspect the actual output**
+- [ ] **手順 1: 失敗しているシナリオだけを再実行し、実際の出力を確認する**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/share/gem/ruby/3.4.0/bin/bundle exec cucumber features/katas/basic_gates.feature:52
 ```
 
-Expected:
+期待結果:
 
-- actual の symbolic 出力が 1 行で見える
+- 実際の記号表示出力が 1 行で見える
 - 期待値との差分が文字列レベルで確認できる
 
-- [ ] **Step 2: Make the smallest possible correction**
+- [ ] **手順 2: 可能な限り小さい修正を行う**
 
 変更は次のどちらかに限定する。
 
-- helper の既存出力が正しいなら、feature の期待文字列だけを修正する
-- helper の出力が `qni_run.feature` の既存方針と矛盾するなら、この計画を止めて新しい spec / plan に戻る
+- ヘルパーの既存出力が正しいなら、機能ファイルの期待文字列だけを修正する
+- ヘルパーの出力が `qni_run.feature` の既存方針と矛盾するなら、この計画を止めて新しい仕様書 / 計画書に戻る
 
-このタスクでは product code を新たに変更しない。
+このタスクでは製品コードを新たに変更しない。
 
-- [ ] **Step 3: Re-run the kata feature and verify it turns green**
+- [ ] **手順 3: Kata 機能ファイルを再実行し、成功することを確認する**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/share/gem/ruby/3.4.0/bin/bundle exec cucumber features/katas/basic_gates.feature
 ```
 
-Expected:
+期待結果:
 
-- 追加した symbolic シナリオを含めて `features/katas/basic_gates.feature` が green
+- 追加した記号表示シナリオを含めて `features/katas/basic_gates.feature` が成功する
 
-- [ ] **Step 4: Commit the corrected scenario**
+- [ ] **手順 4: 修正したシナリオをコミットする**
 
 ```bash
 git add features/katas/basic_gates.feature
 git commit -m "test: document Task 1.1 with symbolic run"
 ```
 
-## Task 3: Verify nearby regressions
+## タスク 3: 周辺の回帰を検証する
 
-**Files:**
-- Verify: `features/katas/basic_gates.feature`
-- Verify: `features/qni_run.feature`
+**対象ファイル:**
+- 検証: `features/katas/basic_gates.feature`
+- 検証: `features/qni_run.feature`
 
-- [ ] **Step 1: Run the targeted regression set**
+- [ ] **手順 1: 対象を絞った回帰確認を実行する**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/share/gem/ruby/3.4.0/bin/bundle exec cucumber features/qni_run.feature features/katas/basic_gates.feature
 ```
 
-Expected:
+期待結果:
 
-- PASS
-- `qni run --symbolic` の既存 feature が回帰していない
-- `Task 1.1` の数値・controlled・symbolic の 3 系統が共存して green
+- 成功
+- `qni run --symbolic` の既存機能が回帰していない
+- `Task 1.1` の数値・制御ゲート・記号表示の 3 系統が共存して成功する
 
-- [ ] **Step 2: Inspect final diff**
+- [ ] **手順 2: 最終差分を確認する**
 
-Check:
+確認:
 
 - 変更が `features/katas/basic_gates.feature` だけに収まっている
-- product code に変更がない
+- 製品コードに変更がない
 
-- [ ] **Step 3: Commit the verification checkpoint**
+- [ ] **手順 3: 検証の区切りをコミットする**
 
 ```bash
 git add features/katas/basic_gates.feature
 git commit -m "test: verify symbolic Task 1.1 coverage"
 ```
 
-## Notes
+## メモ
 
-- 今回の目的は correctness 強化ではなく、`Task 1.1` の一般式を `qni-cli` だけで読めるようにすること。
-- 数値シナリオと controlled 検証シナリオは削除しない。
-- 実際の symbolic 出力が spec と異なる場合は、まず `qni_run.feature` の既存仕様と整合しているかを確認し、整合しているなら kata feature 側の期待値を合わせる。
+- 今回の目的は正しさの強化ではなく、`Task 1.1` の一般式を `qni-cli` だけで読めるようにすること。
+- 数値シナリオと制御ゲート検証シナリオは削除しない。
+- 実際の記号表示出力が仕様と異なる場合は、まず `qni_run.feature` の既存仕様と整合しているかを確認し、整合しているなら Kata の機能ファイル側の期待値を合わせる。
