@@ -1,5 +1,12 @@
 # AGENTS.md
 
+## ドキュメント言語
+
+- superpowers の仕様書は日本語で書く。
+- superpowers の計画書は日本語で書く。
+- 仕様書、計画書、Linear/GitHub への書き込みでは、不自然な英日混在の「ルー語」を避ける。英語の普通名詞に自然な日本語訳がある場合は日本語で書く（例: `step definition の意図` ではなく `ステップ定義の意図`、`env setup` ではなく `環境変数の準備`、`command 実行` ではなく `コマンド実行`）。ただし、ツール名、ファイル名、API名、CLI引数、環境変数、Gherkin キーワード（`Given` / `When` / `Then`）、プログラミング言語名、`QNI_USE_RUBY`、`Ruby fallback` など、識別子や固有の技術用語として英語表記が必要な語はそのまま書いてよい。
+- qni-cli の TypeScript 移行に関する説明でも、読み手向けの文章は自然な日本語にし、コード識別子・コマンド・エラーメッセージ・ファイルパスは原文を保つ。
+
 ## Feature Development Rule
 
 - `features/*.feature` または `features/*.feature.md` のない機能は存在しないのと同じ。
