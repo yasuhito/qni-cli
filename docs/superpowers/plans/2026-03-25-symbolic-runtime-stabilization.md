@@ -157,7 +157,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/sha
 
 - 実行環境の解決順が未更新のため、まだ失敗する
 
-- [ ] **手順 2: リポジトリ内実行環境優先の補助コマンドを実装する**
+- [ ] **手順 2: リポジトリ内実行環境優先の補助プログラムを実装する**
 
 `lib/qni/symbolic_state_renderer.rb` の補助プログラム解決順を次に変える。
 
@@ -246,7 +246,7 @@ git commit --allow-empty -m "test: verify symbolic runtime stabilization"
 ## タスク 5: レビューと統合準備
 
 **ファイル:**
-- 確認: git diff とレビュー指摘
+- 確認: Git 差分とレビュー指摘
 
 - [ ] **手順 1: コードレビューを依頼する**
 
@@ -258,4 +258,4 @@ git commit --allow-empty -m "test: verify symbolic runtime stabilization"
 
 - [ ] **手順 3: 統合方法を決める**
 
-fast-forward merge か追加修正かを判断し、`main` に戻す準備を整える。
+fast-forward マージか追加修正かを判断し、`main` に戻す準備を整える。
