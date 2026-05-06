@@ -84,7 +84,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/sha
 - 失敗理由は `--symbolic` が未対応であることを示す
 - 既存の `qni run` シナリオは引き続き成功する
 
-- [ ] **手順 3: 失敗する機能仕様を commit する**
+- [ ] **手順 3: 失敗する機能仕様をコミットする**
 
 ```bash
 git add features/qni_run.feature
@@ -152,7 +152,7 @@ module Qni
 end
 ```
 
-ここではヘルパー不在、`python3` 不在、`sympy` の import 失敗も `Simulator::Error` に変換する。
+ここではヘルパー不在、`python3` 不在、`sympy` のインポート失敗も `Simulator::Error` に変換する。
 
 - [ ] **手順 4: ラッパーを `Simulator` につなぐ**
 
@@ -177,7 +177,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/sha
 - 2 qubit の対象外エラーは通る
 - 1 qubit の `--symbolic` シナリオはヘルパー未実装のためまだ失敗する
 
-- [ ] **手順 6: Ruby 側の境界を commit する**
+- [ ] **手順 6: Ruby 側の境界をコミットする**
 
 ```bash
 git add lib/qni/cli.rb lib/qni/simulator.rb lib/qni/symbolic_state_renderer.rb features/qni_run.feature
@@ -200,7 +200,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/sha
 
 期待結果:
 
-- ヘルパー未実装か import 失敗で失敗する
+- ヘルパー未実装かインポート失敗で失敗する
 
 - [ ] **手順 2: 最小限の 1 qubit 記号シミュレーターを実装する**
 
@@ -245,7 +245,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/sha
 - 新規 4 シナリオが成功する
 - 既存の `qni run` 数値シナリオも成功する
 
-- [ ] **手順 4: ヘルパーを commit する**
+- [ ] **手順 4: ヘルパーをコミットする**
 
 ```bash
 git add libexec/qni_symbolic_run.py features/qni_run.feature lib/qni/cli.rb lib/qni/simulator.rb lib/qni/symbolic_state_renderer.rb
@@ -294,7 +294,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/sha
 - 既存の数値シミュレーターの振る舞いを壊していない
 - `run --symbolic` の 1 qubit 限定が明確に表現されている
 
-- [ ] **手順 4: 検証の区切りを commit する**
+- [ ] **手順 4: 検証の区切りをコミットする**
 
 ```bash
 git add features/qni_run.feature features/qni_cli.feature features/katas/basic_gates.feature lib/qni/cli.rb lib/qni/simulator.rb lib/qni/symbolic_state_renderer.rb libexec/qni_symbolic_run.py
