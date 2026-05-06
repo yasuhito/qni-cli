@@ -4,7 +4,7 @@
 
 **目的:** `BasicGates Task 1.1 StateFlip` に `qni run --symbolic` を使った説明用シナリオを 1 本追加し、一般式 `α|0> + β|1> -> α|1> + β|0>` を Kata の機能ファイル上で直接読めるようにする。
 
-**構成方針:** 既存の数値シナリオと制御ゲート検証シナリオは残し、`features/katas/basic_gates.feature` にだけ記号表示の回帰ケースを追加する。製品コードはすでに `qni run --symbolic` を持っているため、今回は機能ファイルの追加だけで閉じる前提で進め、回帰確認は `qni_run` と Kata の機能ファイルに限定する。
+**構成方針:** 既存の数値シナリオと制御ゲート検証シナリオは残し、`features/katas/basic_gates.feature` にだけ記号表示の回帰ケースを追加する。製品コードはすでに `qni run --symbolic` を持っているため、今回は機能ファイルの追加だけで閉じる前提で進め、回帰確認は `features/qni_run.feature` と Kata の機能ファイルに限定する。
 
 **使用技術:** Ruby, Cucumber, Bundler, `qni-cli`
 
