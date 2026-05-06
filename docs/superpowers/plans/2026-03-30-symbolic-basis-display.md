@@ -1,10 +1,10 @@
-# シンボリック基底表示の実装計画
+# 記号基底表示の実装計画
 
 > **自律作業エージェント向け:** 必須: この計画を実装するときは superpowers:subagent-driven-development（サブエージェントを使える場合）または superpowers:executing-plans を使う。手順の追跡にはチェックボックス（`- [ ]`）構文を使う。
 
 **目的:** `qni run --symbolic --basis x` と `Then |+>, |-> 基底での状態ベクトルは:` を追加し、BasisChange の機能仕様を `|+>`, `|->` でそのまま読める高レベル表現へ引き上げる。
 
-**構成:** 先に `features/qni_run.feature` と `features/katas/basic_gates/basis_change.feature` を更新して期待値を失敗させ、CLI オプションと Ruby 側の引数受け渡しを最小差分で通す。`symbolic` の基底変換そのものは Python 補助プログラムに閉じ込め、1 量子ビットの `x` 基底だけを v1 として実装する。最後にステップ定義を足して、基底対応の高レベル DSL で読みやすさを仕上げる。
+**構成:** 先に `features/qni_run.feature` と `features/katas/basic_gates/basis_change.feature` を更新して期待値を失敗させ、CLI オプションと Ruby 側の引数受け渡しを最小差分で通す。記号表示の基底変換そのものは Python 補助プログラムに閉じ込め、1 量子ビットの `x` 基底だけを v1 として実装する。最後にステップ定義を足して、基底対応の高レベル DSL で読みやすさを仕上げる。
 
 **技術スタック:** Ruby, Thor, Cucumber, Minitest, Bundler, SymPy 補助プログラム (`libexec/qni_symbolic_run.py`), `qni-cli`
 
@@ -23,9 +23,9 @@
 - 作成: `test/qni/symbolic_state_renderer_test.rb`
   - レンダラーが `basis: 'x'` を補助プログラムに渡し、1 量子ビットの `x` 基底表示を返せることを単体テストする。
 - 変更: `lib/qni/cli.rb`
-  - `run` サブコマンドに `--basis` オプションを追加し、`symbolic` 以外では弾く。
+  - `run` サブコマンドに `--basis` オプションを追加し、`--symbolic` なしでは弾く。
 - 変更: `lib/qni/simulator.rb`
-  - シンボリック表示に基底を渡す入口を追加する。
+  - 記号表示に基底を渡す入口を追加する。
 - 変更: `lib/qni/symbolic_state_renderer.rb`
   - 補助プログラムへ基底引数を渡し、未対応基底 / 量子ビット数のエラーを返せるようにする。
 - 変更: `libexec/qni_symbolic_run.py`
@@ -89,7 +89,7 @@ Scenario: qni run --basis x は --symbolic なしでは失敗
 `features/qni_cli.feature` に `run` ヘルプのシナリオを追加する。
 
 ```gherkin
-Scenario: qni run --help はシンボリック基底オプションを表示
+Scenario: qni run --help は記号基底オプションを表示
   When "qni run --help" を実行
   Then コマンドは成功
   And 標準出力に次を含む:
@@ -297,7 +297,7 @@ python qni_symbolic_run.py --format text --basis x
 
 - [ ] **手順 2: 1 量子ビットの `x` 基底表示関数を追加する**
 
-`a|0> + b|1>` の 1 量子ビットのシンボリック状態を、
+`a|0> + b|1>` の 1 量子ビットの記号状態を、
 
 ```text
 ((a + b)/sqrt(2))|+> + ((a - b)/sqrt(2))|->
