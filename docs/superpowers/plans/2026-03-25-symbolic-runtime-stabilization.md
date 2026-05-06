@@ -89,7 +89,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor \
 
 - `.python-symbolic/`
 
-ここには仮想環境本体を置き、git 追跡対象からは除外する。
+ここには仮想環境本体を置き、Git の追跡対象からは除外する。
 
 - [ ] **手順 2: 実行環境のセットアップスクリプトを追加する**
 
@@ -155,9 +155,9 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/sha
 
 期待結果:
 
-- 実行環境の解決順が未更新のため、まだ失敗する
+- 補助プログラムの解決順が未更新のため、まだ失敗する
 
-- [ ] **手順 2: リポジトリ内実行環境優先の補助プログラムを実装する**
+- [ ] **手順 2: リポジトリ内実行環境優先の補助プログラム解決順を実装する**
 
 `lib/qni/symbolic_state_renderer.rb` の補助プログラム解決順を次に変える。
 
@@ -196,7 +196,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/sha
 
 期待結果:
 
-- 4 シナリオとも PASS
+- 4 シナリオとも成功する
 
 - [ ] **手順 5: 補助プログラム解決順の更新をコミットする**
 
@@ -220,7 +220,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/sha
 
 期待結果:
 
-- 全シナリオが PASS
+- 全シナリオが成功する
 
 - [ ] **手順 2: Ruby 品質チェックを実行する**
 
@@ -235,7 +235,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/sha
 
 期待結果:
 
-- すべて PASS
+- すべて成功する
 
 - [ ] **手順 3: 回帰検証をコミットする**
 
