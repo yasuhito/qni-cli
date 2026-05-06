@@ -84,8 +84,8 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber feat
 ```
 
 期待結果:
-- `InitialState` が 1 量子ビット専用前提のため FAIL
-- Bell 短縮表記未対応で FAIL
+- `InitialState` が 1 量子ビット専用前提のため失敗する
+- Bell 短縮表記未対応で失敗する
 
 - [ ] **手順 4: `lib/qni/initial_state.rb` を最小実装で広げる**
 
@@ -111,7 +111,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec ruby -Itest t
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber features/qni_state.feature
 ```
 
-期待結果: PASS
+期待結果: 成功する
 
 - [ ] **手順 6: コミット**
 
@@ -183,8 +183,8 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber feat
 ```
 
 期待結果:
-- `unsupported symbolic basis: bell` で FAIL
-- ヘルプ文言不一致で FAIL
+- `unsupported symbolic basis: bell` で失敗する
+- ヘルプ文言不一致で失敗する
 
 - [ ] **手順 4: `libexec/qni_symbolic_run.py` に Bell 基底表示を追加する**
 
@@ -224,7 +224,7 @@ def render_symbolic_state_bell_basis(state):
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber features/qni_run.feature features/qni_cli.feature
 ```
 
-期待結果: PASS
+期待結果: 成功する
 
 - [ ] **手順 7: コミット**
 
@@ -290,7 +290,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber feat
 ```
 
 期待結果:
-- ステップ未定義、または比較不一致で FAIL
+- ステップ未定義、または比較不一致で失敗する
 
 - [ ] **手順 4: 最小実装で成功させる**
 
@@ -307,7 +307,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber feat
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber features/katas/basic_gates/bell_state_change_1.feature
 ```
 
-期待結果: PASS
+期待結果: 成功する
 
 - [ ] **手順 6: コミット**
 
@@ -334,7 +334,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber \
   features/katas/basic_gates/bell_state_change_3.feature
 ```
 
-期待結果: PASS
+期待結果: 成功する
 
 タスク 1.9/1.10 がまだ旧 DSL でも、Bell 短縮表記と `--basis bell` を壊していないことだけはここで押さえる。
 
@@ -363,7 +363,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec rake check
 
 - [ ] **手順 4: 仕上げコミット**
 
-作業ブランチの最後が clean なら不要。追加の微修正があればここでまとめる。
+作業ブランチの最後がクリーンなら不要。追加の微修正があればここでまとめる。
 
 ## 実装者向けメモ
 
