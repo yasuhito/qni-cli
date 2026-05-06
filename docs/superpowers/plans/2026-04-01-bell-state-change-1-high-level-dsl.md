@@ -1,55 +1,55 @@
-# Bell State Change 1 High-Level DSL Implementation Plan
+# Bell State Change 1 高レベル DSL 実装計画
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **自律エージェント作業者向け:** 必須: この計画を実装するときは superpowers:subagent-driven-development (subagent が利用できる場合) または superpowers:executing-plans を使う。手順の追跡にはチェックボックス (`- [ ]`) 構文を使う。
 
-**Goal:** Bell 基底 shorthand と `qni run --symbolic --basis bell` を追加し、`bell_state_change_1.feature` を Bell 基底のまま読める高レベル DSL に書き換える。
+**目的:** Bell 基底の短縮表記と `qni run --symbolic --basis bell` を追加し、`bell_state_change_1.feature` を Bell 基底のまま読める高レベル DSL に書き換える。
 
-**Architecture:** 既存の `|+>` / `|+i>` と同じ考え方で、Bell 状態を `InitialState` と symbolic renderer の user-facing shorthand にする。実装は 3 段に分ける: まず 2 qubit 初期状態と Bell shorthand の parse/save、次に Bell 基底表示、最後に Task 1.8 feature の高レベル化。各段で acceptance を先に赤くしてから最小実装で通す。
+**構成:** 既存の `|+>` / `|+i>` と同じ考え方で、Bell 状態を `InitialState` と記号表示処理の利用者向け短縮表記にする。実装は 3 段に分ける: まず 2 量子ビット初期状態と Bell 短縮表記の解析/保存、次に Bell 基底表示、最後にタスク 1.8 の feature ファイルを高レベル化する。各段で受け入れテストを先に失敗させてから最小実装で通す。
 
-**Tech Stack:** Ruby (`Qni::InitialState`, Cucumber, Minitest), Python (`libexec/qni_symbolic_run.py`, SymPy), existing qni CLI / feature DSL
+**技術構成:** Ruby (`Qni::InitialState`, Cucumber, Minitest), Python (`libexec/qni_symbolic_run.py`, SymPy), 既存の qni CLI と feature ファイル用 DSL
 
 ---
 
-## File Map
+## ファイル構成
 
-### Core state parsing and storage
+### 状態解析と保存の中核
 
-- Modify: `/home/yasuhito/Work/qni-cli/lib/qni/initial_state.rb`
-  - 1 qubit 専用だった `InitialState` を 2 qubit Bell shorthand と 2 qubit ket sum まで広げる
-- Modify: `/home/yasuhito/Work/qni-cli/test/qni/initial_state_test.rb`
-  - Bell shorthand と 2 qubit numeric resolution の unit test を追加する
+- 変更: `/home/yasuhito/Work/qni-cli/lib/qni/initial_state.rb`
+  - 1 量子ビット専用だった `InitialState` を 2 量子ビット Bell 短縮表記と 2 量子ビット ket の和まで広げる
+- 変更: `/home/yasuhito/Work/qni-cli/test/qni/initial_state_test.rb`
+  - Bell 短縮表記と 2 量子ビットの数値化の単体テストを追加する
 
-### Symbolic rendering and CLI acceptance
+### 記号表示と CLI 受け入れテスト
 
-- Modify: `/home/yasuhito/Work/qni-cli/libexec/qni_symbolic_run.py`
-  - `--basis bell` の symbolic 表示を追加する
-- Modify: `/home/yasuhito/Work/qni-cli/lib/qni/cli/run_help.rb`
-  - `--basis bell` を help に反映する
-- Modify: `/home/yasuhito/Work/qni-cli/features/qni_run.feature`
-  - `qni run --symbolic --basis bell` の acceptance を追加する
-- Modify: `/home/yasuhito/Work/qni-cli/features/qni_cli.feature`
-  - `qni run --help` に Bell basis を反映する acceptance を追加する
-- Modify: `/home/yasuhito/Work/qni-cli/features/qni_state.feature`
-  - Bell shorthand の保存・表示 acceptance を追加する
+- 変更: `/home/yasuhito/Work/qni-cli/libexec/qni_symbolic_run.py`
+  - `--basis bell` の記号表示を追加する
+- 変更: `/home/yasuhito/Work/qni-cli/lib/qni/cli/run_help.rb`
+  - `--basis bell` をヘルプに反映する
+- 変更: `/home/yasuhito/Work/qni-cli/features/qni_run.feature`
+  - `qni run --symbolic --basis bell` の受け入れテストを追加する
+- 変更: `/home/yasuhito/Work/qni-cli/features/qni_cli.feature`
+  - `qni run --help` に Bell 基底を反映する受け入れテストを追加する
+- 変更: `/home/yasuhito/Work/qni-cli/features/qni_state.feature`
+  - Bell 短縮表記の保存・表示の受け入れテストを追加する
 
-### Feature DSL and kata rewrite
+### Feature ファイル用 DSL と Kata の書き換え
 
-- Modify: `/home/yasuhito/Work/qni-cli/features/step_definitions/cli_steps.rb`
+- 変更: `/home/yasuhito/Work/qni-cli/features/step_definitions/cli_steps.rb`
   - `Then Bell 基底での状態ベクトルは:` を追加する
-  - `Given 初期状態ベクトルは:` が 2 qubit `InitialState` をそのまま書けることを確認する
-- Modify: `/home/yasuhito/Work/qni-cli/features/katas/basic_gates/bell_state_change_1.feature`
-  - low-level scenario を高レベル DSL に書き換える
+  - `Given 初期状態ベクトルは:` が 2 量子ビット `InitialState` をそのまま書けることを確認する
+- 変更: `/home/yasuhito/Work/qni-cli/features/katas/basic_gates/bell_state_change_1.feature`
+  - 低レベルシナリオを高レベル DSL に書き換える
 
-## Task 1: Bell shorthand の acceptance を先に赤くする
+## タスク 1: Bell 短縮表記の受け入れテストを先に失敗させる
 
-**Files:**
-- Modify: `/home/yasuhito/Work/qni-cli/features/qni_state.feature`
-- Modify: `/home/yasuhito/Work/qni-cli/test/qni/initial_state_test.rb`
+**ファイル:**
+- 変更: `/home/yasuhito/Work/qni-cli/features/qni_state.feature`
+- 変更: `/home/yasuhito/Work/qni-cli/test/qni/initial_state_test.rb`
 
-- [ ] **Step 1: `features/qni_state.feature` に Bell shorthand の failing acceptance を追加する**
+- [ ] **手順 1: `features/qni_state.feature` に Bell 短縮表記の失敗する受け入れテストを追加する**
 
 ```gherkin
-Scenario: qni state set は |Φ+> を shorthand のまま表示できる初期状態として保存する
+Scenario: qni state set は |Φ+> を短縮表記のまま表示できる初期状態として保存する
   When "qni state set \"|Φ+>\"" を実行
   Then コマンドは成功
   And "qni state show" を実行
@@ -61,7 +61,7 @@ Scenario: qni state set は |Φ+> を shorthand のまま表示できる初期�
 
 同様に `|Φ->`, `|Ψ+>`, `|Ψ->` と、少なくとも 1 本の線形結合 `alpha|Φ+> + beta|Φ->` も追加する。
 
-- [ ] **Step 2: `test/qni/initial_state_test.rb` に Bell shorthand の failing unit test を追加する**
+- [ ] **手順 2: `test/qni/initial_state_test.rb` に Bell 短縮表記の失敗する単体テストを追加する**
 
 ```ruby
 def test_parse_phi_plus_state_shorthand
@@ -72,29 +72,29 @@ def test_parse_phi_plus_state_shorthand
 end
 ```
 
-`|Φ->`, `|Ψ+>`, `|Ψ->` のうち少なくとも 1〜2 本を対で追加し、2 qubit の shape が見えるようにする。
+`|Φ->`, `|Ψ+>`, `|Ψ->` のうち少なくとも 1〜2 本を対で追加し、2 量子ビットの形が見えるようにする。
 
-- [ ] **Step 3: Red を確認する**
+- [ ] **手順 3: 失敗を確認する**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec ruby -Itest test/qni/initial_state_test.rb
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber features/qni_state.feature
 ```
 
-Expected:
-- `InitialState` が 1 qubit 専用前提のため FAIL
-- Bell shorthand 未対応で FAIL
+期待結果:
+- `InitialState` が 1 量子ビット専用前提のため FAIL
+- Bell 短縮表記未対応で FAIL
 
-- [ ] **Step 4: `lib/qni/initial_state.rb` を最小実装で広げる**
+- [ ] **手順 4: `lib/qni/initial_state.rb` を最小実装で広げる**
 
 実装方針:
 - `Term` の `basis` を `0/1` 固定から `0`, `1`, `00`, `01`, `10`, `11` を受ける形へ広げる
-- state dimension を `terms` の basis 長から求める
-- Bell shorthand を `special_state_for` へ追加する
-- `to_s` は既存 1 qubit shorthand を壊さず、Bell shorthand にも戻せるようにする
-- `resolve_numeric` は 2 qubit なら 4 要素配列を返す
+- 状態の次元を `terms` の `basis` の長さから求める
+- Bell 短縮表記を `special_state_for` へ追加する
+- `to_s` は既存の 1 量子ビット短縮表記を壊さず、Bell 短縮表記にも戻せるようにする
+- `resolve_numeric` は 2 量子ビットなら 4 要素配列を返す
 
 最小の実装イメージ:
 
@@ -102,33 +102,33 @@ Expected:
 when '|Φ+>' then bell_state('00' => PLUS_MINUS_COEFFICIENT_TEXT, '11' => PLUS_MINUS_COEFFICIENT_TEXT)
 ```
 
-- [ ] **Step 5: Green を確認する**
+- [ ] **手順 5: 成功を確認する**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec ruby -Itest test/qni/initial_state_test.rb
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber features/qni_state.feature
 ```
 
-Expected: PASS
+期待結果: PASS
 
-- [ ] **Step 6: Commit**
+- [ ] **手順 6: コミット**
 
 ```bash
 git add test/qni/initial_state_test.rb features/qni_state.feature lib/qni/initial_state.rb
 git commit -m "feat: add Bell initial state shorthand"
 ```
 
-## Task 2: `qni run --symbolic --basis bell` を追加する
+## タスク 2: `qni run --symbolic --basis bell` を追加する
 
-**Files:**
-- Modify: `/home/yasuhito/Work/qni-cli/features/qni_run.feature`
-- Modify: `/home/yasuhito/Work/qni-cli/features/qni_cli.feature`
-- Modify: `/home/yasuhito/Work/qni-cli/libexec/qni_symbolic_run.py`
-- Modify: `/home/yasuhito/Work/qni-cli/lib/qni/cli/run_help.rb`
+**ファイル:**
+- 変更: `/home/yasuhito/Work/qni-cli/features/qni_run.feature`
+- 変更: `/home/yasuhito/Work/qni-cli/features/qni_cli.feature`
+- 変更: `/home/yasuhito/Work/qni-cli/libexec/qni_symbolic_run.py`
+- 変更: `/home/yasuhito/Work/qni-cli/lib/qni/cli/run_help.rb`
 
-- [ ] **Step 1: `features/qni_run.feature` に Bell basis の failing acceptance を追加する**
+- [ ] **手順 1: `features/qni_run.feature` に Bell 基底の失敗する受け入れテストを追加する**
 
 少なくとも次の 3 本を追加する。
 
@@ -163,9 +163,9 @@ Scenario: qni run --symbolic --basis bell は α|Φ+> + β|Φ-> を表示
     """
 ```
 
-必要なら 1 qubit で失敗する scenario も追加する。
+必要なら 1 量子ビットで失敗するシナリオも追加する。
 
-- [ ] **Step 2: `features/qni_cli.feature` に help の failing acceptance を追加する**
+- [ ] **手順 2: `features/qni_cli.feature` にヘルプの失敗する受け入れテストを追加する**
 
 ```gherkin
 And 標準出力に次を含む:
@@ -174,30 +174,30 @@ And 標準出力に次を含む:
   """
 ```
 
-- [ ] **Step 3: Red を確認する**
+- [ ] **手順 3: 失敗を確認する**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber features/qni_run.feature features/qni_cli.feature
 ```
 
-Expected:
+期待結果:
 - `unsupported symbolic basis: bell` で FAIL
-- help 文言不一致で FAIL
+- ヘルプ文言不一致で FAIL
 
-- [ ] **Step 4: `libexec/qni_symbolic_run.py` に Bell basis 表示を追加する**
+- [ ] **手順 4: `libexec/qni_symbolic_run.py` に Bell 基底表示を追加する**
 
 実装方針:
 - `render_symbolic_state_bell_basis(state)` を新設する
-- 2 qubit state `(a, b, c, d)` を
+- 2 量子ビット状態 `(a, b, c, d)` を
   - `(a + d)/sqrt(2)` → `|Φ+>`
   - `(a - d)/sqrt(2)` → `|Φ->`
   - `(b + c)/sqrt(2)` → `|Ψ+>`
   - `(b - c)/sqrt(2)` → `|Ψ->`
   へ変換する
-- `render_named_basis_term` は 2 qubit named basis label にも再利用できるようにする
-- `run(..., basis="bell")` を 2 qubit text-only に限定して追加する
+- `render_named_basis_term` は 2 量子ビットの名前付き基底ラベルにも再利用できるようにする
+- `run(..., basis="bell")` を 2 量子ビットのテキスト表示だけに限定して追加する
 
 最小の関数イメージ:
 
@@ -212,36 +212,36 @@ def render_symbolic_state_bell_basis(state):
     )
 ```
 
-- [ ] **Step 5: `lib/qni/cli/run_help.rb` を更新する**
+- [ ] **手順 5: `lib/qni/cli/run_help.rb` を更新する**
 
-`x or y` を `x, y, or bell` に更新し、2 qubit Bell basis をサポートすることが help から読めるようにする。
+`x or y` を `x, y, or bell` に更新し、2 量子ビット Bell 基底をサポートすることがヘルプから読めるようにする。
 
-- [ ] **Step 6: Green を確認する**
+- [ ] **手順 6: 成功を確認する**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber features/qni_run.feature features/qni_cli.feature
 ```
 
-Expected: PASS
+期待結果: PASS
 
-- [ ] **Step 7: Commit**
+- [ ] **手順 7: コミット**
 
 ```bash
 git add features/qni_run.feature features/qni_cli.feature libexec/qni_symbolic_run.py lib/qni/cli/run_help.rb
 git commit -m "feat: add Bell basis symbolic output"
 ```
 
-## Task 3: Bell 基底 step を追加して Task 1.8 を高レベル化する
+## タスク 3: Bell 基底ステップを追加してタスク 1.8 を高レベル化する
 
-**Files:**
-- Modify: `/home/yasuhito/Work/qni-cli/features/step_definitions/cli_steps.rb`
-- Modify: `/home/yasuhito/Work/qni-cli/features/katas/basic_gates/bell_state_change_1.feature`
+**ファイル:**
+- 変更: `/home/yasuhito/Work/qni-cli/features/step_definitions/cli_steps.rb`
+- 変更: `/home/yasuhito/Work/qni-cli/features/katas/basic_gates/bell_state_change_1.feature`
 
-- [ ] **Step 1: `bell_state_change_1.feature` を先に高レベル DSL へ書き換える**
+- [ ] **手順 1: `bell_state_change_1.feature` を先に高レベル DSL へ書き換える**
 
-目標 shape:
+目標の形:
 
 ```gherkin
 Scenario: Z ゲートは |Φ+> を |Φ-> に変える
@@ -269,7 +269,7 @@ Scenario: Z ゲートは |Φ+> を |Φ-> に変える
 
 の 4 本へそろえる。
 
-- [ ] **Step 2: `features/step_definitions/cli_steps.rb` に failing step を追加する**
+- [ ] **手順 2: `features/step_definitions/cli_steps.rb` に失敗するステップを追加する**
 
 ```ruby
 Then('Bell 基底での状態ベクトルは:') do |doc_string|
@@ -281,49 +281,49 @@ end
 
 必要なら `canonical_named_basis_notation` を `Φ`, `Ψ` でも使えるように最小調整する。
 
-- [ ] **Step 3: Red を確認する**
+- [ ] **手順 3: 失敗を確認する**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber features/katas/basic_gates/bell_state_change_1.feature
 ```
 
-Expected:
-- step 未定義、または comparison mismatch で FAIL
+期待結果:
+- ステップ未定義、または比較不一致で FAIL
 
-- [ ] **Step 4: 最小実装で Green にする**
+- [ ] **手順 4: 最小実装で成功させる**
 
 実装内容:
 - `Then Bell 基底での状態ベクトルは:` を追加する
-- 必要なら `normalize_symbolic_aliases` へ `Φ`, `Ψ` の alias を足さずに済む形で `assert_named_basis_state_matches!` を使う
-- `Given 初期状態ベクトルは:` が 2 qubit `InitialState` をそのまま扱えることを確認し、もし qubit 数を `1` 固定している箇所があれば最小修正する
+- 必要なら `normalize_symbolic_aliases` へ `Φ`, `Ψ` の別名を足さずに済む形で `assert_named_basis_state_matches!` を使う
+- `Given 初期状態ベクトルは:` が 2 量子ビット `InitialState` をそのまま扱えることを確認し、もし量子ビット数を `1` 固定している箇所があれば最小修正する
 
-- [ ] **Step 5: Green を確認する**
+- [ ] **手順 5: 成功を確認する**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber features/katas/basic_gates/bell_state_change_1.feature
 ```
 
-Expected: PASS
+期待結果: PASS
 
-- [ ] **Step 6: Commit**
+- [ ] **手順 6: コミット**
 
 ```bash
 git add features/step_definitions/cli_steps.rb features/katas/basic_gates/bell_state_change_1.feature
 git commit -m "test: rewrite BellStateChange1 scenarios"
 ```
 
-## Task 4: 近い Bell task と full check を回す
+## タスク 4: 近い Bell タスクと全体チェックを回す
 
-**Files:**
-- No new files expected
+**ファイル:**
+- 新しいファイルは想定しない
 
-- [ ] **Step 1: Bell 系 feature をまとめて回す**
+- [ ] **手順 1: Bell 系 feature ファイルをまとめて回す**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber \
@@ -334,41 +334,40 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber \
   features/katas/basic_gates/bell_state_change_3.feature
 ```
 
-Expected: PASS
+期待結果: PASS
 
-Task 1.9/1.10 がまだ旧 DSL でも、Bell shorthand と `--basis bell` を壊していないことだけはここで押さえる。
+タスク 1.9/1.10 がまだ旧 DSL でも、Bell 短縮表記と `--basis bell` を壊していないことだけはここで押さえる。
 
-- [ ] **Step 2: fresh な symbolic setup を行う**
+- [ ] **手順 2: 新しい記号計算環境を準備する**
 
-Run:
+実行:
 
 ```bash
 bash scripts/setup_symbolic_python.sh
 ```
 
-Expected: `1.14.0`
+期待結果: `1.14.0`
 
-- [ ] **Step 3: full check を実行する**
+- [ ] **手順 3: 全体チェックを実行する**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec rake check
 ```
 
-Expected:
-- RuboCop green
-- cucumber green
-- reek green
+期待結果:
+- RuboCop 成功
+- cucumber 成功
+- reek 成功
 
-- [ ] **Step 4: 仕上げ commit**
+- [ ] **手順 4: 仕上げコミット**
 
 作業ブランチの最後が clean なら不要。追加の微修正があればここでまとめる。
 
-## Notes for Implementers
+## 実装者向けメモ
 
-- `lib/qni/initial_state.rb` はいま basis を `0` / `1` 固定で扱っているので、まずここが最大の境界変更になる
-- `libexec/qni_symbolic_run.py` の X/Y basis は 1 qubit text-only という分岐で実装されている。Bell basis も同じ分岐に足すと見通しがよい
-- `features/step_definitions/cli_steps.rb` の `Given 初期状態ベクトルは:` は direct `InitialState.parse` が成功したら qubit 数を `1` 固定で書くので、2 qubit 対応時はここを忘れず直す
-- `bell_state_change_1.feature` の ASCII 回路は parser を使わず append path なので、2 qubit 1-column の簡単な回路図で十分
-
+- `lib/qni/initial_state.rb` はいま `basis` を `0` / `1` 固定で扱っているので、まずここが最大の境界変更になる
+- `libexec/qni_symbolic_run.py` の X/Y 基底は 1 量子ビットのテキスト表示だけという分岐で実装されている。Bell 基底も同じ分岐に足すと見通しがよい
+- `features/step_definitions/cli_steps.rb` の `Given 初期状態ベクトルは:` は直接 `InitialState.parse` が成功したら量子ビット数を `1` 固定で書くので、2 量子ビット対応時はここを忘れず直す
+- `bell_state_change_1.feature` の ASCII 回路は構文解析器を使わず追加経路を通るので、2 量子ビット 1 列の簡単な回路図で十分
