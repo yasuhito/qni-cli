@@ -1,47 +1,47 @@
-# Symbolic Basis Display Implementation Plan
+# シンボリック基底表示の実装計画
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **自律作業エージェント向け:** 必須: この計画を実装するときは superpowers:subagent-driven-development（サブエージェントを使える場合）または superpowers:executing-plans を使う。手順の追跡にはチェックボックス（`- [ ]`）構文を使う。
 
-**Goal:** `qni run --symbolic --basis x` と `Then |+>, |-> 基底での状態ベクトルは:` を追加し、BasisChange の feature を `|+>`, `|->` でそのまま読める高レベル表現へ引き上げる。
+**目的:** `qni run --symbolic --basis x` と `Then |+>, |-> 基底での状態ベクトルは:` を追加し、BasisChange の機能仕様を `|+>`, `|->` でそのまま読める高レベル表現へ引き上げる。
 
-**Architecture:** 先に `features/qni_run.feature` と `features/katas/basic_gates/basis_change.feature` を更新して期待値を赤くし、CLI option と Ruby 側の引数受け渡しを最小差分で通す。symbolic の基底変換そのものは Python helper に閉じ込め、1 qubit の `x` 基底だけを v1 として実装する。最後に feature step を足して、basis-aware な高レベル DSL で読みやすさを仕上げる。
+**構成:** 先に `features/qni_run.feature` と `features/katas/basic_gates/basis_change.feature` を更新して期待値を失敗させ、CLI オプションと Ruby 側の引数受け渡しを最小差分で通す。`symbolic` の基底変換そのものは Python 補助プログラムに閉じ込め、1 量子ビットの `x` 基底だけを v1 として実装する。最後にステップ定義を足して、基底対応の高レベル DSL で読みやすさを仕上げる。
 
-**Tech Stack:** Ruby, Thor, Cucumber, Minitest, Bundler, SymPy helper (`libexec/qni_symbolic_run.py`), `qni-cli`
+**技術スタック:** Ruby, Thor, Cucumber, Minitest, Bundler, SymPy 補助プログラム (`libexec/qni_symbolic_run.py`), `qni-cli`
 
 ---
 
-## File Structure
+## ファイル構成
 
-- Modify: `features/qni_run.feature`
-  - `qni run --symbolic --basis x` の acceptance を追加する。
-- Modify: `features/qni_cli.feature`
+- 変更: `features/qni_run.feature`
+  - `qni run --symbolic --basis x` の受け入れ条件を追加する。
+- 変更: `features/qni_cli.feature`
   - `qni run --help` に `--basis` が見えることを追加する。
-- Modify: `features/katas/basic_gates/basis_change.feature`
+- 変更: `features/katas/basic_gates/basis_change.feature`
   - `0.6|+> + 0.8|->`、`α|+> + β|->` のような期待値に置き換える。
-- Modify: `features/step_definitions/cli_steps.rb`
+- 変更: `features/step_definitions/cli_steps.rb`
   - `Then |+>, |-> 基底での状態ベクトルは:` を追加する。
-- Create: `test/qni/symbolic_state_renderer_test.rb`
-  - renderer が `basis: 'x'` を helper に渡し、1 qubit の `x` 基底表示を返せることを unit test する。
-- Modify: `lib/qni/cli.rb`
-  - `run` サブコマンドに `--basis` option を追加し、symbolic 以外では弾く。
-- Modify: `lib/qni/simulator.rb`
-  - symbolic rendering に basis を渡す入口を追加する。
-- Modify: `lib/qni/symbolic_state_renderer.rb`
-  - helper へ basis 引数を渡し、未対応 basis / qubit 数のエラーを返せるようにする。
-- Modify: `libexec/qni_symbolic_run.py`
-  - `--basis x` の引数 parse、1 qubit state の `|+>`, `|->` 変換、整形を追加する。
+- 作成: `test/qni/symbolic_state_renderer_test.rb`
+  - レンダラーが `basis: 'x'` を補助プログラムに渡し、1 量子ビットの `x` 基底表示を返せることを単体テストする。
+- 変更: `lib/qni/cli.rb`
+  - `run` サブコマンドに `--basis` オプションを追加し、`symbolic` 以外では弾く。
+- 変更: `lib/qni/simulator.rb`
+  - シンボリック表示に基底を渡す入口を追加する。
+- 変更: `lib/qni/symbolic_state_renderer.rb`
+  - 補助プログラムへ基底引数を渡し、未対応基底 / 量子ビット数のエラーを返せるようにする。
+- 変更: `libexec/qni_symbolic_run.py`
+  - `--basis x` の引数解析、1 量子ビット状態の `|+>`, `|->` 変換、整形を追加する。
 
-## Task 1: feature-first で `x` 基底表示の受け入れを赤くする
+## タスク 1: 機能仕様優先で `x` 基底表示の受け入れ条件を失敗させる
 
-**Files:**
-- Modify: `features/qni_run.feature`
-- Modify: `features/qni_cli.feature`
-- Modify: `features/katas/basic_gates/basis_change.feature`
-- Test: `features/qni_run.feature`
-- Test: `features/qni_cli.feature`
-- Test: `features/katas/basic_gates/basis_change.feature`
+**ファイル:**
+- 変更: `features/qni_run.feature`
+- 変更: `features/qni_cli.feature`
+- 変更: `features/katas/basic_gates/basis_change.feature`
+- 検証: `features/qni_run.feature`
+- 検証: `features/qni_cli.feature`
+- 検証: `features/katas/basic_gates/basis_change.feature`
 
-- [ ] **Step 1: `qni run --symbolic --basis x` の acceptance を追加する**
+- [ ] **手順 1: `qni run --symbolic --basis x` の受け入れ条件を追加する**
 
 `features/qni_run.feature` に少なくとも次を追加する。
 
@@ -82,14 +82,14 @@ Scenario: qni run --basis x は --symbolic なしでは失敗
     """
 ```
 
-この scenario は、`H|0> = |+>` をそのまま `|+>, |->` 表示で確認する最小ケースとして使う。大事なのは `--basis x` の acceptance を feature で先に固定すること。
+このシナリオは、`H|0> = |+>` をそのまま `|+>, |->` 表示で確認する最小ケースとして使う。大事なのは `--basis x` の受け入れ条件を機能仕様で先に固定すること。
 
-- [ ] **Step 2: `qni run --help` に `--basis` を出す acceptance を追加する**
+- [ ] **手順 2: `qni run --help` に `--basis` を出す受け入れ条件を追加する**
 
-`features/qni_cli.feature` に `run` help scenario を追加する。
+`features/qni_cli.feature` に `run` ヘルプのシナリオを追加する。
 
 ```gherkin
-Scenario: qni run --help は symbolic basis option を表示
+Scenario: qni run --help はシンボリック基底オプションを表示
   When "qni run --help" を実行
   Then コマンドは成功
   And 標準出力に次を含む:
@@ -102,9 +102,9 @@ Scenario: qni run --help は symbolic basis option を表示
     """
 ```
 
-必要なら option 説明文も assertion する。
+必要ならオプション説明文も検証する。
 
-- [ ] **Step 3: `basis_change.feature` を理想形の期待値に書き換える**
+- [ ] **手順 3: `basis_change.feature` を理想形の期待値に書き換える**
 
 `features/katas/basic_gates/basis_change.feature` の 3 本目以降を少なくとも次のように更新する。
 
@@ -142,11 +142,11 @@ Scenario: H ゲートは α|0> + β|1> を |+>, |-> 基底で表すと α|+> + �
     """
 ```
 
-既存の `Then 状態ベクトルは:` はこの task ではまだ未対応なので、ここで赤くなるのが正しい。
+既存の `Then 状態ベクトルは:` はこのタスクではまだ未対応なので、ここで失敗するのが正しい。
 
-- [ ] **Step 4: red を確認する**
+- [ ] **手順 4: 失敗を確認する**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber \
@@ -155,29 +155,29 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber \
   features/katas/basic_gates/basis_change.feature
 ```
 
-Expected:
+期待結果:
 
-- `--basis` option 未定義で赤くなる
-- `|+>, |-> 基底での状態ベクトルは:` 未定義で赤くなる
-- 失敗理由が typo ではなく機能不足になっている
+- `--basis` オプション未定義で失敗する
+- `|+>, |-> 基底での状態ベクトルは:` 未定義で失敗する
+- 失敗理由が入力ミスではなく機能不足になっている
 
-- [ ] **Step 5: red をコミットする**
+- [ ] **手順 5: 失敗する受け入れ条件をコミットする**
 
 ```bash
 git add features/qni_run.feature features/qni_cli.feature features/katas/basic_gates/basis_change.feature
 git commit -m "test: add symbolic x-basis acceptance"
 ```
 
-## Task 2: Ruby 側で `--basis` を受け取り renderer へ渡す
+## タスク 2: Ruby 側で `--basis` を受け取りレンダラーへ渡す
 
-**Files:**
-- Create: `test/qni/symbolic_state_renderer_test.rb`
-- Modify: `lib/qni/cli.rb`
-- Modify: `lib/qni/simulator.rb`
-- Modify: `lib/qni/symbolic_state_renderer.rb`
-- Test: `test/qni/symbolic_state_renderer_test.rb`
+**ファイル:**
+- 作成: `test/qni/symbolic_state_renderer_test.rb`
+- 変更: `lib/qni/cli.rb`
+- 変更: `lib/qni/simulator.rb`
+- 変更: `lib/qni/symbolic_state_renderer.rb`
+- 検証: `test/qni/symbolic_state_renderer_test.rb`
 
-- [ ] **Step 1: renderer の unit test を赤く書く**
+- [ ] **手順 1: レンダラーの単体テストを失敗する形で書く**
 
 `test/qni/symbolic_state_renderer_test.rb` を作成し、少なくとも次を入れる。
 
@@ -201,23 +201,23 @@ module Qni
 end
 ```
 
-必要なら helper 呼び出し引数を分離して、その private method を unit test してもよい。ポイントは `basis` の Ruby 側 plumbing を最小で押さえること。
+必要なら補助プログラム呼び出し引数を分離して、その非公開メソッドを単体テストしてもよい。ポイントは `basis` の Ruby 側の引数受け渡しを最小で押さえること。
 
-- [ ] **Step 2: unit test が赤いことを確認する**
+- [ ] **手順 2: 単体テストが失敗することを確認する**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec ruby -Itest test/qni/symbolic_state_renderer_test.rb
 ```
 
-Expected:
+期待結果:
 
 - `ArgumentError`
 - または `NoMethodError`
-- または未実装 error
+- または未実装エラー
 
-- [ ] **Step 3: `run --symbolic --basis x` の option parsing を実装する**
+- [ ] **手順 3: `run --symbolic --basis x` のオプション解析を実装する**
 
 `lib/qni/cli.rb` を更新して、`run` に次を追加する。
 
@@ -232,7 +232,7 @@ method_option :basis, type: :string, desc: 'Show a symbolic state in a named bas
 
 へ変える。
 
-- [ ] **Step 4: `Simulator` と `SymbolicStateRenderer` の引数を通す**
+- [ ] **手順 4: `Simulator` と `SymbolicStateRenderer` の引数を通す**
 
 `lib/qni/simulator.rb`
 
@@ -248,43 +248,41 @@ end
 - `render_with_format('text')` に basis を渡す
 - `basis == 'x' && qubits != 1` のときは
   - `raise Simulator::Error, 'symbolic x-basis run currently supports only 1-qubit circuits'`
-- helper へは `--basis x` を追加して渡す
+- 補助プログラムへは `--basis x` を追加して渡す
 
-CLI では未対応 basis 名を早めに弾いてもよいが、最終的な validation は renderer 側にも残す。
+CLI では未対応の基底名を早めに弾いてもよいが、最終的な検証はレンダラー側にも残す。
 
-- [ ] **Step 5: Ruby 側の unit test を green にする**
+- [ ] **手順 5: Ruby 側の単体テストを成功させる**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec ruby -Itest test/qni/symbolic_state_renderer_test.rb
 ```
 
-Expected: PASS
+期待結果: 成功
 
-- [ ] **Step 6: Ruby plumbing をコミットする**
+- [ ] **手順 6: Ruby 側の引数受け渡しをコミットする**
 
 ```bash
 git add test/qni/symbolic_state_renderer_test.rb lib/qni/cli.rb lib/qni/simulator.rb lib/qni/symbolic_state_renderer.rb
 git commit -m "feat: add symbolic basis option plumbing"
 ```
 
-## Task 3: Python helper に `x` 基底変換を追加する
+## タスク 3: Python 補助プログラムに `x` 基底変換を追加する
 
-**Files:**
-- Modify: `libexec/qni_symbolic_run.py`
-- Modify: `features/qni_run.feature`
-- Test: `features/qni_run.feature`
+**ファイル:**
+- 変更: `libexec/qni_symbolic_run.py`
+- 変更: `features/qni_run.feature`
+- 検証: `features/qni_run.feature`
 
-- [ ] **Step 1: helper の basis parse を実装する**
+- [ ] **手順 1: 補助プログラムの基底解析を実装する**
 
-`libexec/qni_symbolic_run.py` に
+`libexec/qni_symbolic_run.py` で次を扱えるようにする。
 
 - `parse_output_format(argv)` を `parse_args(argv)` に置き換える
 - `--format latex`
 - `--basis x`
-
-の両方を読めるようにする。
 
 受け入れる形は第 1 段では次に限定する。
 
@@ -297,9 +295,9 @@ python qni_symbolic_run.py --format text --basis x
 
 それ以外は `ValueError("unsupported symbolic renderer arguments")` でよい。
 
-- [ ] **Step 2: 1 qubit の `x` 基底表示関数を追加する**
+- [ ] **手順 2: 1 量子ビットの `x` 基底表示関数を追加する**
 
-`a|0> + b|1>` の 1 qubit symbolic state を、
+`a|0> + b|1>` の 1 量子ビットのシンボリック状態を、
 
 ```text
 ((a + b)/sqrt(2))|+> + ((a - b)/sqrt(2))|->
@@ -321,9 +319,9 @@ def render_symbolic_state_x_basis(state):
     ])
 ```
 
-という方向でよい。`join_terms` を basis label 付きでも使えるように小さく一般化してもよい。
+という方向でよい。`join_terms` を基底ラベル付きでも使えるように小さく一般化してもよい。
 
-- [ ] **Step 3: `run()` で basis を切り替える**
+- [ ] **手順 3: `run()` で基底を切り替える**
 
 `run(circuit, output_format="text", basis=None)` に変えて、
 
@@ -334,36 +332,36 @@ def render_symbolic_state_x_basis(state):
 
 とする。
 
-latex 出力と basis 指定の組み合わせは v1 では非対応にしてよい。もし弾くなら spec に合わせてメッセージを明示する。
+LaTeX 出力と基底指定の組み合わせは v1 では非対応にしてよい。もし弾くなら仕様に合わせてメッセージを明示する。
 
-- [ ] **Step 4: integration で green を確認する**
+- [ ] **手順 4: 結合確認で成功を確認する**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber features/qni_run.feature
 ```
 
-Expected:
+期待結果:
 
-- 新しい `--basis x` scenario が通る
-- 既存の `qni run --symbolic` scenario が壊れていない
+- 新しい `--basis x` シナリオが通る
+- 既存の `qni run --symbolic` シナリオが壊れていない
 
-- [ ] **Step 5: helper 実装をコミットする**
+- [ ] **手順 5: 補助プログラム実装をコミットする**
 
 ```bash
 git add libexec/qni_symbolic_run.py features/qni_run.feature
 git commit -m "feat: render symbolic states in x basis"
 ```
 
-## Task 4: feature DSL を仕上げて BasisChange を高レベル化する
+## タスク 4: 機能仕様の DSL を仕上げて BasisChange を高レベル化する
 
-**Files:**
-- Modify: `features/step_definitions/cli_steps.rb`
-- Modify: `features/katas/basic_gates/basis_change.feature`
-- Test: `features/katas/basic_gates/basis_change.feature`
+**ファイル:**
+- 変更: `features/step_definitions/cli_steps.rb`
+- 変更: `features/katas/basic_gates/basis_change.feature`
+- 検証: `features/katas/basic_gates/basis_change.feature`
 
-- [ ] **Step 1: 新しい step を赤から実装する**
+- [ ] **手順 1: 新しいステップ定義を失敗する状態から実装する**
 
 `features/step_definitions/cli_steps.rb` に次を追加する。
 
@@ -377,9 +375,9 @@ end
 
 既存の `canonical_symbolic_notation` は `|+>`, `|->`, `α`, `β`, `θ`, `π`, `√2` をすでに吸収しているので、必要最低限の拡張だけにとどめる。
 
-- [ ] **Step 2: `basis_change.feature` の期待値を green に合わせて整える**
+- [ ] **手順 2: `basis_change.feature` の期待値を成功状態に合わせて整える**
 
-`features/katas/basic_gates/basis_change.feature` の scenario 名と期待値を、表示形式に合わせて最終調整する。
+`features/katas/basic_gates/basis_change.feature` のシナリオ名と期待値を、表示形式に合わせて最終調整する。
 
 候補:
 
@@ -389,11 +387,11 @@ Scenario: H ゲートは実数係数の一般状態を |+>, |-> 基底で表す
 Scenario: H ゲートは α|0> + β|1> を |+>, |-> 基底で表すと α|+> + β|-> になる
 ```
 
-ここでは `X basis` という言葉を feature から外し、読みやすさを優先する。
+ここでは `X basis` という言葉を機能仕様から外し、読みやすさを優先する。
 
-- [ ] **Step 3: 対象 feature を green にする**
+- [ ] **手順 3: 対象機能仕様を成功させる**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber \
@@ -402,32 +400,32 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber \
   features/katas/basic_gates/basis_change.feature
 ```
 
-Expected: PASS
+期待結果: 成功
 
-- [ ] **Step 4: 全体確認をする**
+- [ ] **手順 4: 全体確認をする**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec rake check
 ```
 
-Expected:
+期待結果:
 
-- `259 scenarios` から必要分だけ増えた最新件数で PASS
+- `259 scenarios` から必要分だけ増えた最新件数で成功
 - RuboCop / Reek / Cucumber がすべて通る
 
-- [ ] **Step 5: 仕上げをコミットする**
+- [ ] **手順 5: 仕上げをコミットする**
 
 ```bash
 git add features/step_definitions/cli_steps.rb features/katas/basic_gates/basis_change.feature features/qni_cli.feature
 git commit -m "test: rewrite basis change around x-basis display"
 ```
 
-## Notes for the Implementer
+## 実装者向けメモ
 
 - `features/*.feature` を先に変える。`AGENTS.md` のルールを守ること。
-- v1 では 1 qubit の `x` 基底だけで十分。2 qubit の basis 展開へ手を広げない。
-- `|+>`, `|->` は feature 上の読みやすい記法であり、内部 state model を変更する話ではない。
-- 既存の `qni export --state-vector` はこの plan の対象外。basis-aware な LaTeX export は後回しにする。
-- Python helper の引数 parse を広げるときは、既存の `--format latex` を壊さないこと。
+- v1 では 1 量子ビットの `x` 基底だけで十分。2 量子ビットの基底展開へ手を広げない。
+- `|+>`, `|->` は機能仕様上の読みやすい記法であり、内部状態モデルを変更する話ではない。
+- 既存の `qni export --state-vector` はこの計画の対象外。基底対応の LaTeX 書き出しは後回しにする。
+- Python 補助プログラムの引数解析を広げるときは、既存の `--format latex` を壊さないこと。
