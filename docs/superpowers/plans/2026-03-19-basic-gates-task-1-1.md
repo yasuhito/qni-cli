@@ -1,35 +1,35 @@
-# BasicGates Task 1.1 Implementation Plan
+# BasicGates Task 1.1 実装計画
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **自律型エージェント向け:** 必須: サブエージェントを利用できる場合は superpowers:subagent-driven-development、そうでなければ superpowers:executing-plans を使ってこの計画を実装する。進捗管理にはチェックボックス (`- [ ]`) 形式を使う。
 
-**Goal:** `QuantumKatas` の `BasicGates Task 1.1 StateFlip` を `qni-cli` 側の回帰テストとして追加し、`|0⟩ -> |1⟩` と `|1⟩ -> |0⟩` を `qni run` で検証できるようにする。
+**目標:** `QuantumKatas` の `BasicGates Task 1.1 StateFlip` を `qni-cli` 側の回帰テストとして追加し、`|0⟩ -> |1⟩` と `|1⟩ -> |0⟩` を `qni run` で検証できるようにする。
 
-**Architecture:** 既存の Cucumber ベースの CLI 受け入れテストに、Kata 専用 feature を 1 つ追加する。`qni-cli` 本体は先に変更せず、まずは既存の `X` ゲートと `qni run` だけで Task 1.1 を表現できるかを確認し、足りないものがあれば test support 側に最小限の step を追加する。
+**構成:** 既存の Cucumber ベースの CLI 受け入れテストに、Kata 専用の機能ファイルを 1 つ追加する。`qni-cli` 本体は先に変更せず、まずは既存の `X` ゲートと `qni run` だけでタスク 1.1 を表現できるかを確認し、足りないものがあればテスト補助側に最小限のステップを追加する。
 
-**Tech Stack:** Ruby, Cucumber, Bundler, `qni-cli`
+**技術構成:** Ruby, Cucumber, Bundler, `qni-cli`
 
 ---
 
-## File Structure
+## ファイル構成
 
-- Create: `features/katas/basic_gates.feature`
+- 作成: `features/katas/basic_gates.feature`
   - `BasicGates Task 1.1` の回帰シナリオを持つ。
-- Modify: `features/step_definitions/cli_steps.rb`
-  - 1 qubit の `|1⟩` 初期状態を準備する step を追加する。
-- Verify: `features/cli/add/add_x_gate.feature.md`
+- 変更: `features/step_definitions/cli_steps.rb`
+  - 1 量子ビットの `|1⟩` 初期状態を準備するステップを追加する。
+- 確認: `features/cli/add/add_x_gate.feature.md`
   - 既存の `X` ゲート追加機能が回帰していないことを確認する。
-- Verify: `features/qni_run.feature`
+- 確認: `features/qni_run.feature`
   - 既存の `qni run` 振る舞いが回帰していないことを確認する。
 
-### Task 1: Add the kata regression feature
+### タスク 1: Kata 回帰用の機能ファイルを追加する
 
-**Files:**
-- Create: `features/katas/basic_gates.feature`
-- Test: `features/katas/basic_gates.feature`
+**ファイル:**
+- 作成: `features/katas/basic_gates.feature`
+- テスト: `features/katas/basic_gates.feature`
 
-- [ ] **Step 1: Write the failing feature scenarios**
+- [ ] **手順 1: 失敗する機能シナリオを書く**
 
-`features/katas/basic_gates.feature` に日本語 feature を追加し、少なくとも次の 2 シナリオを書く。
+`features/katas/basic_gates.feature` に日本語の機能ファイルを追加し、少なくとも次の 2 シナリオを書く。
 
 ```gherkin
 # language: ja
@@ -53,47 +53,47 @@
       """
 ```
 
-- [ ] **Step 2: Run the new feature and verify it fails**
+- [ ] **手順 2: 新しい機能ファイルを実行し、失敗することを確認する**
 
-Run:
+実行:
 
 ```bash
 bundle exec cucumber features/katas/basic_gates.feature
 ```
 
-Expected:
+期待結果:
 
 - 1 本目のシナリオは通る可能性がある
 - 2 本目は `前提 1 qubit の初期状態が "|1>" である` が未定義で失敗する
 
-- [ ] **Step 3: Commit the failing test**
+- [ ] **手順 3: 失敗するテストをコミットする**
 
 ```bash
 git add features/katas/basic_gates.feature
 git commit -m "test: add BasicGates Task 1.1 regression scenarios"
 ```
 
-### Task 2: Add the missing 1-qubit state preparation step
+### タスク 2: 不足している 1 量子ビットの状態準備ステップを追加する
 
-**Files:**
-- Modify: `features/step_definitions/cli_steps.rb`
-- Test: `features/katas/basic_gates.feature`
+**ファイル:**
+- 変更: `features/step_definitions/cli_steps.rb`
+- テスト: `features/katas/basic_gates.feature`
 
-- [ ] **Step 1: Run the focused failure again**
+- [ ] **手順 1: 対象を絞った失敗を再実行する**
 
-Run:
+実行:
 
 ```bash
 bundle exec cucumber features/katas/basic_gates.feature:12
 ```
 
-Expected:
+期待結果:
 
-- 未定義 step エラーが再現する
+- 未定義ステップのエラーが再現する
 
-- [ ] **Step 2: Write the minimal step definition**
+- [ ] **手順 2: 最小限のステップ定義を書く**
 
-`features/step_definitions/cli_steps.rb` に、1 qubit の初期状態を作る step を追加する。
+`features/step_definitions/cli_steps.rb` に、1 量子ビットの初期状態を作るステップを追加する。
 
 ```ruby
 前提('1 qubit の初期状態が {string} である') do |state|
@@ -114,92 +114,92 @@ Expected:
 end
 ```
 
-- [ ] **Step 3: Run the kata feature and verify it passes**
+- [ ] **手順 3: Kata の機能ファイルを実行し、成功することを確認する**
 
-Run:
+実行:
 
 ```bash
 bundle exec cucumber features/katas/basic_gates.feature
 ```
 
-Expected:
+期待結果:
 
-- 2 scenarios
-- 0 failures
+- 2 シナリオ
+- 失敗 0 件
 
-- [ ] **Step 4: Commit the support change**
+- [ ] **手順 4: 補助コードの変更をコミットする**
 
 ```bash
 git add features/step_definitions/cli_steps.rb features/katas/basic_gates.feature
 git commit -m "test: support BasicGates Task 1.1 state preparation"
 ```
 
-### Task 3: Verify no product change is required
+### タスク 3: `qni-cli` 本体の変更が不要であることを確認する
 
-**Files:**
-- Verify: `features/cli/add/add_x_gate.feature.md`
-- Verify: `features/qni_run.feature`
-- Verify: `features/katas/basic_gates.feature`
+**ファイル:**
+- 確認: `features/cli/add/add_x_gate.feature.md`
+- 確認: `features/qni_run.feature`
+- 確認: `features/katas/basic_gates.feature`
 
-- [ ] **Step 1: Run the existing X-gate feature**
+- [ ] **手順 1: 既存の X ゲート機能を実行する**
 
-Run:
+実行:
 
 ```bash
 bundle exec cucumber features/cli/add/add_x_gate.feature.md
 ```
 
-Expected:
+期待結果:
 
-- PASS
+- 成功
 
-- [ ] **Step 2: Run the existing qni run feature**
+- [ ] **手順 2: 既存の `qni run` 機能を実行する**
 
-Run:
+実行:
 
 ```bash
 bundle exec cucumber features/qni_run.feature
 ```
 
-Expected:
+期待結果:
 
-- PASS
+- 成功
 
-- [ ] **Step 3: Re-run the kata feature**
+- [ ] **手順 3: Kata の機能ファイルを再実行する**
 
-Run:
+実行:
 
 ```bash
 bundle exec cucumber features/katas/basic_gates.feature
 ```
 
-Expected:
+期待結果:
 
-- PASS
+- 成功
 
-- [ ] **Step 4: Inspect whether `qni-cli` implementation changes are still unnecessary**
+- [ ] **手順 4: `qni-cli` 実装変更が引き続き不要か確認する**
 
-Check:
+確認:
 
-- `features/katas/basic_gates.feature` が green である
-- `features/cli/add/add_x_gate.feature.md` が green である
-- `features/qni_run.feature` が green である
+- `features/katas/basic_gates.feature` が成功している
+- `features/cli/add/add_x_gate.feature.md` が成功している
+- `features/qni_run.feature` が成功している
 - `lib/` 配下に変更が不要である
 
-If all are true:
+すべて満たす場合:
 
 - 今回は `qni-cli` 本体の変更は不要
-- `Task 1.1` は既存機能で表現・検証可能と結論づける
+- タスク 1.1 は既存機能で表現・検証可能と結論づける
 
-- [ ] **Step 5: Commit the verification result**
+- [ ] **手順 5: 検証結果をコミットする**
 
 ```bash
 git add features/katas/basic_gates.feature features/step_definitions/cli_steps.rb
 git commit -m "test: verify BasicGates Task 1.1 with existing qni-cli"
 ```
 
-## Notes
+## メモ
 
-- `Task 1.1` は最初の回帰ケースなので、補助検証は追加しない。まずは `qni run` の状態ベクトル比較だけで成立させる。
-- もし `features/qni_run.feature` の既存 step だけで `|1>` 初期状態を十分に表現できる別手段が見つかれば、新 step 追加は不要。その場合でも plan は「最小変更で green にする」という原則で実行する。
+- タスク 1.1 は最初の回帰ケースなので、補助検証は追加しない。まずは `qni run` の状態ベクトル比較だけで成立させる。
+- もし `features/qni_run.feature` の既存ステップだけで `|1>` 初期状態を十分に表現できる別手段が見つかれば、新しいステップ追加は不要。その場合でも計画は「最小変更で成功させる」という原則で実行する。
 - `QuantumKatas` 本体は編集しない。参照のみ。
