@@ -77,4 +77,35 @@ describe('TypeScript numeric simulator compatibility', () => {
       assert.equal(simulator.renderExpectationValues(['X', 'Z']), rubyOutput(dir, ['expect', 'X', 'Z']));
     });
   });
+
+  it('extends a shorter initial_state with zeroed suffix qubits', () => {
+    const circuit: CircuitData = {
+      cols: [[1, 'X']],
+      initial_state: {
+        format: 'ket_sum_v1',
+        terms: [
+          { basis: '0', coefficient: '0.7071067811865476' },
+          { basis: '1', coefficient: '0.7071067811865476' }
+        ]
+      },
+      qubits: 2
+    };
+
+    const simulator = new Simulator(circuit);
+
+    assert.equal(simulator.renderStateVector(), '0.0,0.7071067811865476,0.0,0.7071067811865476');
+    assert.equal(simulator.renderExpectationValues(['IZ']), 'IZ=-1.0');
+  });
+
+  it('rejects qubit counts that would overflow JavaScript bitwise state indexing', () => {
+    const circuit: CircuitData = {
+      cols: [],
+      qubits: 32
+    };
+
+    assert.throws(
+      () => new Simulator(circuit).renderStateVector(),
+      /too many qubits for TypeScript numeric run: 32/u
+    );
+  });
 });

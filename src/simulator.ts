@@ -1,7 +1,7 @@
 import { AngleExpression, AngleExpressionError } from './angle_expression';
 import { Complex } from './complex';
 import type { CircuitData } from './circuit_file';
-import { InitialStateError, resolveNumericInitialState } from './initial_state';
+import { InitialStateError, initialStateQubitCount, resolveNumericInitialState } from './initial_state';
 
 export class SimulatorError extends Error {}
 
@@ -10,6 +10,7 @@ type GateOperator = (zero: Complex, one: Complex) => [Complex, Complex];
 const CONTROL_SYMBOL = '•';
 const EMPTY_SLOT = 1;
 const H_SCALE = 1 / Math.sqrt(2);
+const MAX_BITWISE_QUBITS = 30;
 const SWAP_SYMBOL = 'Swap';
 
 const FIXED_GATE_OPERATORS = new Map<string, GateOperator>([
@@ -51,6 +52,8 @@ export class Simulator {
 
   private stateVector(): StateVector {
     try {
+      ensureSupportedQubitCount(this.data.qubits);
+
       return this.data.cols.reduce(
         (current, col) => new StepOperation(col, this.gateOperatorFor.bind(this)).apply(current),
         this.startingStateVector()
@@ -73,7 +76,17 @@ export class Simulator {
       return StateVector.zero(this.data.qubits);
     }
 
-    return new StateVector(this.data.qubits, resolveNumericInitialState(this.data.initial_state, this.variables()));
+    const initialQubits = initialStateQubitCount(this.data.initial_state);
+    ensureInitialStateFitsCircuit(initialQubits, this.data.qubits);
+
+    return new StateVector(
+      this.data.qubits,
+      expandInitialState(
+        resolveNumericInitialState(this.data.initial_state, this.variables()),
+        initialQubits,
+        this.data.qubits
+      )
+    );
   }
 
   private gateOperatorFor(gate: unknown): GateOperator {
@@ -103,7 +116,7 @@ class StateVector {
   private readonly qubits: number;
 
   static zero(qubits: number): StateVector {
-    const amplitudes = Array.from({ length: 1 << qubits }, () => new Complex(0));
+    const amplitudes = Array.from({ length: stateVectorSize(qubits) }, () => new Complex(0));
     amplitudes[0] = new Complex(1);
 
     return new StateVector(qubits, amplitudes);
@@ -445,6 +458,46 @@ function requiredAmplitude(amplitudes: readonly Complex[], index: number): Compl
   }
 
   return amplitude;
+}
+
+function expandInitialState(
+  amplitudes: readonly Complex[],
+  initialQubits: number,
+  circuitQubits: number
+): readonly Complex[] {
+  if (initialQubits === circuitQubits) {
+    return amplitudes;
+  }
+
+  const suffixStates = stateVectorSize(circuitQubits - initialQubits);
+  const expanded = Array.from({ length: stateVectorSize(circuitQubits) }, () => new Complex(0));
+
+  amplitudes.forEach((amplitude, index) => {
+    expanded[index * suffixStates] = amplitude;
+  });
+
+  return expanded;
+}
+
+function ensureInitialStateFitsCircuit(initialQubits: number, circuitQubits: number): void {
+  if (initialQubits > circuitQubits) {
+    throw new SimulatorError('initial state qubit count cannot exceed circuit qubit count');
+  }
+}
+
+function ensureSupportedQubitCount(qubits: number): void {
+  if (!Number.isInteger(qubits) || qubits < 0) {
+    throw new SimulatorError(`invalid qubit count for run: ${qubits}`);
+  }
+
+  if (qubits > MAX_BITWISE_QUBITS) {
+    throw new SimulatorError(`too many qubits for TypeScript numeric run: ${qubits}`);
+  }
+}
+
+function stateVectorSize(qubits: number): number {
+  ensureSupportedQubitCount(qubits);
+  return 2 ** qubits;
 }
 
 function bitMask(qubits: number, qubit: number): number {
