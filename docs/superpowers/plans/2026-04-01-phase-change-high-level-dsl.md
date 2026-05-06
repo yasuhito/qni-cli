@@ -29,7 +29,7 @@
 - 変更: `features/katas/basic_gates/phase_change.feature`
 - テスト: `features/katas/basic_gates/phase_change.feature`
 
-- [ ] **手順 1: feature ファイルの見出しをタスク 1.6 の数学に合わせて整理する**
+- [ ] **手順 1: 機能ファイルの見出しをタスク 1.6 の数学に合わせて整理する**
 
 `features/katas/basic_gates/phase_change.feature` の導入文を、少なくとも次の内容へ寄せる。
 
@@ -39,7 +39,7 @@
 
 - [ ] **手順 2: 低レベルシナリオを 4 本の高レベルシナリオに置き換える**
 
-feature ファイルを次の方向へ更新する。
+機能ファイルを次の方向へ更新する。
 
 ```gherkin
 Scenario: 位相回転は |0> を変えない
@@ -129,7 +129,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber \
 
 で失敗する。
 
-- [ ] **手順 4: 失敗する feature をコミットする**
+- [ ] **手順 4: 失敗する機能ファイルをコミットする**
 
 ```bash
 git add features/katas/basic_gates/phase_change.feature
@@ -175,7 +175,7 @@ git commit -m "test: rewrite phase change scenarios"
 
 などの正規化を壊さない最小変更にとどめる。
 
-- [ ] **手順 4: 対象 feature ファイルを成功させる**
+- [ ] **手順 4: 対象の機能ファイルを成功させる**
 
 実行:
 
@@ -272,7 +272,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec rake check
 確認:
 
 - 変更が `phase_change.feature` と `cli_steps.rb` 中心に収まっている
-- 無関係な CLI / renderer / basis API の変更が入っていない
+- 無関係な CLI / 描画処理 / 基底 API の変更が入っていない
 
 - [ ] **手順 4: 最終コミットを追加する**
 
