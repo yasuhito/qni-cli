@@ -31,7 +31,7 @@
 - 確認: `features/katas/basic_gates/sign_flip.feature`
   - `Task 1.3` が回帰していないことを確認する。
 
-## Task 1: `Task 1.4` の機能ファイルを先に追加して赤を確認する
+## 作業 1: `Task 1.4` の機能ファイルを先に追加して赤を確認する
 
 **ファイル:**
 - 作成: `features/katas/basic_gates/amplitude_change.feature`
@@ -111,7 +111,7 @@ git add features/katas/basic_gates/amplitude_change.feature
 git commit -m "test: add Task 1.4 kata scenarios"
 ```
 
-## Task 2: 角度式の不足を最小実装で埋める
+## 作業 2: 角度式の不足を最小実装で埋める
 
 **ファイル:**
 - 変更: `features/add_ry_gate.feature`
@@ -177,7 +177,7 @@ git add features/add_ry_gate.feature features/qni_run.feature features/qni_expec
 git commit -m "feat: support simple angle expressions"
 ```
 
-## Task 3: `Task 1.4` の機能ファイルを成功させる
+## 作業 3: `Task 1.4` の機能ファイルを成功させる
 
 **ファイル:**
 - 変更: `features/katas/basic_gates/amplitude_change.feature`
@@ -222,7 +222,7 @@ git add features/katas/basic_gates/amplitude_change.feature
 git commit -m "test: document Task 1.4 amplitude change"
 ```
 
-## Task 4: 近接回帰を確認する
+## 作業 4: 近接回帰を確認する
 
 **ファイル:**
 - 確認: `features/katas/basic_gates/state_flip.feature`
