@@ -1,80 +1,80 @@
-# Circle Notation Export Design
+# 円記法書き出し設計
 
-## Problem
+## 問題
 
 `qni-cli` は現在、
 
 - 回路図の PNG 出力
-- symbolic state vector の PNG 出力
-- 1 qubit 用 Bloch 球出力
+- 記号的な状態ベクトルの PNG 出力
+- 1量子ビット用 Bloch 球出力
 
-を持っているが、Qni 本家の tutorial で使っている circle notation を CLI から書き出す手段がない。
+を持っているが、Qni 本家のチュートリアルで使っている円記法を CLI から書き出す手段がない。
 
 そのため、Task 1.8 以降の Bell 状態の説明では、
 
-- 2 qubit の計算基底ごとの振幅
+- 2量子ビットの計算基底ごとの振幅
 - 振幅の大きさと位相
 - Bell 状態でどの基底成分に重みがあるか
 
 を Obsidian へ貼りやすい静止画像として生成できない。
 
-一方で [../qni](/home/yasuhito/Work/qni) には circle notation の既存実装と docs があり、Qni 全体としてはこの表現がすでにユーザーに馴染んでいる。
+一方で [../qni](/home/yasuhito/Work/qni) には円記法の既存実装とドキュメントがあり、Qni 全体としてはこの表現がすでにユーザーに馴染んでいる。
 
-## Goal
+## 目標
 
-- `qni-cli` に circle notation の PNG 書き出しを追加する
-- CLI 形は既存の export 系に寄せる
-- 1 qubit / 2 qubit の計算基底 state vector を circle notation に変換できるようにする
+- `qni-cli` に円記法の PNG 書き出しを追加する
+- CLI 形式は既存の `export` 系に寄せる
+- 1量子ビット / 2量子ビットの計算基底状態ベクトルを円記法に変換できるようにする
 - Quantum Katas Task 1.8〜1.10 の説明図にそのまま使えるところまでを最初の到達点にする
 
-## Non-Goals
+## 対象外
 
 - HTML / Web Component を直接再利用すること
-- SVG, APNG, interactive popup まで同時に対応すること
-- 3 qubit 以上を最初のスコープに含めること
+- SVG, APNG, 対話式ポップアップまで同時に対応すること
+- 3量子ビット以上を最初の範囲に含めること
 - Bell 基底を別レイアウトで特別扱いすること
 
-## Approaches Considered
+## 検討した案
 
-### 1. `../qni` の Web Component を headless render する
+### 1. `../qni` の Web Component をヘッドレスで描画する
 
 - 見た目の互換性は高い
 - 既存資産を使える
-- ただし Node / browser rendering 依存が増え、`qni-cli` 単体としては重くなる
+- ただし Node / ブラウザー描画への依存が増え、`qni-cli` 単体としては重くなる
 
-### 2. `qni-cli` で circle notation を再実装する
+### 2. `qni-cli` で円記法を再実装する
 
-- Ruby / Python の既存 export pipeline に自然に乗せやすい
+- Ruby / Python の既存書き出し処理に自然に乗せやすい
 - 将来 `qni-cli` を Qni に統合する前提とも整合する
-- 見た目の微差は出るが、notation 自体は比較的単純で再実装コストも抑えられる
+- 見た目の微差は出るが、記法自体は比較的単純で再実装コストも抑えられる
 
 ### 3. 新コマンド `qni circle` を追加する
 
 - コマンドの意味は明快
-- ただし export まわりの責務が分かれ、既存の `qni export --state-vector` と並ばない
+- ただし書き出しまわりの責務が分かれ、既存の `qni export --state-vector` と並ばない
 
-## Decision
+## 決定
 
-Approach 2 を採用し、CLI 形は export 拡張にする。
+案 2 を採用し、CLI 形式は `export` 拡張にする。
 
 具体的には:
 
 - `qni export --circle-notation --png --output state.png`
 - `--circle-notation` と `--state-vector` は排他的
 - 最初は `--png` のみ
-- 1 qubit / 2 qubit のみ対応
+- 1量子ビット / 2量子ビットのみ対応
 
 この形なら、
 
 - 既存の `ExportCommand` に収まりがよい
 - Obsidian 用の静止画像生成に直結する
-- 将来 `qni-cli` の renderer を Qni 本体側へ寄せる余地も残る
+- 将来 `qni-cli` の描画器を Qni 本体側へ寄せる余地も残る
 
-## Rendering Model
+## 描画モデル
 
-circle notation renderer は simulator の最終 state vector を入力に取り、計算基底の各 basis state について次を描く。
+円記法の描画器はシミュレーターの最終状態ベクトルを入力に取り、計算基底の各基底状態について次を描く。
 
-- ket label
+- ケットラベル
 - 振幅の大きさ
 - 位相
 
@@ -82,10 +82,10 @@ circle notation renderer は simulator の最終 state vector を入力に取り
 
 - 円の大きさ: 確率振幅の絶対値に対応
 - 針または線分の向き: 位相に対応
-- 1 qubit は 2 個の円、2 qubit は 4 個の円
+- 1量子ビットは 2 個の円、2量子ビットは 4 個の円
 - 1 行レイアウトで十分
 
-## CLI Surface
+## CLI 仕様
 
 期待する使用例:
 
@@ -93,35 +93,35 @@ circle notation renderer は simulator の最終 state vector を入力に取り
 qni export --circle-notation --png --output state.png
 ```
 
-validation:
+検証:
 
 - `--circle-notation` は `--png` と一緒でなければならない
 - `--circle-notation` と `--state-vector` は同時指定不可
-- 最初は 1 qubit / 2 qubit のみ対応
+- 最初は 1量子ビット / 2量子ビットのみ対応
 
-## Acceptance Shape
+## 受け入れ条件の形
 
 先に `features/qni_export.feature` へ次を追加する。
 
 1. `qni export --circle-notation --png` は PNG を書き出す
-2. `|+>` の 1 qubit circle notation を書き出せる
-3. `|Φ+>` の 2 qubit circle notation を書き出せる
-4. 3 qubit 回路では失敗する
+2. `|+>` の 1量子ビット円記法を書き出せる
+3. `|Φ+>` の 2量子ビット円記法を書き出せる
+4. 3量子ビット回路では失敗する
 5. `--state-vector` との併用は失敗する
 
-## Implementation Notes
+## 実装メモ
 
 - `lib/qni/cli/export_options.rb`
-  - option validation を追加
+  - オプション検証を追加
 - `lib/qni/cli/export_command.rb`
-  - export 分岐を追加
+  - 書き出し分岐を追加
 - `lib/qni/export/`
-  - circle notation renderer と PNG writer を追加
-- 既存の simulator / state vector を再利用し、gate semantics には触れない
+  - 円記法の描画器と PNG 書き込み処理を追加
+- 既存のシミュレーター / 状態ベクトルを再利用し、ゲートの意味には触れない
 
-## Risks
+## リスク
 
 - Qni 本家の円表示と完全一致しない可能性
-- 2 qubit レイアウトの細部で将来調整が必要になる可能性
+- 2量子ビットレイアウトの細部で将来調整が必要になる可能性
 
-ただし、今回の目的は tutorial と Obsidian note 用の説明画像生成なので、まずは「意味が正しく、安定して出力できること」を優先する。
+ただし、今回の目的はチュートリアルと Obsidian ノート用の説明画像生成なので、まずは「意味が正しく、安定して出力できること」を優先する。
