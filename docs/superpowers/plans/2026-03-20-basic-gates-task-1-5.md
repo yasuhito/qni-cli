@@ -91,7 +91,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/sha
 
 期待結果:
 
-- 既存機能で足りるならそのまま PASS
+- 既存機能で足りるならそのまま成功する
 - 失敗した場合は、何が不足かを `S` / `Sdg` / 制御付き指定 / 記号表示のどこかに切り分けられる
 
 - [ ] **手順 3: 失敗でも成功でも、機能仕様を先に追加する変更をコミットする**
@@ -157,7 +157,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/sha
 
 期待結果:
 
-- `Task 1.5` の 3 シナリオが PASS
+- `Task 1.5` の 3 シナリオが成功する
 
 - [ ] **手順 5: 必要な修正をコミットする**
 
@@ -200,7 +200,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/sha
 
 期待結果:
 
-- すべて PASS
+- すべて成功する
 
 - [ ] **手順 2: 近接回帰の成功をコミットする**
 
@@ -223,7 +223,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/sha
 
 期待結果:
 
-- 全シナリオが PASS
+- 全シナリオが成功する
 
 - [ ] **手順 2: Ruby 品質チェックを実行する**
 
@@ -238,7 +238,7 @@ rake flay
 
 期待結果:
 
-- すべて PASS
+- すべて成功する
 
 - [ ] **手順 3: 統合前の状態を確認する**
 
