@@ -1,41 +1,41 @@
-# Symbolic Runtime Stabilization Implementation Plan
+# 記号実行環境安定化の実装計画
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **エージェント作業者向け:** 必須: この計画の実装には superpowers:subagent-driven-development（サブエージェントが利用可能な場合）または superpowers:executing-plans を使う。手順の進捗管理にはチェックボックス（`- [ ]`）構文を使う。
 
-**Goal:** `qni run --symbolic` が setup 完了後のローカル環境でネットワーク不要に安定動作するように、SymPy を repo 内の固定 Python 仮想環境から実行する。
+**目的:** `qni run --symbolic` がセットアップ完了後のローカル環境でネットワーク不要に安定動作するように、SymPy をリポジトリ内の固定 Python 仮想環境から実行する。
 
-**Architecture:** SymPy を捨てず、repo 内に symbolic 専用の Python 仮想環境を置いて正式依存として固定する。Ruby 側の `SymbolicStateRenderer` は helper 解決順を `repo 内 venv -> system python3 -> uv` に変更し、通常経路ではネットワーク不要で helper を呼び出す。既存の symbolic feature はこの固定 runtime を前提に green へ戻す。
+**設計:** SymPy を捨てず、リポジトリ内に記号実行専用の Python 仮想環境を置いて正式依存として固定する。Ruby 側の `SymbolicStateRenderer` は補助プログラムの解決順を `リポジトリ内仮想環境 -> システムの python3 -> uv` に変更し、通常経路ではネットワーク不要で補助プログラムを呼び出す。既存の記号実行機能はこの固定実行環境を前提に成功状態へ戻す。
 
-**Tech Stack:** Ruby, Python 3, SymPy, Bundler, Cucumber, Open3, shell script
+**技術構成:** Ruby, Python 3, SymPy, Bundler, Cucumber, Open3, シェルスクリプト
 
 ---
 
-## File Structure
+## ファイル構成
 
-- Modify: `features/qni_run.feature`
-  - symbolic 実行の失敗原因が runtime 導入不足であることを切り分ける最小回帰を追加する場合のみ触る。
-- Modify: `lib/qni/symbolic_state_renderer.rb`
-  - helper 解決順を repo 内 venv 優先へ変更し、runtime 不足時のエラーメッセージを整理する。
-- Modify: `libexec/qni_symbolic_run.py`
-  - SymPy 本体への依存は維持しつつ、起動方法の前提を repo 内 runtime に合わせる。
-- Create: `scripts/setup_symbolic_python.sh`
-  - repo 内 symbolic runtime を作成し、SymPy をインストールする。
-- Optionally modify: `.gitignore`
-  - repo 内 runtime を追跡しない設定が未整備なら追加する。
-- Optionally modify: `README` または関連ドキュメント
-  - symbolic runtime のセットアップ手順を短く追記する。
+- 変更: `features/qni_run.feature`
+  - 記号実行の失敗原因が実行環境の導入不足であることを切り分ける最小回帰を追加する場合のみ触る。
+- 変更: `lib/qni/symbolic_state_renderer.rb`
+  - 補助プログラムの解決順をリポジトリ内仮想環境優先へ変更し、実行環境不足時のエラーメッセージを整理する。
+- 変更: `libexec/qni_symbolic_run.py`
+  - SymPy 本体への依存は維持しつつ、起動方法の前提をリポジトリ内実行環境に合わせる。
+- 作成: `scripts/setup_symbolic_python.sh`
+  - リポジトリ内に記号実行環境を作成し、SymPy をインストールする。
+- 必要に応じて変更: `.gitignore`
+  - リポジトリ内実行環境を追跡しない設定が未整備なら追加する。
+- 必要に応じて変更: `README` または関連ドキュメント
+  - 記号実行環境のセットアップ手順を短く追記する。
 
-## Task 1: failing symbolic 実行を固定して切り分ける
+## タスク 1: 失敗する記号実行を固定して切り分ける
 
-**Files:**
-- Verify: `features/qni_run.feature`
-- Verify: `features/katas/basic_gates/amplitude_change.feature`
-- Verify: `features/katas/basic_gates/basis_change.feature`
-- Verify: `features/katas/basic_gates/bell_state_change_1.feature`
+**ファイル:**
+- 確認: `features/qni_run.feature`
+- 確認: `features/katas/basic_gates/amplitude_change.feature`
+- 確認: `features/katas/basic_gates/basis_change.feature`
+- 確認: `features/katas/basic_gates/bell_state_change_1.feature`
 
-- [ ] **Step 1: symbolic の失敗シナリオを focused 実行する**
+- [ ] **手順 1: 記号実行の失敗シナリオを絞り込んで実行する**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/share/gem/ruby/3.4.0/bin/bundle exec cucumber \
@@ -45,14 +45,14 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/sha
   features/katas/basic_gates/bell_state_change_1.feature
 ```
 
-Expected:
+期待結果:
 
 - `qni run --symbolic` を使うシナリオが失敗する
-- 失敗の共通点が helper runtime にあることを確認できる
+- 失敗の共通点が補助プログラムの実行環境にあることを確認できる
 
-- [ ] **Step 2: direct 実行で root cause を再確認する**
+- [ ] **手順 2: 直接実行で根本原因を再確認する**
 
-Run:
+実行:
 
 ```bash
 tmpdir=$(mktemp -d /tmp/qni-symbolic-XXXXXX)
@@ -69,29 +69,29 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor \
 /home/yasuhito/Work/qni-cli/bin/qni run --symbolic
 ```
 
-Expected:
+期待結果:
 
-- `python3` に SymPy がなく、`uv` フォールバックがネットワーク制限で失敗することを確認できる
+- `python3` に SymPy がなく、`uv` 代替経路がネットワーク制限で失敗することを確認できる
 
-- [ ] **Step 3: この失敗状態をコミットしない**
+- [ ] **手順 3: この失敗状態をコミットしない**
 
-この task では、root cause の確認だけを行い、失敗状態のための commit は作らない。
+このタスクでは、根本原因の確認だけを行い、失敗状態のためのコミットは作らない。
 
-## Task 2: repo 内 symbolic runtime を追加する
+## タスク 2: リポジトリ内の記号実行環境を追加する
 
-**Files:**
-- Create: `scripts/setup_symbolic_python.sh`
-- Optionally modify: `.gitignore`
+**ファイル:**
+- 作成: `scripts/setup_symbolic_python.sh`
+- 必要に応じて変更: `.gitignore`
 
-- [ ] **Step 1: runtime 配置先を決める**
+- [ ] **手順 1: 実行環境の配置先を決める**
 
-配置先は repo 内の隠し directory とし、候補は次を優先する。
+配置先はリポジトリ内の隠しディレクトリとし、候補は次を優先する。
 
 - `.python-symbolic/`
 
 ここには仮想環境本体を置き、git 追跡対象からは除外する。
 
-- [ ] **Step 2: runtime setup script を追加する**
+- [ ] **手順 2: 実行環境のセットアップスクリプトを追加する**
 
 `scripts/setup_symbolic_python.sh` を新規作成し、少なくとも次を行う。
 
@@ -107,10 +107,10 @@ python3 -m venv "$VENV"
 "$VENV/bin/python" -m pip install sympy
 ```
 
-必要なら idempotent にし、既存環境があれば再利用できるようにする。
-setup 時の dependency install はネットワークを使ってよい。ここで重要なのは、setup 完了後の symbolic 実行がネットワーク不要になることである。
+必要なら冪等にし、既存環境があれば再利用できるようにする。
+セットアップ時の依存関係インストールはネットワークを使ってよい。ここで重要なのは、セットアップ完了後の記号実行がネットワーク不要になることである。
 
-- [ ] **Step 3: runtime directory を ignore する**
+- [ ] **手順 3: 実行環境ディレクトリを追跡対象から除外する**
 
 `.gitignore` に次を追加する。
 
@@ -118,57 +118,57 @@ setup 時の dependency install はネットワークを使ってよい。ここ
 .python-symbolic/
 ```
 
-すでに ignore 済みなら変更しない。
+すでに除外済みなら変更しない。
 
-- [ ] **Step 4: setup script を実行して runtime を作る**
+- [ ] **手順 4: セットアップスクリプトを実行して実行環境を作る**
 
-Run:
+実行:
 
 ```bash
 bash scripts/setup_symbolic_python.sh
 ```
 
-Expected:
+期待結果:
 
 - `./.python-symbolic/bin/python` が作成される
 - その Python で `import sympy` が成功する
 
-- [ ] **Step 5: runtime 追加をコミットする**
+- [ ] **手順 5: 実行環境追加をコミットする**
 
 ```bash
 git add scripts/setup_symbolic_python.sh .gitignore
 git commit -m "build: add symbolic runtime setup"
 ```
 
-## Task 3: Ruby 側の helper 解決順を更新する
+## タスク 3: Ruby 側の補助プログラム解決順を更新する
 
-**Files:**
-- Modify: `lib/qni/symbolic_state_renderer.rb`
+**ファイル:**
+- 変更: `lib/qni/symbolic_state_renderer.rb`
 
-- [ ] **Step 1: failing symbolic scenario を 1 本再実行する**
+- [ ] **手順 1: 失敗する記号実行シナリオを 1 本再実行する**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/share/gem/ruby/3.4.0/bin/bundle exec cucumber features/qni_run.feature
 ```
 
-Expected:
+期待結果:
 
-- runtime 解決順未更新のため、まだ失敗する
+- 実行環境の解決順が未更新のため、まだ失敗する
 
-- [ ] **Step 2: repo 内 runtime 優先の helper command を実装する**
+- [ ] **手順 2: リポジトリ内実行環境優先の補助コマンドを実装する**
 
-`lib/qni/symbolic_state_renderer.rb` の helper 解決順を次に変える。
+`lib/qni/symbolic_state_renderer.rb` の補助プログラム解決順を次に変える。
 
 - 1. `./.python-symbolic/bin/python`
 - 2. `python3`
 - 3. `uv run --quiet --with sympy python3`
 
-repo 内 runtime が存在しない場合だけ次候補へ進む。
-現在の実装は `ENOENT` で即座に abort するため、repo 内 runtime 不在時に明示的に retry して次候補へ進むロジックを追加する。
+リポジトリ内実行環境が存在しない場合だけ次候補へ進む。
+現在の実装は `ENOENT` で即座に中断するため、リポジトリ内実行環境不在時に明示的に再試行して次候補へ進むロジックを追加する。
 
-- [ ] **Step 3: runtime 不足時のエラーメッセージを更新する**
+- [ ] **手順 3: 実行環境不足時のエラーメッセージを更新する**
 
 現状の
 
@@ -176,15 +176,15 @@ repo 内 runtime が存在しない場合だけ次候補へ進む。
 symbolic run requires Python with SymPy or uv
 ```
 
-を、repo 内 runtime を前提にした表現へ更新する。例:
+を、リポジトリ内実行環境を前提にした表現へ更新する。例:
 
 ```text
 symbolic run requires SymPy runtime; run scripts/setup_symbolic_python.sh
 ```
 
-- [ ] **Step 4: focused symbolic scenario を green にする**
+- [ ] **手順 4: 絞り込んだ記号実行シナリオを成功させる**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/share/gem/ruby/3.4.0/bin/bundle exec cucumber \
@@ -194,37 +194,37 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/sha
   features/katas/basic_gates/bell_state_change_1.feature
 ```
 
-Expected:
+期待結果:
 
-- 4 scenario とも PASS
+- 4 シナリオとも PASS
 
-- [ ] **Step 5: helper 解決順の更新をコミットする**
+- [ ] **手順 5: 補助プログラム解決順の更新をコミットする**
 
 ```bash
 git add lib/qni/symbolic_state_renderer.rb
 git commit -m "feat: prefer repo symbolic runtime"
 ```
 
-## Task 4: full verification を main 相当で通す
+## タスク 4: 全体検証を main 相当で通す
 
-**Files:**
-- Verify: repository-wide checks
+**ファイル:**
+- 確認: リポジトリ全体のチェック
 
-- [ ] **Step 1: full cucumber を fresh に実行する**
+- [ ] **手順 1: 全 Cucumber を新規に実行する**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/share/gem/ruby/3.4.0/bin/bundle exec cucumber
 ```
 
-Expected:
+期待結果:
 
-- 全 scenario が PASS
+- 全シナリオが PASS
 
-- [ ] **Step 2: Ruby 品質チェックを実行する**
+- [ ] **手順 2: Ruby 品質チェックを実行する**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/share/gem/ruby/3.4.0/bin/bundle exec rake rubocop
@@ -233,29 +233,29 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/sha
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/share/gem/ruby/3.4.0/bin/bundle exec rake flay
 ```
 
-Expected:
+期待結果:
 
 - すべて PASS
 
-- [ ] **Step 3: regression verification をコミットする**
+- [ ] **手順 3: 回帰検証をコミットする**
 
 ```bash
 git commit --allow-empty -m "test: verify symbolic runtime stabilization"
 ```
 
-## Task 5: review と統合準備
+## タスク 5: レビューと統合準備
 
-**Files:**
-- Verify: git diff and review feedback
+**ファイル:**
+- 確認: git diff とレビュー指摘
 
-- [ ] **Step 1: code review を依頼する**
+- [ ] **手順 1: コードレビューを依頼する**
 
-`superpowers:requesting-code-review` を使い、runtime stabilization の diff に対して review を取る。
+`superpowers:requesting-code-review` を使い、実行環境安定化の diff に対してレビューを取る。
 
-- [ ] **Step 2: 指摘があれば修正して再検証する**
+- [ ] **手順 2: 指摘があれば修正して再検証する**
 
-重要な指摘は統合前に解消し、必要な verification を再実行する。
+重要な指摘は統合前に解消し、必要な検証を再実行する。
 
-- [ ] **Step 3: 統合方法を決める**
+- [ ] **手順 3: 統合方法を決める**
 
 fast-forward merge か追加修正かを判断し、`main` に戻す準備を整える。
