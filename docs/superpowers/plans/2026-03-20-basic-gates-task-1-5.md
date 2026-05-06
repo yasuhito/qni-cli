@@ -4,7 +4,7 @@
 
 **目的:** `BasicGates Task 1.5 PhaseFlip` を `features/katas/basic_gates/phase_flip.feature` に追加し、Quantum Katas の `DumpDiffOnOneQubit` と制御付き等価性検証の意図を `qni-cli` 側で再現する。
 
-**方針:** 先に `phase_flip.feature` を追加して、既存の `S`、`S†`、制御付き指定、`qni run`、`qni run --symbolic`、`qni expect` だけでタスクを表現できるかを確認する。`Task 1.5` は自己随伴ではないため、制御付き検証では候補の制御付き `S` と逆操作の制御付き `S†` を組にして、制御量子ビットが `|0⟩` に戻ることを見る。不足が出た場合のみ、機能仕様を先に定義する方針で新しい仕様書 / 計画書に戻る。
+**方針:** 先に `phase_flip.feature` を追加して、既存の `S`、`Sdg`（S†）、制御付き指定、`qni run`、`qni run --symbolic`、`qni expect` だけでタスクを表現できるかを確認する。`Task 1.5` は自己随伴ではないため、制御付き検証では候補の制御付き `S` と逆操作の制御付き `Sdg`（S†）を組にして、制御量子ビットが `|0⟩` に戻ることを見る。不足が出た場合のみ、機能仕様を先に定義する方針で新しい仕様書 / 計画書に戻る。
 
 **技術構成:** Ruby, Cucumber, Bundler, `qni-cli`
 
@@ -17,7 +17,7 @@
 - 確認: `features/add_s_gate.feature`
   - `qni add S` の既存挙動が回帰していないことを確認する。
 - 確認: `features/add_s_dagger_gate.feature`
-  - 制御付き検証で使う `S†` の既存挙動が回帰していないことを確認する。
+  - 制御付き検証で使う `Sdg`（S†）の既存挙動が回帰していないことを確認する。
 - 確認: `features/qni_run.feature`
   - 数値実行と記号表示の実行が回帰していないことを確認する。
 - 確認: `features/qni_expect.feature`
