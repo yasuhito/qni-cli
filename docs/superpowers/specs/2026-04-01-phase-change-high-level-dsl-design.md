@@ -1,14 +1,14 @@
-# Phase Change High-Level DSL Design
+# 位相変化の高レベル DSL 設計
 
-## Problem
+## 課題
 
 現在の [phase_change.feature](/home/yasuhito/Work/qni-cli/.worktrees/codex-phase-change-rewrite/features/katas/basic_gates/phase_change.feature) は、
 
 - `qni add P --angle ...`
 - `qni variable set alpha ...`
 - `qni run`
-- numeric CSV の比較
-- controlled 検証 scenario
+- 数値 CSV の比較
+- 制御付きゲートの検証シナリオ
 
 が前面に出ており、すでに高レベル化した
 
@@ -19,32 +19,32 @@
 
 の読み口から外れている。
 
-そのため、Task 1.6 の本質である
+そのため、タスク 1.6 の本質である
 
 - `|0>` は変わらない
 - `|1>` にだけ `exp(iθ)` が掛かる
 - `θ = π/2` では PhaseFlip と同じ `|+> -> |+i>` が見える
 - 一般には `α|0> + β|1>` が `α|0> + exp(iθ)β|1>` になる
 
-が scenario から直接読み取りにくい。
+がシナリオから直接読み取りにくい。
 
-さらに、現状の feature は角度に `alpha`、振幅に `β` / `γ` を使っていて、これまでの高レベル kata で揃ってきた `θ` / `α` / `β` の記号系とも少しずれている。
+さらに、現状の機能ファイルは角度に `alpha`、振幅に `β` / `γ` を使っていて、これまでの高レベル kata で揃ってきた `θ` / `α` / `β` の記号系とも少しずれている。
 
-## Goal
+## 目標
 
-- [phase_change.feature](/home/yasuhito/Work/qni-cli/.worktrees/codex-phase-change-rewrite/features/katas/basic_gates/phase_change.feature) を Task 1.1〜1.5 と同じ高レベル DSL に書き換える
-- 主語は `P(θ)` ではなく「位相回転」にして、task の数学的意味を前面に出す
+- [phase_change.feature](/home/yasuhito/Work/qni-cli/.worktrees/codex-phase-change-rewrite/features/katas/basic_gates/phase_change.feature) をタスク 1.1〜1.5 と同じ高レベル DSL に書き換える
+- 主語は `P(θ)` ではなく「位相回転」にして、タスクの数学的意味を前面に出す
 - 角度は `θ`、振幅は `α` / `β` に寄せて読みやすくする
-- controlled 検証 scenario は外し、1 qubit の状態変化に集中する
+- 制御付きゲートの検証シナリオは外し、1 量子ビットの状態変化に集中する
 
-## Non-Goals
+## 対象外
 
-- `qni run --symbolic --basis z` のような新しい basis API を増やすこと
-- 多 qubit の一般化を同時に設計すること
-- Bloch 球や期待値ベースの検証を feature DSL に混ぜること
-- `P(θ)` の pretty-print をこの spec の中で完成させること
+- `qni run --symbolic --basis z` のような新しい基底 API を増やすこと
+- 複数量子ビットの一般化を同時に設計すること
+- Bloch 球や期待値ベースの検証を機能 DSL に混ぜること
+- `P(θ)` の整形表示をこの仕様書の中で完成させること
 
-## Approaches Considered
+## 検討した方針
 
 ### 1. ゲート中心に `P(θ)` を主語にする
 
@@ -57,7 +57,7 @@ Scenario: P(θ) は |1> を exp(iθ)|1> に変える
 - 実装に忠実
 - すでにある ASCII 回路とも一致しやすい
 
-ただし、Task 1.6 の主題はゲート名そのものではなく「一般角の位相回転」なので、学習者には記号が先に見えやすい。
+ただし、タスク 1.6 の主題はゲート名そのものではなく「一般角の位相回転」なので、学習者には記号が先に見えやすい。
 
 ### 2. 概念中心に「位相回転」を主語にする
 
@@ -67,7 +67,7 @@ Scenario: P(θ) は |1> を exp(iθ)|1> に変える
 Scenario: 位相回転は |1> に exp(iθ) を掛ける
 ```
 
-- Task の数学的意味がそのまま読める
+- タスクの数学的意味がそのまま読める
 - [phase_flip.feature](/home/yasuhito/Work/qni-cli/.worktrees/codex-phase-change-rewrite/features/katas/basic_gates/phase_flip.feature) の `S ゲートは ...` を「固定角の特別な位相回転」として自然につなげられる
 - 回路は `When 次の回路を適用:` で具体的に見せられる
 
@@ -80,21 +80,21 @@ When 位相を θ だけ回転:
 ```
 
 - かなり読みやすい
-- ただし Task 1.1〜1.5 で揃えた `When 次の回路を適用:` のリズムから外れる
-- task 専用 DSL をこれ以上増やさないほうが全体の一貫性は高い
+- ただしタスク 1.1〜1.5 で揃えた `When 次の回路を適用:` のリズムから外れる
+- タスク専用 DSL をこれ以上増やさないほうが全体の一貫性は高い
 
-## Decision
+## 決定
 
-Approach 2 を採用する。
+方針 2 を採用する。
 
-- feature の説明文と scenario 名は「位相回転」を主語にする
+- 機能ファイルの説明文とシナリオ名は「位相回転」を主語にする
 - 回路自体は既存 DSL のまま `When 次の回路を適用:` で `P` ゲートを見せる
 - 角度記号は `θ` に統一し、振幅の一般式は `α|0> + β|1>` にする
-- Task 1.5 とのつながりを見せるため、`θ = π/2` の具体例として `|+> -> |+i>` を 1 本入れる
+- タスク 1.5 とのつながりを見せるため、`θ = π/2` の具体例として `|+> -> |+i>` を 1 本入れる
 
 この方針なら、ゲート名と数学的意味の両方が見えるが、主役はあくまで「位相回転」になる。
 
-## Feature Shape
+## 書き換え後の構成
 
 書き換え後の [phase_change.feature](/home/yasuhito/Work/qni-cli/.worktrees/codex-phase-change-rewrite/features/katas/basic_gates/phase_change.feature) は、次の 4 本を基本形とする。
 
@@ -161,7 +161,7 @@ Scenario: θ = π/2 の位相回転は |+> を |+i> に変える
     """
 ```
 
-これは Task 1.5 PhaseFlip が `S = P(π/2)` の特別な場合であることも自然に示せる。
+これはタスク 1.5 PhaseFlip が `S = P(π/2)` の特別な場合であることも自然に示せる。
 
 ### 4. 一般式
 
@@ -184,7 +184,7 @@ Scenario: 位相回転は α|0> + β|1> を α|0> + exp(iθ)β|1> に変える
     """
 ```
 
-## Notes on Formatting
+## 書式に関するメモ
 
 `Then 状態ベクトルは:` の期待値は、人間には
 
@@ -194,16 +194,16 @@ Scenario: 位相回転は α|0> + β|1> を α|0> + exp(iθ)β|1> に変える
 
 の順が読みやすい。
 
-一方で現在の symbolic helper は `β*exp(I*theta)` のような並びを出す可能性がある。実装では次のどちらかを選べばよい。
+一方で現在のシンボリック補助処理は `β*exp(I*theta)` のような並びを出す可能性がある。実装では次のどちらかを選べばよい。
 
-- symbolic renderer 側を少し整えて `exp(iθ)β` に寄せる
-- step comparison helper で、`β*exp(iθ)` と `exp(iθ)β` を同値として扱う
+- シンボリック表示側を少し整えて `exp(iθ)β` に寄せる
+- ステップ比較の補助処理で、`β*exp(iθ)` と `exp(iθ)β` を同値として扱う
 
-この spec の目的は feature を高レベルに読みやすくすることなので、どちらの実装手段を採るかは plan で決めればよい。
+この仕様書の目的は機能ファイルを高レベルに読みやすくすることなので、どちらの実装手段を採るかは計画書で決めればよい。
 
-## Why This Shape Is Better
+## この構成がよい理由
 
-- Task 1.6 の本質が「一般角の位相回転」だと、scenario 名だけで分かる
-- `S` は固定角の special case、`P(θ)` はその一般化、という流れが自然につながる
-- `When 次の回路を適用:` を維持するので、Task 1.1〜1.5 と DSL の rhythm が崩れない
-- `θ = π/2` の具体例で、位相のイメージを Task 1.5 の `|+i>` に接続できる
+- タスク 1.6 の本質が「一般角の位相回転」だと、シナリオ名だけで分かる
+- `S` は固定角の特殊例、`P(θ)` はその一般化、という流れが自然につながる
+- `When 次の回路を適用:` を維持するので、タスク 1.1〜1.5 と DSL のリズムが崩れない
+- `θ = π/2` の具体例で、位相のイメージをタスク 1.5 の `|+i>` に接続できる
