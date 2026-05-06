@@ -52,6 +52,11 @@ export function parseAsciiCircuit(asciiArt: string): CircuitData {
 
 class LineSet {
   private readonly asciiArt: string;
+  private linesCache: string[] | undefined;
+  private parsedMidLinesCache: Array<readonly [number, RegExpExecArray]> | undefined;
+  private wireLabelWidthCache: number | undefined;
+  private wirePrefixCache: string | undefined;
+  private wireWidthCache: number | undefined;
 
   constructor(asciiArt: string) {
     this.asciiArt = asciiArt;
@@ -80,16 +85,26 @@ class LineSet {
   }
 
   parsedMidLines(): Array<readonly [number, RegExpExecArray]> {
+    if (this.parsedMidLinesCache) {
+      return this.parsedMidLinesCache;
+    }
+
     const midLines = this.collectMidLines();
 
     this.validateMidLinesPresent(midLines);
     this.validateQubitOrder(midLines);
+    this.parsedMidLinesCache = midLines;
 
     return midLines;
   }
 
   wireWidth(): number {
-    return Math.max(...this.parsedMidLines().map(([_lineIndex, match]) => charLength(match.groups?.wire ?? '')), 0);
+    this.wireWidthCache ??= Math.max(
+      ...this.parsedMidLines().map(([_lineIndex, match]) => charLength(match.groups?.wire ?? '')),
+      0
+    );
+
+    return this.wireWidthCache;
   }
 
   private annotationCandidateSegment(candidateIndex: number): string | undefined {
@@ -125,10 +140,12 @@ class LineSet {
   }
 
   private lines(): string[] {
-    return this.asciiArt
+    this.linesCache ??= this.asciiArt
       .split('\n')
       .map((line) => rstrip(line))
       .filter((line) => line !== '');
+
+    return this.linesCache;
   }
 
   private validateMidLinesPresent(midLines: Array<readonly [number, RegExpExecArray]>): void {
@@ -148,11 +165,17 @@ class LineSet {
   }
 
   private wireLabelWidth(): number {
-    return Math.max(...this.parsedMidLines().map(([_lineIndex, match]) => charLength(match.groups?.prefix ?? '')));
+    this.wireLabelWidthCache ??= Math.max(
+      ...this.parsedMidLines().map(([_lineIndex, match]) => charLength(match.groups?.prefix ?? ''))
+    );
+
+    return this.wireLabelWidthCache;
   }
 
   private wirePrefix(): string {
-    return ' '.repeat(this.wireLabelWidth());
+    this.wirePrefixCache ??= ' '.repeat(this.wireLabelWidth());
+
+    return this.wirePrefixCache;
   }
 
   private wireSegmentFor(line: string): string {

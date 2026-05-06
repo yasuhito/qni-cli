@@ -47,13 +47,13 @@ function captureDispatcherRun(cwd: string, argv: string[], env: NodeJS.ProcessEn
   process.stderr.write = ((
     chunk: string | Uint8Array,
     encodingOrCallback?: BufferEncoding | ((error?: Error | null) => void),
-    callback?: BufferEncoding | ((error?: Error | null) => void)
+    callback?: (error?: Error | null) => void
   ): boolean => {
     stderr += Buffer.isBuffer(chunk) ? chunk.toString('utf8') : chunk.toString();
     if (typeof encodingOrCallback === 'function') {
       encodingOrCallback();
     }
-    if (typeof callback === 'function') {
+    if (callback) {
       callback();
     }
     return true;

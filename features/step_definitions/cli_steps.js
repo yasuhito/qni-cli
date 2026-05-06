@@ -89,7 +89,7 @@ function splitCommand(command) {
   return words;
 }
 
-function bundlerEnv(extraEnv = {}) {
+function scenarioEnv(extraEnv = {}) {
   return {
     ...process.env,
     ...extraEnv,
@@ -116,7 +116,7 @@ function runNodeQniCommand(scenarioDir, command, extraEnv = {}) {
   return new Promise((resolve, reject) => {
     const child = spawn('node', [NODE_QNI_BIN, ...argv.slice(1)], {
       cwd: scenarioDir,
-      env: bundlerEnv(extraEnv)
+      env: scenarioEnv(extraEnv)
     });
 
     const stdout = [];
@@ -154,7 +154,7 @@ function runQniCommandInTty(scenarioDir, command, extraEnv = {}) {
   return new Promise((resolve, reject) => {
     const child = spawn('script', ['-qfec', ttyCommand, '/dev/null'], {
       cwd: scenarioDir,
-      env: bundlerEnv(extraEnv)
+      env: scenarioEnv(extraEnv)
     });
 
     const stdout = [];
@@ -261,7 +261,7 @@ function parseAsciiCircuit(asciiArt) {
     ['-e', script],
     {
       cwd: PROJECT_ROOT,
-      env: bundlerEnv(),
+      env: scenarioEnv(),
       input: asciiArt,
       encoding: 'utf8'
     }
@@ -303,7 +303,7 @@ function directInitialState(state) {
     ['exec', 'ruby', '-Ilib', '-rjson', '-rqni/initial_state', '-e', script],
     {
       cwd: PROJECT_ROOT,
-      env: bundlerEnv(),
+      env: scenarioEnv(),
       input: state,
       encoding: 'utf8'
     }

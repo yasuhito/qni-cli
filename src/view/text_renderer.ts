@@ -1,4 +1,4 @@
-import type { CircuitData } from '../circuit_file';
+import { CircuitFileError, type CircuitData } from '../circuit_file';
 
 const CONTROL_SYMBOL = '•';
 const DIM_SUFFIX_PATTERN = /┤ ([A-Z])([xyz†])├/gu;
@@ -378,7 +378,7 @@ class TextLayer {
     const cell = this.cells[qubit];
 
     if (!cell) {
-      throw new Error(`qubit index out of bounds: ${qubit}`);
+      throw new CircuitFileError(`qubit index out of bounds: ${qubit} (qubits: ${this.cells.length})`);
     }
 
     return cell;
