@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
+import * as childProcess from 'node:child_process';
 import { chmod, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { describe, it } from 'node:test';
+import { describe, it, mock } from 'node:test';
 
 import { createDispatcher } from '../../src/dispatcher';
 import {
@@ -14,6 +16,22 @@ interface CapturedRun {
   readonly exitStatus: number;
   readonly stderr: string;
   readonly stdout: string;
+}
+
+const childProcessForMock = createRequire(__filename)('node:child_process') as typeof childProcess;
+
+function spawnResult(
+  overrides: Partial<childProcess.SpawnSyncReturns<string>>
+): childProcess.SpawnSyncReturns<string> {
+  return {
+    output: [],
+    pid: 0,
+    signal: null,
+    status: 0,
+    stderr: '',
+    stdout: '',
+    ...overrides
+  };
 }
 
 async function withTempDir<T>(callback: (dir: string) => Promise<T>): Promise<T> {
@@ -39,6 +57,14 @@ async function writeExecutable(filePath: string, body: string): Promise<void> {
 async function writeSymbolicHelperPlaceholder(projectRoot: string): Promise<void> {
   await mkdir(path.join(projectRoot, 'libexec'), { recursive: true });
   await writeFile(path.join(projectRoot, 'libexec', 'qni_symbolic_run.py'), '');
+}
+
+function epipeProneCircuit(): { cols: number[][]; qubits: number } {
+  return {
+    // Keep the serialized input well above typical 64 KB stdin pipe buffers.
+    cols: Array(200_000).fill([1]),
+    qubits: 1
+  };
 }
 
 function captureDispatcherRun(cwd: string, argv: string[], env: NodeJS.ProcessEnv = { PATH: '' }): CapturedRun {
@@ -154,6 +180,91 @@ describe('TypeScript symbolic state renderer boundary', () => {
     );
   });
 
+  it('continues to uv after an EPIPE from retryable system python stderr', () => {
+    const calls: string[] = [];
+    const missingRuntime = new Error('spawn ENOENT') as NodeJS.ErrnoException;
+    const brokenPipe = new Error('write EPIPE') as NodeJS.ErrnoException;
+    missingRuntime.code = 'ENOENT';
+    brokenPipe.code = 'EPIPE';
+
+    const spawnMock = mock.method(
+      childProcessForMock,
+      'spawnSync',
+      ((command: string) => {
+        calls.push(command);
+
+        if (command.endsWith('/.python-symbolic/bin/python')) {
+          return spawnResult({ error: missingRuntime, status: null });
+        }
+
+        if (command === 'python3') {
+          return spawnResult({
+            error: brokenPipe,
+            status: 1,
+            stderr: "ModuleNotFoundError: No module named 'sympy'\n"
+          });
+        }
+
+        if (command === 'uv') {
+          return spawnResult({ stdout: 'uv-success\n' });
+        }
+
+        return spawnResult({
+          status: 127,
+          stderr: `unexpected command: ${command}`
+        });
+      }) as unknown as typeof childProcess.spawnSync
+    );
+
+    try {
+      assert.equal(
+        renderSymbolicStateVector({
+          circuit: {
+            cols: [[1]],
+            qubits: 1
+          },
+          env: { PATH: '' },
+          projectRoot: '/project'
+        }),
+        'uv-success'
+      );
+      assert.deepEqual(calls, ['/project/.python-symbolic/bin/python', 'python3', 'uv']);
+    } finally {
+      spawnMock.mock.restore();
+    }
+  });
+
+  it('returns stdout when an EPIPE helper result reports success', () => {
+    const brokenPipe = new Error('write EPIPE') as NodeJS.ErrnoException;
+    brokenPipe.code = 'EPIPE';
+    const spawnMock = mock.method(
+      childProcessForMock,
+      'spawnSync',
+      (() =>
+        spawnResult({
+          error: brokenPipe,
+          status: 0,
+          stdout: 'python-success\n'
+        })) as unknown as typeof childProcess.spawnSync
+    );
+
+    try {
+      assert.equal(
+        renderSymbolicStateVector({
+          circuit: {
+            cols: [[1]],
+            qubits: 1
+          },
+          env: { PATH: '' },
+          projectRoot: '/project'
+        }),
+        'python-success'
+      );
+    } finally {
+      spawnMock.mock.restore();
+    }
+  });
+
   it('falls back from missing repository runtime to uv when system python lacks SymPy', async () => {
     await withTempDir(async (projectRoot) => {
       const bin = path.join(projectRoot, 'bin');
@@ -170,10 +281,7 @@ exit 1
 
       assert.equal(
         renderSymbolicStateVector({
-          circuit: {
-            cols: [[1]],
-            qubits: 1
-          },
+          circuit: epipeProneCircuit(),
           env: { PATH: bin },
           projectRoot
         }),
