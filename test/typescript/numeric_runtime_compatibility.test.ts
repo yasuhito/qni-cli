@@ -8,12 +8,13 @@ import { describe, it } from 'node:test';
 import { Simulator } from '../../src/simulator';
 import type { CircuitData } from '../../src/circuit_file';
 
-async function withCircuit<T>(circuit: CircuitData, callback: (dir: string) => T): Promise<T> {
+async function withCircuit<T>(circuit: CircuitData, callback: (dir: string) => Promise<T> | T): Promise<T> {
   const dir = await mkdtemp(path.join(tmpdir(), 'qni-cli-runtime-'));
 
   try {
     await writeFile(path.join(dir, 'circuit.json'), `${JSON.stringify(circuit, null, 2)}\n`);
-    return callback(dir);
+    const result = await callback(dir);
+    return result;
   } finally {
     await rm(dir, { force: true, recursive: true });
   }

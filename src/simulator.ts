@@ -119,7 +119,7 @@ class StateVector {
     const amplitudes = Array.from({ length: stateVectorSize(qubits) }, () => new Complex(0));
     amplitudes[0] = new Complex(1);
 
-    return new StateVector(qubits, amplitudes);
+    return new StateVector(qubits, amplitudes, false);
   }
 
   static formatAmplitude(amplitude: Complex): string {
@@ -137,9 +137,9 @@ class StateVector {
     return `${formatRubyFloat(real)}${imaginary > 0 ? '+' : ''}${formatRubyFloat(imaginary)}i`;
   }
 
-  constructor(qubits: number, amplitudes: readonly Complex[]) {
+  constructor(qubits: number, amplitudes: readonly Complex[], copy = true) {
     this.qubits = qubits;
-    this.amplitudes = [...amplitudes];
+    this.amplitudes = copy ? [...amplitudes] : amplitudes;
   }
 
   applySingleQubitGate(qubit: number, gateOperator: GateOperator): StateVector {
@@ -165,7 +165,7 @@ class StateVector {
       result[destination] = amplitude;
     });
 
-    return new StateVector(this.qubits, result);
+    return new StateVector(this.qubits, result, false);
   }
 
   expectation(pauliString: string): Complex {
@@ -185,10 +185,10 @@ class StateVector {
     const result = [...this.amplitudes];
 
     for (let blockIndex = 0; blockIndex < this.amplitudes.length / layout.blockSize; blockIndex += 1) {
-      layout.applyBlock(result, this.amplitudes.slice(blockIndex * layout.blockSize, (blockIndex + 1) * layout.blockSize), blockIndex);
+      layout.applyBlock(result, this.amplitudes, blockIndex * layout.blockSize);
     }
 
-    return new StateVector(this.qubits, result);
+    return new StateVector(this.qubits, result, false);
   }
 }
 
@@ -205,24 +205,23 @@ class SingleQubitGateLayout {
     this.gateOperator = gateOperator;
   }
 
-  applyBlock(result: Complex[], block: readonly Complex[], blockIndex: number): void {
-    this.eachTransformedPair(block, blockIndex, (zeroIndex, transformed) => {
+  applyBlock(result: Complex[], source: readonly Complex[], baseIndex: number): void {
+    this.eachTransformedPair(source, baseIndex, (zeroIndex, transformed) => {
       result[zeroIndex] = transformed[0];
       result[zeroIndex + this.stride] = transformed[1];
     });
   }
 
   protected eachTransformedPair(
-    block: readonly Complex[],
-    blockIndex: number,
+    source: readonly Complex[],
+    baseIndex: number,
     callback: (zeroIndex: number, transformed: [Complex, Complex]) => void
   ): void {
-    const baseIndex = blockIndex * this.blockSize;
-
     for (let offset = 0; offset < this.stride; offset += 1) {
+      const zeroIndex = baseIndex + offset;
       callback(
-        baseIndex + offset,
-        this.gateOperator(requiredAmplitude(block, offset), requiredAmplitude(block, offset + this.stride))
+        zeroIndex,
+        this.gateOperator(requiredAmplitude(source, zeroIndex), requiredAmplitude(source, zeroIndex + this.stride))
       );
     }
   }
@@ -236,8 +235,8 @@ class ControlledSingleQubitGateLayout extends SingleQubitGateLayout {
     this.controls = controls;
   }
 
-  override applyBlock(result: Complex[], block: readonly Complex[], blockIndex: number): void {
-    this.eachTransformedPair(block, blockIndex, (zeroIndex, transformed) => {
+  override applyBlock(result: Complex[], source: readonly Complex[], baseIndex: number): void {
+    this.eachTransformedPair(source, baseIndex, (zeroIndex, transformed) => {
       if (!this.controlsActive(zeroIndex)) {
         return;
       }
