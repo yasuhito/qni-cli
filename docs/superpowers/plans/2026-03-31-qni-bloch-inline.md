@@ -97,7 +97,7 @@ end
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber features/qni_bloch.feature features/qni_cli.feature
 ```
 
-期待結果: 新しいヘルプ文、オプション、インライン描画経路がまだ存在しないため FAIL。
+期待結果: 新しいヘルプ文、オプション、インライン描画経路がまだ存在しないため失敗する。
 
 ### タスク 2: インラインモードの CLI 公開インターフェースと検証を追加する
 
@@ -200,7 +200,7 @@ end
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec ruby -Itest test/qni/kitty_graphics_emitter_test.rb
 ```
 
-期待結果: 出力器クラスがまだ存在しないため FAIL。
+期待結果: 出力器クラスがまだ存在しないため失敗する。
 
 - [ ] **ステップ 3: `Qni::KittyGraphicsEmitter` を実装する**
 
@@ -223,7 +223,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec ruby -Itest t
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec ruby -Itest test/qni/kitty_graphics_emitter_test.rb
 ```
 
-期待結果: PASS
+期待結果: 成功する
 
 - [ ] **ステップ 5: 出力器の作業単位をコミットする**
 
@@ -271,7 +271,7 @@ end
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec ruby -Itest test/qni/bloch_renderer_test.rb
 ```
 
-期待結果: `BlochRenderer` が現時点ではファイル書き出ししかできないため FAIL。
+期待結果: `BlochRenderer` が現時点ではファイル書き出ししかできないため失敗する。
 
 - [ ] **ステップ 3: `libexec/qni_bloch_render.py` を拡張する**
 
@@ -300,7 +300,7 @@ python3 -m py_compile libexec/qni_bloch_render.py
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec ruby -Itest test/qni/bloch_renderer_test.rb
 ```
 
-期待結果: どちらも PASS。
+期待結果: どちらも成功する。
 
 - [ ] **ステップ 6: 描画器リファクタリングをコミットする**
 
@@ -356,7 +356,7 @@ inline bloch rendering requires a Kitty-compatible terminal; use --png or --gif 
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber features/qni_bloch.feature features/qni_cli.feature
 ```
 
-期待結果: PASS
+期待結果: 成功する
 
 - [ ] **ステップ 5: 一気通貫のインライン経路をコミットする**
 
@@ -389,7 +389,7 @@ git commit -m "feat: add inline bloch rendering"
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber features/qni_bloch.feature features/qni_cli.feature features/qni_run.feature features/qni_export.feature
 ```
 
-期待結果: PASS
+期待結果: 成功する
 
 - [ ] **ステップ 3: 対象を絞った Ruby 品質チェックを実行する**
 
@@ -400,7 +400,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec rubocop lib/q
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec reek lib/qni/cli/bloch_command.rb lib/qni/bloch_renderer.rb lib/qni/bloch_inline_renderer.rb lib/qni/kitty_graphics_emitter.rb
 ```
 
-期待結果: PASS
+期待結果: 成功する
 
 - [ ] **ステップ 4: プロジェクト全体の確認を実行する**
 
@@ -411,7 +411,7 @@ bash scripts/setup_symbolic_python.sh
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec rake check
 ```
 
-期待結果: PASS
+期待結果: 成功する
 
 - [ ] **ステップ 5: 検証作業をコミットする**
 
