@@ -1,6 +1,6 @@
 # Feature: qni bloch inline
 
-qni-cli のユーザとして
+qni-cli の利用者として
 対応端末で画像ファイルを開かずにブロッホ球を確認できるように
 qni bloch --inline で Kitty graphics protocol による表示を使いたい。
 
