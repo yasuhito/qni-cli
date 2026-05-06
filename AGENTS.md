@@ -29,6 +29,11 @@
 
 - Linear に issue を作成するとき、タイトルは日本語にする。
 
+## PR Review Rule
+
+- PR をレビューしてマージ OK と判断した場合は、ユーザーの追加確認を待たずにマージしてよい。
+- 対応が必要と判断した場合は、PR に具体的な指摘と修正方針をコメントし、対応する Linear issue の状態を `In Progress` にする。
+
 ## Verification Rule
 
 - commit や push の前には full check を fresh に通す。
