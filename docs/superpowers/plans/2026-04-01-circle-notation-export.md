@@ -2,9 +2,9 @@
 
 > **エージェント作業者向け:** 必須: この計画を実装するときは superpowers:subagent-driven-development (サブエージェントが利用可能な場合) または superpowers:executing-plans を使う。進捗管理にはチェックボックス (`- [ ]`) 構文を使う。
 
-**目標:** `qni export --circle-notation --png` を追加し、1 qubit / 2 qubit の計算基底の状態ベクトルを円表示の PNG として書き出せるようにする。
+**目標:** `qni export --circle-notation --png` を追加し、1 量子ビット / 2 量子ビットの計算基底の状態ベクトルを円表示の PNG として書き出せるようにする。
 
-**構成:** 既存の `ExportCommand` に `--circle-notation` 分岐を追加し、描画元はシミュレーターの最終状態ベクトルから直接作る。最初は 1 qubit / 2 qubit・PNG のみに絞り、Qni 本家の円表示の概念を保ちながら `qni-cli` 側で最小再実装する。
+**構成:** 既存の `ExportCommand` に `--circle-notation` 分岐を追加し、描画元はシミュレーターの最終状態ベクトルから直接作る。最初は 1 量子ビット / 2 量子ビット・PNG のみに絞り、Qni 本家の円表示の概念を保ちながら `qni-cli` 側で最小再実装する。
 
 **技術構成:** Ruby、既存の `qni export` 処理系、Cucumber、シミュレーター/状態ベクトル内部処理、PNG 書き出しヘルパー
 
@@ -34,13 +34,13 @@
 
 - [ ] **手順 1: ヘルプ / 使い方のセクションに `--circle-notation` を追記**
 
-- [ ] **手順 2: 1 qubit PNG 書き出しシナリオを追加**
+- [ ] **手順 2: 1 量子ビット PNG 書き出しシナリオを追加**
 
 期待:
 - `qni export --circle-notation --png --output state.png` が成功
 - `state.png` が存在する
 
-- [ ] **手順 3: 2 qubit Bell 状態 PNG 書き出しシナリオを追加**
+- [ ] **手順 3: 2 量子ビット Bell 状態 PNG 書き出しシナリオを追加**
 
 期待:
 - `|Φ+>` 初期状態で PNG が書き出せる
@@ -49,7 +49,7 @@
 
 期待:
 - `--state-vector` との併用は失敗
-- 3 qubit 回路は失敗
+- 3 量子ビット回路は失敗
 - `--png` なしは失敗
 
 - [ ] **手順 5: 対象を絞って Cucumber を実行し、失敗状態を確認**
@@ -87,13 +87,13 @@ bundle exec cucumber features/qni_export.feature
 
 - [ ] **手順 1: 最終状態ベクトルを描画処理に渡す書き出し分岐を追加**
 
-- [ ] **手順 2: 1 qubit / 2 qubit の基底一覧と配置を実装**
+- [ ] **手順 2: 1 量子ビット / 2 量子ビットの基底一覧と配置を実装**
 
 - [ ] **手順 3: 各基底状態について大きさ / 位相から円表示を描く**
 
 - [ ] **手順 4: PNG を出力パスへ保存する**
 
-- [ ] **手順 5: 未対応の qubit 数で明示的に失敗させる**
+- [ ] **手順 5: 未対応の量子ビット数で明示的に失敗させる**
 
 ### 作業 4: 検証と簡易確認を通す
 
@@ -124,7 +124,7 @@ bundle exec /home/yasuhito/Work/qni-cli/bin/qni export --circle-notation --png -
 期待結果:
 - `bell.png` が存在する
 
-- [ ] **手順 3: 1 qubit のサンプルも 1 枚生成**
+- [ ] **手順 3: 1 量子ビットのサンプルも 1 枚生成**
 
 実行:
 
