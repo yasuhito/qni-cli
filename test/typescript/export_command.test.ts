@@ -133,6 +133,50 @@ describe('export command TypeScript route', () => {
     });
   });
 
+  it('rejects malformed --caption-size values like the Ruby oracle without invoking Ruby fallback', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        qubits: 1,
+        cols: [['H']]
+      });
+
+      for (const value of ['1abc', 'abc', 'NaN', 'Infinity', '0x10', '5.']) {
+        const argv = ['export', '--latex-source', '--caption-size', value];
+        const result = captureDispatcherRun(dir, argv, { PATH: '' });
+        const oracle = await rubyOracle(dir, argv);
+
+        assert.equal(result.exitStatus, oracle.exitStatus, value);
+        assert.equal(result.stdout, oracle.stdout, value);
+        assert.equal(result.stderr, oracle.stderr, value);
+      }
+    });
+  });
+
+  it('reports malformed controlled and swap steps like the Ruby oracle', async () => {
+    await withTempDir(async (dir) => {
+      for (const circuit of [
+        {
+          qubits: 3,
+          cols: [['•', 'H', 'X']]
+        },
+        {
+          qubits: 3,
+          cols: [['Swap', 'Swap', 'H']]
+        }
+      ]) {
+        await writeCircuit(dir, circuit);
+
+        const argv = ['export', '--latex-source'];
+        const result = captureDispatcherRun(dir, argv, { PATH: '' });
+        const oracle = await rubyOracle(dir, argv);
+
+        assert.equal(result.exitStatus, oracle.exitStatus);
+        assert.equal(result.stdout, oracle.stdout);
+        assert.equal(result.stderr, oracle.stderr);
+      }
+    });
+  });
+
   it('writes LaTeX source to --output without stdout like Ruby', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {

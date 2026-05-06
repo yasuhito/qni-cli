@@ -256,7 +256,7 @@ class QCircuitColumn {
       .filter(({ slot }) => !emptySlot(slot) && slot !== CONTROL_SYMBOL);
 
     if (targets.length !== 1) {
-      throw new Error(`unsupported controlled step: ${JSON.stringify(this.slots)}`);
+      throw new Error(`unsupported controlled step: ${rubyInspect(this.slots)}`);
     }
 
     return new ControlledTarget(targets[0].slot, targets[0].qubit);
@@ -275,7 +275,7 @@ class QCircuitColumn {
 
   private swapCells(): Map<number, string> {
     if (!this.validSwapStep) {
-      throw new Error(`unsupported swap step: ${JSON.stringify(this.slots)}`);
+      throw new Error(`unsupported swap step: ${rubyInspect(this.slots)}`);
     }
 
     const [topQubit, bottomQubit] = this.swapQubits.sort((a, b) => a - b);
@@ -344,6 +344,22 @@ function gateLabel(slot: unknown): string {
 
 function formattedAngle(angle: string): string {
   return angle.replace(/π/gu, '\\pi').replace(/(?<![A-Za-z])pi(?![A-Za-z])/gu, '\\pi');
+}
+
+function rubyInspect(value: unknown): string {
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => rubyInspect(item)).join(', ')}]`;
+  }
+
+  if (value === null || value === undefined) {
+    return 'nil';
+  }
+
+  if (typeof value === 'string') {
+    return JSON.stringify(value);
+  }
+
+  return String(value);
 }
 
 export function validateCaptionOptions(options: QCircuitCaptionOptions): void {

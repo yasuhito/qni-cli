@@ -54,6 +54,7 @@ Examples:
 interface ExportOptions {
   readonly caption?: string;
   readonly captionFormat: 'tex' | 'text';
+  readonly captionSizeError?: string;
   readonly captionPosition: string;
   readonly captionSize: number;
   readonly circleNotation: boolean;
@@ -99,7 +100,14 @@ const VALUE_OPTIONS = new Map<string, (options: MutableExportOptions, value: str
     options.captionPosition = value;
   }],
   ['--caption-size', (options, value) => {
-    options.captionSize = Number.parseInt(value, 10);
+    const captionSize = parseCaptionSize(value);
+
+    if (captionSize === undefined) {
+      options.captionSizeError = `Expected numeric value for '--caption-size'; got "${value}"`;
+      return;
+    }
+
+    options.captionSize = captionSize;
   }],
   ['--output', (options, value) => {
     options.output = value;
@@ -199,6 +207,10 @@ function parseExportOptions(args: string[]): ExportOptions | undefined {
 }
 
 function validateOptions(options: ExportOptions): void {
+  if (options.captionSizeError) {
+    throw new Error(options.captionSizeError);
+  }
+
   if (!options.png && options.stateVector) {
     throw new Error('--state-vector currently supports only --png');
   }
@@ -237,6 +249,14 @@ function validateOptions(options: ExportOptions): void {
 
 function captionPresent(options: ExportOptions): boolean {
   return (options.caption ?? '').length > 0;
+}
+
+function parseCaptionSize(value: string): number | undefined {
+  if (!/^[+-]?(?:\d+(?:\.\d+)?|\.\d+)$/u.test(value)) {
+    return undefined;
+  }
+
+  return Math.trunc(Number(value));
 }
 
 function rubyFallback(argv: string[], context: CommandHandlerContext): number {
