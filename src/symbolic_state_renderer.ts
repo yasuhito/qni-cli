@@ -1,4 +1,4 @@
-import { spawnSync } from 'node:child_process';
+import * as childProcess from 'node:child_process';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -85,7 +85,7 @@ function helperCommands(options: ResolvedSymbolicStateRenderOptions): HelperComm
 }
 
 function renderWithHelper(command: HelperCommand, options: ResolvedSymbolicStateRenderOptions): string | undefined {
-  const result = spawnSync(command.command, [...command.args], {
+  const result = childProcess.spawnSync(command.command, [...command.args], {
     encoding: 'utf8',
     env: {
       ...process.env,
@@ -100,6 +100,27 @@ function renderWithHelper(command: HelperCommand, options: ResolvedSymbolicState
     const error = result.error as NodeJS.ErrnoException;
     if (error.code === 'ENOENT') {
       return undefined;
+    }
+
+    if (error.code === 'EPIPE') {
+      const stdout = result.stdout ?? '';
+      const stderr = result.stderr ?? '';
+
+      if (result.status === 0) {
+        return stdout.trim();
+      }
+
+      if (retryableWithNextCommand(command.command, stderr)) {
+        return undefined;
+      }
+
+      if (result.status !== null || stderr.trim() !== '') {
+        throw new SymbolicStateRendererError(renderErrorMessage(stderr, result.status));
+      }
+
+      if (result.signal !== null) {
+        throw new SymbolicStateRendererError(`${error.message} (signal: ${result.signal})`);
+      }
     }
 
     throw new SymbolicStateRendererError(error.message);
