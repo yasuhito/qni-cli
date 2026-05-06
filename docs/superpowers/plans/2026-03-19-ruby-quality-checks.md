@@ -66,7 +66,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/sha
 
 期待結果:
 
-- PASS
+- 成功する
 - `2*alpha` / `-2*alpha` の挙動が変わっていない
 
 - [ ] **手順 4: `AngleExpression` の整理をコミットする**
@@ -116,7 +116,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/sha
 
 期待結果:
 
-- PASS
+- 成功する
 - `run --symbolic` の既存出力が回帰していない
 
 - [ ] **手順 4: `SymbolicStateRenderer` の整理をコミットする**
@@ -162,7 +162,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/sha
 
 期待結果:
 
-- PASS
+- 成功する
 - `run` / `expect` のエラー経路と出力が回帰していない
 
 - [ ] **手順 4: `CLI#simulate` の整理をコミットする**
@@ -196,7 +196,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/sha
 
 期待結果:
 
-- すべて PASS
+- すべて成功する
 
 - [ ] **手順 2: Cucumber 全体を実行する**
 
@@ -208,7 +208,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/sha
 
 期待結果:
 
-- PASS
+- 成功する
 - `Task 1.4` と単純な角度式対応を含めて回帰なし
 
 - [ ] **手順 3: 最終差分を確認する**
