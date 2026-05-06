@@ -1,15 +1,15 @@
-# Feature: qni add help
+# Feature: qni add のヘルプ
 
-qni-cli のユーザとして
+qni-cli の利用者として
 add コマンドの使い方を知るために
-qni add の help を見たい
+qni add のヘルプを見たい
 
 ## Scenario: qni add は成功する
 
 - When "qni add" を実行
 - Then コマンドは成功
 
-## Scenario: qni add は add コマンドの使い方を表示
+## Scenario: qni add は add コマンドの使い方を表示する
 
 - When "qni add" を実行
 - Then 標準出力:
@@ -56,7 +56,7 @@ qni add の help を見たい
 - When "qni add --help" を実行
 - Then コマンドは成功
 
-## Scenario: qni add --help は add コマンドの使い方を表示
+## Scenario: qni add --help は add コマンドの使い方を表示する
 
 - When "qni add --help" を実行
 - Then 標準出力:
