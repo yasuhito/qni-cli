@@ -1,6 +1,6 @@
-# Feature: qni bloch のヘルプ
+# Feature: qni bloch help
 
-qni-cli のユーザーとして
+qni-cli のユーザとして
 ブロッホ球出力の使い方を迷わず選べるように
 qni bloch のヘルプで利用できる出力形式とオプションを確認したい。
 
