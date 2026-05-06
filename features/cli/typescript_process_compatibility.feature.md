@@ -15,3 +15,11 @@ process compatibility helper の契約を明確にしたい
 ## Scenario: full check は TypeScript tests を実行する
 
 - Then リポジトリファイル "Rakefile" は "npm run test:ts" を含む
+
+## Scenario: TypeScript symbolic helper boundary が存在する
+
+- Then リポジトリファイル "src/symbolic_state_renderer.ts" は存在する
+
+## Scenario: TypeScript run command は symbolic helper boundary を使う
+
+- Then リポジトリファイル "src/commands/run_command.ts" は "renderSymbolicStateVector" を含む
