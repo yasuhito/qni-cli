@@ -153,7 +153,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber \
 
 期待結果:
 
-- 3 シナリオが PASS
+- 3 シナリオが成功する
 - `Rz(2π)` による全体 `-1` が高レベル DSL で読める
 
 - [ ] **手順 4: 実装結果をコミットする**
@@ -192,7 +192,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber \
 
 期待結果:
 
-- PASS
+- 成功する
 - タスク 1.5 の固定角位相
 - タスク 1.6 の一般角位相
 - タスク 1.7 のグローバル位相
@@ -242,10 +242,10 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec rake check
 
 期待結果:
 
-- cucumber PASS
-- RuboCop PASS
-- reek PASS
-- flog / flay PASS
+- cucumber が成功する
+- RuboCop が成功する
+- reek が成功する
+- flog / flay が成功する
 
 - [ ] **手順 3: 最終差分を確認する**
 
