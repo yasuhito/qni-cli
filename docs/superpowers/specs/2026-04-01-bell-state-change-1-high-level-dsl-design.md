@@ -1,4 +1,4 @@
-# Bell State Change 1 の高レベル DSL 設計
+# BellStateChange1 の高レベル DSL 設計
 
 ## 問題
 
