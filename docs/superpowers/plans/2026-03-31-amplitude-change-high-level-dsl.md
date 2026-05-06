@@ -1,35 +1,35 @@
-# Amplitude Change High-Level DSL Implementation Plan
+# 振幅変更の高レベル DSL 実装計画
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **エージェント作業者向け:** 必須: この計画の実装には superpowers:subagent-driven-development (サブエージェントが利用可能な場合) または superpowers:executing-plans を使う。進捗管理にはチェックボックス (`- [ ]`) 構文を使う。
 
-**Goal:** `amplitude_change.feature` を Task 1.1 / 1.2 / 1.3 と同じ高レベル DSL に書き換え、`When 振幅を θ だけ回転:` で Task 1.4 の意図をストレートに表せるようにする。
+**目的:** `amplitude_change.feature` を課題 1.1 / 1.2 / 1.3 と同じ高レベル DSL に書き換え、`When 振幅を θ だけ回転:` で課題 1.4 の意図を直接表せるようにする。
 
-**Architecture:** 先に [amplitude_change.feature](/home/yasuhito/Work/qni-cli/features/katas/basic_gates/amplitude_change.feature) を高レベル形へ赤く書き換え、失敗理由を `振幅を ... だけ回転` step の未実装に限定する。実装は [features/step_definitions/cli_steps.rb](/home/yasuhito/Work/qni-cli/features/step_definitions/cli_steps.rb) に最小の 1 step を追加し、内部では既存の `Ry` と symbolic / numeric run を再利用して green にする。
+**構成方針:** 先に [amplitude_change.feature](/home/yasuhito/Work/qni-cli/features/katas/basic_gates/amplitude_change.feature) を高レベル形へ失敗する形で書き換え、失敗理由を `振幅を ... だけ回転` ステップの未実装に限定する。実装は [features/step_definitions/cli_steps.rb](/home/yasuhito/Work/qni-cli/features/step_definitions/cli_steps.rb) に最小の 1 ステップを追加し、内部では既存の `Ry` と記号実行 / 数値実行を再利用して成功させる。
 
-**Tech Stack:** Ruby, Cucumber, Bundler, `cli_steps.rb`, `qni-cli`
+**技術構成:** Ruby, Cucumber, Bundler, `cli_steps.rb`, `qni-cli`
 
 ---
 
-## File Structure
+## ファイル構成
 
-- Modify: `features/katas/basic_gates/amplitude_change.feature`
-  - low-level な `qni add Ry ...` / CSV 比較 / controlled 検証を、高レベル DSL の 1-qubit scenario へ置き換える。
-- Modify: `features/step_definitions/cli_steps.rb`
-  - `When 振幅を {angle} だけ回転:` を追加し、角度文字列を最小限正規化して `Ry(2*angle)` を append する。
-- Verify: `features/katas/basic_gates/state_flip.feature`
+- 変更: `features/katas/basic_gates/amplitude_change.feature`
+  - 低レベルな `qni add Ry ...` / CSV 比較 / 制御付き操作の検証を、高レベル DSL の 1 量子ビットのシナリオへ置き換える。
+- 変更: `features/step_definitions/cli_steps.rb`
+  - `When 振幅を {angle} だけ回転:` を追加し、角度文字列を最小限正規化して `Ry(2*angle)` を追加する。
+- 確認: `features/katas/basic_gates/state_flip.feature`
   - 既存の高レベル DSL が回帰していないことを確認する。
-- Verify: `features/katas/basic_gates/basis_change.feature`
+- 確認: `features/katas/basic_gates/basis_change.feature`
   - `|+>, |->` 基底 DSL への影響がないことを確認する。
-- Verify: `features/katas/basic_gates/sign_flip.feature`
+- 確認: `features/katas/basic_gates/sign_flip.feature`
   - `状態ベクトルは:` ベースの高レベル DSL が回帰していないことを確認する。
 
-## Task 1: `amplitude_change.feature` を高レベル DSL へ先に書き換えて赤くする
+## タスク 1: `amplitude_change.feature` を高レベル DSL へ先に書き換えて失敗させる
 
-**Files:**
-- Modify: `features/katas/basic_gates/amplitude_change.feature`
-- Test: `features/katas/basic_gates/amplitude_change.feature`
+**対象ファイル:**
+- 変更: `features/katas/basic_gates/amplitude_change.feature`
+- テスト: `features/katas/basic_gates/amplitude_change.feature`
 
-- [ ] **Step 1: Task 1.4 を高レベル scenario へ書き換える**
+- [ ] **手順 1: 課題 1.4 を高レベルシナリオへ書き換える**
 
 `features/katas/basic_gates/amplitude_change.feature` を次の方向へ更新する。
 
@@ -79,37 +79,37 @@ Scenario: 振幅回転は α|0> + β|1> を一般式どおりに変える
     """
 ```
 
-この task で controlled 検証 scenario は削除する。
+このタスクで制御付き操作の検証シナリオは削除する。
 
-- [ ] **Step 2: focused 実行で red を確認する**
+- [ ] **手順 2: 対象を絞った実行で失敗を確認する**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber \
   features/katas/basic_gates/amplitude_change.feature
 ```
 
-Expected:
+期待結果:
 
 - `Undefined step` で `When 振幅を θ だけ回転:` が未実装として落ちる
-- または angle 正規化不足で `qni add` 相当の失敗になる
-- 失敗理由が typo ではなく DSL 未実装である
+- または角度正規化不足で `qni add` 相当の失敗になる
+- 失敗理由が入力ミスではなく DSL 未実装である
 
-- [ ] **Step 3: failing feature をコミットする**
+- [ ] **手順 3: 失敗する機能ファイルをコミットする**
 
 ```bash
 git add features/katas/basic_gates/amplitude_change.feature
 git commit -m "test: rewrite amplitude change scenarios"
 ```
 
-## Task 2: `振幅を ... だけ回転` step を最小実装する
+## タスク 2: `振幅を ... だけ回転` ステップを最小実装する
 
-**Files:**
-- Modify: `features/step_definitions/cli_steps.rb`
-- Test: `features/katas/basic_gates/amplitude_change.feature`
+**対象ファイル:**
+- 変更: `features/step_definitions/cli_steps.rb`
+- テスト: `features/katas/basic_gates/amplitude_change.feature`
 
-- [ ] **Step 1: step definition を追加する**
+- [ ] **手順 1: ステップ定義を追加する**
 
 `features/step_definitions/cli_steps.rb` に次を追加する。
 
@@ -126,17 +126,17 @@ When('振幅を {string} だけ回転:') do |angle|
 end
 ```
 
-必要なら helper を追加して、
+必要ならヘルパーを追加して、
 
 - `θ` -> `theta`
 - 空白除去
 
 だけを責務に切り出す。
 
-- [ ] **Step 2: 1 qubit 専用であることをコード上で明確にする**
+- [ ] **手順 2: 1 量子ビット専用であることをコード上で明確にする**
 
-上の step は初期版では 1 qubit 専用とする。
-必要ならコメントか小さな helper 名で意図を明示する。
+上のステップは初期版では 1 量子ビット専用とする。
+必要ならコメントか小さなヘルパー名で意図を明示する。
 
 例:
 
@@ -146,38 +146,38 @@ def amplitude_rotation_column(angle)
 end
 ```
 
-- [ ] **Step 3: focused feature を green にする**
+- [ ] **手順 3: 対象の機能ファイルを成功させる**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber \
   features/katas/basic_gates/amplitude_change.feature
 ```
 
-Expected:
+期待結果:
 
-- 4 scenario が PASS
-- symbolic 一般式が `(αcos(θ) - βsin(θ))|0> + (αsin(θ) + βcos(θ))|1>` と一致する
+- 4 シナリオが PASS
+- 記号式の一般式が `(αcos(θ) - βsin(θ))|0> + (αsin(θ) + βcos(θ))|1>` と一致する
 
-- [ ] **Step 4: step 実装をコミットする**
+- [ ] **手順 4: ステップ実装をコミットする**
 
 ```bash
 git add features/step_definitions/cli_steps.rb features/katas/basic_gates/amplitude_change.feature
 git commit -m "feat: add amplitude rotation DSL step"
 ```
 
-## Task 3: 近接 kata の回帰を確認する
+## タスク 3: 近接する演習の回帰を確認する
 
-**Files:**
-- Verify: `features/katas/basic_gates/state_flip.feature`
-- Verify: `features/katas/basic_gates/basis_change.feature`
-- Verify: `features/katas/basic_gates/sign_flip.feature`
-- Verify: `features/katas/basic_gates/amplitude_change.feature`
+**対象ファイル:**
+- 確認: `features/katas/basic_gates/state_flip.feature`
+- 確認: `features/katas/basic_gates/basis_change.feature`
+- 確認: `features/katas/basic_gates/sign_flip.feature`
+- 確認: `features/katas/basic_gates/amplitude_change.feature`
 
-- [ ] **Step 1: high-level kata セットを実行する**
+- [ ] **手順 1: 高レベル演習一式を実行する**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber \
@@ -187,73 +187,73 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber \
   features/katas/basic_gates/amplitude_change.feature
 ```
 
-Expected:
+期待結果:
 
 - PASS
-- Task 1.1 から 1.4 までが同じ DSL の流れで green
+- 課題 1.1 から 1.4 までが同じ DSL の流れで成功する
 
-- [ ] **Step 2: step wording が崩れていないことを確認する**
+- [ ] **手順 2: ステップ文言が崩れていないことを確認する**
 
-Check:
+確認:
 
-- `Then 状態ベクトルは:` を使う feature が回帰していない
-- `Then |+>, |-> 基底での状態ベクトルは:` の scenario に影響がない
+- `Then 状態ベクトルは:` を使う機能ファイルが回帰していない
+- `Then |+>, |-> 基底での状態ベクトルは:` のシナリオに影響がない
 
-- [ ] **Step 3: 回帰確認をコミットする**
+- [ ] **手順 3: 回帰確認をコミットする**
 
 ```bash
 git add features/katas/basic_gates/amplitude_change.feature features/step_definitions/cli_steps.rb
 git commit -m "test: verify high-level gate kata DSL"
 ```
 
-## Task 4: full check を fresh に通す
+## タスク 4: 全体チェックを最新状態で通す
 
-**Files:**
-- Verify: `features/step_definitions/cli_steps.rb`
-- Verify: `features/katas/basic_gates/amplitude_change.feature`
-- Verify: repo-wide checks
+**対象ファイル:**
+- 確認: `features/step_definitions/cli_steps.rb`
+- 確認: `features/katas/basic_gates/amplitude_change.feature`
+- 確認: リポジトリ全体のチェック
 
-- [ ] **Step 1: symbolic runtime を先に整える**
+- [ ] **手順 1: 記号実行環境を先に整える**
 
-Run:
+実行:
 
 ```bash
 bash scripts/setup_symbolic_python.sh
 ```
 
-Expected:
+期待結果:
 
-- SymPy version が表示される
+- SymPy のバージョンが表示される
 
-- [ ] **Step 2: repo 全体の品質チェックを実行する**
+- [ ] **手順 2: リポジトリ全体の品質チェックを実行する**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec rake check
 ```
 
-Expected:
+期待結果:
 
 - RuboCop PASS
 - reek PASS
 - cucumber PASS
 - flog / flay PASS
 
-- [ ] **Step 3: 最終差分を確認する**
+- [ ] **手順 3: 最終差分を確認する**
 
-Check:
+確認:
 
 - 変更が `amplitude_change.feature` と `cli_steps.rb` 中心に収まっている
-- unrelated な DSL 拡張が入っていない
+- 無関係な DSL 拡張が入っていない
 
-- [ ] **Step 4: 最終 commit を追加する**
+- [ ] **手順 4: 最終コミットを追加する**
 
 ```bash
 git add features/katas/basic_gates/amplitude_change.feature features/step_definitions/cli_steps.rb
 git commit -m "test: complete amplitude change high-level DSL"
 ```
 
-- [ ] **Step 5: integration handoff**
+- [ ] **手順 5: 統合に引き渡す**
 
-If the branch is clean and `rake check` passed, merge or prepare PR using the repo’s usual completion flow.
+ブランチに未コミットの変更がなく `rake check` が成功していれば、リポジトリの通常の完了手順に従ってマージするか PR を準備する。
