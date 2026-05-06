@@ -182,7 +182,7 @@ function parseExportOptions(args: string[]): ExportOptions | undefined {
     if (valueSetter) {
       const value = inlineValue ?? args[index + 1];
 
-      if (value === undefined || (inlineValue === undefined && value.startsWith('-'))) {
+      if (value === undefined || (inlineValue === undefined && optionLikeValue(name, value))) {
         return undefined;
       }
 
@@ -249,6 +249,10 @@ function validateOptions(options: ExportOptions): void {
 
 function captionPresent(options: ExportOptions): boolean {
   return (options.caption ?? '').length > 0;
+}
+
+function optionLikeValue(optionName: string, value: string): boolean {
+  return value.startsWith('-') && (optionName !== '--caption-size' || parseCaptionSize(value) === undefined);
 }
 
 function parseCaptionSize(value: string): number | undefined {

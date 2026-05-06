@@ -140,7 +140,7 @@ describe('export command TypeScript route', () => {
         cols: [['H']]
       });
 
-      for (const value of ['1abc', 'abc', 'NaN', 'Infinity', '0x10', '5.']) {
+      for (const value of ['1abc', 'abc', 'NaN', 'Infinity', '0x10', '5.', '-1', '-1.5', '.5']) {
         const argv = ['export', '--latex-source', '--caption-size', value];
         const result = captureDispatcherRun(dir, argv, { PATH: '' });
         const oracle = await rubyOracle(dir, argv);
