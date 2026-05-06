@@ -245,7 +245,7 @@ end
 `lib/qni/symbolic_state_renderer.rb`
 
 - `initialize(circuit_hash, basis: nil)`
-- `render_with_format('text')` に basis を渡す
+- `render_with_format('text')` に `basis` を渡す
 - `basis == 'x' && qubits != 1` のときは
   - `raise Simulator::Error, 'symbolic x-basis run currently supports only 1-qubit circuits'`
 - 補助プログラムへは `--basis x` を追加して渡す
@@ -328,7 +328,7 @@ def render_symbolic_state_x_basis(state):
 - `basis is None` なら従来どおり
 - `basis == "x"` かつ `qubits == 1` なら `render_symbolic_state_x_basis(...)`
 - `basis == "x"` かつ `qubits != 1` なら `ValueError("symbolic x-basis run currently supports only 1-qubit circuits")`
-- 未対応 basis は `ValueError("unsupported symbolic basis: ...")`
+- 未対応の基底は `ValueError("unsupported symbolic basis: ...")`
 
 とする。
 
