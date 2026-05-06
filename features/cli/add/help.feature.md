@@ -1,8 +1,7 @@
-# Feature: qni add help
+# Feature: add コマンドのヘルプ表示
 
-qni-cli のユーザとして
-add コマンドの使い方を知るために
-qni add の help を見たい
+qni-cli の利用者として、add コマンドの使い方を確認するために、
+`qni add` の使い方をヘルプで見たい。
 
 ## Scenario: qni add は成功する
 
