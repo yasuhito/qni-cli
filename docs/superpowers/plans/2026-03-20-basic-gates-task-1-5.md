@@ -2,9 +2,9 @@
 
 > **自律実装エージェント向け:** 必須: この計画を実装するときは、利用可能なら superpowers:subagent-driven-development、なければ superpowers:executing-plans を使う。進捗管理にはチェックボックス (`- [ ]`) 記法を使う。
 
-**目的:** `BasicGates Task 1.5 PhaseFlip` を `features/katas/basic_gates/phase_flip.feature` に追加し、Quantum Katas の `DumpDiffOnOneQubit` と制御付き等価性検証の意図を `qni-cli` 側で再現する。
+**目的:** `BasicGates Task 1.5 PhaseFlip` を `features/katas/basic_gates/phase_flip.feature.md` に追加し、Quantum Katas の `DumpDiffOnOneQubit` と制御付き等価性検証の意図を `qni-cli` 側で再現する。
 
-**方針:** 先に `phase_flip.feature` を追加して、既存の `S`、`Sdg`（S†）、制御付き指定、`qni run`、`qni run --symbolic`、`qni expect` だけでタスクを表現できるかを確認する。`Task 1.5` は自己随伴ではないため、制御付き検証では候補の制御付き `S` と逆操作の制御付き `Sdg`（S†）を組にして、制御量子ビットが `|0⟩` に戻ることを見る。不足が出た場合のみ、機能仕様を先に定義する方針で新しい仕様書 / 計画書に戻る。
+**方針:** 先に `phase_flip.feature.md` を追加して、既存の `S`、`Sdg`（S†）、制御付き指定、`qni run`、`qni run --symbolic`、`qni expect` だけでタスクを表現できるかを確認する。`Task 1.5` は自己随伴ではないため、制御付き検証では候補の制御付き `S` と逆操作の制御付き `Sdg`（S†）を組にして、制御量子ビットが `|0⟩` に戻ることを見る。不足が出た場合のみ、機能仕様を先に定義する方針で新しい仕様書 / 計画書に戻る。
 
 **技術構成:** Ruby, Cucumber, Bundler, `qni-cli`
 
@@ -12,34 +12,36 @@
 
 ## ファイル構成
 
-- 作成: `features/katas/basic_gates/phase_flip.feature`
+- 変更: `features/katas/basic_gates/phase_flip.feature.md`
   - `Task 1.5` の問題文、`DumpDiffOnOneQubit` 相当の数値シナリオ、制御付き等価性検証、記号表示の補助シナリオを追加する。
-- 確認: `features/add_s_gate.feature`
+- 確認: `features/cli/add/add_s_gate.feature.md`
   - `qni add S` の既存挙動が回帰していないことを確認する。
-- 確認: `features/add_s_dagger_gate.feature`
+- 確認: `features/cli/add/add_s_dagger_gate.feature.md`
   - 制御付き検証で使う `Sdg`（S†）の既存挙動が回帰していないことを確認する。
-- 確認: `features/qni_run.feature`
-  - 数値実行と記号表示の実行が回帰していないことを確認する。
-- 確認: `features/qni_expect.feature`
+- 確認: `features/cli/run/basic_state_vectors.feature.md`
+  - 数値実行が回帰していないことを確認する。
+- 確認: `features/cli/run/symbolic.feature.md`
+  - 記号表示の実行が回帰していないことを確認する。
+- 確認: `features/cli/expect/command.feature.md`
   - `qni expect` の出力が制御付き検証で回帰していないことを確認する。
-- 確認: `features/katas/basic_gates/state_flip.feature`
+- 確認: `features/katas/basic_gates/state_flip.feature.md`
   - `Task 1.1` が回帰していないことを確認する。
-- 確認: `features/katas/basic_gates/basis_change.feature`
+- 確認: `features/katas/basic_gates/basis_change.feature.md`
   - `Task 1.2` が回帰していないことを確認する。
-- 確認: `features/katas/basic_gates/sign_flip.feature`
+- 確認: `features/katas/basic_gates/sign_flip.feature.md`
   - `Task 1.3` が回帰していないことを確認する。
-- 確認: `features/katas/basic_gates/amplitude_change.feature`
+- 確認: `features/katas/basic_gates/amplitude_change.feature.md`
   - `Task 1.4` が回帰していないことを確認する。
 
 ## タスク 1: `Task 1.5` の機能仕様を先に追加して既存機能で足りるか確認する
 
 **対象ファイル:**
-- 作成: `features/katas/basic_gates/phase_flip.feature`
-- テスト: `features/katas/basic_gates/phase_flip.feature`
+- 変更: `features/katas/basic_gates/phase_flip.feature.md`
+- テスト: `features/katas/basic_gates/phase_flip.feature.md`
 
 - [ ] **手順 1: `Task 1.5` の問題文とシナリオを書く**
 
-`features/katas/basic_gates/phase_flip.feature` を新規作成し、少なくとも次を追加する。
+`features/katas/basic_gates/phase_flip.feature.md` に少なくとも次を追加する。
 
 ```gherkin
 Feature: Quantum Katas BasicGates Task 1.5 PhaseFlip
@@ -86,7 +88,7 @@ Feature: Quantum Katas BasicGates Task 1.5 PhaseFlip
 実行:
 
 ```bash
-BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/share/gem/ruby/3.4.0/bin/bundle exec cucumber features/katas/basic_gates/phase_flip.feature
+BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/share/gem/ruby/3.4.0/bin/bundle exec cucumber features/katas/basic_gates/phase_flip.feature.md
 ```
 
 期待結果:
@@ -97,18 +99,19 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/sha
 - [ ] **手順 3: 失敗でも成功でも、機能仕様を先に追加する変更をコミットする**
 
 ```bash
-git add features/katas/basic_gates/phase_flip.feature
+git add features/katas/basic_gates/phase_flip.feature.md
 git commit -m "test: add Task 1.5 kata scenarios"
 ```
 
 ## タスク 2: 必要なら最小修正で成功させる
 
 **対象ファイル:**
-- 変更: `features/katas/basic_gates/phase_flip.feature`
-- 必要なら変更: `features/add_s_gate.feature`
-- 必要なら変更: `features/add_s_dagger_gate.feature`
-- 必要なら変更: `features/qni_run.feature`
-- 必要なら変更: `features/qni_expect.feature`
+- 変更: `features/katas/basic_gates/phase_flip.feature.md`
+- 必要なら変更: `features/cli/add/add_s_gate.feature.md`
+- 必要なら変更: `features/cli/add/add_s_dagger_gate.feature.md`
+- 必要なら変更: `features/cli/run/basic_state_vectors.feature.md`
+- 必要なら変更: `features/cli/run/symbolic.feature.md`
+- 必要なら変更: `features/cli/expect/command.feature.md`
 - 必要なら変更: `lib/qni/...`
 
 - [ ] **手順 1: 失敗原因を 1 箇所に絞る**
@@ -128,13 +131,13 @@ git commit -m "test: add Task 1.5 kata scenarios"
 
 例:
 
-- `features/add_s_gate.feature`
+- `features/cli/add/add_s_gate.feature.md`
   - 制御付き `S` が回路に保存できること
-- `features/add_s_dagger_gate.feature`
+- `features/cli/add/add_s_dagger_gate.feature.md`
   - 制御付き `Sdg` が回路に保存できること
-- `features/qni_run.feature`
+- `features/cli/run/basic_state_vectors.feature.md` / `features/cli/run/symbolic.feature.md`
   - `S` 適用後に複素係数を数値 / 記号表示の両方で表示できること
-- `features/qni_expect.feature`
+- `features/cli/expect/command.feature.md`
   - 制御付き `S` と `Sdg` を含む回路で `ZI` が 1 に戻ること
 
 - [ ] **手順 3: 必要な最小実装だけを入れる**
@@ -152,7 +155,7 @@ git commit -m "test: add Task 1.5 kata scenarios"
 実行:
 
 ```bash
-BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/share/gem/ruby/3.4.0/bin/bundle exec cucumber features/katas/basic_gates/phase_flip.feature
+BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/share/gem/ruby/3.4.0/bin/bundle exec cucumber features/katas/basic_gates/phase_flip.feature.md
 ```
 
 期待結果:
@@ -162,7 +165,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/sha
 - [ ] **手順 5: 必要な修正をコミットする**
 
 ```bash
-git add features/katas/basic_gates/phase_flip.feature features/add_s_gate.feature features/add_s_dagger_gate.feature features/qni_run.feature features/qni_expect.feature lib/qni
+git add features/katas/basic_gates/phase_flip.feature.md features/cli/add/add_s_gate.feature.md features/cli/add/add_s_dagger_gate.feature.md features/cli/run/basic_state_vectors.feature.md features/cli/run/symbolic.feature.md features/cli/expect/command.feature.md lib/qni
 git commit -m "feat: support Task 1.5 phase flip verification"
 ```
 
@@ -171,15 +174,16 @@ git commit -m "feat: support Task 1.5 phase flip verification"
 ## タスク 3: 近接回帰を確認する
 
 **対象ファイル:**
-- テスト: `features/add_s_gate.feature`
-- テスト: `features/add_s_dagger_gate.feature`
-- テスト: `features/qni_run.feature`
-- テスト: `features/qni_expect.feature`
-- テスト: `features/katas/basic_gates/state_flip.feature`
-- テスト: `features/katas/basic_gates/basis_change.feature`
-- テスト: `features/katas/basic_gates/sign_flip.feature`
-- テスト: `features/katas/basic_gates/amplitude_change.feature`
-- テスト: `features/katas/basic_gates/phase_flip.feature`
+- テスト: `features/cli/add/add_s_gate.feature.md`
+- テスト: `features/cli/add/add_s_dagger_gate.feature.md`
+- テスト: `features/cli/run/basic_state_vectors.feature.md`
+- テスト: `features/cli/run/symbolic.feature.md`
+- テスト: `features/cli/expect/command.feature.md`
+- テスト: `features/katas/basic_gates/state_flip.feature.md`
+- テスト: `features/katas/basic_gates/basis_change.feature.md`
+- テスト: `features/katas/basic_gates/sign_flip.feature.md`
+- テスト: `features/katas/basic_gates/amplitude_change.feature.md`
+- テスト: `features/katas/basic_gates/phase_flip.feature.md`
 
 - [ ] **手順 1: 近接する機能仕様をまとめて実行する**
 
@@ -187,15 +191,16 @@ git commit -m "feat: support Task 1.5 phase flip verification"
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/share/gem/ruby/3.4.0/bin/bundle exec cucumber \
-  features/add_s_gate.feature \
-  features/add_s_dagger_gate.feature \
-  features/qni_run.feature \
-  features/qni_expect.feature \
-  features/katas/basic_gates/state_flip.feature \
-  features/katas/basic_gates/basis_change.feature \
-  features/katas/basic_gates/sign_flip.feature \
-  features/katas/basic_gates/amplitude_change.feature \
-  features/katas/basic_gates/phase_flip.feature
+  features/cli/add/add_s_gate.feature.md \
+  features/cli/add/add_s_dagger_gate.feature.md \
+  features/cli/run/basic_state_vectors.feature.md \
+  features/cli/run/symbolic.feature.md \
+  features/cli/expect/command.feature.md \
+  features/katas/basic_gates/state_flip.feature.md \
+  features/katas/basic_gates/basis_change.feature.md \
+  features/katas/basic_gates/sign_flip.feature.md \
+  features/katas/basic_gates/amplitude_change.feature.md \
+  features/katas/basic_gates/phase_flip.feature.md
 ```
 
 期待結果:
