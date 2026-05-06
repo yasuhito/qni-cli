@@ -1,16 +1,16 @@
 # Feature: qni bloch のエラー
 
-qni-cli のユーザーとして
+qni-cli のユーザとして
 誤った `qni bloch` の使い方をすぐ直せるように
 qni bloch が明確なエラーを返してほしい。
 
-## Scenario: qni bloch は 2 量子ビット回路では失敗する
+## Scenario: qni bloch は対応外の量子ビット数では失敗する
 
 - Given 空の 2 qubit 回路がある
 - When "qni bloch --png --output bloch.png" を実行
 - Then コマンドは失敗
 
-## Scenario: qni bloch は 2 量子ビット回路では対応する量子ビット数のエラーを表示する
+## Scenario: qni bloch は対応外の量子ビット数のエラーを表示する
 
 - Given 空の 2 qubit 回路がある
 - When "qni bloch --png --output bloch.png" を実行
