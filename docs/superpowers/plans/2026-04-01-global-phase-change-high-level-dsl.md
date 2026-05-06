@@ -13,7 +13,7 @@
 ## ファイル構成
 
 - 変更: `features/katas/basic_gates/global_phase_change.feature`
-  - 低レベルな制御付き検証回路と `qni expect ZI` を、高レベル DSL の 1 量子ビットシナリオへ置き換える。
+  - 低レベルな制御付き検証回路と `qni expect ZI` を、高レベル DSL の 1 量子ビットのシナリオへ置き換える。
 - 確認: `features/step_definitions/cli_steps.rb`
   - 既存の `Then 状態ベクトルは:` 比較ヘルパーだけで `-|0>`, `-α|0> - β|1>` が通ることを確認する。
 - 確認: `features/katas/basic_gates/phase_change.feature`
