@@ -1,6 +1,6 @@
 # 円表示書き出し実装計画
 
-> **エージェント作業者向け:** 必須: この計画を実装するときは superpowers:subagent-driven-development (subagent が利用可能な場合) または superpowers:executing-plans を使う。進捗管理にはチェックボックス (`- [ ]`) 構文を使う。
+> **エージェント作業者向け:** 必須: この計画を実装するときは superpowers:subagent-driven-development (サブエージェントが利用可能な場合) または superpowers:executing-plans を使う。進捗管理にはチェックボックス (`- [ ]`) 構文を使う。
 
 **目標:** `qni export --circle-notation --png` を追加し、1 qubit / 2 qubit の計算基底の状態ベクトルを円表示の PNG として書き出せるようにする。
 
@@ -122,7 +122,7 @@ bundle exec /home/yasuhito/Work/qni-cli/bin/qni export --circle-notation --png -
 ```
 
 期待結果:
-- `bell.png` が存在
+- `bell.png` が存在する
 
 - [ ] **手順 3: 1 qubit のサンプルも 1 枚生成**
 
@@ -138,4 +138,4 @@ bundle exec /home/yasuhito/Work/qni-cli/bin/qni export --circle-notation --png -
 ```
 
 期待結果:
-- `plus.png` が存在
+- `plus.png` が存在する
