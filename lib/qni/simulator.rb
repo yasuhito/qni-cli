@@ -83,13 +83,32 @@ module Qni
     end
 
     def starting_state_vector
-      initial_state = data['initial_state']
-      return StateVector.zero(qubits) unless initial_state
+      initial_state_data = data['initial_state']
+      return StateVector.zero(qubits) unless initial_state_data
 
+      initial_state = InitialState.from_h(initial_state_data)
       StateVector.new(
         qubits:,
-        amplitudes: InitialState.from_h(initial_state).resolve_numeric(variables)
+        amplitudes: expanded_initial_amplitudes(initial_state)
       )
+    end
+
+    def expanded_initial_amplitudes(initial_state)
+      initial_qubits = initial_state.qubits
+      raise Error, 'initial state qubit count cannot exceed circuit qubit count' if initial_qubits > qubits
+
+      amplitudes = initial_state.resolve_numeric(variables)
+      return amplitudes if initial_qubits == qubits
+
+      expand_initial_amplitudes(amplitudes, suffix_states: 2**(qubits - initial_qubits))
+    end
+
+    def expand_initial_amplitudes(amplitudes, suffix_states:)
+      expanded = Array.new(2**qubits, 0.0)
+      amplitudes.each_with_index do |amplitude, index|
+        expanded[index * suffix_states] = amplitude
+      end
+      expanded
     end
 
     def apply_col(state_vector, col)

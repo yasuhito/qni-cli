@@ -10,7 +10,7 @@ type GateOperator = (zero: Complex, one: Complex) => [Complex, Complex];
 const CONTROL_SYMBOL = '•';
 const EMPTY_SLOT = 1;
 const H_SCALE = 1 / Math.sqrt(2);
-const MAX_BITWISE_QUBITS = 30;
+const MAX_IN_MEMORY_QUBITS = 30;
 const SWAP_SYMBOL = 'Swap';
 
 const FIXED_GATE_OPERATORS = new Map<string, GateOperator>([
@@ -489,7 +489,7 @@ function ensureSupportedQubitCount(qubits: number): void {
     throw new SimulatorError(`invalid qubit count for run: ${qubits}`);
   }
 
-  if (qubits > MAX_BITWISE_QUBITS) {
+  if (qubits > MAX_IN_MEMORY_QUBITS) {
     throw new SimulatorError(`too many qubits for TypeScript numeric run: ${qubits}`);
   }
 }
