@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import * as childProcess from 'node:child_process';
 import { chmod, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -7,6 +8,7 @@ import { describe, it } from 'node:test';
 import { createDispatcher } from '../../src/dispatcher';
 import {
   renderSymbolicStateVector,
+  setSymbolicStateRendererSpawnSyncForTest,
   SymbolicStateRendererError
 } from '../../src/symbolic_state_renderer';
 
@@ -14,6 +16,20 @@ interface CapturedRun {
   readonly exitStatus: number;
   readonly stderr: string;
   readonly stdout: string;
+}
+
+function spawnResult(
+  overrides: Partial<childProcess.SpawnSyncReturns<string>>
+): childProcess.SpawnSyncReturns<string> {
+  return {
+    output: [],
+    pid: 0,
+    signal: null,
+    status: 0,
+    stderr: '',
+    stdout: '',
+    ...overrides
+  };
 }
 
 async function withTempDir<T>(callback: (dir: string) => Promise<T>): Promise<T> {
@@ -160,6 +176,56 @@ describe('TypeScript symbolic state renderer boundary', () => {
         error instanceof SymbolicStateRendererError &&
         error.message === 'symbolic x-basis run currently supports only 1-qubit circuits'
     );
+  });
+
+  it('continues to uv after an EPIPE from retryable system python stderr', () => {
+    const calls: string[] = [];
+    const missingRuntime = new Error('spawn ENOENT') as NodeJS.ErrnoException;
+    const brokenPipe = new Error('write EPIPE') as NodeJS.ErrnoException;
+    missingRuntime.code = 'ENOENT';
+    brokenPipe.code = 'EPIPE';
+
+    const restoreSpawnSync = setSymbolicStateRendererSpawnSyncForTest(((command: string) => {
+      calls.push(command);
+
+      if (command.endsWith('/.python-symbolic/bin/python')) {
+        return spawnResult({ error: missingRuntime, status: null });
+      }
+
+      if (command === 'python3') {
+        return spawnResult({
+          error: brokenPipe,
+          status: 1,
+          stderr: "ModuleNotFoundError: No module named 'sympy'\n"
+        });
+      }
+
+      if (command === 'uv') {
+        return spawnResult({ stdout: 'uv-success\n' });
+      }
+
+      return spawnResult({
+        status: 127,
+        stderr: `unexpected command: ${command}`
+      });
+    }) as typeof childProcess.spawnSync);
+
+    try {
+      assert.equal(
+        renderSymbolicStateVector({
+          circuit: {
+            cols: [[1]],
+            qubits: 1
+          },
+          env: { PATH: '' },
+          projectRoot: '/project'
+        }),
+        'uv-success'
+      );
+      assert.deepEqual(calls, ['/project/.python-symbolic/bin/python', 'python3', 'uv']);
+    } finally {
+      restoreSpawnSync();
+    }
   });
 
   it('falls back from missing repository runtime to uv when system python lacks SymPy', async () => {
