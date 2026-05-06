@@ -102,6 +102,20 @@ function renderWithHelper(command: HelperCommand, options: ResolvedSymbolicState
       return undefined;
     }
 
+    if (error.code === 'EPIPE') {
+      if (result.status === 0) {
+        return result.stdout.trim();
+      }
+
+      if (retryableWithNextCommand(command.command, result.stderr)) {
+        return undefined;
+      }
+
+      if (result.stderr.trim() !== '') {
+        throw new SymbolicStateRendererError(renderErrorMessage(result.stderr, result.status));
+      }
+    }
+
     throw new SymbolicStateRendererError(error.message);
   }
 
