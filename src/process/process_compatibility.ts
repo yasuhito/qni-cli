@@ -40,6 +40,8 @@ export interface RunRubyFallbackSyncOptions extends RubyFallbackOptions {
   readonly stderr?: Writable;
 }
 
+export type RubyFallbackSyncStdio = ['ignore', 'pipe' | 'inherit', 'pipe' | 'inherit'];
+
 export interface CommandImplementationOptions {
   readonly argv: readonly string[];
   readonly env: NodeJS.ProcessEnv;
@@ -129,12 +131,19 @@ export function runRubyFallback(options: RunRubyFallbackOptions): Promise<Subpro
   });
 }
 
+export function rubyFallbackSyncStdio(options: Pick<RunRubyFallbackSyncOptions, 'stderr' | 'stdout'>): RubyFallbackSyncStdio {
+  const stdoutMode = options.stdout || !process.stdout.isTTY ? 'pipe' : 'inherit';
+  const stderrMode = options.stderr || !process.stderr.isTTY ? 'pipe' : 'inherit';
+
+  return ['ignore', stdoutMode, stderrMode];
+}
+
 export function runRubyFallbackSync(options: RunRubyFallbackSyncOptions): SubprocessResult {
   const invocation = createRubyFallbackInvocation(options);
   const result = spawnSync(invocation.command, [...invocation.args], {
     cwd: invocation.cwd,
     env: invocation.env,
-    stdio: ['ignore', 'pipe', 'pipe']
+    stdio: rubyFallbackSyncStdio(options)
   });
 
   if (result.error) {
@@ -142,8 +151,13 @@ export function runRubyFallbackSync(options: RunRubyFallbackSyncOptions): Subpro
     return { exitStatus: 127, signal: null };
   }
 
-  (options.stdout ?? process.stdout).write(result.stdout);
-  (options.stderr ?? process.stderr).write(result.stderr);
+  if (result.stdout) {
+    (options.stdout ?? process.stdout).write(result.stdout);
+  }
+
+  if (result.stderr) {
+    (options.stderr ?? process.stderr).write(result.stderr);
+  }
 
   return {
     exitStatus: result.status,

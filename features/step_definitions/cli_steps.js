@@ -7,7 +7,6 @@ const assert = require('node:assert/strict');
 const { Given, Then, When } = require('@cucumber/cucumber');
 
 const PROJECT_ROOT = path.resolve(__dirname, '../..');
-const QNI_BIN = path.join(PROJECT_ROOT, 'bin', 'qni');
 const NODE_QNI_BIN = path.join(PROJECT_ROOT, 'dist', 'bin', 'qni.js');
 const PYTHON_SYMBOLIC = path.join(PROJECT_ROOT, '.python-symbolic', 'bin', 'python');
 const MPLCONFIGDIR = process.env.MPLCONFIGDIR || path.join(os.tmpdir(), 'qni-cli-matplotlib');
@@ -90,7 +89,7 @@ function splitCommand(command) {
   return words;
 }
 
-function bundlerEnv(extraEnv = {}) {
+function scenarioEnv(extraEnv = {}) {
   return {
     ...process.env,
     ...extraEnv,
@@ -117,7 +116,7 @@ function runNodeQniCommand(scenarioDir, command, extraEnv = {}) {
   return new Promise((resolve, reject) => {
     const child = spawn('node', [NODE_QNI_BIN, ...argv.slice(1)], {
       cwd: scenarioDir,
-      env: bundlerEnv(extraEnv)
+      env: scenarioEnv(extraEnv)
     });
 
     const stdout = [];
@@ -148,14 +147,14 @@ function runQniCommandInTty(scenarioDir, command, extraEnv = {}) {
     throw new Error(`command must start with qni: ${command}`);
   }
 
-  const ttyCommand = ['bundle', 'exec', QNI_BIN, ...argv.slice(1)]
+  const ttyCommand = ['node', NODE_QNI_BIN, ...argv.slice(1)]
     .map(shellQuote)
     .join(' ');
 
   return new Promise((resolve, reject) => {
     const child = spawn('script', ['-qfec', ttyCommand, '/dev/null'], {
       cwd: scenarioDir,
-      env: bundlerEnv(extraEnv)
+      env: scenarioEnv(extraEnv)
     });
 
     const stdout = [];
@@ -240,20 +239,29 @@ function appendCircuitJson(scenarioDir, data) {
 
 function parseAsciiCircuit(asciiArt) {
   const script = [
-    'begin',
-    '  circuit = Qni::View::AsciiCircuitParser.new(STDIN.read).parse',
-    '  puts JSON.generate(ok: true, circuit: circuit.to_h)',
-    'rescue Qni::View::AsciiCircuitParser::Error => e',
-    '  puts JSON.generate(ok: false, error: e.message)',
-    'end'
+    'const { parseAsciiCircuit, AsciiCircuitParserError } = require("./dist/view/ascii_circuit_parser");',
+    'let input = "";',
+    'process.stdin.setEncoding("utf8");',
+    'process.stdin.on("data", (chunk) => { input += chunk; });',
+    'process.stdin.on("end", () => {',
+    '  try {',
+    '    process.stdout.write(JSON.stringify({ ok: true, circuit: parseAsciiCircuit(input) }));',
+    '  } catch (error) {',
+    '    if (error instanceof AsciiCircuitParserError) {',
+    '      process.stdout.write(JSON.stringify({ ok: false, error: error.message }));',
+    '    } else {',
+    '      throw error;',
+    '    }',
+    '  }',
+    '});'
   ].join('\n');
 
   return JSON.parse(execFileSync(
-    'bundle',
-    ['exec', 'ruby', '-Ilib', '-rjson', '-rqni/view/ascii_circuit_parser', '-e', script],
+    'node',
+    ['-e', script],
     {
       cwd: PROJECT_ROOT,
-      env: bundlerEnv(),
+      env: scenarioEnv(),
       input: asciiArt,
       encoding: 'utf8'
     }
@@ -295,7 +303,7 @@ function directInitialState(state) {
     ['exec', 'ruby', '-Ilib', '-rjson', '-rqni/initial_state', '-e', script],
     {
       cwd: PROJECT_ROOT,
-      env: bundlerEnv(),
+      env: scenarioEnv(),
       input: state,
       encoding: 'utf8'
     }

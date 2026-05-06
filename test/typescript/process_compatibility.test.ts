@@ -9,6 +9,7 @@ import {
   chooseCommandImplementation,
   commandLineArgs,
   createRubyFallbackInvocation,
+  rubyFallbackSyncStdio,
   runRubyFallback,
   runRubyFallbackSync,
   runSubprocess
@@ -38,6 +39,36 @@ async function withTempDir<T>(callback: (dir: string) => Promise<T>): Promise<T>
     return await callback(dir);
   } finally {
     await rm(dir, { force: true, recursive: true });
+  }
+}
+
+function withProcessTty<T>(isTTY: boolean, callback: () => T): T {
+  const stdoutDescriptor = Object.getOwnPropertyDescriptor(process.stdout, 'isTTY');
+  const stderrDescriptor = Object.getOwnPropertyDescriptor(process.stderr, 'isTTY');
+
+  Object.defineProperty(process.stdout, 'isTTY', {
+    configurable: true,
+    value: isTTY
+  });
+  Object.defineProperty(process.stderr, 'isTTY', {
+    configurable: true,
+    value: isTTY
+  });
+
+  try {
+    return callback();
+  } finally {
+    if (stdoutDescriptor) {
+      Object.defineProperty(process.stdout, 'isTTY', stdoutDescriptor);
+    } else {
+      Reflect.deleteProperty(process.stdout, 'isTTY');
+    }
+
+    if (stderrDescriptor) {
+      Object.defineProperty(process.stderr, 'isTTY', stderrDescriptor);
+    } else {
+      Reflect.deleteProperty(process.stderr, 'isTTY');
+    }
   }
 }
 
@@ -164,6 +195,20 @@ describe('Ruby fallback process compatibility', () => {
     assert.equal(result.signal, null);
     assert.match(stdout.text(), /^Usage:\n  qni clear\n/u);
     assert.equal(stderr.text(), '');
+  });
+
+  it('inherits TTY streams for synchronous Ruby fallback when no custom stream is supplied', () => {
+    withProcessTty(true, () => {
+      assert.deepEqual(rubyFallbackSyncStdio({}), ['ignore', 'inherit', 'inherit']);
+      assert.deepEqual(rubyFallbackSyncStdio({ stdout: new StringSink() }), ['ignore', 'pipe', 'inherit']);
+      assert.deepEqual(rubyFallbackSyncStdio({ stderr: new StringSink() }), ['ignore', 'inherit', 'pipe']);
+    });
+  });
+
+  it('pipes synchronous Ruby fallback streams for non-TTY parents', () => {
+    withProcessTty(false, () => {
+      assert.deepEqual(rubyFallbackSyncStdio({}), ['ignore', 'pipe', 'pipe']);
+    });
   });
 });
 
