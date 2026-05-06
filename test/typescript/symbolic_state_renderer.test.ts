@@ -41,6 +41,13 @@ async function writeSymbolicHelperPlaceholder(projectRoot: string): Promise<void
   await writeFile(path.join(projectRoot, 'libexec', 'qni_symbolic_run.py'), '');
 }
 
+function epipeProneCircuit(): { cols: number[][]; qubits: number } {
+  return {
+    cols: Array.from({ length: 200_000 }, () => [1]),
+    qubits: 1
+  };
+}
+
 function captureDispatcherRun(cwd: string, argv: string[], env: NodeJS.ProcessEnv = { PATH: '' }): CapturedRun {
   let stdout = '';
   let stderr = '';
@@ -169,10 +176,7 @@ exit 1
 
       assert.equal(
         renderSymbolicStateVector({
-          circuit: {
-            cols: [[1]],
-            qubits: 1
-          },
+          circuit: epipeProneCircuit(),
           env: { PATH: bin },
           projectRoot
         }),

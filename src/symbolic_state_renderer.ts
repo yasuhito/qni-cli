@@ -111,7 +111,7 @@ function renderWithHelper(command: HelperCommand, options: ResolvedSymbolicState
         return undefined;
       }
 
-      if (result.stderr.trim() !== '') {
+      if (result.status !== null || result.stderr.trim() !== '') {
         throw new SymbolicStateRendererError(renderErrorMessage(result.stderr, result.status));
       }
     }
