@@ -1,5 +1,6 @@
-import { CircuitFileError, currentCircuitFile } from '../circuit_file';
+import { currentCircuitFile } from '../circuit_file';
 import type { CommandHandlerContext } from '../dispatcher';
+import { CommandError } from './command_error';
 
 const HELP_TEXT = `Usage:
   qni state set "alpha|0> + beta|1>"
@@ -32,7 +33,7 @@ export function runStateCommand(argv: string[], context: CommandHandlerContext):
 
   try {
     if (!isTypeScriptStateSubcommand(subcommand)) {
-      throw new CircuitFileError(`unsupported state subcommand: ${subcommand}`);
+      throw new CommandError(`unsupported state subcommand: ${subcommand}`);
     }
 
     const output = executeSubcommand(subcommand, argv.slice(2), context);
@@ -75,12 +76,12 @@ function isTypeScriptStateSubcommand(value: string): value is TypeScriptStateSub
 
 function requireArgumentCount(args: string[], expected: number): void {
   if (args.length !== expected) {
-    throw new CircuitFileError('wrong number of arguments');
+    throw new CommandError('wrong number of arguments');
   }
 }
 
 function requireStateExpression(value: string): void {
   if (value.length === 0) {
-    throw new CircuitFileError('initial state expression is required');
+    throw new CommandError('initial state expression is required');
   }
 }
