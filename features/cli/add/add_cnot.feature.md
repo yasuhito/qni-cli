@@ -1,7 +1,7 @@
 # Feature: CNOT ゲートを追加
 
 qni-cli のユーザとして、コマンドラインから量子回路を組み立てるために、
-指定した step と control と target に CNOT ゲートを追加したい。
+指定したステップ、制御量子ビット、対象量子ビットに CNOT ゲートを追加したい。
 
 ## Scenario: CNOT ゲート追加コマンドは成功
 
@@ -40,7 +40,7 @@ qni-cli のユーザとして、コマンドラインから量子回路を組み
   }
   ```
 
-## Scenario: CNOT ゲートは decimal step でも circuit.json を作成
+## Scenario: CNOT ゲートは小数のステップ値でも circuit.json を作成
 
 - When "qni add X --control 0 --qubit 1 --step 0.0" を実行
 - Then "circuit.json" の内容:
