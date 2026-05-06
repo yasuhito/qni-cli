@@ -1,43 +1,43 @@
-# BellStateChange3 High-Level DSL Design
+# BellStateChange3 高水準 DSL 設計
 
-## Goal
+## 目的
 
-Rewrite `features/katas/basic_gates/bell_state_change_3.feature` so it reads at the same high level as Task 1.8 and Task 1.9.
+`features/katas/basic_gates/bell_state_change_3.feature` を、タスク 1.8 とタスク 1.9 と同じ高水準で読めるように書き換える。
 
-The feature should describe Bell-basis state changes directly instead of low-level `qni add ...` sequences and raw numeric state-vector output.
+この機能仕様では、低水準の `qni add ...` 列や生の数値状態ベクトル出力ではなく、Bell 基底での状態変化を直接記述する。
 
-## Scope
+## 範囲
 
-- Reuse the existing Bell-basis DSL already introduced for BellStateChange1/2:
+- BellStateChange1/2 で導入済みの既存の Bell 基底 DSL を再利用する:
   - `Given 初期状態ベクトルは:`
   - `When 次の回路を適用:`
   - `Then Bell 基底での状態ベクトルは:`
-- Do not add new CLI commands or new step definitions unless the existing Bell-basis support proves insufficient.
-- Remove the controlled verification scenario from this feature, following the current high-level kata style.
+- 既存の Bell 基底対応だけでは不足すると分かるまでは、新しい CLI コマンドや新しいステップ定義を追加しない。
+- 現在の高水準な課題の文体に合わせ、この機能仕様から制御用の検証シナリオを削除する。
 
-## Representation
+## 表現
 
-Task 1.10 changes `|Φ+>` into `|Ψ->`.
+タスク 1.10 は `|Φ+>` を `|Ψ->` に変える。
 
-The most readable high-level phrasing is to describe the implemented circuit, not a hidden low-level kata trick:
+最も読みやすい高水準な表現は、隠れた低水準の課題用の技法ではなく、実装された回路を記述することである:
 
 - "X と Z を順に適用した回路は |Φ+> を |Ψ-> に変える"
 - "X と Z を順に適用した回路は |Ψ-> を |Φ+> に変える"
 
-This keeps the feature honest about the actual circuit while still reading at the level of Bell-state behavior.
+これにより、Bell 状態の振る舞いの粒度で読めるまま、機能仕様を実際の回路に忠実に保てる。
 
-## Scenarios
+## シナリオ
 
-Use four scenarios, mirroring BellStateChange1/2:
+BellStateChange1/2 と同じ構成で、4 つのシナリオを使う:
 
 1. `|Φ+> -> |Ψ->`
 2. `|Ψ-> -> |Φ+>`
-3. `0.6|Φ+> + 0.8|Ψ->` coefficient swap
-4. `α|Φ+> + β|Ψ->` symbolic coefficient swap
+3. `0.6|Φ+> + 0.8|Ψ->` の係数の入れ替え
+4. `α|Φ+> + β|Ψ->` の記号係数の入れ替え
 
-## Circuit Form
+## 回路形式
 
-Each scenario should show the same 2-qubit circuit:
+各シナリオでは、同じ 2 量子ビット回路を示す:
 
 ```text
     ┌───┐┌───┐
@@ -46,11 +46,10 @@ q0: ┤ X ├┤ Z ├
 q1: ───────────
 ```
 
-This keeps the feature aligned with the actual implementation and consistent with the visual DSL used in the earlier tasks.
+これにより、機能仕様を実際の実装に合わせ、前のタスクで使った視覚的な DSL と一貫させる。
 
-## Verification
+## 検証
 
-- First, run the rewritten `bell_state_change_3.feature` alone.
-- Then run BellStateChange1/2/3 together.
-- Finally run full `bundle exec rake check`.
-
+- まず、書き換えた `bell_state_change_3.feature` だけを実行する。
+- 次に、BellStateChange1/2/3 をまとめて実行する。
+- 最後に、全体の `bundle exec rake check` を実行する。
