@@ -1,7 +1,7 @@
 # Feature: qni bloch PNG
 
 qni-cli のユーザとして
-1 qubit の状態を画像として確認するために
+1 量子ビットの状態を画像として確認するために
 qni bloch --png でブロッホ球 PNG を書き出したい。
 
 ## Scenario: qni bloch --png は成功する
