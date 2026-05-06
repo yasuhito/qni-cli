@@ -681,7 +681,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec rake check
 
 - 成功する
 
-- [ ] **手順 5: 最終コミットを行う**
+- [ ] **手順 5: 仕上げをコミットする**
 
 ```bash
 git add \
