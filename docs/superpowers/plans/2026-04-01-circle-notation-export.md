@@ -1,116 +1,116 @@
-# Circle Notation Export Implementation Plan
+# 円表示書き出し実装計画
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **エージェント作業者向け:** 必須: この計画を実装するときは superpowers:subagent-driven-development (subagent が利用可能な場合) または superpowers:executing-plans を使う。進捗管理にはチェックボックス (`- [ ]`) 構文を使う。
 
-**Goal:** `qni export --circle-notation --png` を追加し、1 qubit / 2 qubit の計算基底 state vector を circle notation の PNG として書き出せるようにする。
+**目標:** `qni export --circle-notation --png` を追加し、1 qubit / 2 qubit の計算基底の状態ベクトルを円表示の PNG として書き出せるようにする。
 
-**Architecture:** 既存の `ExportCommand` に `--circle-notation` 分岐を追加し、render source は simulator の最終 state vector から直接作る。最初は 1 qubit / 2 qubit・PNG のみに絞り、Qni 本家の円表示の概念を保ちながら `qni-cli` 側で最小再実装する。
+**構成:** 既存の `ExportCommand` に `--circle-notation` 分岐を追加し、描画元はシミュレーターの最終状態ベクトルから直接作る。最初は 1 qubit / 2 qubit・PNG のみに絞り、Qni 本家の円表示の概念を保ちながら `qni-cli` 側で最小再実装する。
 
-**Tech Stack:** Ruby, existing `qni export` pipeline, Cucumber, simulator/state vector internals, PNG export helpers
+**技術構成:** Ruby、既存の `qni export` 処理系、Cucumber、シミュレーター/状態ベクトル内部処理、PNG 書き出しヘルパー
 
 ---
 
-## File Structure
+## ファイル構成
 
-- Modify: `features/qni_export.feature`
+- 変更: `features/qni_export.feature`
   - `--circle-notation` の受け入れ仕様を先に追加する
-- Modify: `lib/qni/cli.rb`
-  - CLI option help を追加する
-- Modify: `lib/qni/cli/export_options.rb`
-  - `--circle-notation` の validation を追加する
-- Modify: `lib/qni/cli/export_command.rb`
-  - export 分岐を追加する
-- Create: `lib/qni/export/circle_notation_png.rb`
-  - state vector を円表示 PNG に変換する
-- Modify: `lib/qni/cli/export_help.rb`
-  - help text を追加する
-- Verify: `features/step_definitions/cli_steps.rb`
-  - 既存 step で PNG existence / size check が足りるか確認する
+- 変更: `lib/qni/cli.rb`
+  - CLI オプションのヘルプを追加する
+- 変更: `lib/qni/cli/export_options.rb`
+  - `--circle-notation` の検証を追加する
+- 変更: `lib/qni/cli/export_command.rb`
+  - 書き出し分岐を追加する
+- 作成: `lib/qni/export/circle_notation_png.rb`
+  - 状態ベクトルを円表示 PNG に変換する
+- 変更: `lib/qni/cli/export_help.rb`
+  - ヘルプ文を追加する
+- 確認: `features/step_definitions/cli_steps.rb`
+  - 既存ステップで PNG の存在確認 / サイズ確認が足りるか確認する
 
-### Task 1: feature を先に追加して red を作る
+### 作業 1: 機能仕様を先に追加して失敗状態を作る
 
-**Files:**
-- Modify: `features/qni_export.feature`
+**ファイル:**
+- 変更: `features/qni_export.feature`
 
-- [ ] **Step 1: help / usage section に `--circle-notation` を追記**
+- [ ] **手順 1: ヘルプ / 使い方のセクションに `--circle-notation` を追記**
 
-- [ ] **Step 2: 1 qubit PNG 書き出し scenario を追加**
+- [ ] **手順 2: 1 qubit PNG 書き出しシナリオを追加**
 
 期待:
 - `qni export --circle-notation --png --output state.png` が成功
 - `state.png` が存在する
 
-- [ ] **Step 3: 2 qubit Bell 状態 PNG 書き出し scenario を追加**
+- [ ] **手順 3: 2 qubit Bell 状態 PNG 書き出しシナリオを追加**
 
 期待:
 - `|Φ+>` 初期状態で PNG が書き出せる
 
-- [ ] **Step 4: invalid usage scenario を追加**
+- [ ] **手順 4: 不正な使い方のシナリオを追加**
 
 期待:
 - `--state-vector` との併用は失敗
 - 3 qubit 回路は失敗
 - `--png` なしは失敗
 
-- [ ] **Step 5: focused cucumber を実行して red を確認**
+- [ ] **手順 5: 対象を絞って Cucumber を実行し、失敗状態を確認**
 
-Run:
+実行:
 
 ```bash
 bundle exec cucumber features/qni_export.feature
 ```
 
-### Task 2: CLI option と validation を追加する
+### 作業 2: CLI オプションと検証を追加する
 
-**Files:**
-- Modify: `lib/qni/cli.rb`
-- Modify: `lib/qni/cli/export_options.rb`
-- Modify: `lib/qni/cli/export_help.rb`
+**ファイル:**
+- 変更: `lib/qni/cli.rb`
+- 変更: `lib/qni/cli/export_options.rb`
+- 変更: `lib/qni/cli/export_help.rb`
 
-- [ ] **Step 1: `--circle-notation` option を CLI に追加**
+- [ ] **手順 1: `--circle-notation` オプションを CLI に追加**
 
-- [ ] **Step 2: export option validation を追加**
+- [ ] **手順 2: 書き出しオプションの検証を追加**
 
 制約:
 - `--circle-notation` は `--png` 必須
 - `--circle-notation` と `--state-vector` は排他的
 
-- [ ] **Step 3: help text を更新**
+- [ ] **手順 3: ヘルプ文を更新**
 
-- [ ] **Step 4: focused feature を再実行し、validation failure が期待どおりか確認**
+- [ ] **手順 4: 対象を絞った機能仕様を再実行し、検証失敗が期待どおりか確認**
 
-### Task 3: circle notation renderer を実装する
+### 作業 3: 円表示の描画処理を実装する
 
-**Files:**
-- Create: `lib/qni/export/circle_notation_png.rb`
-- Modify: `lib/qni/cli/export_command.rb`
+**ファイル:**
+- 作成: `lib/qni/export/circle_notation_png.rb`
+- 変更: `lib/qni/cli/export_command.rb`
 
-- [ ] **Step 1: final state vector を renderer に渡す export 分岐を追加**
+- [ ] **手順 1: 最終状態ベクトルを描画処理に渡す書き出し分岐を追加**
 
-- [ ] **Step 2: 1 qubit / 2 qubit の basis list と layout を実装**
+- [ ] **手順 2: 1 qubit / 2 qubit の基底一覧と配置を実装**
 
-- [ ] **Step 3: 各 basis state について magnitude / phase から円表示を描く**
+- [ ] **手順 3: 各基底状態について大きさ / 位相から円表示を描く**
 
-- [ ] **Step 4: PNG を output path へ保存する**
+- [ ] **手順 4: PNG を出力パスへ保存する**
 
-- [ ] **Step 5: unsupported qubit count で明示的に失敗させる**
+- [ ] **手順 5: 未対応の qubit 数で明示的に失敗させる**
 
-### Task 4: verify と smoke test を通す
+### 作業 4: 検証と簡易確認を通す
 
-**Files:**
-- Verify: `features/qni_export.feature`
+**ファイル:**
+- 確認: `features/qni_export.feature`
 
-- [ ] **Step 1: export feature を再実行**
+- [ ] **手順 1: 書き出し機能仕様を再実行**
 
-Run:
+実行:
 
 ```bash
 bundle exec cucumber features/qni_export.feature
 ```
 
-- [ ] **Step 2: sample Bell state PNG を手元で 1 枚生成**
+- [ ] **手順 2: Bell 状態のサンプル PNG を手元で 1 枚生成**
 
-Run:
+実行:
 
 ```bash
 tmpdir=$(mktemp -d)
@@ -121,12 +121,12 @@ bundle exec /home/yasuhito/Work/qni-cli/bin/qni state set '|Φ+>'
 bundle exec /home/yasuhito/Work/qni-cli/bin/qni export --circle-notation --png --output bell.png
 ```
 
-Expected:
+期待結果:
 - `bell.png` が存在
 
-- [ ] **Step 3: 1 qubit sample も 1 枚生成**
+- [ ] **手順 3: 1 qubit のサンプルも 1 枚生成**
 
-Run:
+実行:
 
 ```bash
 tmpdir=$(mktemp -d)
@@ -137,5 +137,5 @@ bundle exec /home/yasuhito/Work/qni-cli/bin/qni state set '|+>'
 bundle exec /home/yasuhito/Work/qni-cli/bin/qni export --circle-notation --png --output plus.png
 ```
 
-Expected:
+期待結果:
 - `plus.png` が存在
