@@ -1,61 +1,61 @@
-# Initial State Vector Implementation Plan
+# 初期状態ベクトル実装計画
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **エージェント作業者向け:** 必須: この計画の実装には superpowers:subagent-driven-development（サブエージェントが使える場合）または superpowers:executing-plans を使う。手順の追跡にはチェックボックス（`- [ ]`）記法を使う。
 
-**Goal:** 1 qubit の初期状態ベクトルを `qni` の正式機能として追加し、CLI・`circuit.json`・numeric run・symbolic run・feature DSL から一貫して扱えるようにする。
+**目的:** 1 qubit の初期状態ベクトルを `qni` の正式機能として追加し、CLI・`circuit.json`・数値実行・記号実行・機能仕様 DSL から一貫して扱えるようにする。
 
-**Architecture:** まず feature-first で `qni state` CLI と `initial_state` 付き run の acceptance を赤くする。次に `InitialState` モデルを追加して `Circuit`/`CircuitFile` の JSON 経路へ組み込み、numeric run と symbolic run をそれぞれ既存経路に最小差分で接続する。数値実行は既存の `StateVector` を維持し、symbolic 実行だけ SymPy ベースの初期状態評価を追加する。
+**構成方針:** まず機能仕様を先に書く方針で、`qni state` CLI と `initial_state` 付き実行の受け入れ条件を失敗させる。次に `InitialState` モデルを追加して `Circuit`/`CircuitFile` の JSON 経路へ組み込み、数値実行と記号実行をそれぞれ既存経路に最小差分で接続する。数値実行は既存の `StateVector` を維持し、記号実行だけ SymPy ベースの初期状態評価を追加する。
 
-**Tech Stack:** Ruby, Cucumber, Minitest, Bundler, SymPy helper (`libexec/qni_symbolic_run.py`), `qni-cli`
+**技術要素:** Ruby, Cucumber, Minitest, Bundler, SymPy 補助プログラム (`libexec/qni_symbolic_run.py`), `qni-cli`
 
 ---
 
-## File Structure
+## ファイル構成
 
-- Create: `features/qni_state.feature`
-  - `qni state set/show/clear` の acceptance を追加する。
-- Modify: `features/qni_run.feature`
-  - `initial_state` 付き symbolic run / numeric run / validation failure を追加する。
-- Modify: `features/katas/basic_gates/state_flip.feature`
-  - 必要なら `alpha|0> + beta|1>` を使う高レベル scenario を追加する。
-- Modify: `features/step_definitions/cli_steps.rb`
+- 作成: `features/qni_state.feature`
+  - `qni state set/show/clear` の受け入れ条件を追加する。
+- 変更: `features/qni_run.feature`
+  - `initial_state` 付き記号実行 / 数値実行 / 検証失敗を追加する。
+- 変更: `features/katas/basic_gates/state_flip.feature`
+  - 必要なら `alpha|0> + beta|1>` を使う高レベルシナリオを追加する。
+- 変更: `features/step_definitions/cli_steps.rb`
   - `Given 初期状態ベクトルは:` で `alpha|0> + beta|1>` を `initial_state` JSON に落とせるようにする。
-- Create: `test/qni/initial_state_test.rb`
-  - `InitialState` の parse / JSON round-trip / numeric resolution / validation を unit test する。
-- Create: `lib/qni/initial_state.rb`
-  - 1 qubit 初期状態の parse / normalize / JSON serialize / numeric resolve を担当する。
-- Modify: `lib/qni/circuit.rb`
+- 作成: `test/qni/initial_state_test.rb`
+  - `InitialState` の `parse` / JSON 往復変換 / 数値解決 / 検証を単体テストする。
+- 作成: `lib/qni/initial_state.rb`
+  - 1 qubit 初期状態の解析 / 正規化 / JSON 出力 / 数値解決を担当する。
+- 変更: `lib/qni/circuit.rb`
   - `initial_state` を保持し、`to_h` / `from_h` に組み込む。
-- Modify: `lib/qni/circuit_file.rb`
+- 変更: `lib/qni/circuit_file.rb`
   - `initial_state` を読む / 書くユーティリティを追加する。
-- Modify: `lib/qni/simulator.rb`
-  - zero state ではなく `initial_state` から開始できるようにする。
-- Modify: `lib/qni/state_vector.rb`
-  - 必要なら arbitrary amplitudes から構築する補助を追加する。
-- Modify: `lib/qni/symbolic_state_renderer.rb`
-  - helper へ `initial_state` 付き JSON を渡すだけに留める。
-- Modify: `libexec/qni_symbolic_run.py`
-  - `initial_state` を SymPy ベクトルへ変換し、そこから gate を適用できるようにする。
-- Modify: `lib/qni/cli.rb`
+- 変更: `lib/qni/simulator.rb`
+  - ゼロ状態ではなく `initial_state` から開始できるようにする。
+- 変更: `lib/qni/state_vector.rb`
+  - 必要なら任意の振幅から構築する補助を追加する。
+- 変更: `lib/qni/symbolic_state_renderer.rb`
+  - 補助プログラムへ `initial_state` 付き JSON を渡すだけに留める。
+- 変更: `libexec/qni_symbolic_run.py`
+  - `initial_state` を SymPy ベクトルへ変換し、そこからゲートを適用できるようにする。
+- 変更: `lib/qni/cli.rb`
   - `state` サブコマンドを登録する。
-- Create: `lib/qni/cli/state_command.rb`
+- 作成: `lib/qni/cli/state_command.rb`
   - `set/show/clear` の実装本体を持つ。
-- Create: `lib/qni/cli/state_help.rb`
-  - `qni state` の help text を持つ。
-- Modify: `features/qni_cli.feature`
-  - `qni state` help と usage の acceptance を追加する。
+- 作成: `lib/qni/cli/state_help.rb`
+  - `qni state` のヘルプ文を持つ。
+- 変更: `features/qni_cli.feature`
+  - `qni state` のヘルプと使用方法の受け入れ条件を追加する。
 
-## Task 1: CLI と run の acceptance を先に赤くする
+## タスク 1: CLI と実行の受け入れ条件を先に失敗させる
 
-**Files:**
-- Create: `features/qni_state.feature`
-- Modify: `features/qni_run.feature`
-- Modify: `features/qni_cli.feature`
-- Test: `features/qni_state.feature`
-- Test: `features/qni_run.feature`
-- Test: `features/qni_cli.feature`
+**ファイル:**
+- 作成: `features/qni_state.feature`
+- 変更: `features/qni_run.feature`
+- 変更: `features/qni_cli.feature`
+- テスト: `features/qni_state.feature`
+- テスト: `features/qni_run.feature`
+- テスト: `features/qni_cli.feature`
 
-- [ ] **Step 1: `qni state` feature を追加する**
+- [ ] **手順 1: `qni state` の機能仕様を追加する**
 
 `features/qni_state.feature` を新規作成し、少なくとも次を入れる。
 
@@ -106,9 +106,9 @@ Feature: qni state コマンド
       """
 ```
 
-- [ ] **Step 2: `qni run` acceptance を追加する**
+- [ ] **手順 2: `qni run` の受け入れ条件を追加する**
 
-`features/qni_run.feature` に次の scenario を追加する。
+`features/qni_run.feature` に次のシナリオを追加する。
 
 ```gherkin
 Scenario: qni run --symbolic は初期状態ベクトル alpha|0> + beta|1> に X を適用する
@@ -152,11 +152,11 @@ Scenario: qni run は非正規化の初期状態ベクトルでは失敗する
     """
 ```
 
-既存 step で足りない assertion は後続 task で追加する。
+既存ステップで足りない検証は後続タスクで追加する。
 
-- [ ] **Step 3: CLI help acceptance を追加する**
+- [ ] **手順 3: CLI ヘルプの受け入れ条件を追加する**
 
-`features/qni_cli.feature` に `qni state` の help scenario を追加する。
+`features/qni_cli.feature` に `qni state` のヘルプシナリオを追加する。
 
 ```gherkin
 Scenario: qni state help は初期状態ベクトルの設定方法を表示
@@ -167,9 +167,9 @@ Scenario: qni state help は初期状態ベクトルの設定方法を表示
     """
 ```
 
-- [ ] **Step 4: red を確認する**
+- [ ] **手順 4: 失敗を確認する**
 
-Run:
+実行コマンド:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber \
@@ -178,27 +178,27 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber \
   features/qni_cli.feature
 ```
 
-Expected:
+期待結果:
 
 - `qni state` 未実装で赤くなる
 - `initial_state` 未対応で赤くなる
-- 失敗理由が typo ではなく機能不足に対応している
+- 失敗理由が入力誤りではなく機能不足に対応している
 
-- [ ] **Step 5: feature-first の red をコミットする**
+- [ ] **手順 5: 機能仕様先行の失敗確認をコミットする**
 
 ```bash
 git add features/qni_state.feature features/qni_run.feature features/qni_cli.feature
 git commit -m "test: add initial state vector acceptance"
 ```
 
-## Task 2: `InitialState` モデルを追加する
+## タスク 2: `InitialState` モデルを追加する
 
-**Files:**
-- Create: `test/qni/initial_state_test.rb`
-- Create: `lib/qni/initial_state.rb`
-- Test: `test/qni/initial_state_test.rb`
+**ファイル:**
+- 作成: `test/qni/initial_state_test.rb`
+- 作成: `lib/qni/initial_state.rb`
+- テスト: `test/qni/initial_state_test.rb`
 
-- [ ] **Step 1: unit test を赤く書く**
+- [ ] **手順 1: 単体テストを失敗する状態で書く**
 
 `test/qni/initial_state_test.rb` を作成し、少なくとも次を入れる。
 
@@ -235,19 +235,19 @@ def test_rejects_non_normalized_numeric_state
 end
 ```
 
-- [ ] **Step 2: unit test が赤いことを確認する**
+- [ ] **手順 2: 単体テストが失敗することを確認する**
 
-Run:
+実行コマンド:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec ruby -Itest test/qni/initial_state_test.rb
 ```
 
-Expected:
+期待結果:
 
 - `LoadError` または `NameError`
 
-- [ ] **Step 3: `InitialState` の最小実装を書く**
+- [ ] **手順 3: `InitialState` の最小実装を書く**
 
 `lib/qni/initial_state.rb` に次を実装する。
 
@@ -257,7 +257,7 @@ Expected:
 - `resolve_numeric(variables)`
 - `default_for(qubits)` は第 1 段では 1 qubit の `|0>` のみ
 
-第 1 段の parse 対象は次のみに限定する。
+第 1 段の解析対象は次のみに限定する。
 
 ```ruby
 'alpha|0> + beta|1>'
@@ -266,42 +266,42 @@ Expected:
 '|1>'
 ```
 
-validation:
+検証:
 
-- basis は `0` と `1` のみ
+- `basis` は `0` と `1` のみ
 - 項数は 1 か 2
-- 数値 run では全係数が解決できる
+- 数値実行では全係数が解決できる
 - ノルム 1 を満たす
 
-- [ ] **Step 4: unit test を green にする**
+- [ ] **手順 4: 単体テストを成功させる**
 
-Run:
+実行コマンド:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec ruby -Itest test/qni/initial_state_test.rb
 ```
 
-Expected:
+期待結果:
 
-- PASS
+- 成功する
 
-- [ ] **Step 5: `InitialState` モデルをコミットする**
+- [ ] **手順 5: `InitialState` モデルをコミットする**
 
 ```bash
 git add test/qni/initial_state_test.rb lib/qni/initial_state.rb
 git commit -m "feat: add initial state model"
 ```
 
-## Task 3: `Circuit` と `CircuitFile` に `initial_state` を通す
+## タスク 3: `Circuit` と `CircuitFile` に `initial_state` を通す
 
-**Files:**
-- Modify: `lib/qni/circuit.rb`
-- Modify: `lib/qni/circuit_file.rb`
-- Modify: `test/qni/initial_state_test.rb`
-- Test: `test/qni/initial_state_test.rb`
-- Test: `features/qni_state.feature`
+**ファイル:**
+- 変更: `lib/qni/circuit.rb`
+- 変更: `lib/qni/circuit_file.rb`
+- 変更: `test/qni/initial_state_test.rb`
+- テスト: `test/qni/initial_state_test.rb`
+- テスト: `features/qni_state.feature`
 
-- [ ] **Step 1: JSON round-trip の failing test を追加する**
+- [ ] **手順 1: JSON 往復変換の失敗するテストを追加する**
 
 `test/qni/initial_state_test.rb` に次を足す。
 
@@ -323,7 +323,7 @@ def test_circuit_to_h_includes_initial_state
 end
 ```
 
-- [ ] **Step 2: `Circuit` に `initial_state` を追加する**
+- [ ] **手順 2: `Circuit` に `initial_state` を追加する**
 
 `lib/qni/circuit.rb` で次を行う。
 
@@ -332,9 +332,9 @@ end
 - `to_h` で `initial_state` を書く
 - 指定がなければ従来どおり `nil`
 
-- [ ] **Step 3: `CircuitFile` に state accessor を追加する**
+- [ ] **手順 3: `CircuitFile` に状態アクセサを追加する**
 
-`lib/qni/circuit_file.rb` に少なくとも次の helper を追加する。
+`lib/qni/circuit_file.rb` に少なくとも次の補助メソッドを追加する。
 
 ```ruby
 def set_initial_state(initial_state:)
@@ -343,38 +343,38 @@ def clear_initial_state
 
 これらは既存の `circuit.json` を壊さず更新する。
 
-- [ ] **Step 4: `qni_state.feature` の JSON 保存シナリオを green にする**
+- [ ] **手順 4: `qni_state.feature` の JSON 保存シナリオを成功させる**
 
-Run:
+実行コマンド:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber features/qni_state.feature
 ```
 
-Expected:
+期待結果:
 
 - `state set` の保存確認以外はまだ赤でもよい
 
-- [ ] **Step 5: JSON 経路の変更をコミットする**
+- [ ] **手順 5: JSON 経路の変更をコミットする**
 
 ```bash
 git add lib/qni/circuit.rb lib/qni/circuit_file.rb test/qni/initial_state_test.rb features/qni_state.feature
 git commit -m "feat: persist initial state in circuit JSON"
 ```
 
-## Task 4: `qni state` CLI を実装する
+## タスク 4: `qni state` CLI を実装する
 
-**Files:**
-- Modify: `lib/qni/cli.rb`
-- Create: `lib/qni/cli/state_command.rb`
-- Create: `lib/qni/cli/state_help.rb`
-- Modify: `features/qni_cli.feature`
-- Test: `features/qni_state.feature`
-- Test: `features/qni_cli.feature`
+**ファイル:**
+- 変更: `lib/qni/cli.rb`
+- 作成: `lib/qni/cli/state_command.rb`
+- 作成: `lib/qni/cli/state_help.rb`
+- 変更: `features/qni_cli.feature`
+- テスト: `features/qni_state.feature`
+- テスト: `features/qni_cli.feature`
 
-- [ ] **Step 1: help / dispatch の failing expectation を確認する**
+- [ ] **手順 1: ヘルプ / 振り分けの失敗する期待値を確認する**
 
-Run:
+実行コマンド:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber \
@@ -382,15 +382,15 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber \
   features/qni_cli.feature
 ```
 
-Expected:
+期待結果:
 
-- `qni state` unknown command で赤い
+- `qni state` が unknown command で失敗する
 
-- [ ] **Step 2: `state` subcommand を登録する**
+- [ ] **手順 2: `state` サブコマンドを登録する**
 
-`lib/qni/cli.rb` で `state` サブコマンドを追加し、既存の `variable` と同じパターンで help と dispatch をつなぐ。
+`lib/qni/cli.rb` で `state` サブコマンドを追加し、既存の `variable` と同じパターンでヘルプと振り分けをつなぐ。
 
-- [ ] **Step 3: `StateCommand` を実装する**
+- [ ] **手順 3: `StateCommand` を実装する**
 
 `lib/qni/cli/state_command.rb` に次を実装する。
 
@@ -400,9 +400,9 @@ Expected:
 
 `set` は `InitialState.parse` を使い、`CircuitFile#set_initial_state` を呼ぶ。
 
-- [ ] **Step 4: help text を追加する**
+- [ ] **手順 4: ヘルプ文を追加する**
 
-`lib/qni/cli/state_help.rb` に usage text を書く。
+`lib/qni/cli/state_help.rb` に使用方法の文を書く。
 
 最低限、次の例を入れる。
 
@@ -412,9 +412,9 @@ qni state show
 qni state clear
 ```
 
-- [ ] **Step 5: `qni state` の acceptance を green にする**
+- [ ] **手順 5: `qni state` の受け入れ条件を成功させる**
 
-Run:
+実行コマンド:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber \
@@ -422,42 +422,42 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber \
   features/qni_cli.feature
 ```
 
-Expected:
+期待結果:
 
-- `qni state set/show/clear` が PASS
-- help scenario が PASS
+- `qni state set/show/clear` が成功する
+- ヘルプシナリオが成功する
 
-- [ ] **Step 6: CLI 実装をコミットする**
+- [ ] **手順 6: CLI 実装をコミットする**
 
 ```bash
 git add lib/qni/cli.rb lib/qni/cli/state_command.rb lib/qni/cli/state_help.rb features/qni_state.feature features/qni_cli.feature
 git commit -m "feat: add qni state command"
 ```
 
-## Task 5: numeric run を `initial_state` から開始できるようにする
+## タスク 5: 数値実行を `initial_state` から開始できるようにする
 
-**Files:**
-- Modify: `lib/qni/simulator.rb`
-- Modify: `lib/qni/state_vector.rb`
-- Modify: `features/qni_run.feature`
-- Test: `features/qni_run.feature`
-- Test: `test/qni/initial_state_test.rb`
+**ファイル:**
+- 変更: `lib/qni/simulator.rb`
+- 変更: `lib/qni/state_vector.rb`
+- 変更: `features/qni_run.feature`
+- テスト: `features/qni_run.feature`
+- テスト: `test/qni/initial_state_test.rb`
 
-- [ ] **Step 1: numeric run の failing scenario を絞って実行する**
+- [ ] **手順 1: 数値実行の失敗するシナリオを絞って実行する**
 
-Run:
+実行コマンド:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber features/qni_run.feature:390
 ```
 
-Expected:
+期待結果:
 
 - `initial_state` を無視するか未対応で赤い
 
-- [ ] **Step 2: `StateVector` の構築補助を追加する**
+- [ ] **手順 2: `StateVector` の構築補助を追加する**
 
-`lib/qni/state_vector.rb` に、振幅配列から 1 qubit state を構築する安全な class method を追加する。
+`lib/qni/state_vector.rb` に、振幅配列から 1 qubit 状態を構築する安全なクラスメソッドを追加する。
 
 ```ruby
 def self.from_amplitudes(qubits:, amplitudes:)
@@ -465,11 +465,11 @@ def self.from_amplitudes(qubits:, amplitudes:)
 end
 ```
 
-必要なら長さ validation もここで行う。
+必要なら長さ検証もここで行う。
 
-- [ ] **Step 3: `Simulator` が初期状態から開始するようにする**
+- [ ] **手順 3: `Simulator` が初期状態から開始するようにする**
 
-`lib/qni/simulator.rb` の run 経路で、
+`lib/qni/simulator.rb` の実行経路で、
 
 - `circuit_hash['initial_state']` があれば `InitialState.from_h(...).resolve_numeric(variables)` を使う
 - そこから `StateVector.from_amplitudes` を作る
@@ -477,49 +477,49 @@ end
 
 とする。
 
-エラー文言は spec と合わせる。
+エラー文言は仕様と合わせる。
 
-- [ ] **Step 4: numeric run scenarios を green にする**
+- [ ] **手順 4: 数値実行シナリオを成功させる**
 
-Run:
+実行コマンド:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber features/qni_run.feature
 ```
 
-Expected:
+期待結果:
 
-- variable 解決後の numeric run が PASS
-- 未束縛 / 非正規化エラーが PASS
+- 変数解決後の数値実行が成功する
+- 未束縛 / 非正規化エラーが成功する
 
-- [ ] **Step 5: numeric run 対応をコミットする**
+- [ ] **手順 5: 数値実行対応をコミットする**
 
 ```bash
 git add lib/qni/simulator.rb lib/qni/state_vector.rb features/qni_run.feature test/qni/initial_state_test.rb
 git commit -m "feat: run circuits from initial state vectors"
 ```
 
-## Task 6: symbolic run を `initial_state` から開始できるようにする
+## タスク 6: 記号実行を `initial_state` から開始できるようにする
 
-**Files:**
-- Modify: `lib/qni/symbolic_state_renderer.rb`
-- Modify: `libexec/qni_symbolic_run.py`
-- Modify: `features/qni_run.feature`
-- Test: `features/qni_run.feature`
+**ファイル:**
+- 変更: `lib/qni/symbolic_state_renderer.rb`
+- 変更: `libexec/qni_symbolic_run.py`
+- 変更: `features/qni_run.feature`
+- テスト: `features/qni_run.feature`
 
-- [ ] **Step 1: symbolic scenario が赤いことを確認する**
+- [ ] **手順 1: 記号実行シナリオが失敗することを確認する**
 
-Run:
+実行コマンド:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber features/qni_run.feature:385
 ```
 
-Expected:
+期待結果:
 
-- `alpha|0> + beta|1>` を起点にした symbolic run が失敗する
+- `alpha|0> + beta|1>` を起点にした記号実行が失敗する
 
-- [ ] **Step 2: Python helper に `initial_state` 読み込みを追加する**
+- [ ] **手順 2: Python 補助プログラムに `initial_state` 読み込みを追加する**
 
 `libexec/qni_symbolic_run.py` で次を行う。
 
@@ -527,42 +527,42 @@ Expected:
 - 指定があれば `Matrix([[coeff_0], [coeff_1]])` を構築する
 - 指定がなければ従来どおり `|0>` または `|00>` 開始
 
-第 1 段の coeff は数値または単純な identifier のみでよい。
+第 1 段の `coeff` は数値または単純な識別子のみでよい。
 
-- [ ] **Step 3: Ruby 側の renderer を変更する**
+- [ ] **手順 3: Ruby 側の出力処理を変更する**
 
-`lib/qni/symbolic_state_renderer.rb` は大きく変えず、helper へ渡す JSON が `initial_state` を含めるだけで動く形に留める。
+`lib/qni/symbolic_state_renderer.rb` は大きく変えず、補助プログラムへ渡す JSON が `initial_state` を含めるだけで動く形に留める。
 
-- [ ] **Step 4: symbolic run scenarios を green にする**
+- [ ] **手順 4: 記号実行シナリオを成功させる**
 
-Run:
+実行コマンド:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber features/qni_run.feature
 ```
 
-Expected:
+期待結果:
 
-- `beta|0> + alpha|1>` scenario が PASS
-- 既存の symbolic scenario が回帰していない
+- `beta|0> + alpha|1>` シナリオが成功する
+- 既存の記号実行シナリオが回帰していない
 
-- [ ] **Step 5: symbolic run 対応をコミットする**
+- [ ] **手順 5: 記号実行対応をコミットする**
 
 ```bash
 git add lib/qni/symbolic_state_renderer.rb libexec/qni_symbolic_run.py features/qni_run.feature
 git commit -m "feat: support symbolic initial state vectors"
 ```
 
-## Task 7: feature DSL と kata scenario を initial_state に乗せる
+## タスク 7: 機能仕様 DSL と kata シナリオを `initial_state` に乗せる
 
-**Files:**
-- Modify: `features/step_definitions/cli_steps.rb`
-- Modify: `features/katas/basic_gates/state_flip.feature`
-- Test: `features/katas/basic_gates/state_flip.feature`
+**ファイル:**
+- 変更: `features/step_definitions/cli_steps.rb`
+- 変更: `features/katas/basic_gates/state_flip.feature`
+- テスト: `features/katas/basic_gates/state_flip.feature`
 
-- [ ] **Step 1: `Given 初期状態ベクトルは:` の failing case を追加する**
+- [ ] **手順 1: `Given 初期状態ベクトルは:` の失敗するケースを追加する**
 
-`features/katas/basic_gates/state_flip.feature` に、必要なら次の scenario を追加する。
+`features/katas/basic_gates/state_flip.feature` に、必要なら次のシナリオを追加する。
 
 ```gherkin
 Scenario: X ゲートは alpha|0> + beta|1> の振幅を入れ替える
@@ -582,56 +582,56 @@ Scenario: X ゲートは alpha|0> + beta|1> の振幅を入れ替える
     """
 ```
 
-- [ ] **Step 2: step definition を `initial_state` JSON 書き込みへ切り替える**
+- [ ] **手順 2: ステップ定義を `initial_state` JSON 書き込みへ切り替える**
 
 `features/step_definitions/cli_steps.rb` の `Given 初期状態ベクトルは:` は、
 
-- 既存の固定 gate 準備 shortcut を維持してもよい
+- 既存の固定ゲート準備のショートカットを維持してもよい
 - ただし `alpha|0> + beta|1>` が来たら `InitialState.parse` を使って `initial_state` を書く
 
 ようにする。
 
-- [ ] **Step 3: kata feature を green にする**
+- [ ] **手順 3: kata 機能仕様を成功させる**
 
-Run:
+実行コマンド:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber features/katas/basic_gates/state_flip.feature
 ```
 
-Expected:
+期待結果:
 
-- 既存 4 scenario が PASS
-- 追加した `alpha|0> + beta|1>` scenario も PASS
+- 既存 4 シナリオが成功する
+- 追加した `alpha|0> + beta|1>` シナリオも成功する
 
-- [ ] **Step 4: DSL 接続をコミットする**
+- [ ] **手順 4: DSL 接続をコミットする**
 
 ```bash
 git add features/step_definitions/cli_steps.rb features/katas/basic_gates/state_flip.feature
 git commit -m "feat: support initial state vectors in feature DSL"
 ```
 
-## Task 8: full verification と仕上げ
+## タスク 8: 全体検証と仕上げ
 
-**Files:**
-- Modify: touched files only
-- Test: full project checks
+**ファイル:**
+- 変更: 触ったファイルのみ
+- テスト: プロジェクト全体のチェック
 
-- [ ] **Step 1: symbolic runtime を準備する**
+- [ ] **手順 1: 記号実行環境を準備する**
 
-Run:
+実行コマンド:
 
 ```bash
 bash scripts/setup_symbolic_python.sh
 ```
 
-Expected:
+期待結果:
 
-- Python / SymPy runtime が使える
+- Python / SymPy 実行環境が使える
 
-- [ ] **Step 2: focused checks を実行する**
+- [ ] **手順 2: 対象を絞ったチェックを実行する**
 
-Run:
+実行コマンド:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec ruby -Itest test/qni/initial_state_test.rb
@@ -642,13 +642,13 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber \
   features/katas/basic_gates/state_flip.feature
 ```
 
-Expected:
+期待結果:
 
-- すべて PASS
+- すべて成功する
 
-- [ ] **Step 3: lint を実行する**
+- [ ] **手順 3: lint を実行する**
 
-Run:
+実行コマンド:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec rubocop \
@@ -665,23 +665,23 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec rubocop \
   test/qni/initial_state_test.rb
 ```
 
-Expected:
+期待結果:
 
 - no offenses detected
 
-- [ ] **Step 4: full check を実行する**
+- [ ] **手順 4: 全体チェックを実行する**
 
-Run:
+実行コマンド:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec rake check
 ```
 
-Expected:
+期待結果:
 
-- PASS
+- 成功する
 
-- [ ] **Step 5: 最終コミットを行う**
+- [ ] **手順 5: 仕上げをコミットする**
 
 ```bash
 git add \
@@ -703,4 +703,3 @@ git add \
   libexec/qni_symbolic_run.py
 git commit -m "feat: add initial state vector support"
 ```
-
