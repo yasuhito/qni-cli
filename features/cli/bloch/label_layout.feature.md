@@ -1,4 +1,4 @@
-# Feature: qni bloch label layout
+# Feature: qni bloch のラベル配置
 
 qni-cli のユーザとして
 ブロッホ球の軸ラベルと状態ラベルを読み分けられるように
