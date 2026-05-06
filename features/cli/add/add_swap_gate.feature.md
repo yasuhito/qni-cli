@@ -1,6 +1,6 @@
 # Feature: qni add SWAP コマンド
 
-qni-cli のユーザとして、2 つの qubit を入れ替える回路を作るために、
+qni-cli の利用者として、2 つの量子ビットを入れ替える回路を作るために、
 qni add SWAP を実行したい。
 
 ## Scenario: qni add SWAP コマンドは成功
@@ -49,7 +49,7 @@ qni add SWAP を実行したい。
   }
   ```
 
-## Scenario: qni add SWAP は decimal step でも circuit.json に Swap を 2 つ追加
+## Scenario: qni add SWAP は小数の --step でも circuit.json に Swap を 2 つ追加
 
 - When "qni add SWAP --qubit 0,1 --step 0.0" を実行
 - Then "circuit.json" の内容:
@@ -63,7 +63,7 @@ qni add SWAP を実行したい。
   }
   ```
 
-## Scenario: qni add SWAP は target qubit が 1 つだと失敗
+## Scenario: qni add SWAP は対象量子ビットが 1 つだと失敗
 
 - When "qni add SWAP --qubit 0 --step 0" を実行
 - Then コマンドは失敗して標準エラー:
@@ -72,7 +72,7 @@ qni add SWAP を実行したい。
   SWAP requires exactly 2 target qubits
   ```
 
-## Scenario: qni add SWAP は target qubit が 3 つだと失敗
+## Scenario: qni add SWAP は対象量子ビットが 3 つだと失敗
 
 - When "qni add SWAP --qubit 0,1,2 --step 0" を実行
 - Then コマンドは失敗して標準エラー:
