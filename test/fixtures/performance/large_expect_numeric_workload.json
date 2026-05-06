@@ -1,0 +1,10 @@
+{
+  "name": "large-expect-numeric-8q-160steps",
+  "command": ["expect", "ZZZZZZZZ", "XXXXXXXX"],
+  "input": {
+    "kind": "generated-circuit",
+    "qubits": 8,
+    "depth": 160,
+    "pattern": ["H", "X", "Y", "Z", "S", "T", "1", "1"]
+  }
+}

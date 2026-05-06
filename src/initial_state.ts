@@ -1,3 +1,6 @@
+import { AngleExpression, AngleExpressionError } from './angle_expression';
+import { Complex } from './complex';
+
 export class InitialStateError extends Error {}
 
 const FORMAT = 'ket_sum_v1';
@@ -57,6 +60,25 @@ export function initialStateQubitCount(value: unknown): number {
   const basis = terms[0]?.basis;
 
   return basis ? qubitCount(basis) : 1;
+}
+
+export function resolveNumericInitialState(
+  value: unknown,
+  variables: Readonly<Record<string, string>>
+): Complex[] {
+  const terms = loadTerms(value);
+  const amplitudes = Array.from({ length: 1 << initialStateQubitCount(value) }, () => new Complex(0));
+
+  for (const term of terms) {
+    const coefficient = resolveCoefficient(term.coefficient, variables);
+
+    for (const [index, scale] of basisComponents(term.basis)) {
+      amplitudes[index] = amplitudes[index].add(coefficient.multiply(scale));
+    }
+  }
+
+  ensureNormalized(amplitudes);
+  return amplitudes;
 }
 
 function loadTerms(value: unknown): InitialStateTerm[] {
@@ -209,6 +231,28 @@ function qubitCount(basis: string): number {
   return BELL_BASES.has(basis) ? 2 : 0;
 }
 
+function basisComponents(basis: string): Array<[number, number]> {
+  if (COMPUTATIONAL_BASIS_PATTERN.test(basis)) {
+    return [[Number.parseInt(basis, 2), 1]];
+  }
+
+  const factor = Math.sqrt(0.5);
+  const components = new Map<string, Array<[number, number]>>([
+    ['Φ+', [[0, factor], [3, factor]]],
+    ['Φ-', [[0, factor], [3, -factor]]],
+    ['Ψ+', [[1, factor], [2, factor]]],
+    ['Ψ-', [[1, factor], [2, -factor]]]
+  ]);
+
+  const result = components.get(basis);
+
+  if (!result) {
+    throw new InitialStateError(`unsupported basis state: ${basis}`);
+  }
+
+  return result;
+}
+
 function validatedCoefficient(value: unknown): string {
   const coefficient = String(value).trim();
 
@@ -226,6 +270,63 @@ function supportedCoefficient(coefficient: string): boolean {
     NUMERIC_PATTERN,
     IMAGINARY_NUMERIC_PATTERN
   ].some((pattern) => pattern.test(coefficient));
+}
+
+function resolveCoefficient(
+  coefficient: string,
+  variables: Readonly<Record<string, string>>
+): Complex {
+  if (NUMERIC_PATTERN.test(coefficient)) {
+    return new Complex(Number(coefficient));
+  }
+
+  if (IMAGINARY_NUMERIC_PATTERN.test(coefficient)) {
+    return new Complex(0, Number(coefficient.slice(0, -1)));
+  }
+
+  const signedIdentifier = /^([+-])([a-zA-Z_][a-zA-Z0-9_]*)$/u.exec(coefficient);
+
+  if (signedIdentifier) {
+    const sign = signedIdentifier[1] === '-' ? -1 : 1;
+    return resolveIdentifier(signedIdentifier[2] ?? '', variables).multiply(sign);
+  }
+
+  return resolveIdentifier(coefficient, variables);
+}
+
+function resolveIdentifier(
+  identifier: string,
+  variables: Readonly<Record<string, string>>
+): Complex {
+  const resolvedValue = variables[identifier];
+
+  if (resolvedValue === undefined) {
+    throw new InitialStateError(`unresolved initial state variable: ${identifier}`);
+  }
+
+  try {
+    const expression = new AngleExpression(resolvedValue);
+
+    if (!expression.concrete()) {
+      throw new InitialStateError(`variable value must be concrete: ${identifier}`);
+    }
+
+    return new Complex(expression.radians());
+  } catch (error) {
+    if (error instanceof AngleExpressionError) {
+      throw new InitialStateError(error.message);
+    }
+
+    throw error;
+  }
+}
+
+function ensureNormalized(amplitudes: readonly Complex[]): void {
+  const norm = amplitudes.reduce((sum, amplitude) => sum + amplitude.absSquared(), 0);
+
+  if (Math.abs(norm - 1) > 1e-12) {
+    throw new InitialStateError('initial state must be normalized');
+  }
 }
 
 function formatTerms(terms: InitialStateTerm[]): string {

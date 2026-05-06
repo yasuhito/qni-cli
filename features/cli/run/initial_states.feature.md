@@ -17,3 +17,38 @@ qni run が変数解決済みの初期状態を使うことを確認したい。
   ```text
   0.8,0.6
   ```
+
+## Scenario: qni run は短い initial_state を |0> suffix qubits で拡張して数値実行する
+
+- Given 次の circuit.json がある:
+
+  ```json
+  {
+    "qubits": 2,
+    "cols": [
+      [
+        1,
+        "X"
+      ]
+    ],
+    "initial_state": {
+      "format": "ket_sum_v1",
+      "terms": [
+        {
+          "basis": "0",
+          "coefficient": "0.7071067811865476"
+        },
+        {
+          "basis": "1",
+          "coefficient": "0.7071067811865476"
+        }
+      ]
+    }
+  }
+  ```
+- When "qni run" を実行
+- Then 標準出力:
+
+  ```text
+  0.0,0.7071067811865476,0.0,0.7071067811865476
+  ```

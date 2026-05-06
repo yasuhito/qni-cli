@@ -53,6 +53,20 @@ module Qni
       assert_equal '0.0,0.0,0.0,1.0', result.to_csv
     end
 
+    def test_simulator_expands_initial_state_with_zero_suffix_qubits
+      simulator = Simulator.new(
+        CircuitDouble.new(
+          {
+            'qubits' => 2,
+            'cols' => [[1, XGate::SYMBOL]],
+            'initial_state' => InitialState.parse('|+>').to_h
+          }
+        )
+      )
+
+      assert_equal '0.0,0.7071067811865476,0.0,0.7071067811865476', simulator.render_state_vector
+    end
+
     private
 
     def build_simulator(variables: {})

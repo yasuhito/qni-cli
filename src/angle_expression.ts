@@ -13,6 +13,7 @@ export function validAngleIdentifier(value: string): boolean {
 
 interface AngleTerm {
   readonly concrete: boolean;
+  readonly radians: (variables: Readonly<Record<string, string>>) => number;
   readonly text: string;
 }
 
@@ -25,6 +26,10 @@ export class AngleExpression {
 
   concrete(): boolean {
     return this.parse().concrete;
+  }
+
+  radians(variables: Readonly<Record<string, string>> = {}): number {
+    return this.parse().radians(variables);
   }
 
   toString(): string {
@@ -71,7 +76,7 @@ function parseNumericLiteral(value: string): AngleTerm | undefined {
     return undefined;
   }
 
-  return { concrete: true, text: value };
+  return { concrete: true, radians: () => Number(value), text: value };
 }
 
 function parseSignedIdentifier(value: string): AngleTerm | undefined {
@@ -81,10 +86,12 @@ function parseSignedIdentifier(value: string): AngleTerm | undefined {
     return undefined;
   }
 
-  const identifier = match.groups.identifier ?? '';
+  const groups = match.groups;
+  const identifier = groups.identifier ?? '';
   return {
     concrete: false,
-    text: match.groups.sign === '-' ? `-${identifier}` : identifier
+    radians: (variables) => variableRadians(identifier, variables) * (groups.sign === '-' ? -1 : 1),
+    text: groups.sign === '-' ? `-${identifier}` : identifier
   };
 }
 
@@ -93,7 +100,7 @@ function parseVariableReference(value: string): AngleTerm | undefined {
     return undefined;
   }
 
-  return { concrete: false, text: value };
+  return { concrete: false, radians: (variables) => variableRadians(value, variables), text: value };
 }
 
 function parsePiTerm(value: string): AngleTerm | undefined {
@@ -111,6 +118,7 @@ function parsePiTerm(value: string): AngleTerm | undefined {
 
   return {
     concrete: true,
+    radians: () => signValue(sign) * Number(coefficient) * Math.PI / Number(denominator),
     text: `${sign}${coefficientPrefix}π${denominatorSuffix}`
   };
 }
@@ -127,6 +135,27 @@ function parseProduct(value: string): AngleTerm | undefined {
 
   return {
     concrete: inner.concrete,
+    radians: (variables) => Number(coefficient) * inner.radians(variables),
     text: `${coefficient}*${inner.text}`
   };
+}
+
+function variableRadians(name: string, variables: Readonly<Record<string, string>>): number {
+  const resolvedValue = variables[name];
+
+  if (resolvedValue === undefined) {
+    throw new AngleExpressionError(`unresolved angle variable: ${name}`);
+  }
+
+  const angle = new AngleExpression(resolvedValue);
+
+  if (!angle.concrete()) {
+    throw new AngleExpressionError(`variable value must be concrete: ${name}`);
+  }
+
+  return angle.radians();
+}
+
+function signValue(sign: string): number {
+  return sign === '-' ? -1 : 1;
 }
