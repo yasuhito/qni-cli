@@ -213,7 +213,7 @@ NEGATED_PLUS_MINUS_COEFFICIENT = (-Math.sqrt(0.5)).to_s
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec ruby -Itest test/qni/initial_state_test.rb
 ```
 
-期待結果: PASS
+期待結果: 成功する
 
 - [ ] **ステップ 6: `InitialState` 実装をコミットする**
 
@@ -260,7 +260,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber \
   features/katas/basic_gates/sign_flip.feature
 ```
 
-期待結果: PASS
+期待結果: 成功する
 
 - [ ] **ステップ 4: 互換性を抜き取りで確認する**
 
@@ -272,7 +272,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber \
   features/katas/basic_gates/basis_change.feature
 ```
 
-期待結果: PASS
+期待結果: 成功する
 
 - [ ] **ステップ 5: 高レベル SignFlip をコミットする**
 
@@ -299,7 +299,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec rake check
 
 期待結果:
 
-- RuboCop / Reek / Cucumber / Flog / Flay を含む `check` が PASS
+- RuboCop / Reek / Cucumber / Flog / Flay を含む `check` が成功する
 - シナリオ数は最新件数で増えていてよい
 
 - [ ] **ステップ 2: 変更内容を要約してコミット列を確認する**
