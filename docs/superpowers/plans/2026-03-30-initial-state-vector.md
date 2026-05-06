@@ -28,6 +28,7 @@
   - `initial_state` を保持し、`to_h` / `from_h` に組み込む。
 - 変更: `lib/qni/circuit_file.rb`
   - `initial_state` を読む / 書くユーティリティを追加する。
+- 変更: `lib/qni/simulator.rb`
   - ゼロ状態ではなく `initial_state` から開始できるようにする。
 - 変更: `lib/qni/state_vector.rb`
   - 必要なら任意の振幅から構築する補助を追加する。
