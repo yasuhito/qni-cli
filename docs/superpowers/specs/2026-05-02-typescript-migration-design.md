@@ -228,8 +228,8 @@ Move simulation after the circuit model is stable:
 - then port `bloch` sampling, but keep image rendering delegated until the
   renderer boundary is decided.
 
-`run --symbolic` should remain Ruby/Python-backed until there is a dedicated
-plan for replacing or retaining `libexec/qni_symbolic_run.py`.
+`run --symbolic` should remain Python-helper-backed through the retained
+symbolic boundary described below while numeric `run` moves to TypeScript.
 
 ### Symbolic Helper Strategy
 
@@ -259,14 +259,17 @@ The TypeScript subprocess boundary should mirror the current Ruby boundary:
 - pass `--format text` or `--format latex`;
 - pass `--basis x`, `--basis y`, or `--basis bell` only when the user supplied a
   symbolic basis;
-- preserve helper stdout exactly, including trailing newline behavior at the CLI
-  boundary;
+- match the current exposed CLI stdout contract: strip the helper's stdout
+  payload before the command layer writes the final line to the terminal;
 - surface helper stderr as the command error message when the helper exits
   non-zero;
-- retry only for dependency/bootstrap failures that are equivalent to the
-  current Ruby fallback behavior;
-- keep the same helper discovery order in spirit: repository-local symbolic
-  Python runtime first, then a system/runtime fallback that can provide SymPy.
+- keep option and basis validation in the TypeScript layer where Ruby validates
+  it today, including `--basis requires --symbolic` and the `x`/`y`/`bell`
+  qubit-count checks;
+- retry only for dependency/bootstrap failures that are equivalent to current
+  Ruby behavior: skip a missing repository-local symbolic Python executable,
+  retry with `uv` when system `python3` lacks SymPy, and do not mask a
+  non-zero helper exit from an otherwise found repository-local runtime.
 
 Replacing the helper with TypeScript should be a separate decision after the
 numeric runtime is stable. A replacement would need a SymPy-equivalent story for
@@ -280,9 +283,11 @@ as `sqrt(2)/2` vs equivalent algebraic forms.
 
 Therefore existing symbolic features should continue through the retained Python
 helper path while `run` numeric behavior moves to TypeScript. Add a follow-up
-implementation issue for the TypeScript `run --symbolic` subprocess boundary,
-and keep a later optional replacement issue out of scope until packaging and
-symbolic-algebra library constraints are known.
+implementation issue for the TypeScript symbolic helper subprocess boundary
+that covers every TypeScript caller that needs helper output, including
+`run --symbolic` and symbolic state-vector export. Keep a later optional
+replacement issue out of scope until packaging and symbolic-algebra library
+constraints are known.
 
 ### Phase 5: Rendering and Export Migration
 
@@ -456,12 +461,13 @@ Create implementation issues in this order:
      samples and cucumber-js features.
    - Estimate: L, milestone: M5, precision: rough.
    - Risk/dependency: state-vector math and complex formatting parity.
-10. Implement retained symbolic helper boundary for TypeScript `run --symbolic`
-    - Linear title candidate: TypeScript `run --symbolic` から symbolic helper を呼び出す
+10. Implement retained symbolic helper subprocess boundary
+    - Linear title candidate: TypeScript から symbolic helper を呼び出す境界を実装する
     - Acceptance: `run --symbolic`, `--basis x`, `--basis y`, `--basis bell`,
       symbolic angle simplification, LaTeX state-vector export, and
-      unsupported-basis errors match the Ruby/Python oracle through the
-      TypeScript subprocess path.
+      validation/error behavior match the Ruby/Python oracle through the
+      TypeScript command path. TypeScript-owned validation must still happen
+      before invoking the helper when Ruby validates before invoking it today.
     - Estimate: M, milestone: M5, precision: rough.
     - Risk/dependency: SymPy runtime discovery, subprocess stderr mapping,
       named-basis formatting, and exact string compatibility.
