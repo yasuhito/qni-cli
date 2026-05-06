@@ -1,39 +1,39 @@
-# BasicGates Task 1.6 Implementation Plan
+# BasicGates Task 1.6 実装計画
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **自律実行ワーカー向け:** 必須: この計画を実装するときは、利用可能なら superpowers:subagent-driven-development を使い、利用できない場合は superpowers:executing-plans を使う。手順は追跡用にチェックボックス (`- [ ]`) 記法を使う。
 
-**Goal:** `BasicGates Task 1.6 PhaseChange` を `features/katas/basic_gates/phase_change.feature` に追加し、Quantum Katas の `DumpDiffOnOneQubit` と `alpha = 0..36` の controlled 等価性検証を `qni-cli` 側で再現する。
+**目標:** `BasicGates Task 1.6 PhaseChange` を `features/katas/basic_gates/phase_change.feature` に追加し、Quantum Katas の `DumpDiffOnOneQubit` と `alpha = 0..36` の制御付き等価性検証を `qni-cli` 側で再現する。
 
-**Architecture:** 先に `phase_change.feature` を追加し、既存の `P`、angle expression、`qni run`、`qni run --symbolic`、`qni expect`、controlled 指定だけで task を表現できるかを確認する。`Task 1.6` は self-adjoint ではないため、controlled 検証では candidate の `controlled-P(alpha)` と inverse の `controlled-P(-alpha)` を組にして control qubit が `|0⟩` に戻ることを見る。不足が出た場合のみ、feature-first で最小の product 修正を追加する。
+**構成方針:** 先に `phase_change.feature` を追加し、既存の `P`、角度式、`qni run`、`qni run --symbolic`、`qni expect`、制御指定だけでタスクを表現できるかを確認する。`Task 1.6` は自己随伴ではないため、制御付き検証では候補の `controlled-P(alpha)` と逆操作の `controlled-P(-alpha)` を組にして制御量子ビットが `|0⟩` に戻ることを見る。不足が出た場合のみ、機能仕様優先で最小の実装修正を追加する。
 
-**Tech Stack:** Ruby, Cucumber, Bundler, `qni-cli`
+**技術構成:** Ruby, Cucumber, Bundler, `qni-cli`
 
 ---
 
-## File Structure
+## ファイル構成
 
-- Create: `features/katas/basic_gates/phase_change.feature`
-  - `Task 1.6` の問題文、`dumpAlpha = 5π/9` の人間向けシナリオ、`alpha = 0..36` の controlled 走査、symbolic 補助シナリオを追加する。
-- Optionally modify: `features/cli/add/add_phase_gate.feature.md`
-  - controlled `P` を回路に保存できることが未保証なら最小回帰を追加する。
-- Optionally modify: `features/qni_run.feature`
-  - `P(alpha)` の symbolic 表示や複素数出力が未保証なら最小回帰を追加する。
-- Optionally modify: `features/qni_expect.feature`
-  - controlled `P(alpha)` / `P(-alpha)` を含む回路で `ZI` が 1 に戻ることが未保証なら最小回帰を追加する。
-- Optionally modify: `lib/qni/...`
-  - `controlled P` か symbolic 表示に本当の不足がある場合だけ最小実装を入れる。
-- Verify: `features/katas/basic_gates/amplitude_change.feature`
+- 作成: `features/katas/basic_gates/phase_change.feature`
+  - `Task 1.6` の問題文、`dumpAlpha = 5π/9` の人間向けシナリオ、`alpha = 0..36` の制御付き走査、記号表示の補助シナリオを追加する。
+- 必要なら変更: `features/cli/add/add_phase_gate.feature.md`
+  - 制御付き `P` を回路に保存できることが未保証なら最小回帰を追加する。
+- 必要なら変更: `features/qni_run.feature`
+  - `P(alpha)` の記号表示や複素数出力が未保証なら最小回帰を追加する。
+- 必要なら変更: `features/qni_expect.feature`
+  - 制御付き `P(alpha)` / `P(-alpha)` を含む回路で `ZI` が 1 に戻ることが未保証なら最小回帰を追加する。
+- 必要なら変更: `lib/qni/...`
+  - 制御付き `P` か記号表示に本当の不足がある場合だけ最小実装を入れる。
+- 検証: `features/katas/basic_gates/amplitude_change.feature`
   - `Task 1.4` が回帰していないことを確認する。
-- Verify: `features/katas/basic_gates/phase_flip.feature`
+- 検証: `features/katas/basic_gates/phase_flip.feature`
   - `Task 1.5` が回帰していないことを確認する。
 
-## Task 1: `Task 1.6` feature を先に追加して既存機能で足りるか確認する
+## タスク 1: `Task 1.6` の機能仕様を先に追加して既存機能で足りるか確認する
 
-**Files:**
-- Create: `features/katas/basic_gates/phase_change.feature`
-- Test: `features/katas/basic_gates/phase_change.feature`
+**ファイル:**
+- 作成: `features/katas/basic_gates/phase_change.feature`
+- テスト: `features/katas/basic_gates/phase_change.feature`
 
-- [ ] **Step 1: `Task 1.6` の問題文とシナリオを書く**
+- [ ] **手順 1: `Task 1.6` の問題文とシナリオを書く**
 
 `features/katas/basic_gates/phase_change.feature` を新規作成し、少なくとも次を追加する。
 
@@ -55,7 +55,7 @@ Feature: Quantum Katas BasicGates Task 1.6 PhaseChange
       <actual dumpAlpha output>
       """
 
-  Scenario Outline: Task 1.6 の controlled 検証回路は alpha を走査して control qubit を |0> に戻す
+  Scenario Outline: Task 1.6 の制御付き検証回路は alpha を走査して制御量子ビットを |0> に戻す
     Given 空の 2 qubit 回路がある
     And "qni add H --qubit 0 --step 0" を実行
     And "qni add Ry --angle 1.8545904360032246 --qubit 1 --step 1" を実行
@@ -106,7 +106,7 @@ Feature: Quantum Katas BasicGates Task 1.6 PhaseChange
       | 35π/18 |
       | 2π     |
 
-  Scenario: Task 1.6 は symbolic 表示で一般式を示す
+  Scenario: Task 1.6 は記号表示で一般式を示す
     Given "qni add P --angle alpha --qubit 0 --step 0" を実行
     When "qni run --symbolic" を実行
     Then 標準出力:
@@ -115,101 +115,101 @@ Feature: Quantum Katas BasicGates Task 1.6 PhaseChange
       """
 ```
 
-- [ ] **Step 2: focused 実行で red / green を確認する**
+- [ ] **手順 2: 対象を絞った実行で失敗 / 成功を確認する**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/share/gem/ruby/3.4.0/bin/bundle exec cucumber features/katas/basic_gates/phase_change.feature
 ```
 
-Expected:
+期待:
 
-- 少なくとも dump / controlled / symbolic のどこで不足があるかを 1 箇所に切り分けられる
-- 既存機能で足りるならそのまま PASS
+- 少なくともダンプ / 制御付き / 記号表示のどこで不足があるかを 1 箇所に切り分けられる
+- 既存機能で足りるならそのまま成功
 
-- [ ] **Step 3: feature-first の追加をコミットする**
+- [ ] **手順 3: 機能仕様優先の追加をコミットする**
 
 ```bash
 git add features/katas/basic_gates/phase_change.feature
 git commit -m "test: add Task 1.6 kata scenarios"
 ```
 
-## Task 2: 必要なら最小修正で green にする
+## タスク 2: 必要なら最小修正で成功させる
 
-**Files:**
-- Modify: `features/katas/basic_gates/phase_change.feature`
-- Optionally modify: `features/cli/add/add_phase_gate.feature.md`
-- Optionally modify: `features/qni_run.feature`
-- Optionally modify: `features/qni_expect.feature`
-- Optionally modify: `lib/qni/...`
+**ファイル:**
+- 変更: `features/katas/basic_gates/phase_change.feature`
+- 必要なら変更: `features/cli/add/add_phase_gate.feature.md`
+- 必要なら変更: `features/qni_run.feature`
+- 必要なら変更: `features/qni_expect.feature`
+- 必要なら変更: `lib/qni/...`
 
-- [ ] **Step 1: 失敗原因を 1 箇所に絞る**
+- [ ] **手順 1: 失敗原因を 1 箇所に絞る**
 
 想定する失敗原因は次に限る。
 
 - `qni add P --angle ... --control ...` が受理されない
 - `qni add P --angle -alpha --control ...` が受理されない
-- `qni run --symbolic` の `P(alpha)` 表示が expected と違う
-- `qni expect ZI` の丸め差で exact 比較が落ちる
+- `qni run --symbolic` の `P(alpha)` 表示が期待と違う
+- `qni expect ZI` の丸め差で厳密比較が落ちる
 
-- [ ] **Step 2: product code 不足がある場合だけ既存 feature に最小回帰を追加する**
+- [ ] **手順 2: 実装コードに不足がある場合だけ既存機能仕様に最小回帰を追加する**
 
-不足が product code にある場合のみ、対応する既存 feature に最小シナリオを追加する。
+不足が実装コードにある場合のみ、対応する既存機能仕様に最小シナリオを追加する。
 
 例:
 
 - `features/cli/add/add_phase_gate.feature.md`
-  - controlled `P` が回路に保存できること
+  - 制御付き `P` が回路に保存できること
 - `features/qni_run.feature`
-  - `P(alpha)` を未束縛変数付きで symbolic 表示できること
+  - `P(alpha)` を未束縛変数付きで記号表示できること
 - `features/qni_expect.feature`
-  - controlled `P(alpha)` と `P(-alpha)` を含む回路で `ZI` が 1 に戻ること
+  - 制御付き `P(alpha)` と `P(-alpha)` を含む回路で `ZI` が 1 に戻ること
 
-- [ ] **Step 3: 必要な最小実装だけを入れる**
+- [ ] **手順 3: 必要な最小実装だけを入れる**
 
 実装変更は、実際に失敗した箇所のみに限定する。
 
-- controlled `P` の表現力不足なら、その受理と保存
-- symbolic 表示不足なら、`P(alpha)` の出力整形
-- expect の丸め差だけなら、既存の近似比較 step を使う方向を優先する
+- 制御付き `P` の表現力不足なら、その受理と保存
+- 記号表示不足なら、`P(alpha)` の出力整形
+- `expect` の丸め差だけなら、既存の近似比較ステップを使う方向を優先する
 
 新しい CLI コマンドや汎用検証機能は追加しない。
 
-- [ ] **Step 4: `Task 1.6` feature を再実行して green を確認する**
+- [ ] **手順 4: `Task 1.6` の機能仕様を再実行して成功を確認する**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/share/gem/ruby/3.4.0/bin/bundle exec cucumber features/katas/basic_gates/phase_change.feature
 ```
 
-Expected:
+期待:
 
-- `Task 1.6` の feature が PASS
+- `Task 1.6` の機能仕様が成功
 
-- [ ] **Step 5: 必要な修正をコミットする**
+- [ ] **手順 5: 必要な修正をコミットする**
 
 ```bash
 git add features/katas/basic_gates/phase_change.feature features/cli/add/add_phase_gate.feature.md features/qni_run.feature features/qni_expect.feature lib/qni
 git commit -m "feat: support Task 1.6 phase change verification"
 ```
 
-`lib/qni` に変更がない場合は、実際に触った file だけ `git add` する。
+`lib/qni` に変更がない場合は、実際に触ったファイルだけ `git add` する。
 
-## Task 3: 近接回帰を確認する
+## タスク 3: 近接回帰を確認する
 
-**Files:**
-- Test: `features/cli/add/add_phase_gate.feature.md`
-- Test: `features/qni_run.feature`
-- Test: `features/qni_expect.feature`
-- Test: `features/katas/basic_gates/amplitude_change.feature`
-- Test: `features/katas/basic_gates/phase_flip.feature`
-- Test: `features/katas/basic_gates/phase_change.feature`
+**ファイル:**
+- テスト: `features/cli/add/add_phase_gate.feature.md`
+- テスト: `features/qni_run.feature`
+- テスト: `features/qni_expect.feature`
+- テスト: `features/katas/basic_gates/amplitude_change.feature`
+- テスト: `features/katas/basic_gates/phase_flip.feature`
+- テスト: `features/katas/basic_gates/phase_change.feature`
 
-- [ ] **Step 1: 近接 feature をまとめて実行する**
+- [ ] **手順 1: 近接機能仕様をまとめて実行する**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/share/gem/ruby/3.4.0/bin/bundle exec cucumber \
@@ -221,36 +221,36 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/sha
   features/katas/basic_gates/phase_change.feature
 ```
 
-Expected:
+期待:
 
-- すべて PASS
+- すべて成功
 
-- [ ] **Step 2: 近接回帰の green をコミットする**
+- [ ] **手順 2: 近接回帰の成功をコミットする**
 
 ```bash
 git commit --allow-empty -m "test: verify Task 1.6 regressions"
 ```
 
-## Task 4: 全量確認して統合準備をする
+## タスク 4: 全量確認して統合準備をする
 
-**Files:**
-- Test: repository-wide checks
+**ファイル:**
+- テスト: リポジトリ全体のチェック
 
-- [ ] **Step 1: full cucumber を実行する**
+- [ ] **手順 1: Cucumber 全体を実行する**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/share/gem/ruby/3.4.0/bin/bundle exec cucumber
 ```
 
-Expected:
+期待:
 
-- 全 scenario が PASS
+- 全シナリオが成功
 
-- [ ] **Step 2: Ruby 品質チェックを実行する**
+- [ ] **手順 2: Ruby 品質チェックを実行する**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/share/gem/ruby/3.4.0/bin/bundle exec rake rubocop
@@ -259,20 +259,20 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/sha
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/share/gem/ruby/3.4.0/bin/bundle exec rake flay
 ```
 
-Expected:
+期待:
 
-- すべて PASS
+- すべて成功
 
-- [ ] **Step 3: 統合前の状態を確認する**
+- [ ] **手順 3: 統合前の状態を確認する**
 
-Run:
+実行:
 
 ```bash
 git status --short
 git log --oneline --decorate -5
 ```
 
-Expected:
+期待:
 
 - 作業ツリーがクリーン
 - `Task 1.6` 関連コミットが確認できる
