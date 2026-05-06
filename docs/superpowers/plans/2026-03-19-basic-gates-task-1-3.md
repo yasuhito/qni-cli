@@ -13,7 +13,7 @@
 ## ファイル構成
 
 - 作成: `features/katas/basic_gates/sign_flip.feature`
-  - `Task 1.3` の問題文、数値 3 シナリオ、制御付き検証 1 シナリオ、記号説明 1 シナリオを追加する。
+  - `Task 1.3` の問題文、数値 3 シナリオ、制御付き検証 1 シナリオ、記号表示 1 シナリオを追加する。
 - 確認: `features/katas/basic_gates/state_flip.feature`
   - `Task 1.1` の既存ケースが回帰していないことを確認する。
 - 確認: `features/katas/basic_gates/basis_change.feature`
@@ -201,5 +201,5 @@ git commit -m "test: verify Task 1.3 kata coverage"
 ## 補足
 
 - 今回は `Task 1.3` を `Task 1.1` と `Task 1.2` と同じ深さに揃えることが目的であり、製品コード追加は前提にしない。
-- `Task 1.3` は位相と符号を扱うため、記号出力の整形を改善したくなる可能性はあるが、この計画ではまず既存出力に機能ファイルを合わせる。
+- `Task 1.3` は位相と符号を扱うため、記号表示の整形を改善したくなる可能性はあるが、この計画ではまず既存出力に機能ファイルを合わせる。
 - 制御付き `Z` が `qni add Z --control 0 --qubit 1` でそのまま書けることが前提であり、ここで不足が見つかった場合は新しい仕様書 / 計画書に切り出す。
