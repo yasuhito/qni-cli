@@ -54,7 +54,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/sha
 
 期待結果:
 
-- PASS
+- 成功する
 - `Task 1.1` の 5 シナリオが成功する
 - `Task 1.2` の 4 シナリオが成功する
 
@@ -83,7 +83,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/sha
 
 期待結果:
 
-- PASS
+- 成功する
 - `qni run`、`qni run --symbolic`、`qni expect` の既存フィーチャーファイルが回帰していない
 - 練習問題側は `Task 1.1` と `Task 1.2` を別ファイルで実行しても成功する
 
