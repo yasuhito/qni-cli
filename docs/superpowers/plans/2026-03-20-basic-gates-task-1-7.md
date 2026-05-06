@@ -44,7 +44,7 @@ Feature: Quantum Katas BasicGates Task 1.7 GlobalPhaseChange
   単独の量子ビットではグローバル位相は観測できないため、制御付き版で確認する
 
   Scenario: Task 1.7 の制御付き検証回路は制御量子ビットを |0> に戻す
-    Given 空の 2 量子ビット回路がある
+    Given 空の 2 qubit 回路がある
     And "qni add H --qubit 0 --step 0" を実行
     And "qni add Ry --angle 1.8545904360032246 --qubit 1 --step 1" を実行
     And "qni add Rz --angle 2π --control 0 --qubit 1 --step 2" を実行
