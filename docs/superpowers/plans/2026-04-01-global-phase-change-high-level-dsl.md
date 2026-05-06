@@ -230,7 +230,7 @@ bash scripts/setup_symbolic_python.sh
 
 期待結果:
 
-- SymPy version が表示される
+- SymPy のバージョンが表示される
 
 - [ ] **手順 2: リポジトリ全体の品質チェックを実行する**
 
