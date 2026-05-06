@@ -1,7 +1,7 @@
 # Feature: Ry ゲートを追加
 
 qni-cli のユーザとして、コマンドラインから量子回路を組み立てるために、
-指定した step と qubit に Ry ゲートを追加したい。
+指定したステップと量子ビットに Ry ゲートを追加したい。
 
 ## Scenario: Ry ゲート追加コマンドは成功
 
@@ -50,7 +50,7 @@ qni-cli のユーザとして、コマンドラインから量子回路を組み
   }
   ```
 
-## Scenario: Ry ゲートは変数 angle をそのまま保存できる
+## Scenario: Ry ゲートは角度を変数のまま保存できる
 
 - When "qni add Ry --angle theta --qubit 0 --step 0" を実行
 - Then "circuit.json" の内容:
