@@ -1,35 +1,35 @@
-# BasicGates Task 1.3 Implementation Plan
+# BasicGates Task 1.3 実装計画
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **エージェント作業者向け:** 必須: この計画を実装するときは、利用できる場合は superpowers:subagent-driven-development を、利用できない場合は superpowers:executing-plans を使う。手順の追跡にはチェックボックス (`- [ ]`) 記法を使う。
 
-**Goal:** `BasicGates Task 1.3 SignFlip` を `features/katas/basic_gates/sign_flip.feature` に追加し、`Z` による符号反転を数値、controlled 検証、symbolic 表示の 3 つの観点で回帰テスト化する。
+**目的:** `BasicGates Task 1.3 SignFlip` を `features/katas/basic_gates/sign_flip.feature` に追加し、`Z` による符号反転を数値、制御付き検証、記号表示の 3 つの観点で回帰テスト化する。
 
-**Architecture:** `Task 1.1` と `Task 1.2` と同じ粒度を維持するため、新しい `features/katas/basic_gates/sign_flip.feature` を作って `Task 1.3` の 5 シナリオを順に追加する。既存の `qni run`、`qni run --symbolic`、`qni expect`、初期状態 step だけで表現できる前提で進め、product code は触らない。不足が見つかった場合はその場で実装を足さず、新しい spec / plan に戻る。
+**構成方針:** `Task 1.1` と `Task 1.2` と同じ粒度を維持するため、新しい `features/katas/basic_gates/sign_flip.feature` を作って `Task 1.3` の 5 シナリオを順に追加する。既存の `qni run`、`qni run --symbolic`、`qni expect`、初期状態ステップだけで表現できる前提で進め、製品コードは触らない。不足が見つかった場合はその場で実装を足さず、新しい仕様書 / 計画書に戻る。
 
-**Tech Stack:** Ruby, Cucumber, Bundler, `qni-cli`
+**利用技術:** Ruby, Cucumber, Bundler, `qni-cli`
 
 ---
 
-## File Structure
+## ファイル構成
 
-- Create: `features/katas/basic_gates/sign_flip.feature`
-  - `Task 1.3` の問題文、数値 3 シナリオ、controlled 検証 1 シナリオ、symbolic 説明 1 シナリオを追加する。
-- Verify: `features/katas/basic_gates/state_flip.feature`
+- 作成: `features/katas/basic_gates/sign_flip.feature`
+  - `Task 1.3` の問題文、数値 3 シナリオ、制御付き検証 1 シナリオ、記号説明 1 シナリオを追加する。
+- 確認: `features/katas/basic_gates/state_flip.feature`
   - `Task 1.1` の既存ケースが回帰していないことを確認する。
-- Verify: `features/katas/basic_gates/basis_change.feature`
+- 確認: `features/katas/basic_gates/basis_change.feature`
   - `Task 1.2` の既存ケースが回帰していないことを確認する。
-- Verify: `features/qni_run.feature`
+- 確認: `features/qni_run.feature`
   - `qni run` と `qni run --symbolic` の既存振る舞いが回帰していないことを確認する。
-- Verify: `features/qni_expect.feature`
-  - controlled-`Z` を含む `qni expect` の経路が問題なく動くことを確認する。
+- 確認: `features/qni_expect.feature`
+  - 制御付き `Z` を含む `qni expect` の経路が問題なく動くことを確認する。
 
-## Task 1: 失敗する `Task 1.3` feature を先に追加する
+## 作業 1: 失敗する `Task 1.3` 機能ファイルを先に追加する
 
-**Files:**
-- Create: `features/katas/basic_gates/sign_flip.feature`
-- Test: `features/katas/basic_gates/sign_flip.feature`
+**ファイル:**
+- 作成: `features/katas/basic_gates/sign_flip.feature`
+- テスト: `features/katas/basic_gates/sign_flip.feature`
 
-- [ ] **Step 1: `Task 1.3` の問題文と 5 シナリオを書く**
+- [ ] **手順 1: `Task 1.3` の問題文と 5 シナリオを書く**
 
 `features/katas/basic_gates/sign_flip.feature` を新規作成し、`Task 1.3 SignFlip` の問題文と次の 5 シナリオを追加する。
 
@@ -94,112 +94,112 @@
       """
 ```
 
-- [ ] **Step 2: `Task 1.3` feature を実行して red を確認する**
+- [ ] **手順 2: `Task 1.3` 機能ファイルを実行して失敗を確認する**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/share/gem/ruby/3.4.0/bin/bundle exec cucumber features/katas/basic_gates/sign_flip.feature
 ```
 
-Expected:
+期待結果:
 
 - 新規 `Task 1.3` シナリオのうち少なくとも 1 本が失敗する
-- failure は expected stdout の差、または controlled-`Z` / symbolic の既存 CLI 表現差にある
+- 失敗は期待する標準出力との差、または制御付き `Z` / 記号表示の既存 CLI 表現差にある
 
-- [ ] **Step 3: failing feature をコミットする**
+- [ ] **手順 3: 失敗する機能ファイルをコミットする**
 
 ```bash
 git add features/katas/basic_gates/sign_flip.feature
 git commit -m "test: add Task 1.3 kata scenarios"
 ```
 
-## Task 2: 期待値だけを最小修正して green にする
+## 作業 2: 期待値だけを最小修正して成功させる
 
-**Files:**
-- Modify: `features/katas/basic_gates/sign_flip.feature`
-- Test: `features/katas/basic_gates/sign_flip.feature`
+**ファイル:**
+- 修正: `features/katas/basic_gates/sign_flip.feature`
+- テスト: `features/katas/basic_gates/sign_flip.feature`
 
-- [ ] **Step 1: 失敗した 1 シナリオを単独で再実行する**
+- [ ] **手順 1: 失敗した 1 シナリオを単独で再実行する**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/share/gem/ruby/3.4.0/bin/bundle exec cucumber features/katas/basic_gates/sign_flip.feature:1
 ```
 
-Expected:
+期待結果:
 
-- actual の `qni run` / `qni run --symbolic` / `qni expect` 出力を確認できる
+- 実際の `qni run` / `qni run --symbolic` / `qni expect` 出力を確認できる
 
-- [ ] **Step 2: feature の期待値だけを最小修正する**
+- [ ] **手順 2: 機能ファイルの期待値だけを最小修正する**
 
 変更は次に限定する。
 
-- 数値の丸め差があれば expected stdout を現実の CLI 出力に合わせる
-- symbolic の符号、項順、係数表記が既存 `qni_run.feature` と整合しているなら、その表記に feature を合わせる
-- controlled-`Z` が既存 CLI で書けない場合はここで止め、新しい spec / plan に戻る
+- 数値の丸め差があれば期待する標準出力を現実の CLI 出力に合わせる
+- 記号表示の符号、項順、係数表記が既存 `qni_run.feature` と整合しているなら、その表記に機能ファイルを合わせる
+- 制御付き `Z` が既存 CLI で書けない場合はここで止め、新しい仕様書 / 計画書に戻る
 
-このタスクでは product code を変更しない。
+このタスクでは製品コードを変更しない。
 
-- [ ] **Step 3: `Task 1.3` feature を再実行して green を確認する**
+- [ ] **手順 3: `Task 1.3` 機能ファイルを再実行して成功を確認する**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/share/gem/ruby/3.4.0/bin/bundle exec cucumber features/katas/basic_gates/sign_flip.feature
 ```
 
-Expected:
+期待結果:
 
-- `Task 1.3` の 5 シナリオが green
+- `Task 1.3` の 5 シナリオが成功する
 
-- [ ] **Step 4: 修正済み feature をコミットする**
+- [ ] **手順 4: 修正済み機能ファイルをコミットする**
 
 ```bash
 git add features/katas/basic_gates/sign_flip.feature
 git commit -m "test: document Task 1.3 sign flip"
 ```
 
-## Task 3: 近接回帰を確認する
+## 作業 3: 近接回帰を確認する
 
-**Files:**
-- Verify: `features/katas/basic_gates/sign_flip.feature`
-- Verify: `features/katas/basic_gates/state_flip.feature`
-- Verify: `features/katas/basic_gates/basis_change.feature`
-- Verify: `features/qni_run.feature`
-- Verify: `features/qni_expect.feature`
+**ファイル:**
+- 確認: `features/katas/basic_gates/sign_flip.feature`
+- 確認: `features/katas/basic_gates/state_flip.feature`
+- 確認: `features/katas/basic_gates/basis_change.feature`
+- 確認: `features/qni_run.feature`
+- 確認: `features/qni_expect.feature`
 
-- [ ] **Step 1: 近接回帰セットを実行する**
+- [ ] **手順 1: 近接回帰セットを実行する**
 
-Run:
+実行:
 
 ```bash
 BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/share/gem/ruby/3.4.0/bin/bundle exec cucumber features/qni_run.feature features/qni_expect.feature features/katas/basic_gates/state_flip.feature features/katas/basic_gates/basis_change.feature features/katas/basic_gates/sign_flip.feature
 ```
 
-Expected:
+期待結果:
 
-- PASS
-- `Task 1.1`、`Task 1.2`、`Task 1.3` が共存して green
-- `qni run`、`qni run --symbolic`、`qni expect` の既存 feature が回帰していない
+- 成功
+- `Task 1.1`、`Task 1.2`、`Task 1.3` が共存して成功する
+- `qni run`、`qni run --symbolic`、`qni expect` の既存機能ファイルが回帰していない
 
-- [ ] **Step 2: 最終差分を確認する**
+- [ ] **手順 2: 最終差分を確認する**
 
-Check:
+確認項目:
 
 - 変更が `features/katas/basic_gates/sign_flip.feature` だけに収まっている
-- product code と step 定義に変更がない
+- 製品コードとステップ定義に変更がない
 
-- [ ] **Step 3: 回帰確認のチェックポイントをコミットする**
+- [ ] **手順 3: 回帰確認のチェックポイントをコミットする**
 
 ```bash
 git add features/katas/basic_gates/sign_flip.feature
 git commit -m "test: verify Task 1.3 kata coverage"
 ```
 
-## Notes
+## 補足
 
-- 今回は `Task 1.3` を `Task 1.1` と `Task 1.2` と同じ深さに揃えることが目的であり、product code 追加は前提にしない。
-- `Task 1.3` は位相と符号を扱うため、symbolic 出力の整形を改善したくなる可能性はあるが、この plan ではまず既存出力に feature を合わせる。
-- controlled-`Z` が `qni add Z --control 0 --qubit 1` でそのまま書けることが前提であり、ここで不足が見つかった場合は新しい spec / plan に切り出す。
+- 今回は `Task 1.3` を `Task 1.1` と `Task 1.2` と同じ深さに揃えることが目的であり、製品コード追加は前提にしない。
+- `Task 1.3` は位相と符号を扱うため、記号出力の整形を改善したくなる可能性はあるが、この計画ではまず既存出力に機能ファイルを合わせる。
+- 制御付き `Z` が `qni add Z --control 0 --qubit 1` でそのまま書けることが前提であり、ここで不足が見つかった場合は新しい仕様書 / 計画書に切り出す。
