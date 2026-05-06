@@ -9,6 +9,7 @@ import { runRemoveCommand } from './commands/remove_command';
 import { runRunCommand } from './commands/run_command';
 import { runStateCommand } from './commands/state_command';
 import { runVariableCommand } from './commands/variable_command';
+import { runViewCommand } from './commands/view_command';
 
 export interface CommandHandlerContext {
   readonly cwd: string;
@@ -37,7 +38,8 @@ const TYPESCRIPT_ROUTES = new Map<string, CommandHandler>([
   ['rm', runRemoveCommand],
   ['run', runRunCommand],
   ['state', runStateCommand],
-  ['variable', runVariableCommand]
+  ['variable', runVariableCommand],
+  ['view', runViewCommand]
 ]);
 
 export function createDispatcher(options: DispatcherOptions): Dispatcher {

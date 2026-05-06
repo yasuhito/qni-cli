@@ -131,10 +131,12 @@ export function runRubyFallback(options: RunRubyFallbackOptions): Promise<Subpro
 
 export function runRubyFallbackSync(options: RunRubyFallbackSyncOptions): SubprocessResult {
   const invocation = createRubyFallbackInvocation(options);
+  const stdoutMode = options.stdout || !process.stdout.isTTY ? 'pipe' : 'inherit';
+  const stderrMode = options.stderr || !process.stderr.isTTY ? 'pipe' : 'inherit';
   const result = spawnSync(invocation.command, [...invocation.args], {
     cwd: invocation.cwd,
     env: invocation.env,
-    stdio: ['ignore', 'pipe', 'pipe']
+    stdio: ['ignore', stdoutMode, stderrMode]
   });
 
   if (result.error) {
@@ -142,8 +144,13 @@ export function runRubyFallbackSync(options: RunRubyFallbackSyncOptions): Subpro
     return { exitStatus: 127, signal: null };
   }
 
-  (options.stdout ?? process.stdout).write(result.stdout);
-  (options.stderr ?? process.stderr).write(result.stderr);
+  if (result.stdout) {
+    (options.stdout ?? process.stdout).write(result.stdout);
+  }
+
+  if (result.stderr) {
+    (options.stderr ?? process.stderr).write(result.stderr);
+  }
 
   return {
     exitStatus: result.status,
