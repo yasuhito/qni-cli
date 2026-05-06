@@ -1,10 +1,10 @@
-# Feature: circuit auto-expand
+# Feature: 回路の自動拡張
 
-qni-cli のユーザとして
+qni-cli の利用者として
 必要なサイズの回路を手作業で準備しなくて済むように
-ゲート追加時に回路が自動的に拡張されてほしい。
+ゲートを追加するときに回路が自動的に拡張されてほしい。
 
-## Scenario: 既存回路に新しい qubit を追加できる
+## Scenario: 既存回路に新しい量子ビットを追加できる
 
 - Given "qni add H --qubit 0 --step 0" を実行
 - When "qni add H --qubit 1 --step 0" を実行
