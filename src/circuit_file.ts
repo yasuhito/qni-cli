@@ -15,7 +15,7 @@ const CONTROL_SYMBOL = '•';
 const EMPTY_SLOT = 1;
 const SWAP_SYMBOL = 'Swap';
 
-interface CircuitData {
+export interface CircuitData {
   cols: unknown[][];
   initial_state?: unknown;
   qubits: number;
@@ -39,6 +39,10 @@ export class CircuitFile {
     }
 
     return false;
+  }
+
+  load(): CircuitData {
+    return this.requiredCircuit();
   }
 
   clearInitialState(): boolean {
