@@ -183,6 +183,21 @@ describe('export command TypeScript route', () => {
     });
   });
 
+  it('leaves value-like option ambiguity on Ruby fallback', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        qubits: 1,
+        cols: [['H']]
+      });
+
+      const result = captureDispatcherRun(dir, ['export', '--latex-source', '--output', '--light'], { PATH: '' });
+
+      assert.equal(result.exitStatus, 127);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, 'spawnSync bundle ENOENT\n');
+    });
+  });
+
   it('honors QNI_USE_RUBY for export', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {

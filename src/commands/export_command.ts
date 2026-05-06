@@ -174,7 +174,7 @@ function parseExportOptions(args: string[]): ExportOptions | undefined {
     if (valueSetter) {
       const value = inlineValue ?? args[index + 1];
 
-      if (value === undefined) {
+      if (value === undefined || (inlineValue === undefined && value.startsWith('-'))) {
         return undefined;
       }
 
