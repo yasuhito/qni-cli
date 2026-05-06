@@ -4,7 +4,7 @@
 
 **目的:** `BasicGates Task 1.10 BellStateChange3` を `features/katas/basic_gates/bell_state_change_3.feature` に追加し、Quantum Katas の `DumpDiff` と制御付き Bell 状態検証を `qni-cli` 側で再現する。
 
-**構成:** 先に `bell_state_change_3.feature` を追加し、2 量子ビットの数値シナリオ、2 量子ビットのシンボリックシナリオ、3 量子ビットの制御付き検証シナリオを書いて失敗 / 成功を確認する。`Task 1.8` と `Task 1.9` で整えた 2 量子ビットのシンボリック対応はそのまま再利用し、今回の焦点は `Task 1.10` 固有の位相罠を避けるために候補を `qs[0]` に固定することと、`VerifyBellStateConversion(..., 0, 3)` の再現に多重制御 `X` が本当に必要かを機能仕様を先に書く方針で切り分けることに置く。
+**構成:** 先に `bell_state_change_3.feature` を追加し、2 量子ビットの数値シナリオ、2 量子ビットの記号表示シナリオ、3 量子ビットの制御付き検証シナリオを書いて失敗 / 成功を確認する。`Task 1.8` と `Task 1.9` で整えた 2 量子ビットの記号表示対応はそのまま再利用し、今回の焦点は `Task 1.10` 固有の位相罠を避けるために候補を `qs[0]` に固定することと、`VerifyBellStateConversion(..., 0, 3)` の再現に多重制御 `X` が本当に必要かを機能仕様を先に書く方針で切り分けることに置く。
 
 **利用技術:** Ruby, Python, SymPy, Cucumber, Bundler, `qni-cli`
 
@@ -13,9 +13,9 @@
 ## ファイル構成
 
 - 作成: `features/katas/basic_gates/bell_state_change_3.feature`
-  - `Task 1.10` の問題文、2 量子ビットの数値シナリオ、2 量子ビットのシンボリックシナリオ、3 量子ビットの制御付き検証シナリオを追加する。
+  - `Task 1.10` の問題文、2 量子ビットの数値シナリオ、2 量子ビットの記号表示シナリオ、3 量子ビットの制御付き検証シナリオを追加する。
 - 必要なら変更: `features/qni_run.feature`
-  - `Task 1.10` 用の Bell 状態シンボリック表示が未保証なら最小回帰を追加する。
+  - `Task 1.10` 用の Bell 状態の記号表示が未保証なら最小回帰を追加する。
 - 必要なら変更: `features/step_definitions/cli_steps.rb`
   - Bell 系タスクに必要なテスト支援が不足している場合だけ最小追加する。
 - 必要なら変更: `lib/qni/...`
@@ -98,7 +98,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/sha
 
 期待結果:
 
-- 数値 / シンボリック表示のどこまで既存機能だけで通るかが分かる
+- 数値 / 記号表示のどこまで既存機能だけで通るかが分かる
 - 制御付き検証で多重制御 `X` 相当が不足しているか、あるいは機能仕様の並びだけで書けるかを切り分けられる
 
 - [ ] **手順 3: 機能仕様を先に追加した内容をコミットする**
@@ -122,14 +122,14 @@ git commit -m "test: add Task 1.10 kata scenarios"
 
 - 制御付き検証回路の書き下ろしが間違っている
 - `Task 1.10` に必要な多重制御 `X`、すなわち `CCNOT` 相当の表現や実行が不足している
-- `Task 1.10` 用の Bell 状態シンボリック表示が既存の `qni run --symbolic` で未保証である
+- `Task 1.10` 用の Bell 状態の記号表示が既存の `qni run --symbolic` で未保証である
 
 - [ ] **手順 2: 製品コードに不足がある場合だけ既存の機能仕様に最小回帰を追加する**
 
 不足が製品コードにある場合のみ、対応する既存の機能仕様に最小シナリオを追加する。
 
 - `CCNOT` 相当が不足しているなら、その表現と実行を保証する機能仕様を先に追加する
-- シンボリック出力の不足なら `features/qni_run.feature` に最小回帰を追加する
+- 記号表示出力の不足なら `features/qni_run.feature` に最小回帰を追加する
 
 - [ ] **手順 3: 必要な最小実装だけを入れる**
 
@@ -148,7 +148,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/sha
 
 期待結果:
 
-- `Task 1.10` の機能仕様が PASS
+- `Task 1.10` の機能仕様が成功する
 
 - [ ] **手順 5: 必要な修正をコミットする**
 
@@ -181,7 +181,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/sha
 
 期待結果:
 
-- すべて PASS
+- すべて成功する
 
 - [ ] **手順 2: 近接回帰の成功確認をコミットする**
 
@@ -204,7 +204,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/sha
 
 期待結果:
 
-- 全シナリオが PASS
+- 全シナリオが成功する
 
 - [ ] **手順 2: Ruby 品質チェックを実行する**
 
@@ -219,4 +219,4 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/sha
 
 期待結果:
 
-- すべて PASS
+- すべて成功する
