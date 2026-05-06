@@ -138,7 +138,7 @@ git commit -m "test: rewrite global phase change scenarios"
 - `-0.6|0> - 0.8|1>`
 - `-α|0> - β|1>`
 
-を既存の symbolic 出力と同値に扱えるようにする。
+を既存の記号式出力と同値に扱えるようにする。
 
 このタスクでは YAGNI でよい。タスク 1.7 で使う形だけを通せれば十分。
 
@@ -203,7 +203,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber \
 
 確認:
 
-- `phase_flip.feature` は `S`
+- `phase_flip.feature` は `S` ゲートの固定角位相変化を確認する
 - `phase_change.feature` は「位相回転」
 - `global_phase_change.feature` は「グローバル位相変化」
 - どれも `When 次の回路を適用:` を使っている
