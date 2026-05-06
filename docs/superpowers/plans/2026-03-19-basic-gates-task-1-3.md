@@ -37,8 +37,10 @@
 # language: ja
 機能: Quantum Katas BasicGates Task 1.3 SignFlip
   Task 1.3 SignFlip: |+⟩ を |-⟩ に、|-⟩ を |+⟩ に変える
+
   入力:
   1 量子ビットの状態 |ψ⟩ = α|0⟩ + β|1⟩
+
   目標:
   状態を α|0⟩ - β|1⟩ に変える
 
@@ -191,12 +193,9 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/sha
 - 変更が `features/katas/basic_gates/sign_flip.feature` だけに収まっている
 - 製品コードとステップ定義に変更がない
 
-- [ ] **手順 3: 回帰確認のチェックポイントをコミットする**
+- [ ] **手順 3: 回帰確認の結果を記録する**
 
-```bash
-git add features/katas/basic_gates/sign_flip.feature
-git commit -m "test: verify Task 1.3 kata coverage"
-```
+追加差分がない場合はコミットせず、作業メモまたは PR の検証欄に近接回帰セットの成功結果を記録する。
 
 ## 補足
 

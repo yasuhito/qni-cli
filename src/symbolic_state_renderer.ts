@@ -103,16 +103,23 @@ function renderWithHelper(command: HelperCommand, options: ResolvedSymbolicState
     }
 
     if (error.code === 'EPIPE') {
+      const stdout = result.stdout ?? '';
+      const stderr = result.stderr ?? '';
+
       if (result.status === 0) {
-        return result.stdout.trim();
+        return stdout.trim();
       }
 
-      if (retryableWithNextCommand(command.command, result.stderr)) {
+      if (retryableWithNextCommand(command.command, stderr)) {
         return undefined;
       }
 
-      if (result.status !== null || result.stderr.trim() !== '') {
-        throw new SymbolicStateRendererError(renderErrorMessage(result.stderr, result.status));
+      if (result.status !== null || stderr.trim() !== '') {
+        throw new SymbolicStateRendererError(renderErrorMessage(stderr, result.status));
+      }
+
+      if (result.signal !== null) {
+        throw new SymbolicStateRendererError(`${error.message} (signal: ${result.signal})`);
       }
     }
 
