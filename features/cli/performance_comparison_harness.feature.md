@@ -23,3 +23,7 @@ Ruby から TypeScript へ command migration を進める前に、
 ## Scenario: harness は 20% threshold を扱う
 
 - Then リポジトリファイル "src/performance/comparison_harness.ts" は "thresholdRatio" を含む
+
+## Scenario: harness は TypeScript 測定で Ruby override を引き継がない
+
+- Then リポジトリファイル "src/performance/comparison_harness.ts" は "withoutRubyOverrideEnvironment" を含む
