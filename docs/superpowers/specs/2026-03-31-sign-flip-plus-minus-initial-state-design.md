@@ -1,6 +1,6 @@
-# Sign Flip Plus/Minus Initial State Design
+# SignFlip のプラス/マイナス初期状態設計
 
-## Problem
+## 課題
 
 現在の [sign_flip.feature](/home/yasuhito/Work/qni-cli/features/katas/basic_gates/sign_flip.feature) は、
 
@@ -9,15 +9,15 @@
 - `qni run`
 - 数値 CSV 出力の比較
 
-という low-level な書き方になっている。
+という低レベルな書き方になっている。
 
-そのため、Task 1.1 の [state_flip.feature](/home/yasuhito/Work/qni-cli/features/katas/basic_gates/state_flip.feature) や Task 1.2 の [basis_change.feature](/home/yasuhito/Work/qni-cli/features/katas/basic_gates/basis_change.feature) と比べると、
+そのため、課題 1.1 の [state_flip.feature](/home/yasuhito/Work/qni-cli/features/katas/basic_gates/state_flip.feature) や課題 1.2 の [basis_change.feature](/home/yasuhito/Work/qni-cli/features/katas/basic_gates/basis_change.feature) と比べると、
 
 - `|+> -> |->`
 - `|-> -> |+>`
 - `α|0> + β|1> -> α|0> - β|1>`
 
-という課題の本質が scenario から直接読み取りにくい。
+という課題の本質がシナリオから直接読み取りにくい。
 
 さらに、現在の `Given 初期状態ベクトルは:` は `|0>`, `|1>`, `α|0> + β|1>` のような計算基底中心の記法は扱えるが、
 
@@ -32,48 +32,48 @@
 - 回路は `Z`
 - 結果は `|+>, |->` 基底で読む
 
-という構図をそのまま feature に落とせない。
+という構図をそのまま機能仕様に落とせない。
 
-## Goal
+## 目的
 
 - `Given 初期状態ベクトルは:` で `|+>` と `|->` を直接受け付ける
-- 必要なら CLI の `qni state set "|+>"` / `qni state set "|->"` でも同じ shorthand を使えるようにする
-- [sign_flip.feature](/home/yasuhito/Work/qni-cli/features/katas/basic_gates/sign_flip.feature) を Task 1.1 / 1.2 と同じ高レベル DSL に書き換える
+- 必要なら CLI の `qni state set "|+>"` / `qni state set "|->"` でも同じ短縮記法を使えるようにする
+- [sign_flip.feature](/home/yasuhito/Work/qni-cli/features/katas/basic_gates/sign_flip.feature) を課題 1.1 / 1.2 と同じ高レベル DSL に書き換える
 - SignFlip の学習目標を `|+>, |->` 基底と計算基底の両方から読みやすくする
 
-## Non-Goals
+## 対象外
 
-- `|+i>` や `|-i>` など Y 基底の shorthand を追加すること
-- 一般の `sqrt(2)/2|0> + sqrt(2)/2|1>` 形式を fully symbolic に parse すること
-- 2 qubit 以上の `|++>` などを同時にサポートすること
-- controlled 検証 scenario を再び導入すること
+- `|+i>` や `|-i>` など Y 基底の短縮記法を追加すること
+- 一般の `sqrt(2)/2|0> + sqrt(2)/2|1>` 形式を完全な記号式として解析すること
+- 2 量子ビット以上の `|++>` などを同時にサポートすること
+- 制御付き検証シナリオを再び導入すること
 
-## Approaches Considered
+## 検討した案
 
 ### 1. `sign_flip.feature` だけ低レベルのまま残す
 
 - 実装は不要
-- ただし Task 1.1 / 1.2 と DSL が揃わず、読みやすさの流れが途切れる
+- ただし課題 1.1 / 1.2 と DSL が揃わず、読みやすさの流れが途切れる
 
-### 2. `|+>` / `|->` を feature step 専用の sugar としてだけ追加する
+### 2. `|+>` / `|->` をステップ定義専用の糖衣構文としてだけ追加する
 
 - `Given 初期状態ベクトルは:` の内部でだけ `|+>` / `|->` を認識する
 - 変更範囲は小さい
 - ただし CLI の `qni state set` とは表現が分かれ、エージェントからの対話的利用でも一貫しない
 
-### 3. `InitialState` の正式 shorthand として `|+>` / `|->` を追加する
+### 3. `InitialState` の正式な短縮記法として `|+>` / `|->` を追加する
 
-- feature DSL と CLI が同じ表現を共有できる
+- 機能仕様の DSL と CLI が同じ表現を共有できる
 - 今後 `basis_change.feature` や対話実験でも自然に使える
-- 実装はやや広いが、`|+>` / `|->` だけなら範囲は still small
+- 実装はやや広いが、`|+>` / `|->` だけなら範囲は小さいままである
 
-## Decision
+## 決定
 
-Approach 3 を採用する。
+案 3 を採用する。
 
 - `InitialState.parse` で `|+>` / `|->` を正式サポートする
 - [features/step_definitions/cli_steps.rb](/home/yasuhito/Work/qni-cli/features/step_definitions/cli_steps.rb) の `Given 初期状態ベクトルは:` はそのまま恩恵を受ける
-- [lib/qni/state_file.rb](/home/yasuhito/Work/qni-cli/lib/qni/state_file.rb) 経由の `qni state set` でも同じ shorthand が使えるようにする
+- [lib/qni/state_file.rb](/home/yasuhito/Work/qni-cli/lib/qni/state_file.rb) 経由の `qni state set` でも同じ短縮記法が使えるようにする
 
 これにより、SignFlip は
 
@@ -83,9 +83,9 @@ Approach 3 を採用する。
 
 という理想形へ寄せられる。
 
-## User-Facing API
+## 利用者向け API
 
-### Initial State DSL
+### 初期状態 DSL
 
 これらを受け付けるようにする。
 
@@ -94,14 +94,14 @@ Approach 3 を採用する。
 |->
 ```
 
-意味は次の shorthand とする。
+意味は次の短縮記法とする。
 
 ```text
 |+> = (|0> + |1>) / sqrt(2)
 |-> = (|0> - |1>) / sqrt(2)
 ```
 
-第 1 段では parser 内で直接 concrete な 2 項 state に展開してよい。
+第 1 段ではパーサー内で直接具体的な 2 項状態に展開してよい。
 
 ### CLI
 
@@ -114,15 +114,15 @@ qni state set "|->"
 
 `qni state show` は、保存された初期状態が `|+>` / `|->` と等価なとき、
 
-- shorthand のまま表示するか
-- 正規化済みの ket sum を表示するか
+- 短縮記法のまま表示するか
+- 正規化済みの ket の和を表示するか
 
 のどちらかを選ぶ必要がある。
 
-第 1 段では **表示も shorthand を優先** する。
+第 1 段では **表示も短縮記法を優先** する。
 学習者にとって `|+>` / `|->` のまま見えるほうが価値が高いからである。
 
-## SignFlip Feature Shape
+## SignFlip の機能仕様案
 
 書き換え後の [sign_flip.feature](/home/yasuhito/Work/qni-cli/features/katas/basic_gates/sign_flip.feature) は、次の方向を目指す。
 
@@ -222,11 +222,11 @@ Scenario: Z ゲートは α|0> + β|1> を α|0> - β|1> に変える
     """
 ```
 
-## Internal Design
+## 内部設計
 
 ### 1. `InitialState`
 
-[lib/qni/initial_state.rb](/home/yasuhito/Work/qni-cli/lib/qni/initial_state.rb) に `|+>` / `|->` の special-case parse を追加する。
+[lib/qni/initial_state.rb](/home/yasuhito/Work/qni-cli/lib/qni/initial_state.rb) に `|+>` / `|->` の特別扱いの解析を追加する。
 
 最小案:
 
@@ -237,7 +237,7 @@ Scenario: Z ゲートは α|0> + β|1> を α|0> - β|1> に変える
   - `Term('0', PLUS_MINUS_COEFFICIENT)`
   - `Term('1', NEGATED_PLUS_MINUS_COEFFICIENT)`
 
-ここで coefficient は parser がすでに扱える concrete number とする。
+ここで係数は、パーサーがすでに扱える具体的な数値とする。
 つまり第 1 段では、
 
 - `0.7071067811865476`
@@ -248,14 +248,14 @@ Scenario: Z ゲートは α|0> + β|1> を α|0> - β|1> に変える
 この方針なら、
 
 - `resolve_numeric`
-- JSON serialization
-- simulator
+- JSON 直列化
+- シミュレーター
 
 を大きく変えずに済む。
 
-### 2. Canonical Display
+### 2. 正規表示
 
-`InitialState#to_s` や `qni state show` は、保存された state が `|+>` / `|->` と tolerance 内で一致するなら、shorthand を返すようにしてよい。
+`InitialState#to_s` や `qni state show` は、保存された状態が `|+>` / `|->` と許容誤差内で一致するなら、短縮記法を返すようにしてよい。
 
 そうしないと、
 
@@ -265,13 +265,13 @@ Scenario: Z ゲートは α|0> + β|1> を α|0> - β|1> に変える
 
 が見えてしまい、学習用途の価値が下がる。
 
-### 3. Step Definitions
+### 3. ステップ定義
 
-[features/step_definitions/cli_steps.rb](/home/yasuhito/Work/qni-cli/features/step_definitions/cli_steps.rb) は、`Qni::InitialState.parse` に通すだけなので、`InitialState` 側が shorthand を理解すれば追加変更は最小で済む。
+[features/step_definitions/cli_steps.rb](/home/yasuhito/Work/qni-cli/features/step_definitions/cli_steps.rb) は、`Qni::InitialState.parse` に通すだけなので、`InitialState` 側が短縮記法を理解すれば追加変更は最小で済む。
 
 必要なのは、
 
-- comparison 側で `|+>` / `|->` がそのまま扱えること
+- 比較処理側で `|+>` / `|->` がそのまま扱えること
 - `Then 計算基底での状態ベクトルは:`
 - `Then |+>, |-> 基底での状態ベクトルは:`
 
@@ -279,9 +279,9 @@ Scenario: Z ゲートは α|0> + β|1> を α|0> - β|1> に変える
 
 である。
 
-## Controlled Scenario
+## 制御付きシナリオ
 
-Task 1.1 と同じ考えで、controlled 検証 scenario は削除する。
+課題 1.1 と同じ考えで、制御付き検証シナリオは削除する。
 
 理由:
 
@@ -289,43 +289,43 @@ Task 1.1 と同じ考えで、controlled 検証 scenario は削除する。
 - SignFlip の主題は `Z` の作用そのもの
 - `|+>`, `|->` と計算基底の両方で十分に学習目標を表現できる
 
-## Testing
+## テスト
 
-先に feature を更新する。
+先に機能仕様を更新する。
 
-### New / Updated Features
+### 新規・更新する機能仕様
 
 - `features/qni_state.feature`
   - `qni state set "|+>"` / `qni state show`
 - `features/katas/basic_gates/sign_flip.feature`
-  - high-level DSL に全面書き換え
+  - 高レベル DSL に全面書き換え
 
-### Unit Tests
+### 単体テスト
 
 - `test/qni/initial_state_test.rb`
   - `InitialState.parse('|+>')`
   - `InitialState.parse('|->')`
-  - `to_s` が shorthand を返すこと
+  - `to_s` が短縮記法を返すこと
 
-### Verification
+### 検証
 
 - `bundle exec ruby -Itest test/qni/initial_state_test.rb`
 - `bundle exec cucumber features/qni_state.feature features/katas/basic_gates/sign_flip.feature`
 - 最後に `bundle exec rake check`
 
-## Expected Outcome
+## 期待する結果
 
-SignFlip は Task 1.1 / 1.2 と同じレベルで、
+SignFlip は課題 1.1 / 1.2 と同じレベルで、
 
 - 初期状態
 - 適用する回路
 - 期待する状態変化
 
-をそのまま読める feature になる。
+をそのまま読める機能仕様になる。
 
 特に `|+>` と `|->` を初期状態として直接置けることで、
 
 - `Z` が `|+>` を `|->` に変える
 - `Z` が `|->` を `|+>` に変える
 
-という task のタイトルそのものを scenario にできるようになる。
+という課題のタイトルそのものをシナリオにできるようになる。
