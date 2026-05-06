@@ -94,7 +94,7 @@ BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor /home/yasuhito/.local/sha
 
 - `Qni::SymbolicStateRenderer#render` が `TooManyStatements`
 - `Qni::SymbolicStateRenderer#render` の `flog` スコアが `20` を超える
-- ユーティリティメソッド指摘が 2 件ある
+- ユーティリティメソッドの指摘が 2 件ある
 
 - [ ] **手順 2: `render` を小さい補助メソッドに分割する**
 
