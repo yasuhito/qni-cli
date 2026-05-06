@@ -1,9 +1,9 @@
 # Feature: add コマンドのスロット制約
 
-qni-cli のユーザとして、既存のゲートを誤って上書きしないために、
-すでに埋まっているスロットへの add は失敗してほしい。
+qni-cli の利用者として、既存のゲートを誤って上書きしないために、
+すでに埋まっているスロットに対する qni add は失敗してほしい。
 
-## Scenario: 既存スロットへの qni add は失敗
+## Scenario: 既存スロットに対する qni add は失敗
 
 - Given "qni add H --qubit 0 --step 0" を実行
 - When "qni add H --qubit 0 --step 0" を実行
