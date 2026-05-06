@@ -13,7 +13,7 @@
 ## ファイル構成
 
 - 変更: `features/katas/basic_gates/phase_change.feature`
-  - 低レベルな `qni add P ...` / 数値 CSV 比較 / 制御つき検証を、高レベル DSL の 1量子ビットシナリオへ置き換える。
+  - 低レベルな `qni add P ...` / 数値 CSV 比較 / 制御付き検証を、高レベル DSL の 1量子ビットシナリオへ置き換える。
 - 変更: `features/step_definitions/cli_steps.rb`
   - `Then 状態ベクトルは:` の記号表現比較ヘルパーを拡張し、`exp(iθ)` 形式と乗算順の差を最小限正規化する。
 - 確認: `features/katas/basic_gates/phase_flip.feature`
@@ -111,7 +111,7 @@ Scenario: 位相回転は α|0> + β|1> を α|0> + exp(iθ)β|1> に変える
     """
 ```
 
-このタスクで制御つき検証シナリオは削除する。
+このタスクで制御付き検証シナリオは削除する。
 
 - [ ] **手順 3: 対象 Cucumber で失敗を確認する**
 
