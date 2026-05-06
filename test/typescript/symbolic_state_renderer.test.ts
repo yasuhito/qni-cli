@@ -44,7 +44,7 @@ async function writeSymbolicHelperPlaceholder(projectRoot: string): Promise<void
 function epipeProneCircuit(): { cols: number[][]; qubits: number } {
   return {
     // Keep the serialized input well above typical 64 KB stdin pipe buffers.
-    cols: Array.from({ length: 200_000 }, () => [1]),
+    cols: Array(200_000).fill([1]),
     qubits: 1
   };
 }
