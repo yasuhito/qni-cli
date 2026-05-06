@@ -1,47 +1,47 @@
-# qni bloch APNG Implementation Plan
+# qni bloch APNG 実装計画
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **自律エージェント作業者向け:** 必須: この計画を実装するときは、利用できる場合は superpowers:subagent-driven-development を使い、利用できない場合は superpowers:executing-plans を使う。手順の進捗管理にはチェックボックス (`- [ ]`) 記法を使う。
 
-**Goal:** Replace animated Bloch-sphere GIF export with native APNG export and remove `--gif` from `qni bloch`.
+**目的:** ブロッホ球アニメーションの GIF 書き出しを APNG 形式そのものの書き出しに置き換え、`qni bloch` から `--gif` を削除する。
 
-**Architecture:** Keep the existing Bloch sampling and inline Kitty rendering model, but change file-output animation to native APNG. Ruby will switch the CLI surface from `--gif` to `--apng`, and Python will write animated PNG directly from RGBA frame images instead of palette-reduced GIF frames.
+**設計:** 既存のブロッホ球サンプリングと Kitty インライン描画モデルは維持する。ただし、ファイル出力のアニメーションを APNG 形式そのものに変更する。Ruby 側では CLI の指定方法を `--gif` から `--apng` に切り替え、Python 側ではパレット削減済み GIF フレームではなく、RGBA フレーム画像からアニメーション PNG を直接書き出す。
 
-**Tech Stack:** Ruby, Thor, Cucumber, Minitest, Python, matplotlib, Pillow, existing `BlochSampler` / `BlochRenderer` infrastructure
+**技術構成:** Ruby、Thor、Cucumber、Minitest、Python、matplotlib、Pillow、既存の `BlochSampler` / `BlochRenderer` 基盤
 
 ---
 
-### Task 1: Rewrite the acceptance surface from GIF to APNG
+### タスク 1: 受け入れ仕様を GIF から APNG に書き換える
 
-**Files:**
-- Modify: `features/qni_bloch.feature`
-- Modify: `features/qni_cli.feature`
-- Modify: `features/step_definitions/cli_steps.rb`
+**ファイル:**
+- 変更: `features/qni_bloch.feature`
+- 変更: `features/qni_cli.feature`
+- 変更: `features/step_definitions/cli_steps.rb`
 
-- [ ] **Step 1: Replace GIF scenarios with APNG scenarios**
+- [ ] **手順 1: GIF シナリオを APNG シナリオに置き換える**
 
-In `features/qni_bloch.feature`, rewrite the animated file-output coverage so it uses:
+`features/qni_bloch.feature` で、アニメーション付きファイル出力の検証を次の形式に書き換える:
 
 ```text
 qni bloch --apng --output bloch.png
 ```
 
-Cover:
-- APNG export succeeds for a rotation circuit
-- the output file is an animated PNG
-- the animated PNG has 2 frames or more
-- `--png` and `--apng` together fail
-- `--animate` without `--inline` still fails if paired with `--apng`
+次を対象にする:
+- 回転回路で APNG 書き出しが成功する
+- 出力ファイルがアニメーション PNG である
+- アニメーション PNG が 2 フレーム以上を持つ
+- `--png` と `--apng` を同時に指定すると失敗する
+- `--animate` を `--inline` なしで使う場合、`--apng` と組み合わせても失敗する
 
-- [ ] **Step 2: Update CLI help expectations**
+- [ ] **手順 2: CLI ヘルプの期待値を更新する**
 
-In `features/qni_cli.feature`, replace all `--gif` mentions with `--apng`, including:
+`features/qni_cli.feature` で、次を含むすべての `--gif` 記述を `--apng` に置き換える:
 - `qni bloch --help`
-- top-level command summaries if needed
-- usage/examples/options text
+- 必要であれば最上位コマンドの要約
+- 使用法、例、オプションの文言
 
-- [ ] **Step 3: Add APNG assertion helpers**
+- [ ] **手順 3: APNG 検証ヘルパーを追加する**
 
-Extend `features/step_definitions/cli_steps.rb` with steps like:
+`features/step_definitions/cli_steps.rb` に次のようなステップを追加する:
 
 ```ruby
 Then('{string} は APNG 画像である') do |path|
@@ -50,124 +50,124 @@ Then('{string} は APNG 画像である') do |path|
 end
 ```
 
-and:
+さらに次も追加する:
 
 ```ruby
 Then('{string} は {int} フレーム以上の APNG 画像である') do |path, minimum_frames|
-  # inspect with Pillow or a tiny Python helper
+  # Pillow または小さな Python ヘルパーで調べる
 end
 ```
 
-Keep the implementation parallel to the existing PNG/GIF helpers.
+実装は既存の PNG/GIF ヘルパーと同じ流れにする。
 
-- [ ] **Step 4: Run cucumber and confirm RED**
+- [ ] **手順 4: cucumber を実行して失敗を確認する**
 
-Run: `BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber features/qni_bloch.feature features/qni_cli.feature`
+実行: `BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber features/qni_bloch.feature features/qni_cli.feature`
 
-Expected: FAIL because the CLI still speaks `--gif`.
+期待値: CLI がまだ `--gif` を扱っているため失敗する。
 
-- [ ] **Step 5: Commit the red tests**
+- [ ] **手順 5: 赤いテストをコミットする**
 
 ```bash
 git add features/qni_bloch.feature features/qni_cli.feature features/step_definitions/cli_steps.rb
 git commit -m "test: switch bloch acceptance from gif to apng"
 ```
 
-### Task 2: Change the CLI and help surface to `--apng`
+### タスク 2: CLI とヘルプの表示を `--apng` に変更する
 
-**Files:**
-- Modify: `lib/qni/cli.rb`
-- Modify: `lib/qni/cli/bloch_command.rb`
-- Modify: `lib/qni/cli/bloch_help.rb`
+**ファイル:**
+- 変更: `lib/qni/cli.rb`
+- 変更: `lib/qni/cli/bloch_command.rb`
+- 変更: `lib/qni/cli/bloch_help.rb`
 
-- [ ] **Step 1: Replace the Thor option**
+- [ ] **手順 1: Thor オプションを置き換える**
 
-In `lib/qni/cli.rb`, remove:
+`lib/qni/cli.rb` で、次を削除する:
 
 ```ruby
 method_option :gif, ...
 ```
 
-and add:
+そして次を追加する:
 
 ```ruby
 method_option :apng, type: :boolean, default: false, desc: 'Write a Bloch sphere APNG'
 ```
 
-- [ ] **Step 2: Update format validation**
+- [ ] **手順 2: 形式検証を更新する**
 
-In `lib/qni/cli/bloch_command.rb`:
-- replace `:gif` with `:apng` in `FILE_FORMATS`
-- update the mutually-exclusive format error text to:
+`lib/qni/cli/bloch_command.rb` で次を行う:
+- `FILE_FORMATS` の `:gif` を `:apng` に置き換える
+- 同時指定できない形式のエラー文を次に更新する:
 
 ```text
 choose exactly one of --png, --apng, or --inline
 ```
 
-- [ ] **Step 3: Update format selection**
+- [ ] **手順 3: 形式選択を更新する**
 
-Make file output choose:
+ファイル出力の選択を次のようにする:
 
 ```ruby
 option_enabled?(:apng) ? 'apng' : 'png'
 ```
 
-No GIF fallback should remain.
+GIF への後方互換は残さない。
 
-- [ ] **Step 4: Rewrite help text**
+- [ ] **手順 4: ヘルプ文を編集する**
 
-In `lib/qni/cli/bloch_help.rb`, replace every GIF mention with APNG:
-- usage
-- overview
-- options
-- examples
+`lib/qni/cli/bloch_help.rb` で、次にあるすべての GIF 記述を APNG に置き換える:
+- 使用法
+- 概要
+- オプション
+- 例
 
-- [ ] **Step 5: Run focused cucumber and get GREEN on CLI/help**
+- [ ] **手順 5: 対象を絞った cucumber を実行し、CLI とヘルプが成功することを確認する**
 
-Run: `BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber features/qni_bloch.feature features/qni_cli.feature`
+実行: `BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber features/qni_bloch.feature features/qni_cli.feature`
 
-Expected: CLI/help scenarios pass, but APNG file rendering may still fail until the renderer is updated.
+期待値: CLI とヘルプのシナリオは成功する。ただし、描画器の更新が終わるまでは APNG ファイル描画がまだ失敗する可能性がある。
 
-- [ ] **Step 6: Commit the CLI rename**
+- [ ] **手順 6: CLI 名称変更をコミットする**
 
 ```bash
 git add lib/qni/cli.rb lib/qni/cli/bloch_command.rb lib/qni/cli/bloch_help.rb
 git commit -m "feat: replace bloch gif option with apng"
 ```
 
-### Task 3: Write native APNG from RGBA Bloch frames
+### タスク 3: RGBA ブロッホ球フレームから APNG 形式そのものを書き出す
 
-**Files:**
-- Modify: `lib/qni/bloch_renderer.rb`
-- Modify: `libexec/qni_bloch_render.py`
-- Modify: `test/qni/bloch_renderer_test.rb`
-- Test: `features/qni_bloch.feature`
+**ファイル:**
+- 変更: `lib/qni/bloch_renderer.rb`
+- 変更: `libexec/qni_bloch_render.py`
+- 変更: `test/qni/bloch_renderer_test.rb`
+- テスト: `features/qni_bloch.feature`
 
-- [ ] **Step 1: Add a failing renderer test for APNG**
+- [ ] **手順 1: APNG の失敗する描画器テストを追加する**
 
-In `test/qni/bloch_renderer_test.rb`, add coverage that:
-- `format: 'apng'` is accepted
-- the renderer writes an animated PNG payload or file
+`test/qni/bloch_renderer_test.rb` に、次を確認する検証を追加する:
+- `format: 'apng'` が受け入れられる
+- 描画器がアニメーション PNG の内容またはファイルを書き出す
 
-Keep the test small and contract-focused.
+テストは小さく、入出力の約束に集中させる。
 
-- [ ] **Step 2: Update Ruby-side renderer format handling**
+- [ ] **手順 2: Ruby 側の描画器形式処理を更新する**
 
-In `lib/qni/bloch_renderer.rb`:
-- treat `apng` as a file-rendered format
-- stop mentioning `gif`
-- preserve `inline_png` and `inline_frames` as-is
+`lib/qni/bloch_renderer.rb` で次を行う:
+- `apng` をファイル描画形式として扱う
+- `gif` への言及をやめる
+- `inline_png` と `inline_frames` はそのまま維持する
 
-- [ ] **Step 3: Replace GIF writing with native APNG writing in Python**
+- [ ] **手順 3: Python 側の GIF 書き出しを APNG 形式そのものの書き出しに置き換える**
 
-In `libexec/qni_bloch_render.py`:
-- remove the `gif` branch
-- add an `apng` branch
-- render all RGBA frames with `render_frame_image(...)`
-- save them directly as animated PNG with Pillow using `save_all=True`
-- keep the static `png` and inline paths unchanged
+`libexec/qni_bloch_render.py` で次を行う:
+- `gif` 分岐を削除する
+- `apng` 分岐を追加する
+- `render_frame_image(...)` ですべての RGBA フレームを描画する
+- `save_all=True` を指定して、Pillow でアニメーション PNG として直接保存する
+- 静的 `png` とインライン経路は変更しない
 
-The target shape is:
+目標の形は次のとおり:
 
 ```python
 if format_name == "apng":
@@ -183,30 +183,30 @@ if format_name == "apng":
     )
 ```
 
-Use the full RGBA frames directly; do not route through GIF or indexed-color conversion.
+RGBA フレームをそのまま使う。GIF やインデックスカラー変換を経由しない。
 
-- [ ] **Step 4: Verify renderer tests**
+- [ ] **手順 4: 描画器テストを確認する**
 
-Run: `BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec ruby -Itest test/qni/bloch_renderer_test.rb`
+実行: `BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec ruby -Itest test/qni/bloch_renderer_test.rb`
 
-Expected: PASS
+期待値: 成功する。
 
-- [ ] **Step 5: Verify bloch acceptance**
+- [ ] **手順 5: ブロッホ球の受け入れテストを確認する**
 
-Run: `BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber features/qni_bloch.feature`
+実行: `BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec cucumber features/qni_bloch.feature`
 
-Expected: PASS
+期待値: 成功する。
 
-- [ ] **Step 6: Run the full check**
+- [ ] **手順 6: 全体チェックを実行する**
 
-Run: `BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec rake check`
+実行: `BUNDLE_PATH=/home/yasuhito/Work/qni-cli/.bundle/vendor bundle exec rake check`
 
-Expected:
-- RuboCop clean
-- Reek clean
-- full Cucumber suite green
+期待値:
+- RuboCop が成功する
+- Reek が成功する
+- Cucumber 全体が成功する
 
-- [ ] **Step 7: Commit the native APNG renderer**
+- [ ] **手順 7: APNG 形式そのものを書き出す描画器をコミットする**
 
 ```bash
 git add lib/qni/bloch_renderer.rb libexec/qni_bloch_render.py test/qni/bloch_renderer_test.rb
