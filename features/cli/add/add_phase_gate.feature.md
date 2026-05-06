@@ -50,7 +50,7 @@ qni-cli のユーザとして、コマンドラインから量子回路を組み
   }
   ```
 
-## Scenario: 位相ゲート追加で負の変数を角度として保存できる
+## Scenario: 位相ゲート追加で負の変数を angle として保存できる
 
 - When "qni add P --angle=-alpha --qubit 0 --step 0" を実行
 - Then "circuit.json" の内容:
@@ -64,7 +64,7 @@ qni-cli のユーザとして、コマンドラインから量子回路を組み
   }
   ```
 
-## Scenario: 位相ゲートは角度がないと追加できない
+## Scenario: 位相ゲートは angle がないと追加できない
 
 - When "qni add P --qubit 0 --step 0" を実行
 - Then コマンドは失敗して標準エラー:
