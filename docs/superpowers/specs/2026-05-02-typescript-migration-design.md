@@ -1,549 +1,528 @@
-# TypeScript Migration Design
+# TypeScript 移行設計
 
-## Status
+## 状態
 
-Accepted for planning. This document defines the migration policy before any
-TypeScript runtime implementation starts.
+計画用に承認済み。この文書は、TypeScript の実行時実装を始める前に
+移行方針を定義する。
 
-## Context
+## 背景
 
-`qni-cli` is currently a Ruby CLI that edits, views, simulates, and exports
-quantum circuits stored in `./circuit.json`. The public behavior is already
-covered mainly by cucumber-js Markdown features under `features/**/*.feature.md`.
-Those features run the repository CLI as a black-box command through
-`bundle exec bin/qni`, which makes them suitable golden tests while the runtime
-implementation changes behind the same command surface.
+`qni-cli` は現在、`./circuit.json` に保存された量子回路の編集、表示、
+シミュレーション、エクスポートを行う Ruby CLI である。公開動作は主に
+`features/**/*.feature.md` 配下の cucumber-js Markdown 機能ファイルで
+覆われている。これらの機能ファイルは `bundle exec bin/qni` を通じて
+リポジトリの CLI をブラックボックスのコマンドとして実行するため、同じ
+コマンド外形の背後で実行時実装を差し替える間の基準テストとして使える。
 
-The migration must not be a big-bang rewrite. The codebase has several distinct
-responsibilities:
+移行は一括書き換えにしてはならない。コードベースには次のような独立した
+責務がある。
 
-- `bin/qni` is a thin Ruby entrypoint that loads `Qni::CLI.start(ARGV)`.
-- `lib/qni/cli.rb` registers Thor commands and wires top-level command behavior.
-- `lib/qni/cli/routing.rb` and `lib/qni/cli/bootstrap.rb` own help routing and
-  startup behavior that must stay byte-for-byte compatible where features assert
-  stdout, stderr, or exit status.
-- `lib/qni/cli/*_command.rb` files execute command-specific workflows such as
-  `add`, `rm`, `gate`, `state`, `variable`, `export`, and `bloch`.
-- `lib/qni/circuit.rb` and `lib/qni/circuit/**` own the mutable circuit model,
-  layout normalization, controlled gate placement, operation removal, and
-  variable storage.
-- `lib/qni/circuit_file.rb` and `lib/qni/state_file.rb` own `circuit.json`
-  loading, writing, and domain-error translation.
-- `lib/qni/simulator.rb`, `lib/qni/state_vector.rb`, gate classes, and
-  `lib/qni/simulator/**` own numeric simulation and expectation values.
-- `lib/qni/initial_state.rb` and `lib/qni/initial_state/**` own initial-state
-  parsing, formatting, validation, and numeric resolution.
-- `lib/qni/view/**` owns ASCII rendering and ASCII circuit parsing.
-- `lib/qni/export/**`, `lib/qni/cli/export_command.rb`, and
-  `lib/qni/cli/png_export_writer.rb` own LaTeX and PNG export workflows.
-- `lib/qni/bloch_*.rb` and `lib/qni/cli/bloch_command.rb` own Bloch sampling,
-  renderer invocation, and inline output.
-- `lib/qni/symbolic_state_renderer.rb` owns the Ruby-to-Python boundary for
-  symbolic rendering.
-- `libexec/qni_symbolic_run.py`, `libexec/qni_bloch_render.py`, and
-  `libexec/qni_circle_notation_render.py` are Python helpers that remain runtime
-  dependencies until each caller is replaced or explicitly retained.
+- `bin/qni` は `Qni::CLI.start(ARGV)` を読み込む薄い Ruby
+  エントリーポイントである。
+- `lib/qni/cli.rb` は Thor コマンドを登録し、最上位コマンドの動作を
+  接続する。
+- `lib/qni/cli/routing.rb` と `lib/qni/cli/bootstrap.rb` はヘルプの
+  経路制御と起動時動作を担当する。機能ファイルが stdout、stderr、終了状態を
+  検証している箇所では、バイト単位で互換性を保つ必要がある。
+- `lib/qni/cli/*_command.rb` は `add`、`rm`、`gate`、`state`、
+  `variable`、`export`、`bloch` などのコマンド固有の処理を実行する。
+- `lib/qni/circuit.rb` と `lib/qni/circuit/**` は可変の回路モデル、
+  レイアウト正規化、制御ゲート配置、操作削除、変数保存を担当する。
+- `lib/qni/circuit_file.rb` と `lib/qni/state_file.rb` は
+  `circuit.json` の読み込み、書き込み、ドメインエラーへの変換を担当する。
+- `lib/qni/simulator.rb`、`lib/qni/state_vector.rb`、ゲートクラス、
+  `lib/qni/simulator/**` は数値シミュレーションと期待値を担当する。
+- `lib/qni/initial_state.rb` と `lib/qni/initial_state/**` は初期状態の
+  解析、整形、検証、数値解決を担当する。
+- `lib/qni/view/**` は ASCII 表示と ASCII 回路の解析を担当する。
+- `lib/qni/export/**`、`lib/qni/cli/export_command.rb`、
+  `lib/qni/cli/png_export_writer.rb` は LaTeX と PNG のエクスポート処理を
+  担当する。
+- `lib/qni/bloch_*.rb` と `lib/qni/cli/bloch_command.rb` は Bloch の
+  標本化、描画器の呼び出し、インライン出力を担当する。
+- `lib/qni/symbolic_state_renderer.rb` は記号的な描画のための
+  Ruby-to-Python 境界を担当する。
+- `libexec/qni_symbolic_run.py`、`libexec/qni_bloch_render.py`、
+  `libexec/qni_circle_notation_render.py` は Python 補助プログラムであり、
+  各呼び出し元が置き換えられるか、明示的に維持されるまでは実行時依存として
+  残る。
 
-## Goals
+## 目的
 
-- Make end-user installation easier by moving toward an npm-distributed CLI
-  that fits environments where Node.js is more likely to be present than Ruby.
-- Align implementation and BDD tooling around Node.js, TypeScript, and
-  cucumber-js.
-- Keep the public `qni` command surface stable during migration.
-- Preserve stdout, stderr, exit status, `circuit.json` shape, and file output
-  compatibility for every migrated command.
-- Keep the Ruby implementation available as an oracle until the TypeScript path
-  has equivalent coverage and release confidence.
-- Leave room for a future standalone binary, without making it a first-phase
-  requirement.
+- Node.js の方が Ruby より用意されている可能性が高い環境に合うよう、
+  npm 配布の CLI へ近づけ、エンドユーザーのインストールを簡単にする。
+- 実装と BDD ツールを Node.js、TypeScript、cucumber-js にそろえる。
+- 移行中も公開されている `qni` コマンド外形を安定させる。
+- 移行済みコマンドごとに、stdout、stderr、終了状態、`circuit.json` の形、
+  ファイル出力の互換性を保つ。
+- TypeScript 経路に同等のカバレッジとリリース信頼性がそろうまで、Ruby 実装を
+  基準実装として利用できるようにしておく。
+- 将来の単体バイナリに余地を残す。ただし第一段階の必須要件にはしない。
 
-## Non-Goals
+## 対象外
 
-- Rewriting simulator, renderer, symbolic, export, and Bloch behavior in one
-  change.
-- Weakening or deleting existing cucumber-js features to make migration easier.
-- Changing the `circuit.json` schema as part of the runtime-language migration.
-- Removing Python helper dependencies before their callers have a separate
-  migration plan.
-- Publishing the first npm package in the same change as this design memo.
+- シミュレーター、描画器、記号処理、エクスポート、Bloch 動作を 1 つの変更で
+  書き換えること。
+- 移行を簡単にするために既存の cucumber-js 機能ファイルを弱めたり削除したり
+  すること。
+- 実行時言語の移行と同時に `circuit.json` スキーマを変えること。
+- 呼び出し元に別の移行計画がない段階で Python 補助プログラムへの依存を
+  削除すること。
+- この設計メモと同じ変更で最初の npm パッケージを公開すること。
 
-## Decision
+## 決定
 
-Migrate by command and module, behind a stable `qni` entrypoint, using the Ruby
-implementation as the oracle and the existing cucumber-js Markdown features as
-black-box compatibility tests.
+安定した `qni` エントリーポイントの背後で、コマンド単位、モジュール単位で
+移行する。Ruby 実装を基準実装として使い、既存の cucumber-js Markdown 機能
+ファイルをブラックボックスの互換性テストとして使う。
 
-The first TypeScript implementation should introduce a Node-based dispatcher and
-move only low-risk JSON-editing and read-only commands. Higher-risk commands
-that depend on numerical simulation, symbolic math, rendering, LaTeX, PNG/APNG,
-or terminal graphics should remain Ruby-backed until the lower layers have been
-ported and cross-checked.
+最初の TypeScript 実装では Node ベースの振り分け器を導入し、低リスクの
+JSON 編集コマンドと読み取り専用コマンドだけを移す。数値シミュレーション、
+記号計算、描画、LaTeX、PNG/APNG、端末グラフィックに依存する高リスクの
+コマンドは、下位層が移植されて突き合わせ済みになるまで Ruby 経由のままにする。
 
-## Compatibility Contract
+## 互換性契約
 
-Every migrated command must preserve:
+移行済みコマンドは、次を保たなければならない。
 
-- command name, option names, option parsing behavior, and help output;
-- stdout text, stderr text, trailing newlines, and exit status;
-- `circuit.json` formatting, schema, auto-expand, auto-shrink, and persistence
-  behavior;
-- output file paths, parent-directory creation behavior, and file bytes where
-  features assert image or LaTeX properties;
-- unsupported-input error messages already covered by features.
+- コマンド名、オプション名、オプション解析の動作、ヘルプ出力。
+- stdout の文面、stderr の文面、末尾の改行、終了状態。
+- `circuit.json` の整形、スキーマ、自動拡張、自動縮小、永続化動作。
+- 出力ファイルのパス、親ディレクトリ作成動作、機能ファイルが画像や LaTeX の
+  性質を検証している場合のファイル内容。
+- 機能ファイルで覆われている未対応入力のエラーメッセージ。
 
-The compatibility gate for a command migration is the existing cucumber-js
-feature set for that command plus any missing regression feature added before
-implementation. Feature files must not be weakened; if a feature is ambiguous,
-split scenarios or add narrower coverage while preserving the one-`Then` rule.
+コマンド移行の互換性判定は、そのコマンドの既存 cucumber-js 機能ファイル一式と、
+実装前に追加する不足した回帰機能で行う。機能ファイルを弱めてはならない。
+機能ファイルが曖昧な場合は、シナリオを分けるか、one-`Then` ルールを守ったまま
+より狭いカバレッジを追加する。
 
-The one-`Then` rule means a Cucumber scenario should assert one observable
-outcome. A validation `And` after `Then` counts as another `Then`, so a case
-that needs both exit-status and stdout coverage should be split into two
-scenarios. This keeps failure output focused on the broken contract.
+one-`Then` ルールは、Cucumber シナリオが 1 つの観測可能な結果だけを検証する
+という意味である。`Then` の後に検証目的の `And` がある場合、それも別の
+`Then` とみなす。そのため、終了状態と stdout の両方を覆う必要があるケースは
+2 つのシナリオに分ける。これにより、失敗出力が壊れた契約に集中する。
 
-## Migration Strategy
+## 移行戦略
 
-### Phase 0: Harness and Packaging Skeleton
+### フェーズ 0: ハーネスとパッケージの骨組み
 
-Introduce TypeScript tooling without changing the default behavior:
+既定の動作を変えずに TypeScript ツール環境を導入する。
 
-- add a TypeScript source tree such as `src/`;
-- add `tsconfig.json` and a minimal build command;
-- keep `bin/qni` behavior unchanged until the Node dispatcher is explicitly
-  selected;
-- add a Node executable entrypoint that can delegate all commands to Ruby;
-- keep `bundle exec rake check` as the full validation gate.
+- `src/` などの TypeScript ソースツリーを追加する。
+- `tsconfig.json` と最小限のビルドコマンドを追加する。
+- Node 振り分け器が明示的に選ばれるまで `bin/qni` の動作を変えない。
+- すべてのコマンドを Ruby へ委譲できる Node 実行可能エントリーポイントを
+  追加する。
+- `bundle exec rake check` を全体検証の判定として維持する。
 
-Recommended tooling:
+推奨するツール環境は次のとおり。
 
-- TypeScript compiler: `tsc` for the first phase, because it is stable and
-  enough for a CLI library build;
-- package manager: npm, matching the existing `package.json` and cucumber-js
-  setup;
-- module format: CommonJS initially, matching the current `package.json`;
-- ESM migration path: keep CommonJS in Phase 0, but document a later switch to
-  ESM once the npm bin is stable, Node LTS support is explicit, and subprocess
-  delegation tests cover both direct `node` execution and installed-package
-  execution;
-- npm bin name: `qni`;
-- runtime target: current maintained Node LTS;
-- test harness: existing cucumber-js Markdown features, with TypeScript unit
-  tests added only for migrated modules where they reduce debugging cost.
+- TypeScript コンパイラー: 第一段階では `tsc` を使う。安定しており、CLI
+  ライブラリのビルドには十分である。
+- パッケージマネージャー: 既存の `package.json` と cucumber-js 構成に合わせて
+  npm を使う。
+- モジュール形式: 現在の `package.json` に合わせて、最初は CommonJS とする。
+- ESM 移行経路: フェーズ 0 では CommonJS を維持する。ただし、npm bin が安定し、
+  Node LTS 対応が明示され、直接の `node` 実行とインストール済みパッケージ実行の
+  両方をサブプロセス委譲テストが覆った後で、ESM へ切り替える後続作業を文書化する。
+- npm bin 名: `qni`。
+- 実行時の対象: 現在保守されている Node LTS。
+- テストハーネス: 既存の cucumber-js Markdown 機能ファイルを使う。TypeScript
+  単体テストは、デバッグコストを下げる移行済みモジュールに限って追加する。
 
-The ESM switch should be its own migration issue. Its trigger is evidence that
-the package is consumed as an npm CLI rather than as a CommonJS library. Its
-compatibility strategy is to keep the `qni` bin contract stable and test the
-same cucumber-js feature set against the installed package before changing the
-module format in `package.json`.
+ESM への切り替えは独立した移行課題にする。発動条件は、パッケージが CommonJS
+ライブラリとしてではなく npm CLI として利用されている証拠があること。互換性戦略は、
+`qni` bin の契約を安定させたまま、`package.json` のモジュール形式を変える前に、
+同じ cucumber-js 機能ファイル一式をインストール済みパッケージに対して実行すること。
 
-Standalone binary packaging should be evaluated after npm distribution works.
-Tools such as `pkg`, `nexe`, or a Node single executable application can be
-considered later, but binary packaging must not block the staged runtime
-migration.
+npm 配布が機能した後で、単体バイナリのパッケージ化を評価する。`pkg`、`nexe`、
+Node single executable application などのツールは後で検討できるが、バイナリの
+パッケージ化で段階的な実行時移行を止めてはならない。
 
-### Phase 1: Ruby Oracle Dispatcher
+### フェーズ 1: Ruby 基準実装の振り分け器
 
-Add a TypeScript dispatcher that owns command selection but delegates
-non-migrated commands to Ruby. This gives the project one place to switch
-commands from Ruby to TypeScript while retaining rollback.
+コマンド選択を担当し、未移行コマンドを Ruby に委譲する TypeScript 振り分け器を
+追加する。これにより、Ruby から TypeScript へコマンドを切り替える場所を 1 つに
+しつつ、戻しやすさを保つ。
 
-The dispatcher must support per-command routing:
+振り分け器はコマンド単位の経路制御に対応する必要がある。
 
-- TypeScript command implementation when marked migrated;
-- Ruby subprocess fallback for all other commands;
-- an environment override, for example `QNI_USE_RUBY=1`, to force Ruby for
-  emergency rollback and release comparison.
+- 移行済みとして印付けされた場合は TypeScript コマンド実装を使う。
+- それ以外のすべてのコマンドは Ruby サブプロセスへフォールバックする。
+- 緊急時の戻しやリリース差分の比較のため、`QNI_USE_RUBY=1` のような環境変数で
+  Ruby を強制できるようにする。
 
-During this phase, `bin/qni` may remain Ruby-first. The npm `bin` can point to
-the TypeScript dispatcher once the dispatcher can delegate every command to Ruby
-with compatible process behavior.
+この段階では `bin/qni` は Ruby 優先のままでよい。振り分け器がすべてのコマンドを
+互換性のあるプロセス動作で Ruby に委譲できるようになったら、npm `bin` は
+TypeScript 振り分け器を指せる。
 
-### Operational Documentation
+### 運用ドキュメント
 
-Document `QNI_USE_RUBY=1` in the README or a troubleshooting guide when the
-dispatcher lands. The guide must explain:
+振り分け器が入るときに、README またはトラブルシューティングガイドで
+`QNI_USE_RUBY=1` を文書化する。ガイドでは次を説明する。
 
-- purpose: force Ruby during emergency rollback or release-difference analysis;
-- expected effect: every command bypasses TypeScript routing and executes the
-  Ruby fallback path;
-- usage: prefix a command such as `QNI_USE_RUBY=1 qni run` or set the variable
-  in the shell before a comparison run;
-- risk: the override can hide TypeScript regressions, so CI should fail if it is
-  accidentally set in the TypeScript compatibility lane;
-- removal: delete the guide only in the final Ruby fallback removal issue.
+- 目的: 緊急時の戻し、またはリリース差分分析の間は Ruby を強制する。
+- 期待される効果: すべてのコマンドが TypeScript の経路制御を迂回し、
+  Ruby fallback 経路で実行される。
+- 使い方: `QNI_USE_RUBY=1 qni run` のようにコマンドへ前置するか、比較実行の前に
+  シェルで変数を設定する。
+- リスク: この上書き設定は TypeScript の退行を隠せるため、TypeScript 互換性
+  レーンで誤って設定されている場合は CI を失敗させる。
+- 削除: 最終的な Ruby fallback 削除課題でのみガイドを削除する。
 
-### Phase 2: Low-Risk Command Migration
+### フェーズ 2: 低リスクコマンドの移行
 
-Migrate commands that mostly manipulate or inspect `circuit.json`, with minimal
-math and no external rendering:
+主に `circuit.json` を操作または確認し、数式処理が少なく、外部描画を伴わない
+コマンドを移行する。
 
 1. `variable`
-   - Reads and writes the `variables` object.
-   - Has contained validation through angle-expression parsing.
-   - Does not require simulator, renderer, or Python helper behavior.
-2. `state show` and `state clear`
-   - `show` has simple default behavior and formatting.
-   - `clear` removes only the `initial_state` portion.
-   - Keep `state set` Ruby-backed until initial-state parsing is ported.
+   - `variables` オブジェクトを読み書きする。
+   - 角度式解析を通じた閉じた範囲の検証を持つ。
+   - シミュレーター、描画器、Python 補助プログラムの動作を必要としない。
+2. `state show` と `state clear`
+   - `show` は単純な既定動作と整形を持つ。
+   - `clear` は `initial_state` 部分だけを削除する。
+   - 初期状態解析が移植されるまで `state set` は Ruby 経由にしておく。
 3. `gate`
-   - Reads one serialized cell and reports slot errors.
-   - Good read-only compatibility check for the shared circuit loader.
+   - 1 つの直列化済みセルを読み、スロットエラーを報告する。
+   - 共有回路読み込み処理の読み取り専用互換性確認に向いている。
 4. `rm`
-   - Exercises operation removal and layout normalization.
-   - Move after the TypeScript circuit model has enough parity for removal.
-5. `add` for fixed single-qubit gates
-   - Move only `H`, `X`, `Y`, `Z`, `S`, `S†`, `T`, `T†`, and `√X` first.
-   - Keep angled gates, controlled gates, and `SWAP` Ruby-backed until their
-     parser and placement rules are ported.
+   - 操作削除とレイアウト正規化を動かす。
+   - TypeScript 回路モデルが削除処理に十分な同等性を持ってから移す。
+5. 固定の 1 量子ビットゲート用 `add`
+   - まず `H`、`X`、`Y`、`Z`、`S`、`S†`、`T`、`T†`、`√X` だけを移す。
+   - 角度付きゲート、制御ゲート、`SWAP` は、それぞれの解析と配置規則が
+     移植されるまで Ruby 経由にしておく。
 
-This order starts with the smallest blast radius and grows into shared model
-behavior only after the loader, writer, and error formatting are proven.
+この順序は最小の影響範囲から始め、読み込み、書き込み、エラー整形が実証された後で
+共有モデルの動作へ広げる。
 
-### Phase 3: Circuit Model Completion
+### フェーズ 3: 回路モデルの完成
 
-Port the shared circuit modules needed by all mutating commands:
+すべての変更系コマンドに必要な共有回路モジュールを移植する。
 
-- `CircuitFile` / JSON persistence;
-- `Circuit` / `Step` / layout normalization;
-- controlled gate representation;
-- operation removal;
-- symbolic variable storage;
-- angle-expression parsing sufficient for `P`, `Rx`, `Ry`, and `Rz`;
-- initial-state parsing and numeric resolution only when `state set`, `run`, or
-  Bloch migration needs it.
+- `CircuitFile` / JSON 永続化。
+- `Circuit` / `Step` / レイアウト正規化。
+- 制御ゲート表現。
+- 操作削除。
+- 記号変数保存。
+- `P`、`Rx`、`Ry`、`Rz` に十分な角度式解析。
+- `state set`、`run`、Bloch 移行で必要になった時点での初期状態解析と数値解決。
 
-Once these modules are TypeScript-backed, expand `add` to controlled gates,
-`SWAP`, and angled gates. Keep Ruby oracle comparison for sample circuits that
-exercise auto-expand, auto-shrink, controlled removal, and variable resolution.
+これらのモジュールが TypeScript 経由になったら、`add` を制御ゲート、`SWAP`、
+角度付きゲートへ広げる。自動拡張、自動縮小、制御付き操作の削除、変数解決を動かす
+サンプル回路では、Ruby 基準比較を維持する。
 
-### Phase 4: Numeric Runtime Migration
+### フェーズ 4: 数値実行時の移行
 
-Move simulation after the circuit model is stable:
+回路モデルが安定した後でシミュレーションを移す。
 
-- port gate operators and `StateVector`;
-- port `Simulator::StepOperation`;
-- port `run` numeric output;
-- port `expect`;
-- then port `bloch` sampling, but keep image rendering delegated until the
-  renderer boundary is decided.
+- ゲート演算子と `StateVector` を移植する。
+- `Simulator::StepOperation` を移植する。
+- `run` の数値出力を移植する。
+- `expect` を移植する。
+- その後で `bloch` の標本化を移植する。ただし、描画器の境界が決まるまでは
+  画像描画を委譲したままにする。
 
-`run --symbolic` should remain Python-helper-backed through the retained
-symbolic boundary described below while numeric `run` moves to TypeScript.
+数値 `run` が TypeScript へ移っても、`run --symbolic` は後述する維持対象の
+記号処理境界を通じて Python 補助プログラム経由のままにする。
 
-### Symbolic Helper Strategy
+### 記号処理補助プログラムの方針
 
-Retain `libexec/qni_symbolic_run.py` as the symbolic math owner during the
-TypeScript migration. TypeScript should own command routing, option validation
-parity, `circuit.json` loading, process execution, and error translation for
-`run --symbolic`, but it should invoke the Python/SymPy helper for symbolic
-state construction, simplification, named-basis conversion, and text/LaTeX
-rendering.
+TypeScript 移行中は、`libexec/qni_symbolic_run.py` を記号計算の担当として
+維持する。TypeScript は `run --symbolic` について、コマンド経路制御、
+オプション検証の同等性、`circuit.json` 読み込み、プロセス実行、エラー変換を
+担当する。ただし、記号状態の構築、簡約、名前付き基底への変換、テキスト/LaTeX
+描画には Python/SymPy 補助プログラムを呼び出す。
 
-The current symbolic behavior covered by features includes:
+機能ファイルで覆われている現在の記号処理動作には次が含まれる。
 
-- computational-basis ket output for 1-, 2-, and 3-qubit circuits;
-- symbolic initial-state coefficients such as `alpha|0> + beta|1>`;
-- exact SymPy simplification for angle expressions such as `Ry(2*alpha)` and
-  concrete pi terms such as `Ry(π/2)`;
-- pure-imaginary coefficient rendering, including the current `1.0i` form for
-  the `Y` gate path;
-- named-basis text output for `--basis x` and `--basis y` on 1-qubit circuits;
-- Bell-basis text output for `--basis bell` on 2-qubit circuits;
-- basis-specific unsupported-qubit error messages.
+- 1、2、3 量子ビット回路の計算基底 ket 出力。
+- `alpha|0> + beta|1>` のような記号的な初期状態係数。
+- `Ry(2*alpha)` のような角度式と `Ry(π/2)` のような具体的な pi 項に対する
+  厳密な SymPy 簡約。
+- `Y` ゲート経路での現在の `1.0i` 形式を含む、純虚数係数の整形。
+- 1 量子ビット回路での `--basis x` と `--basis y` の名前付き基底テキスト出力。
+- 2 量子ビット回路での `--basis bell` の Bell 基底テキスト出力。
+- 基底ごとの未対応量子ビット数エラーメッセージ。
 
-The TypeScript subprocess boundary should mirror the current Ruby boundary:
+TypeScript のサブプロセス境界は、現在の Ruby 境界を反映する。
 
-- read the normalized circuit object and pass it to the helper as JSON on
-  `stdin`;
-- pass `--format text` or `--format latex`;
-- pass `--basis x`, `--basis y`, or `--basis bell` only when the user supplied a
-  symbolic basis;
-- match the current exposed CLI stdout contract: strip the helper's stdout
-  payload before the command layer writes the final line to the terminal;
-- surface helper stderr as the command error message when the helper exits
-  non-zero;
-- keep option and basis validation in the TypeScript layer where Ruby validates
-  it today, including `--basis requires --symbolic` and the `x`/`y`/`bell`
-  qubit-count checks;
-- retry only for dependency/bootstrap failures that are equivalent to current
-  Ruby behavior: skip a missing repository-local symbolic Python executable,
-  retry with `uv` when system `python3` lacks SymPy, and do not mask a
-  non-zero helper exit from an otherwise found repository-local runtime.
+- 正規化済み回路オブジェクトを読み取り、JSON として `stdin` で補助プログラムへ
+  渡す。
+- `--format text` または `--format latex` を渡す。
+- ユーザーが記号基底を指定した場合だけ、`--basis x`、`--basis y`、
+  `--basis bell` を渡す。
+- 公開 CLI の現在の stdout 契約に合わせる。つまり、コマンド層が端末へ最終行を
+  書く前に、補助プログラムの stdout から前後の空白を取り除く。
+- 補助プログラムが非ゼロ終了した場合、その stderr をコマンドのエラーメッセージ
+  として表に出す。
+- `--basis requires --symbolic`、`x`/`y`/`bell` の量子ビット数チェックなど、
+  Ruby が現在検証しているオプションと基底の検証は TypeScript 層に残す。
+- 現在の Ruby 動作と同等の依存関係/起動失敗に限って再試行する。具体的には、
+  リポジトリローカルの記号処理 Python 実行ファイルがない場合は飛ばし、
+  システムの `python3` に SymPy がない場合は `uv` で再試行し、発見済みの
+  リポジトリローカル実行時からの非ゼロ終了は隠さない。
 
-Replacing the helper with TypeScript should be a separate decision after the
-numeric runtime is stable. A replacement would need a SymPy-equivalent story for
-symbolic matrices, trigonometric simplification, exact square roots, pi parsing,
-complex coefficients, LaTeX output, and deterministic string formatting. The
-named-basis renderers are not just basis labels: `x`, `y`, and `bell` each
-perform exact symbolic basis transforms before formatting. Reimplementing those
-transforms in TypeScript risks subtle output drift, especially term ordering,
-coefficient normalization, Unicode basis labels, and simplification choices such
-as `sqrt(2)/2` vs equivalent algebraic forms.
+補助プログラムを TypeScript で置き換える判断は、数値実行時が安定した後の
+別判断にする。置き換えには、記号行列、三角関数の簡約、厳密な平方根、pi 解析、
+複素係数、LaTeX 出力、決定的な文字列整形について SymPy と同等の説明が必要になる。
+名前付き基底の描画器は単なる基底ラベルではない。`x`、`y`、`bell` はそれぞれ、
+整形前に厳密な記号的基底変換を行う。これらを TypeScript で再実装すると、項の順序、
+係数の正規化、Unicode 基底ラベル、`sqrt(2)/2` と同等な代数形式のような簡約の
+選び方で、微妙な出力ずれを起こす危険がある。
 
-Therefore existing symbolic features should continue through the retained Python
-helper path while `run` numeric behavior moves to TypeScript. Add a follow-up
-implementation issue for the TypeScript symbolic helper subprocess boundary
-that covers every TypeScript caller that needs helper output, including
-`run --symbolic` and symbolic state-vector export. Keep a later optional
-replacement issue out of scope until packaging and symbolic-algebra library
-constraints are known.
+したがって、数値 `run` が TypeScript へ移る間も、既存の記号処理機能は維持された
+Python 補助プログラム経路を通し続ける。`run --symbolic` と記号状態ベクトルの
+エクスポートを含め、補助プログラム出力を必要とするすべての TypeScript 呼び出し元を
+覆う、TypeScript 記号処理補助プログラムのサブプロセス境界実装課題を追加する。
+パッケージ化と記号代数ライブラリの制約が分かるまで、後続の任意置き換え課題は
+対象外にしておく。
 
-### Phase 5: Rendering and Export Migration
+### フェーズ 5: 描画とエクスポートの移行
 
-Move rendering only after core state behavior is TypeScript-backed:
+中核の状態動作が TypeScript 経由になった後で描画を移す。
 
-- port `view` ASCII rendering and parser behavior;
-- port `export --latex-source`;
-- port PNG-writing wrappers only after LaTeX invocation and file behavior are
-  covered by features;
-- port `export --state-vector --png`, `export --circle-notation --png`, and
-  `bloch` file/inline output last, because they combine simulation, helper
-  invocation, image output, and environment-sensitive terminal behavior.
+- `view` の ASCII 表示と解析動作を移植する。
+- `export --latex-source` を移植する。
+- PNG 書き込みのラッパーは、LaTeX 呼び出しとファイル動作が機能ファイルで
+  覆われた後で移植する。
+- `export --state-vector --png`、`export --circle-notation --png`、`bloch` の
+  ファイル/インライン出力は最後に移す。これらはシミュレーション、補助プログラム
+  呼び出し、画像出力、環境に左右される端末動作を組み合わせるためである。
 
-The Python helpers may either remain stable helper dependencies invoked from
-TypeScript or be replaced by TypeScript/native implementations in separate
-issues. That choice should be made per helper after npm packaging constraints
-are clearer.
+Python 補助プログラムは、TypeScript から呼び出す安定した補助依存として残しても、
+別課題で TypeScript/native 実装へ置き換えてもよい。その選択は、npm
+パッケージ化の制約が明確になってから補助プログラムごとに行う。
 
-## Rollback Policy
+## 戻し方針
 
-Rollback must be available at three levels:
+戻しは 3 つの段階で可能にする必要がある。
 
-- per command: route the command back to Ruby in the dispatcher;
-- per release: set an environment override to force Ruby execution;
-- per branch: revert the command-migration commit without touching unrelated
-  migrated commands.
+- コマンド単位: 振り分け器で対象コマンドを Ruby へ戻す。
+- リリース単位: 環境変数の上書きで Ruby 実行を強制する。
+- ブランチ単位: 無関係な移行済みコマンドには触れず、対象コマンドの移行コミットを
+  取り消す。
 
-A TypeScript command is not considered migrated until:
+TypeScript コマンドは、次を満たすまで移行済みとみなさない。
 
-- its existing cucumber-js features pass through the TypeScript path;
-- Ruby oracle comparison has been run for representative success and error
-  cases;
-- the command has a documented rollback switch in the dispatcher;
-- `bundle exec rake check` passes fresh on the latest worktree.
+- 既存の cucumber-js 機能ファイルが TypeScript 経路で通る。
+- 代表的な成功ケースとエラーケースで Ruby 基準比較を実行している。
+- コマンドに振り分け器上の文書化された戻しスイッチがある。
+- 最新の作業木で `bundle exec rake check` が新しく成功している。
 
-If compatibility breaks after release, prefer routing only the affected command
-back to Ruby instead of reverting the whole TypeScript scaffold.
+リリース後に互換性が壊れた場合、TypeScript の骨組み全体を戻すのではなく、
+影響を受けたコマンドだけを Ruby へ戻すことを優先する。
 
-## Ruby Oracle Policy
+## Ruby 基準実装方針
 
-Ruby remains the reference implementation while either condition is true:
+次のいずれかが真である間、Ruby は基準実装として残す。
 
-- any public command still delegates to Ruby;
-- the latest released npm package has not passed one full release cycle with all
-  commands TypeScript-backed and no Ruby fallback usage needed.
+- 公開コマンドのどれかがまだ Ruby に委譲している。
+- 最新の npm パッケージが、全コマンドを TypeScript 経由にし、Ruby fallback を
+  必要としない状態で 1 回の完全なリリースサイクルを終えていない。
 
-The oracle comparison should use temporary scenario directories and compare:
+基準比較では一時シナリオディレクトリを使い、次を比較する。
 
-- process exit status;
-- stdout and stderr;
-- resulting `circuit.json`;
-- output files when applicable.
+- プロセス終了状態。
+- stdout と stderr。
+- 結果の `circuit.json`。
+- 必要に応じた出力ファイル。
 
-For image outputs, compare stable properties already used by features, such as
-PNG/APNG signatures, dimensions, transparency, frame metadata, or color presence,
-instead of fragile byte equality unless byte equality is already guaranteed.
+画像出力では、バイト単位の一致がすでに保証されていない限り、壊れやすいバイト一致
+ではなく、機能ファイルがすでに使っている PNG/APNG 署名、寸法、透過、フレーム
+メタデータ、色の存在などの安定した性質を比較する。
 
-### CI/CD During Oracle Period
+### 基準実装期間中の CI/CD
 
-While Ruby remains the reference implementation, CI should run cucumber-js
-features against both implementations for migrated commands:
+Ruby が基準実装として残る間、CI は移行済みコマンドについて cucumber-js 機能
+ファイルを両方の実装に対して実行する。
 
-- Ruby lane: current `bundle exec bin/qni` behavior remains the reference.
-- TypeScript lane: npm `qni` entrypoint runs the migrated command and delegates
-  non-migrated commands to Ruby.
-- Comparison lane: selected oracle cases compare process exit status, stdout,
-  stderr, resulting `circuit.json`, and stable output-file properties.
+- Ruby レーン: 現在の `bundle exec bin/qni` 動作を基準として維持する。
+- TypeScript レーン: npm `qni` エントリーポイントが移行済みコマンドを実行し、
+  未移行コマンドを Ruby に委譲する。
+- 比較レーン: 選ばれた基準ケースで、プロセス終了状態、stdout、stderr、結果の
+  `circuit.json`、安定した出力ファイルの性質を比較する。
 
-Run both lanes until Ruby no longer meets the oracle conditions above and the
-npm package has completed one full release cycle without `Ruby fallback` usage.
-Track CI ownership in the follow-up issues for the dispatcher and process
-compatibility helpers.
+Ruby が上記の基準実装条件を満たさなくなり、npm パッケージが Ruby fallback を
+使わずに 1 回の完全なリリースサイクルを終えるまで、両方のレーンを実行する。
+CI の担当範囲は、振り分け器とプロセス互換性補助機能の後続課題で追跡する。
 
-### Ruby Bug Handling During Migration
+### 移行中の Ruby バグの扱い
 
-If a bug is found in the Ruby implementation while it is the oracle:
+基準実装である Ruby 実装にバグが見つかった場合は、次のように扱う。
 
-- Triage whether the bug affects the compatibility contract. Bugs that change
-  documented stdout, stderr, exit status, file output, or `circuit.json` shape
-  are release-blocking for the affected command.
-- Patch Ruby immediately when the bug affects current users or oracle accuracy.
-  Port the same corrected behavior to TypeScript when that command is already
-  TypeScript-backed or add it to the command's migration issue when it is not.
-- For npm and Ruby-backed releases, publish or backport in lockstep when the bug
-  affects both paths. If only TypeScript is affected, keep Ruby fallback
-  available until the TypeScript fix ships.
-- Add a regression feature before changing behavior, then run it through Ruby
-  and TypeScript lanes so the fix is inherited by future migrations.
-- Notify users in release notes when a user-visible result changes, especially
-  if Ruby oracle output and TypeScript output are intentionally corrected
-  together.
+- そのバグが互換性契約に影響するかを切り分ける。文書化された stdout、stderr、
+  終了状態、ファイル出力、`circuit.json` の形を変えるバグは、対象コマンドの
+  リリースを止める。
+- 現在のユーザーや基準実装の正確さに影響する場合は、Ruby をすぐ修正する。
+  そのコマンドがすでに TypeScript 経由なら同じ修正済み動作を TypeScript へ移し、
+  まだ移行されていないならコマンド移行課題に含める。
+- npm と Ruby 経由のリリースでは、バグが両方の経路に影響する場合は同時に公開または
+  バックポートする。TypeScript だけが影響を受ける場合は、TypeScript 修正が出るまで
+  Ruby fallback を使える状態にしておく。
+- 動作を変える前に回帰機能を追加し、Ruby レーンと TypeScript レーンの両方で
+  実行する。これにより、将来の移行も修正後の動作を継承する。
+- ユーザーに見える結果が変わる場合、特に Ruby 基準実装の出力と TypeScript 出力を
+  意図的に一緒に修正する場合は、リリースノートで通知する。
 
-## Ruby Removal Criteria
+## Ruby 削除条件
 
-Ruby runtime dependencies may be removed only after all of these are true:
+Ruby 実行時依存を削除してよいのは、次をすべて満たした後だけである。
 
-- every public command has a TypeScript implementation or an explicit retained
-  non-Ruby helper boundary;
-- no shipped command path shells out to `bundle exec bin/qni`;
-- cucumber-js Markdown features pass through the npm `qni` entrypoint;
-- Ruby oracle comparison has been archived for the final migration issue;
-- `bundle exec rake check` has either been replaced by an equivalent Node-based
-  full check or intentionally retained only for historical tests during one
-  final cleanup issue;
-- README installation and development instructions no longer require Ruby for
-  normal CLI use;
-- at least one npm-distributed release has completed without requiring the Ruby
-  fallback.
+- すべての公開コマンドが TypeScript 実装を持つか、明示的に維持された非 Ruby の
+  補助プログラム境界を持っている。
+- 出荷されるコマンド経路が `bundle exec bin/qni` を外部プロセスとして実行していない。
+- cucumber-js Markdown 機能ファイルが npm `qni` エントリーポイントで通る。
+- 最終移行課題のために Ruby 基準比較が記録されている。
+- `bundle exec rake check` が同等の Node ベース全体チェックに置き換えられているか、
+  最後の片付け課題の 1 期間だけ歴史的テスト用に意図的に残されている。
+- README のインストール手順と開発手順が、通常の CLI 利用に Ruby を要求しない。
+- npm 配布のリリースを少なくとも 1 回、Ruby fallback を必要とせずに完了している。
 
-Do not delete Ruby files in the same issue that migrates the last high-risk
-command. Use a separate cleanup issue so rollback remains simple.
+最後の高リスクコマンドを移行する課題と同じ課題で Ruby ファイルを削除してはならない。
+戻しやすさを保つため、別の片付け課題を使う。
 
-## Follow-Up Issue Breakdown
+## 後続課題の分割
 
-Create implementation issues in this order:
+実装課題は次の順序で作成する:
 
-1. TypeScript tooling and Ruby-delegating dispatcher
-   - Linear title candidate: TypeScript tooling と Ruby 委譲 dispatcher を追加する
-   - Acceptance: npm bin can delegate all current commands to Ruby and existing
-     cucumber-js features still pass. The cucumber-js step definitions and CI
-     lane can select the Ruby entrypoint, TypeScript npm entrypoint, or
-     comparison mode through an explicit selector such as `QNI_COMMAND` or
-     `QNI_IMPL`.
-   - Estimate: M, milestone: M1, precision: rough.
-   - Risk/dependency: npm bin delegation must preserve process behavior.
-2. Shared TypeScript process compatibility helpers
-   - Linear title candidate: TypeScript process compatibility helper を整備する
-   - Acceptance: subprocess exit status, stdout, stderr, working directory, and
-     env passthrough match Ruby delegation behavior. TTY and non-TTY execution
-     use the same selector semantics as the cucumber-js harness so local CLI
-     runs and CI lanes exercise equivalent entrypoints.
-   - Estimate: S, milestone: M1, precision: rough.
-   - Risk/dependency: required by every command-level migration and CI lane.
-3. TypeScript `circuit.json` loader/writer and variable store
-   - Linear title candidate: TypeScript 版 `circuit.json` loader/writer と variable store を追加する
-   - Acceptance: `variable list/set/unset/clear` can run through TypeScript
-     with Ruby fallback still available.
-   - Estimate: M, milestone: M2, precision: rough.
-   - Risk/dependency: JSON formatting and variable validation must match Ruby.
-4. Migrate `state show` and `state clear`
-   - Linear title candidate: `state show` と `state clear` を TypeScript に移行する
-   - Acceptance: default state display and state removal match existing
-     features; `state set` remains Ruby-backed.
-   - Estimate: S, milestone: M2, precision: rough.
-   - Risk/dependency: shared loader/writer must already be stable.
-5. Migrate `gate`
-   - Linear title candidate: `gate` を TypeScript に移行する
-   - Acceptance: slot reads and slot error messages match existing features.
-   - Estimate: S, milestone: M2, precision: rough.
-   - Risk/dependency: slot error text must remain compatible.
-6. Migrate `rm`
-   - Linear title candidate: `rm` を TypeScript に移行する
-   - Acceptance: operation removal, controlled removal, SWAP removal, and
-     auto-shrink behavior match existing features.
-   - Estimate: M, milestone: M3, precision: rough.
-   - Risk/dependency: layout normalization and operation removal parity.
-7. Migrate fixed-gate `add`
-   - Linear title candidate: 固定 gate の `add` を TypeScript に移行する
-   - Acceptance: fixed single-qubit gate addition matches existing features;
-     angled, controlled, and SWAP variants still delegate to Ruby.
-   - Estimate: M, milestone: M3, precision: rough.
-   - Risk/dependency: mixed routing must not split one command's help behavior.
-8. Complete TypeScript circuit model for controlled, SWAP, and angled gates
-   - Linear title candidate: controlled / SWAP / angled gate の circuit model を TypeScript 化する
-   - Acceptance: all `add` features pass through TypeScript.
-   - Estimate: L, milestone: M4, precision: rough.
-   - Risk/dependency: angle parsing, controlled placement, and SWAP semantics.
-9. Migrate numeric `run` and `expect`
-   - Linear title candidate: numeric `run` と `expect` を TypeScript に移行する
-   - Acceptance: state-vector CSV and expectation values match Ruby oracle
-     samples and cucumber-js features.
-   - Estimate: L, milestone: M5, precision: rough.
-   - Risk/dependency: state-vector math and complex formatting parity.
-10. Implement retained symbolic helper subprocess boundary
-    - Linear title candidate: TypeScript から symbolic helper を呼び出す境界を実装する
-    - Acceptance: `run --symbolic`, `--basis x`, `--basis y`, `--basis bell`,
-      symbolic angle simplification, LaTeX state-vector export, and
-      validation/error behavior match the Ruby/Python oracle through the
-      TypeScript command path. TypeScript-owned validation must still happen
-      before invoking the helper when Ruby validates before invoking it today.
-    - Estimate: M, milestone: M5, precision: rough.
-    - Risk/dependency: SymPy runtime discovery, subprocess stderr mapping,
-      named-basis formatting, and exact string compatibility.
-11. Migrate `view`
-    - Linear title candidate: `view` を TypeScript に移行する
-    - Acceptance: ASCII output, color behavior, and parser-supported scenarios
-      match current features.
-    - Estimate: M, milestone: M6, precision: rough.
-    - Risk/dependency: terminal style detection and parser compatibility.
-12. Migrate export and Bloch workflows
-    - Linear title candidate: export と Bloch workflows を TypeScript に移行する
-    - Acceptance: LaTeX, PNG/APNG, inline output, and helper error behavior
-      match current features or are intentionally split into narrower issues.
-    - Estimate: L, milestone: M7, precision: rough.
-    - Risk/dependency: external tools, Python helpers, images, and terminal IO.
-13. Update operational documentation for `QNI_USE_RUBY`
-    - Linear title candidate: `QNI_USE_RUBY` の運用ドキュメントを追加する
-    - Acceptance: README or troubleshooting guide includes purpose, usage,
-      expected effect, risks, and cleanup condition for the override.
-    - Owner: migration implementer for the dispatcher issue.
-    - Estimate: S, milestone: M1, precision: rough.
-    - Risk/dependency: must land with the dispatcher to be useful.
-14. Add ESM migration decision issue
-    - Linear title candidate: ESM 移行判断 issue を追加する
-    - Acceptance: triggers, compatibility strategy, and test approach are
-      recorded before switching `package.json` away from CommonJS.
-    - Estimate: S, milestone: after M2, precision: rough.
-    - Risk/dependency: npm package consumption patterns must be known.
-15. Add performance comparison harness
-    - Linear title candidate: Ruby / TypeScript performance comparison harness を追加する
-    - Acceptance: representative large circuits can be run against Ruby and
-      TypeScript, with wall-clock and peak-memory results stored as artifacts.
-    - Estimate: M, milestone: before M5, precision: rough.
-    - Risk/dependency: needs stable TypeScript execution for core commands.
-16. Remove Ruby fallback and Ruby runtime dependency
-    - Linear title candidate: Ruby fallback と Ruby runtime dependency を削除する
-    - Acceptance: Ruby removal criteria above are met and npm entrypoint is the
-      default documented user path.
-    - Estimate: M, milestone: final, precision: rough.
-    - Risk/dependency: blocked by every command migration and one npm release
-      cycle without fallback usage.
+1. TypeScript ツール環境と Ruby 委譲の振り分け器
+   - Linear タイトル候補: TypeScript ツール環境と Ruby 委譲の振り分け器を追加する
+   - 受け入れ条件: npm bin が現行の全コマンドを Ruby へ委譲でき、既存の
+     cucumber-js 機能ファイルが通る。cucumber-js のステップ定義と CI レーンは
+     `QNI_COMMAND` や `QNI_IMPL` のような明示的なセレクターで、Ruby
+     エントリーポイント、TypeScript npm エントリーポイント、比較モードを選べる。
+   - 見積もり: M, マイルストーン: M1, 精度: 概算。
+   - リスク/依存関係: npm bin の委譲はプロセス動作を維持する必要がある。
+2. 共有 TypeScript プロセス互換性補助機能
+   - Linear タイトル候補: TypeScript のプロセス互換性補助機能を整備する
+   - 受け入れ条件: サブプロセスの終了状態、stdout、stderr、作業ディレクトリ、
+     環境変数の引き継ぎが Ruby 委譲の動作と一致する。TTY と非 TTY の実行は
+     cucumber-js ハーネスと同じセレクターの意味を使い、ローカル CLI 実行と
+     CI レーンで同等のエントリーポイントを通せる。
+   - 見積もり: S, マイルストーン: M1, 精度: 概算。
+   - リスク/依存関係: コマンド単位の各移行と CI レーンに必要。
+3. TypeScript `circuit.json` 読み込み・書き込み処理と変数保存領域
+   - Linear タイトル候補: TypeScript 版 `circuit.json` の読み込み・書き込み処理と変数保存領域を追加する
+   - 受け入れ条件: Ruby fallback を残したまま
+     `variable list/set/unset/clear` を TypeScript 経由で実行できる。
+   - 見積もり: M, マイルストーン: M2, 精度: 概算。
+   - リスク/依存関係: JSON 整形と変数検証は Ruby と一致する必要がある。
+4. `state show` と `state clear` の移行
+   - Linear タイトル候補: `state show` と `state clear` を TypeScript に移行する
+   - 受け入れ条件: 既定状態の表示と状態削除が既存機能ファイルと一致する。
+     `state set` は Ruby 経由のままにする。
+   - 見積もり: S, マイルストーン: M2, 精度: 概算。
+   - リスク/依存関係: 共有読み込み・書き込み処理が先に安定している必要がある。
+5. `gate` の移行
+   - Linear タイトル候補: `gate` を TypeScript に移行する
+   - 受け入れ条件: スロット読み取りとスロットエラーメッセージが既存機能ファイルと一致する。
+   - 見積もり: S, マイルストーン: M2, 精度: 概算。
+   - リスク/依存関係: スロットエラー文言は互換性を保つ必要がある。
+6. `rm` の移行
+   - Linear タイトル候補: `rm` を TypeScript に移行する
+   - 受け入れ条件: 操作削除、制御付き操作削除、`SWAP` 削除、自動縮小の動作が
+     既存機能ファイルと一致する。
+   - 見積もり: M, マイルストーン: M3, 精度: 概算。
+   - リスク/依存関係: レイアウト正規化と操作削除の同等性。
+7. 固定ゲートの `add` 移行
+   - Linear タイトル候補: 固定ゲートの `add` を TypeScript に移行する
+   - 受け入れ条件: 固定の 1 量子ビットゲート追加が既存機能ファイルと一致する。
+     角度付き、制御付き、`SWAP` の各種別は Ruby への委譲を続ける。
+   - 見積もり: M, マイルストーン: M3, 精度: 概算。
+   - リスク/依存関係: 混在ルーティングで 1 つのコマンドのヘルプ動作を分割しない。
+8. 制御ゲート、`SWAP`、角度付きゲートの TypeScript 回路モデル完成
+   - Linear タイトル候補: 制御ゲート / `SWAP` / 角度付きゲートの回路モデルを TypeScript 化する
+   - 受け入れ条件: すべての `add` 機能ファイルが TypeScript 経由で通る。
+   - 見積もり: L, マイルストーン: M4, 精度: 概算。
+   - リスク/依存関係: 角度解析、制御ゲート配置、`SWAP` の意味。
+9. 数値 `run` と `expect` の移行
+   - Linear タイトル候補: 数値 `run` と `expect` を TypeScript に移行する
+   - 受け入れ条件: 状態ベクトル CSV と期待値が Ruby 基準サンプルおよび
+     cucumber-js 機能ファイルと一致する。
+   - 見積もり: L, マイルストーン: M5, 精度: 概算。
+   - リスク/依存関係: 状態ベクトル計算と複素数整形の同等性。
+10. 維持する記号計算補助プログラムのサブプロセス境界実装
+    - Linear タイトル候補: TypeScript から記号計算補助プログラムを呼び出す境界を実装する
+    - 受け入れ条件: `run --symbolic`, `--basis x`, `--basis y`, `--basis bell`,
+      記号角度の簡約、LaTeX 状態ベクトル出力、検証/エラー動作が TypeScript
+      コマンド経路で Ruby/Python 基準実装と一致する。Ruby が現在補助プログラム呼び出し前に
+      検証している場合は、TypeScript 側の検証も呼び出し前に行う。
+    - 見積もり: M, マイルストーン: M5, 精度: 概算。
+    - リスク/依存関係: SymPy 実行環境の発見、サブプロセス stderr の対応付け、
+      名前付き基底の整形、厳密な文字列互換性。
+11. `view` の移行
+    - Linear タイトル候補: `view` を TypeScript に移行する
+    - 受け入れ条件: ASCII 出力、色の動作、パーサー対応シナリオが現行機能ファイルと一致する。
+    - 見積もり: M, マイルストーン: M6, 精度: 概算。
+    - リスク/依存関係: 端末スタイル検出とパーサー互換性。
+12. `export` と Bloch 処理の移行
+    - Linear タイトル候補: `export` と Bloch 処理を TypeScript に移行する
+    - 受け入れ条件: LaTeX、PNG/APNG、インライン出力、補助プログラムのエラー動作が
+      現行機能ファイルと一致する。または意図的に、より狭い課題へ分割されている。
+    - 見積もり: L, マイルストーン: M7, 精度: 概算。
+    - リスク/依存関係: 外部ツール、Python 補助プログラム、画像、端末入出力。
+13. `QNI_USE_RUBY` 運用ドキュメントの更新
+    - Linear タイトル候補: `QNI_USE_RUBY` の運用ドキュメントを追加する
+    - 受け入れ条件: README またはトラブルシューティングガイドに、目的、使い方、
+      期待される効果、リスク、上書き設定の整理条件が含まれている。
+    - 担当: 振り分け器課題の移行実装者。
+    - 見積もり: S, マイルストーン: M1, 精度: 概算。
+    - リスク/依存関係: 役に立つためには振り分け器と同時に取り込む必要がある。
+14. ESM 移行判断課題の追加
+    - Linear タイトル候補: ESM 移行判断課題を追加する
+    - 受け入れ条件: `package.json` を CommonJS から切り替える前に、発動条件、
+      互換性戦略、テスト方針が記録されている。
+    - 見積もり: S, マイルストーン: M2 後, 精度: 概算。
+    - リスク/依存関係: npm パッケージの利用傾向が分かっている必要がある。
+15. 性能比較の仕組み追加
+    - Linear タイトル候補: Ruby / TypeScript 性能比較の仕組みを追加する
+    - 受け入れ条件: 代表的な大規模回路を Ruby と TypeScript の両方で実行でき、
+      経過時間と最大メモリー使用量の結果が成果物として保存される。
+    - 見積もり: M, マイルストーン: M5 前, 精度: 概算。
+    - リスク/依存関係: 中核コマンドで安定した TypeScript 実行が必要。
+16. Ruby fallback と Ruby 実行時依存の削除
+    - Linear タイトル候補: Ruby fallback と Ruby 実行時依存を削除する
+    - 受け入れ条件: 上記の Ruby 削除条件を満たし、npm エントリーポイントが
+      文書化された既定のユーザー経路になっている。
+    - 見積もり: M, マイルストーン: 最終, 精度: 概算。
+    - リスク/依存関係: すべてのコマンド移行と、fallback 利用なしの npm リリース
+      1 サイクルが完了するまで着手できない。
 
-Milestones are relative migration slices, not calendar commitments. Re-estimate
-each issue when opening it in Linear; this document records sequencing and
-relative size only.
+マイルストーンは相対的な移行区分であり、日付の約束ではない。Linear で各課題を
+開くときに再見積もりする。この文書は順序と相対的な大きさだけを記録する。
 
-## Validation Plan
+## 検証計画
 
-For each migration issue:
+各移行課題では次を行う。
 
-- start by adding or tightening a feature only when existing coverage does not
-  pin the command behavior;
-- run the affected cucumber-js feature files through both Ruby and TypeScript
-  paths while Ruby is still available;
-- run `git diff --check`;
-- run `bundle exec rake check` fresh before commit, push, or handoff;
-- run the PR feedback sweep before moving the Linear issue to human review.
+- 既存カバレッジがコマンド動作を固定していない場合だけ、機能ファイルを追加または
+  強化する。
+- Ruby がまだ利用可能な間は、影響を受ける cucumber-js 機能ファイルを Ruby 経路と
+  TypeScript 経路の両方で実行する。
+- `git diff --check` を実行する。
+- commit、push、引き渡しの前に `bundle exec rake check` を新しく実行する。
+- Linear 課題を `Human Review` に移す前に PR feedback sweep を実行する。
 
-### Performance Regression Testing
+### 性能退行テスト
 
-For command migrations that can process large circuits, add a performance check
-next to the Ruby/TypeScript compatibility run:
+大きな回路を処理できるコマンド移行では、Ruby / TypeScript 互換性実行の横に
+性能確認を追加する。
 
-- use representative large-circuit workloads from existing cucumber-js feature
-  patterns or a dedicated harness when feature runtime would become too slow;
-- run Ruby and TypeScript implementations on the same input, repeating each case
-  at least five times after one warm-up run;
-- record wall-clock time, peak memory, command, input size, commit SHA, and
-  runtime versions in CSV or CI artifacts;
-- treat TypeScript as requiring investigation if median wall-clock time or peak
-  memory exceeds Ruby by more than 20% for a migrated command;
-- do not block migration on a single noisy run, but file a follow-up issue when
-  repeated measurements exceed the threshold.
+- 既存の cucumber-js 機能ファイルのパターン、または機能ファイルの実行時間が長く
+  なりすぎる場合は専用ハーネスから、代表的な大規模回路作業を使う。
+- 同じ入力で Ruby 実装と TypeScript 実装を実行し、ウォームアップを 1 回行った後、
+  各ケースを少なくとも 5 回繰り返す。
+- 経過時間、最大メモリー使用量、コマンド、入力サイズ、commit SHA、実行時バージョンを
+  CSV または CI 成果物に記録する。
+- 移行済みコマンドで TypeScript の経過時間中央値または最大メモリー使用量が Ruby を
+  20% 超えている場合は、調査が必要な状態として扱う。
+- 1 回のノイズの多い実行だけで移行を止めない。ただし、繰り返し測定でしきい値を
+  超える場合は後続課題を作成する。
 
-For this design-only issue:
+この設計だけの課題では次を確認する。
 
-- verify the new document exists and covers the acceptance criteria;
-- run `git diff --check`;
-- run `bundle exec rake check` fresh before publishing.
+- 新しい文書が存在し、受け入れ条件を覆っている。
+- `git diff --check` を実行する。
+- 公開前に `bundle exec rake check` を新しく実行する。
