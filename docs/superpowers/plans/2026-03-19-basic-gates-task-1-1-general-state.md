@@ -1,33 +1,33 @@
-# BasicGates Task 1.1 General-State Verification Implementation Plan
+# BasicGates Task 1.1 の一般状態検証実装計画
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **自律エージェント作業者向け:** 必須: この計画の実装には superpowers:subagent-driven-development (サブエージェントが使える場合) または superpowers:executing-plans を使う。各手順は追跡用にチェックボックス (`- [ ]`) 構文を使う。
 
-**Goal:** `BasicGates Task 1.1 StateFlip` の検証を基底状態 2 例から一般状態 1 例まで広げ、`0.6|0⟩ + 0.8|1⟩` が `X` によって `0.8|0⟩ + 0.6|1⟩` へ反転することを `qni run` で確認できるようにする。
+**目的:** `BasicGates Task 1.1 StateFlip` の検証を基底状態 2 例から一般状態 1 例まで広げ、`0.6|0⟩ + 0.8|1⟩` が `X` によって `0.8|0⟩ + 0.6|1⟩` へ反転することを `qni run` で確認できるようにする。
 
-**Architecture:** 既存の [basic_gates.feature](/home/yasuhito/Work/qni-cli/features/katas/basic_gates.feature) に非自明な振幅ケースを 1 本追加する。`qni-cli` 本体には手を入れず、`features/step_definitions/cli_steps.rb` の既存 1 qubit 初期状態 step を最小限だけ拡張して、Kata が使う具体的な振幅パターンを準備できるようにする。
+**構成方針:** 既存の [basic_gates.feature](/home/yasuhito/Work/qni-cli/features/katas/basic_gates.feature) に非自明な振幅の例を 1 本追加する。`qni-cli` 本体には手を入れず、`features/step_definitions/cli_steps.rb` の既存 1 qubit 初期状態ステップ定義を最小限だけ拡張して、Kata が使う具体的な振幅パターンを準備できるようにする。
 
-**Tech Stack:** Ruby, Cucumber, Bundler, `qni-cli`
+**技術構成:** Ruby, Cucumber, Bundler, `qni-cli`
 
 ---
 
-## File Structure
+## ファイル構成
 
-- Modify: `features/katas/basic_gates.feature`
+- 変更: `features/katas/basic_gates.feature`
   - `Task 1.1` の一般状態シナリオを追加する。
-- Modify: `features/step_definitions/cli_steps.rb`
-  - `0.6|0> + 0.8|1>` を準備できるよう既存 step の `case` を拡張する。
-- Verify: `features/qni_run.feature`
+- 変更: `features/step_definitions/cli_steps.rb`
+  - `0.6|0> + 0.8|1>` を準備できるよう既存ステップ定義の `case` を拡張する。
+- 検証: `features/qni_run.feature`
   - `qni run` の既存振る舞いが回帰していないことを確認する。
-- Verify: `features/cli/add/add_x_gate.feature.md`
+- 検証: `features/cli/add/add_x_gate.feature.md`
   - `X` ゲート追加が回帰していないことを確認する。
 
-### Task 1: Add the failing general-state scenario
+### タスク 1: 失敗する一般状態シナリオを追加する
 
-**Files:**
-- Modify: `features/katas/basic_gates.feature`
-- Test: `features/katas/basic_gates.feature`
+**対象ファイル:**
+- 変更: `features/katas/basic_gates.feature`
+- テスト: `features/katas/basic_gates.feature`
 
-- [ ] **Step 1: Write the failing scenario**
+- [ ] **手順 1: 失敗するシナリオを書く**
 
 `features/katas/basic_gates.feature` に次のシナリオを追加する。
 
@@ -42,45 +42,45 @@
       """
 ```
 
-- [ ] **Step 2: Run the feature and verify it fails for the right reason**
+- [ ] **手順 2: 機能を実行し、正しい理由で失敗することを確認する**
 
-Run:
+実行コマンド:
 
 ```bash
 /home/yasuhito/.local/share/gem/ruby/3.4.0/bin/bundle exec cucumber features/katas/basic_gates.feature
 ```
 
-Expected:
+期待結果:
 
 - 新規シナリオだけが失敗する
-- 失敗理由は未定義 step ではなく `unsupported 1-qubit initial state: 0.6|0> + 0.8|1>` である
+- 失敗理由は未定義ステップではなく `unsupported 1-qubit initial state: 0.6|0> + 0.8|1>` である
 
-- [ ] **Step 3: Commit the failing test**
+- [ ] **手順 3: 失敗するテストをコミットする**
 
 ```bash
 git add features/katas/basic_gates.feature
 git commit -m "test: add general-state Task 1.1 scenario"
 ```
 
-### Task 2: Extend the 1-qubit state-preparation step minimally
+### タスク 2: 1 qubit 状態準備ステップ定義を最小限拡張する
 
-**Files:**
-- Modify: `features/step_definitions/cli_steps.rb`
-- Test: `features/katas/basic_gates.feature`
+**対象ファイル:**
+- 変更: `features/step_definitions/cli_steps.rb`
+- テスト: `features/katas/basic_gates.feature`
 
-- [ ] **Step 1: Re-run the focused failing scenario**
+- [ ] **手順 1: 対象の失敗シナリオを再実行する**
 
-Run:
+実行コマンド:
 
 ```bash
 /home/yasuhito/.local/share/gem/ruby/3.4.0/bin/bundle exec cucumber features/katas/basic_gates.feature:29
 ```
 
-Expected:
+期待結果:
 
 - `unsupported 1-qubit initial state: 0.6|0> + 0.8|1>` が再現する
 
-- [ ] **Step 2: Add the minimal case branch**
+- [ ] **手順 2: 最小限の `case` 分岐を追加する**
 
 `features/step_definitions/cli_steps.rb` の既存 `前提('1 qubit の初期状態が {string} である')` に次の `when` を追加する。
 
@@ -91,62 +91,62 @@ Expected:
 
 この角度 `1.8545904360032246` は `2 * Math.acos(0.6)` に対応し、`qni run` では `0.6,0.8` を生成する。
 
-- [ ] **Step 3: Run the kata feature and verify it passes**
+- [ ] **手順 3: Kata の機能を実行し、成功することを確認する**
 
-Run:
+実行コマンド:
 
 ```bash
 /home/yasuhito/.local/share/gem/ruby/3.4.0/bin/bundle exec cucumber features/katas/basic_gates.feature
 ```
 
-Expected:
+期待結果:
 
 - 3 scenarios
 - 0 failures
 
-- [ ] **Step 4: Commit the support change**
+- [ ] **手順 4: 対応変更をコミットする**
 
 ```bash
 git add features/step_definitions/cli_steps.rb features/katas/basic_gates.feature
 git commit -m "test: support general-state Task 1.1 setup"
 ```
 
-### Task 3: Verify relevant regressions
+### タスク 3: 関連する回帰がないことを検証する
 
-**Files:**
-- Verify: `features/katas/basic_gates.feature`
-- Verify: `features/qni_run.feature`
-- Verify: `features/cli/add/add_x_gate.feature.md`
+**対象ファイル:**
+- 検証: `features/katas/basic_gates.feature`
+- 検証: `features/qni_run.feature`
+- 検証: `features/cli/add/add_x_gate.feature.md`
 
-- [ ] **Step 1: Run the targeted regression set**
+- [ ] **手順 1: 対象を絞った回帰検証を実行する**
 
-Run:
+実行コマンド:
 
 ```bash
 /home/yasuhito/.local/share/gem/ruby/3.4.0/bin/bundle exec cucumber features/cli/add/add_x_gate.feature.md features/qni_run.feature features/katas/basic_gates.feature
 ```
 
-Expected:
+期待結果:
 
 - PASS
-- `features/katas/basic_gates.feature` の 3 シナリオがすべて green
+- `features/katas/basic_gates.feature` の 3 シナリオがすべて成功する
 
-- [ ] **Step 2: Inspect whether product code stayed untouched**
+- [ ] **手順 2: 製品コードが変更されていないことを確認する**
 
-Check:
+確認内容:
 
 - 変更が `features/katas/basic_gates.feature` と `features/step_definitions/cli_steps.rb` に限られている
 - `lib/` 配下に変更がない
 
-- [ ] **Step 3: Commit the verification point**
+- [ ] **手順 3: 検証時点をコミットする**
 
 ```bash
 git add features/katas/basic_gates.feature features/step_definitions/cli_steps.rb
 git commit -m "test: verify Task 1.1 on a general state"
 ```
 
-## Notes
+## メモ
 
-- 今回は correctness 強化だけを行う。controlled 等価性の補助検証は別の次段に切る。
-- `qni run` のシンボリック表示オプションはさらに後段で扱う。今回の変更に混ぜない。
-- 状態準備 step は汎用パーサにしない。Kata が要求する `0.6|0> + 0.8|1>` だけを最小追加する。
+- 今回は正しさの強化だけを行う。制御付き等価性の補助検証は別の次段に切る。
+- `qni run` の記号表示オプションはさらに後段で扱う。今回の変更に混ぜない。
+- 状態準備ステップ定義は汎用パーサーにしない。Kata が要求する `0.6|0> + 0.8|1>` だけを最小追加する。
