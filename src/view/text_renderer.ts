@@ -545,6 +545,11 @@ class TextLineMerger {
   ]);
   private readonly blankBottomDoubleVerticalChars = new Set(['║', '╫', '╬']);
   private readonly blankBottomVerticalChars = new Set(['│', '┼', '╪']);
+  private readonly bottomPriorityVerticalChars = new Set(['│', '┼', '╪', '┬']);
+  private readonly bottomTopCornerChars = new Set(['┐', '┌']);
+  private readonly topCornerBottomChars = new Set(['║', '│']);
+  private readonly topCornerChars = new Set(['┬', '╥']);
+  private readonly topPriorityBottomCorners = new Set(['┘', '└']);
 
   mergeBottom(topLine: string, bottomLine: string): string {
     return this.merge(topLine, bottomLine, (topChar, bottomChar) => {
@@ -606,7 +611,7 @@ class TextLineMerger {
   }
 
   private mergeBlankBottomWithBottomPriority(topChar: string): string {
-    if (new Set(['│', '┼', '╪', '┬']).has(topChar)) {
+    if (this.bottomPriorityVerticalChars.has(topChar)) {
       return '│';
     }
 
@@ -622,7 +627,7 @@ class TextLineMerger {
   }
 
   private mergeTopPriority(topChar: string, bottomChar: string): string | undefined {
-    if (new Set(['┬', '╥']).has(topChar) && new Set(['║', '│']).has(bottomChar)) {
+    if (this.topCornerChars.has(topChar) && this.topCornerBottomChars.has(bottomChar)) {
       return topChar;
     }
 
@@ -632,11 +637,11 @@ class TextLineMerger {
       return cornerMerge;
     }
 
-    if (new Set(['┐', '┌']).has(bottomChar)) {
+    if (this.bottomTopCornerChars.has(bottomChar)) {
       return '┬';
     }
 
-    if (new Set(['┘', '└']).has(topChar) && bottomChar === '─') {
+    if (this.topPriorityBottomCorners.has(topChar) && bottomChar === '─') {
       return '┴';
     }
 

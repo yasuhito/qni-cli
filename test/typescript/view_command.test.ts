@@ -81,21 +81,32 @@ async function writeCircuit(dir: string, circuit: unknown): Promise<void> {
   await writeFile(path.join(dir, 'circuit.json'), `${JSON.stringify(circuit, null, 2)}\n`);
 }
 
-function withStdoutTty<T>(isTTY: boolean, callback: () => T): T {
-  const descriptor = Object.getOwnPropertyDescriptor(process.stdout, 'isTTY');
+function withStreamTty<T>(options: { stderr: boolean; stdout: boolean }, callback: () => T): T {
+  const stdoutDescriptor = Object.getOwnPropertyDescriptor(process.stdout, 'isTTY');
+  const stderrDescriptor = Object.getOwnPropertyDescriptor(process.stderr, 'isTTY');
 
   Object.defineProperty(process.stdout, 'isTTY', {
     configurable: true,
-    value: isTTY
+    value: options.stdout
+  });
+  Object.defineProperty(process.stderr, 'isTTY', {
+    configurable: true,
+    value: options.stderr
   });
 
   try {
     return callback();
   } finally {
-    if (descriptor) {
-      Object.defineProperty(process.stdout, 'isTTY', descriptor);
+    if (stdoutDescriptor) {
+      Object.defineProperty(process.stdout, 'isTTY', stdoutDescriptor);
     } else {
       Reflect.deleteProperty(process.stdout, 'isTTY');
+    }
+
+    if (stderrDescriptor) {
+      Object.defineProperty(process.stderr, 'isTTY', stderrDescriptor);
+    } else {
+      Reflect.deleteProperty(process.stderr, 'isTTY');
     }
   }
 }
@@ -156,7 +167,7 @@ describe('view command TypeScript route', () => {
         cols: [['T†'], ['Ry(π/2)']]
       });
 
-      const result = withStdoutTty(true, () => captureDispatcherRun(dir, ['view']));
+      const result = withStreamTty({ stderr: false, stdout: true }, () => captureDispatcherRun(dir, ['view']));
 
       assert.equal(result.exitStatus, 0);
       assert.equal(result.stderr, '');
@@ -204,7 +215,9 @@ Examples:
         cols: [['T†']]
       });
 
-      const result = captureDispatcherRun(dir, ['view'], { ...process.env, QNI_USE_RUBY: '1' });
+      const result = withStreamTty({ stderr: false, stdout: false }, () =>
+        captureDispatcherRun(dir, ['view'], { ...process.env, QNI_USE_RUBY: '1' })
+      );
 
       assert.equal(result.exitStatus, 0);
       assert.equal(result.stderr, '');
@@ -235,6 +248,31 @@ describe('ASCII circuit parser TypeScript port', () => {
       {
         qubits: 2,
         cols: [['•', 'X']]
+      }
+    );
+  });
+
+  it('parses right-justified qubit labels from larger circuits', () => {
+    assert.deepEqual(
+      parseAsciiCircuit(
+        [
+          '     q0: ─────',
+          '     q1: ─────',
+          '     q2: ─────',
+          '     q3: ─────',
+          '     q4: ─────',
+          '     q5: ─────',
+          '     q6: ─────',
+          '     q7: ─────',
+          '     q8: ─────',
+          '     q9: ─────',
+          '    q10: ─────',
+          '    q11: ─────'
+        ].join('\n')
+      ),
+      {
+        qubits: 12,
+        cols: [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]
       }
     );
   });

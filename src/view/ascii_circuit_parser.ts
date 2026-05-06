@@ -31,7 +31,7 @@ const FIXED_GATE_LABELS = new Map<string, string>([
 const ANGLED_GATE_LABELS = new Set(['P', 'Rx', 'Ry', 'Rz']);
 const ANGLED_GATE_ERROR = 'ASCII parser angled gates require a dedicated angle line above the box';
 const BOX_BORDER_PATTERN = /[┌┐└┘├┤]/u;
-const MID_LINE_PATTERN = /^q(?<qubit>\d+): (?<wire>.*)$/u;
+const MID_LINE_PATTERN = /^(?<prefix>\s*q(?<qubit>\d+): )(?<wire>.*)$/u;
 const UNEXPECTED_ANGLE_ERROR = 'ASCII parser angle lines are only supported for Rx, Ry, Rz, and P boxes';
 
 export class AsciiCircuitParser {
@@ -148,7 +148,7 @@ class LineSet {
   }
 
   private wireLabelWidth(): number {
-    return Math.max(...this.parsedMidLines().map(([_lineIndex, match]) => match.index + `q${match.groups?.qubit}: `.length));
+    return Math.max(...this.parsedMidLines().map(([_lineIndex, match]) => charLength(match.groups?.prefix ?? '')));
   }
 
   private wirePrefix(): string {
