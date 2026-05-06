@@ -161,11 +161,12 @@ describe('TypeScript symbolic state renderer boundary', () => {
       await writeExecutable(
         path.join(bin, 'python3'),
         `#!/bin/sh
+while IFS= read -r _; do :; done
 echo "ModuleNotFoundError: No module named 'sympy'" >&2
 exit 1
 `
       );
-      await writeExecutable(path.join(bin, 'uv'), '#!/bin/sh\necho uv-success\n');
+      await writeExecutable(path.join(bin, 'uv'), '#!/bin/sh\nwhile IFS= read -r _; do :; done\necho uv-success\n');
 
       assert.equal(
         renderSymbolicStateVector({
@@ -187,7 +188,7 @@ exit 1
       await writeSymbolicHelperPlaceholder(projectRoot);
       await writeExecutable(
         path.join(projectRoot, '.python-symbolic', 'bin', 'python'),
-        '#!/bin/sh\necho "repo runtime failed" >&2\nexit 9\n'
+        '#!/bin/sh\nwhile IFS= read -r _; do :; done\necho "repo runtime failed" >&2\nexit 9\n'
       );
       await writeExecutable(path.join(bin, 'python3'), '#!/bin/sh\necho should-not-run\n');
 
