@@ -1,7 +1,7 @@
-# Feature: qni variable errors
+# Feature: qni variable のエラー
 
 qni-cli のユーザとして
-variable コマンドの入力エラーを理解するために
+qni variable の入力エラーを理解するために
 qni variable のエラーを確認したい
 
 ## Scenario: qni variable set は circuit.json がないと失敗する
