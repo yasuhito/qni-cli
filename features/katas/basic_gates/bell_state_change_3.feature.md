@@ -1,5 +1,5 @@
-# Feature: Quantum Katas BasicGates Task 1.10 BellStateChange3
-  Task 1.10 BellStateChange3: |Φ⁺⟩ を |Ψ⁻⟩ に変える
+# Feature: Quantum Katas BasicGates 課題 1.10 BellStateChange3
+  課題 1.10 BellStateChange3: |Φ⁺⟩ を |Ψ⁻⟩ に変える
 
   入力:
   2 量子ビットの Bell 状態 |ψ⟩ = α|Φ⁺⟩ + β|Ψ⁻⟩
