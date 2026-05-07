@@ -1,6 +1,6 @@
 # Feature: qni bloch PNG
 
-qni-cli のユーザとして
+qni-cli の利用者として
 1 量子ビットの状態を画像として確認するために
 qni bloch --png でブロッホ球 PNG を書き出したい。
 
