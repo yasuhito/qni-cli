@@ -1,16 +1,16 @@
-# Feature: qni bloch errors
+# Feature: qni bloch のエラー
 
-qni-cli のユーザとして
-誤った bloch コマンドの使い方をすぐ直せるように
-qni bloch が明確なエラーを返してほしい。
+qni-cli の利用者として
+誤った `qni bloch` の使い方をすぐ直せるように
+`qni bloch` が明確なエラーを返してほしい。
 
-## Scenario: qni bloch は 2 qubit 回路では失敗する
+## Scenario: qni bloch は対応外の量子ビット数では失敗する
 
 - Given 空の 2 qubit 回路がある
 - When "qni bloch --png --output bloch.png" を実行
 - Then コマンドは失敗
 
-## Scenario: qni bloch は 2 qubit 回路では対応 qubit 数のエラーを表示する
+## Scenario: qni bloch は対応外の量子ビット数のエラーを表示する
 
 - Given 空の 2 qubit 回路がある
 - When "qni bloch --png --output bloch.png" を実行
@@ -58,7 +58,7 @@ qni bloch が明確なエラーを返してほしい。
 - When "qni bloch --inline --output bloch.png" を実行
 - Then コマンドは失敗
 
-## Scenario: qni bloch は --inline と --output の同時指定で output option のエラーを表示する
+## Scenario: qni bloch は --inline と --output の同時指定で --output オプションのエラーを表示する
 
 - Given "qni add H --qubit 0 --step 0" を実行
 - When "qni bloch --inline --output bloch.png" を実行
@@ -74,7 +74,7 @@ qni bloch が明確なエラーを返してほしい。
 - When "qni bloch --apng --animate --output bloch.png" を実行
 - Then コマンドは失敗
 
-## Scenario: qni bloch は --animate を --inline なしで使うと inline option のエラーを表示する
+## Scenario: qni bloch は --animate を --inline なしで使うと --inline オプションのエラーを表示する
 
 - Given "qni add Ry --angle π/2 --qubit 0 --step 0" を実行
 - When "qni bloch --apng --animate --output bloch.png" を実行
@@ -84,13 +84,13 @@ qni bloch が明確なエラーを返してほしい。
   --animate is supported only with --inline
   ```
 
-## Scenario: qni bloch --inline は unsupported terminal では失敗する
+## Scenario: qni bloch --inline は非対応端末では失敗する
 
 - Given "qni add H --qubit 0 --step 0" を実行
 - When "qni bloch --inline" を実行
 - Then コマンドは失敗
 
-## Scenario: qni bloch --inline は unsupported terminal で terminal 要件のエラーを表示する
+## Scenario: qni bloch --inline は非対応端末で端末要件のエラーを表示する
 
 - Given "qni add H --qubit 0 --step 0" を実行
 - When "qni bloch --inline" を実行
