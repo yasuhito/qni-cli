@@ -1,5 +1,5 @@
 # Feature: Quantum Katas Superposition Task 1.2 MinusState
-  Task 1.2 MinusState: |0⟩ を |-⟩ に変える
+  課題 1.2 MinusState: |0⟩ を |-⟩ に変える
 
   入力:
   1 量子ビットの状態 |0⟩
@@ -7,7 +7,7 @@
   目標:
   状態を |-⟩ = (|0⟩ - |1⟩) / sqrt(2) に変える
 
-  この task では、X ゲートで |1⟩ を作ってから
+  この課題では、X ゲートで |1⟩ を作ってから
   Hadamard ゲート H をかけることで |-⟩ が得られることを確かめる。
 
 ## Scenario: X のあとに H を適用すると |0> は計算基底で負の重ね合わせになる
