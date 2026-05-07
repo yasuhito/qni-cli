@@ -1,6 +1,6 @@
 # Feature: qni variable unset
 
-qni-cli のユーザとして
+qni-cli を使う人として
 不要になった角度変数を取り除くために
 qni variable unset で指定した変数を削除したい
 
