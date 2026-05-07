@@ -1,6 +1,6 @@
 # Feature: qni clear のヘルプ表示
 
-qni-cli のユーザとして
+qni-cli の利用者として
 clear コマンドの使い方を知るために
 qni clear のヘルプを見たい
 
