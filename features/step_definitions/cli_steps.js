@@ -174,6 +174,26 @@ function runQniCommandInTty(scenarioDir, command, extraEnv = {}) {
   });
 }
 
+function copiedScenarioDir(sourceDir) {
+  const targetDir = fs.mkdtempSync(path.join(os.tmpdir(), 'qni-cli-oracle-'));
+  fs.cpSync(sourceDir, targetDir, { recursive: true });
+  return targetDir;
+}
+
+async function runRubyOracleComparison(world, command, runCommand) {
+  const oracleDir = copiedScenarioDir(world.scenarioDir);
+  world.tempDirs ||= [];
+  world.tempDirs.push(oracleDir);
+
+  const commandEnv = world.commandEnv || {};
+  world.routeComparison = {
+    oracle: await runCommand(oracleDir, command, { ...commandEnv, QNI_USE_RUBY: '1' }),
+    oracleDir,
+    typeScript: await runCommand(world.scenarioDir, command, commandEnv),
+    typeScriptDir: world.scenarioDir
+  };
+}
+
 function normalizeMultilineText(value) {
   return value
     .replace(/\n+$/u, '')
@@ -760,12 +780,67 @@ When('{string} を TTY で実行', async function (command) {
   this.lastCommand = await runQniCommandInTty(this.scenarioDir, command, this.commandEnv);
 });
 
+When('TypeScript route と Ruby oracle で {string} を比較実行', async function (command) {
+  await runRubyOracleComparison(this, command, runQniCommand);
+});
+
+When('TypeScript route と Ruby oracle で {string} を TTY 比較実行', async function (command) {
+  await runRubyOracleComparison(this, command, runQniCommandInTty);
+});
+
 Then('コマンドは成功', function () {
   assert.equal(this.lastCommand.code, 0, commandFailureMessage(this.lastCommand));
 });
 
 Then('コマンドは失敗', function () {
   assert.notEqual(this.lastCommand.code, 0, commandSuccessMessage(this.lastCommand));
+});
+
+Then('TypeScript route の終了ステータスは Ruby oracle と同じ', function () {
+  assert.equal(this.routeComparison.typeScript.code, this.routeComparison.oracle.code);
+});
+
+Then('TypeScript route の標準出力は Ruby oracle と同じ', function () {
+  assert.equal(this.routeComparison.typeScript.stdout, this.routeComparison.oracle.stdout);
+});
+
+Then('TypeScript route の標準エラーは Ruby oracle と同じ', function () {
+  assert.equal(this.routeComparison.typeScript.stderr, this.routeComparison.oracle.stderr);
+});
+
+Then('TypeScript route の {string} の画像サイズは Ruby oracle と同じ', function (filePath) {
+  const actual = pngMetadata(path.join(this.routeComparison.typeScriptDir, filePath));
+  const expected = pngMetadata(path.join(this.routeComparison.oracleDir, filePath));
+
+  assert.deepEqual([actual.width, actual.height], [expected.width, expected.height]);
+});
+
+Then('TypeScript route の {string} の透過属性は Ruby oracle と同じ', function (filePath) {
+  const actual = pngMetadata(path.join(this.routeComparison.typeScriptDir, filePath));
+  const expected = pngMetadata(path.join(this.routeComparison.oracleDir, filePath));
+
+  assert.equal(actual.transparent, expected.transparent);
+});
+
+Then('TypeScript route の {string} の色 {string} の有無は Ruby oracle と同じ', function (filePath, hexColor) {
+  const actual = imageIncludesColor(path.join(this.routeComparison.typeScriptDir, filePath), hexColor);
+  const expected = imageIncludesColor(path.join(this.routeComparison.oracleDir, filePath), hexColor);
+
+  assert.equal(actual, expected);
+});
+
+Then('TypeScript route の {string} の APNG フレーム数は Ruby oracle と同じ', function (filePath) {
+  const actual = apngMetadata(path.join(this.routeComparison.typeScriptDir, filePath), filePath);
+  const expected = apngMetadata(path.join(this.routeComparison.oracleDir, filePath), filePath);
+
+  assert.equal(actual.frameCount, expected.frameCount);
+});
+
+Then('TypeScript route の Kitty graphics escape sequence 数は Ruby oracle と同じ', function () {
+  const actualCount = [...this.routeComparison.typeScript.stdout.matchAll(/\u001b_G/gu)].length;
+  const expectedCount = [...this.routeComparison.oracle.stdout.matchAll(/\u001b_G/gu)].length;
+
+  assert.equal(actualCount, expectedCount);
 });
 
 Then('標準出力は空', function () {
