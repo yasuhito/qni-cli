@@ -1,15 +1,15 @@
-# Feature: qni export help
+# Feature: qni export のヘルプ
 
-qni-cli のユーザとして
+qni-cli のユーザーとして
 出力形式ごとの使い方を迷わず選べるように
-qni export の help で利用できる export mode と option を確認したい。
+qni export のヘルプで利用できる出力形式とオプションを確認したい。
 
 ## Scenario: qni export --help は export コマンドの使い方を表示
 
 - When "qni export --help" を実行
 - Then コマンドは成功
 
-## Scenario: qni export --help は export mode と option を表示
+## Scenario: qni export --help は出力形式とオプションを表示
 
 - When "qni export --help" を実行
 - Then 標準出力:
@@ -65,7 +65,7 @@ qni export の help で利用できる export mode と option を確認したい
 - When "qni export" を実行
 - Then コマンドは成功
 
-## Scenario: qni export は export mode と option を表示
+## Scenario: qni export は出力形式とオプションを表示
 
 - When "qni export" を実行
 - Then 標準出力:
