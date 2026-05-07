@@ -1,6 +1,6 @@
 # Feature: qni export のキャプション
 
-qni-cli のユーザとして
+qni-cli の利用者として
 回路図に説明を添えてノートや資料へ貼れるように
 qni export のキャプションオプションを使いたい。
 
