@@ -1,6 +1,6 @@
 # Feature: qni variable list
 
-qni-cli のユーザとして
+qni-cli の利用者として
 保存済みの角度変数を確認するために
 qni variable list で変数を一覧表示したい
 
