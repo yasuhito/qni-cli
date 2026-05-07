@@ -99,17 +99,17 @@ qni-cli validation policy:
 Linear workpad requirement:
 - Before code edits, move `Todo` issues to `In Progress` and create or update exactly one active Linear comment headed `## Codex Workpad`.
 - Keep the marker header `## Codex Workpad` exactly as written so future turns can find the comment.
-- Write the workpad body and any other Linear-facing comments in 日本語 by default, including plan, acceptance criteria, validation, notes, blockers, branch, commit, and PR evidence.
+- Write the workpad body and any other Linear-facing comments in Japanese by default, including plan, acceptance criteria, validation, notes, blockers, branch, commit, and PR evidence.
 - Preserve the established language for an existing workpad; if a workpad is already written in English, continue that issue in English instead of rewriting it.
 - Do not use extra top-level progress comments unless the workflow explicitly requires it.
 
 GitHub PR language requirement:
-- Write GitHub PR titles and PR bodies in 日本語 by default.
+- Write GitHub PR titles and PR bodies in Japanese by default.
 - Do not prefix GitHub PR titles with the Linear issue identifier such as `YAS-214`; use the Japanese change summary as the title and rely on the branch, Linear linkback, and PR body for issue tracking.
-- If the repository PR template has English section headings, keep the headings only when required by the template, but fill every section body in 日本語.
+- If the repository PR template has English section headings, keep the headings only when required by the template, but fill every section body in Japanese.
 - Keep code identifiers, file paths, commands, branch names, commit hashes, exact error messages, and API names unchanged.
 - Do not let `gh pr create` auto-fill an English body from commit messages; draft a Japanese body explicitly and pass it via `--body-file` or update it immediately with `gh pr edit --body-file`.
-- When updating an existing PR, refresh stale English descriptions into 日本語 unless preserving exact quoted reviewer text or command output.
+- When updating an existing PR, refresh stale English descriptions into Japanese unless preserving exact quoted reviewer text or command output.
 
 Description:
 {% if issue.description %}
@@ -143,7 +143,7 @@ The agent should be able to talk to Linear, either via a configured Linear MCP s
 
 - Start by determining the ticket's current status, then follow the matching flow for that status.
 - Start every task by opening the tracking workpad comment and bringing it up to date before doing new implementation work.
-- For new workpads, write Linear-visible progress in 日本語 while keeping code identifiers, file paths, commands, branch names, commit hashes, PR titles, and exact error messages unchanged.
+- For new workpads, write Linear-visible progress in Japanese while keeping code identifiers, file paths, commands, branch names, commit hashes, PR titles, and exact error messages unchanged.
 - Spend extra effort up front on planning and verification design before implementation.
 - Reproduce first: always confirm the current behavior/issue signal before changing code so the fix target is explicit.
 - Keep ticket metadata current (state, checklist, acceptance criteria, links).
@@ -304,7 +304,7 @@ Use this only when completion is blocked by missing required tools or missing au
 8.  Merge latest `origin/main` into branch before final publication, resolve conflicts, and rerun required checks.
 9.  Run the Pre-PR self-review protocol before creating or updating a PR.
 10. Push the branch with `git push -u origin HEAD`, then create or update a GitHub PR with `gh pr create` / `gh pr edit` when no open PR exists.
-    - Write the PR title and body in 日本語 by default, following the GitHub PR language requirement above.
+    - Write the PR title and body in Japanese by default, following the GitHub PR language requirement above.
     - Include the Linear issue identifier in the PR title or body so Linear links the PR to the issue.
     - Add the GitHub PR label `symphony` if that label already exists; do not block handoff if the repository lacks that label.
 11. Attach PR URL to the issue (prefer attachment; use the workpad comment only if attachment is unavailable).
@@ -381,7 +381,7 @@ Use this only when completion is blocked by missing required tools or missing au
 
 ## Workpad template
 
-Use this exact structure for the persistent workpad comment and keep it updated in place throughout execution. Keep the `## Codex Workpad` marker in English, but write section contents in 日本語 for new issues:
+Use this exact structure for the persistent workpad comment and keep it updated in place throughout execution. Keep the `## Codex Workpad` marker in English, but write section contents in Japanese for new issues:
 
 ````md
 ## Codex Workpad
