@@ -1,6 +1,6 @@
 # Feature: qni variable clear
 
-qni-cli のユーザとして
+qni-cli の利用者として
 保存済みの角度変数を初期化するために
 qni variable clear ですべての変数を削除したい
 
