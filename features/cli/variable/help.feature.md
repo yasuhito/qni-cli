@@ -1,15 +1,15 @@
-# Feature: qni variable help
+# Feature: qni variable ヘルプ
 
-qni-cli のユーザとして
-symbolic angle variable の管理方法を知るために
-qni variable の help を見たい
+qni-cli のユーザーとして
+記号角度変数の管理方法を知るために
+qni variable のヘルプを見たい
 
 ## Scenario: qni variable は成功する
 
 - When "qni variable" を実行
 - Then コマンドは成功
 
-## Scenario: qni variable は variable コマンドの使い方を表示
+## Scenario: qni variable は variable サブコマンドの使い方を表示
 
 - When "qni variable" を実行
 - Then 標準出力:
@@ -41,7 +41,7 @@ qni variable の help を見たい
 - When "qni variable --help" を実行
 - Then コマンドは成功
 
-## Scenario: qni variable --help は variable コマンドの使い方を表示
+## Scenario: qni variable --help は variable サブコマンドの使い方を表示
 
 - When "qni variable --help" を実行
 - Then 標準出力:
