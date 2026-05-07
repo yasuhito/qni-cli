@@ -1,6 +1,6 @@
 # Feature: qni export circle-notation PNG
 
-qni-cli のユーザとして
+qni-cli の利用者として
 計算基底の振幅と位相を図で確認できるように
 qni export --circle-notation --png を使いたい。
 
