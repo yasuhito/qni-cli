@@ -1,6 +1,6 @@
 # Feature: qni state Bell
 
-qni-cli のユーザとして
+qni-cli の利用者として
 Bell 基底の初期状態を保存・確認するために
 qni state set の Bell 短縮表記を使いたい
 
