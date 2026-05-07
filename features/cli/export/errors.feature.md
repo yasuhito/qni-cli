@@ -1,7 +1,7 @@
-# Feature: qni export errors
+# Feature: qni export のエラー
 
-qni-cli のユーザとして
-誤った option 組み合わせをすぐ直せるように
+qni-cli の利用者として
+誤ったオプションの組み合わせをすぐ直せるように
 qni export が明確なエラーを返してほしい。
 
 ## Scenario: qni export --caption-position に不正な値を指定すると失敗する
@@ -44,9 +44,9 @@ qni export が明確なエラーを返してほしい。
   choose at most one of --state-vector or --circle-notation
   ```
 
-## Scenario: qni export --circle-notation --png は 3 qubit 回路では失敗する
+## Scenario: qni export --circle-notation --png は 3 量子ビット回路では失敗する
 
-- Given 空の 3 qubit 回路がある
+- Given 空の 3 量子ビット回路がある
 - When "qni export --circle-notation --png --output circles.png" を実行
 - Then コマンドは失敗して標準エラー:
 
