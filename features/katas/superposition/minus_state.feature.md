@@ -1,5 +1,5 @@
 # Feature: Quantum Katas Superposition Task 1.2 MinusState
-  課題 1.2 MinusState: |0⟩ を |-⟩ に変える
+  Task 1.2 MinusState: |0⟩ を |-⟩ に変える
 
   入力:
   1 量子ビットの状態 |0⟩
