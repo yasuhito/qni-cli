@@ -1,6 +1,6 @@
 # Feature: qni expect コマンド
 
-qni-cli のユーザとして、Pauli 文字列の期待値を確認するために、
+qni-cli の利用者として、Pauli 文字列の期待値を確認するために、
 `qni expect` を実行したい。
 
 ## Scenario: qni expect コマンドは成功
@@ -44,7 +44,7 @@ qni-cli のユーザとして、Pauli 文字列の期待値を確認するため
   XX=1.0
   ```
 
-## Scenario: qni expect は 3 qubit の Pauli 文字列の期待値を標準出力に表示
+## Scenario: qni expect は 3 量子ビットの Pauli 文字列の期待値を標準出力に表示
 
 - Given "qni add H --qubit 0 --step 0" を実行
 - And "qni add X --control 0 --qubit 1 --step 1" を実行
@@ -58,7 +58,7 @@ qni-cli のユーザとして、Pauli 文字列の期待値を確認するため
   XXX=1.0
   ```
 
-## Scenario: qni expect は変数 angle を解決して期待値を表示
+## Scenario: qni expect は角度変数を解決して期待値を表示
 
 - Given "qni add H --qubit 0 --step 0" を実行
 - And "qni add X --control 0 --qubit 1 --step 1" を実行
