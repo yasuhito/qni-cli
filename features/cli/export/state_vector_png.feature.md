@@ -29,8 +29,8 @@ qni export --state-vector --png を使いたい。
 - When "qni export --state-vector --png --output state.png" を実行
 - Then "circuit.png" と "state.png" は異なるファイル内容である
 
-## Scenario: qni export --state-vector --png は 3 qubit 回路の状態ベクトル画像を書き出す
+## Scenario: qni export --state-vector --png は 3 量子ビット回路の状態ベクトル画像を書き出す
 
-- Given 空の 3 qubit 回路がある
+- Given 空の 3 量子ビット回路がある
 - When "qni export --state-vector --png --output state.png" を実行
 - Then "state.png" は PNG 画像である
