@@ -1,8 +1,8 @@
-# Feature: qni CLI help
+# Feature: qni CLI のヘルプ
 
-qni-cli のユーザとして
+qni-cli の利用者として
 利用できるコマンドを知るために
-top-level CLI help を見たい
+最上位の CLI ヘルプを見たい
 
 ## Scenario: qni は成功する
 

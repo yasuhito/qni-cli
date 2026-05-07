@@ -1,6 +1,6 @@
 # Feature: gate コマンドのヘルプ表示
 
-qni-cli のユーザとして、指定した circuit slot のゲート取得方法を確認するために、
+qni-cli の利用者として、指定した `--step` と `--qubit` が示すゲートの取得方法を確認するために、
 `qni gate` の使い方をヘルプで見たい。
 
 ## Scenario: qni gate は成功する
