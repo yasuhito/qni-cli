@@ -1,4 +1,4 @@
-# Feature: qni state のヘルプ
+# Feature: qni state のヘルプ表示
 
 qni-cli の利用者として
 初期状態ベクトルの管理方法を知るために
