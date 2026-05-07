@@ -1,17 +1,17 @@
-# Feature: qni run errors
+# Feature: qni run のエラー
 
-qni-cli のユーザとして
-誤った変数や option をすぐ直せるように
+qni-cli の利用者として
+誤った変数やオプションをすぐ直せるように
 qni run が明確な失敗とエラーを返すことを確認したい。
 
 
-## Scenario: qni run は未束縛の変数 angle があると失敗
+## Scenario: qni run は未束縛の角度変数があると失敗
 
 - Given "qni add Ry --angle theta --qubit 0 --step 0" を実行
 - When "qni run" を実行
 - Then コマンドは失敗
 
-## Scenario: qni run は未束縛の変数 angle があると失敗 の標準エラーを表示
+## Scenario: qni run は未束縛の角度変数があると失敗 の標準エラーを表示
 
 - Given "qni add Ry --angle theta --qubit 0 --step 0" を実行
 - When "qni run" を実行
@@ -57,15 +57,15 @@ qni run が明確な失敗とエラーを返すことを確認したい。
   initial state must be normalized
   ```
 
-## Scenario: qni run --symbolic --basis x は 2 qubit 回路では失敗
+## Scenario: qni run --symbolic --basis x は 2 量子ビット回路では失敗
 
-- Given 空の 2 qubit 回路がある
+- Given 空の 2 量子ビット回路がある
 - When "qni run --symbolic --basis x" を実行
 - Then コマンドは失敗
 
-## Scenario: qni run --symbolic --basis x は 2 qubit 回路では失敗 の標準エラーを表示
+## Scenario: qni run --symbolic --basis x は 2 量子ビット回路では失敗 の標準エラーを表示
 
-- Given 空の 2 qubit 回路がある
+- Given 空の 2 量子ビット回路がある
 - When "qni run --symbolic --basis x" を実行
 - Then 標準エラー:
 
@@ -73,15 +73,15 @@ qni run が明確な失敗とエラーを返すことを確認したい。
   symbolic x-basis run currently supports only 1-qubit circuits
   ```
 
-## Scenario: qni run --symbolic --basis y は 2 qubit 回路では失敗
+## Scenario: qni run --symbolic --basis y は 2 量子ビット回路では失敗
 
-- Given 空の 2 qubit 回路がある
+- Given 空の 2 量子ビット回路がある
 - When "qni run --symbolic --basis y" を実行
 - Then コマンドは失敗
 
-## Scenario: qni run --symbolic --basis y は 2 qubit 回路では失敗 の標準エラーを表示
+## Scenario: qni run --symbolic --basis y は 2 量子ビット回路では失敗 の標準エラーを表示
 
-- Given 空の 2 qubit 回路がある
+- Given 空の 2 量子ビット回路がある
 - When "qni run --symbolic --basis y" を実行
 - Then 標準エラー:
 
@@ -89,15 +89,15 @@ qni run が明確な失敗とエラーを返すことを確認したい。
   symbolic y-basis run currently supports only 1-qubit circuits
   ```
 
-## Scenario: qni run --symbolic --basis bell は 1 qubit 回路では失敗
+## Scenario: qni run --symbolic --basis bell は 1 量子ビット回路では失敗
 
-- Given 空の 1 qubit 回路がある
+- Given 空の 1 量子ビット回路がある
 - When "qni run --symbolic --basis bell" を実行
 - Then コマンドは失敗
 
-## Scenario: qni run --symbolic --basis bell は 1 qubit 回路では失敗 の標準エラーを表示
+## Scenario: qni run --symbolic --basis bell は 1 量子ビット回路では失敗 の標準エラーを表示
 
-- Given 空の 1 qubit 回路がある
+- Given 空の 1 量子ビット回路がある
 - When "qni run --symbolic --basis bell" を実行
 - Then 標準エラー:
 
@@ -107,13 +107,13 @@ qni run が明確な失敗とエラーを返すことを確認したい。
 
 ## Scenario: qni run --basis x は --symbolic なしでは失敗
 
-- Given 空の 1 qubit 回路がある
+- Given 空の 1 量子ビット回路がある
 - When "qni run --basis x" を実行
 - Then コマンドは失敗
 
 ## Scenario: qni run --basis x は --symbolic なしでは失敗 の標準エラーを表示
 
-- Given 空の 1 qubit 回路がある
+- Given 空の 1 量子ビット回路がある
 - When "qni run --basis x" を実行
 - Then 標準エラー:
 
