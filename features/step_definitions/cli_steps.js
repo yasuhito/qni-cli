@@ -696,7 +696,7 @@ Given(/^空の 2 (?:qubit |量子ビット)回路がある$/, function () {
   });
 });
 
-Given('2 qubit の初期状態が {string} である', function (state) {
+Given(/^2 (?:qubit |量子ビット)の初期状態が "([^"]*)" である$/, function (state) {
   writeCircuitJson(this.scenarioDir, {
     qubits: 2,
     cols: twoQubitInitialCols(state)
