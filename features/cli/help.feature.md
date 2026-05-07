@@ -1,6 +1,6 @@
 # Feature: qni CLI のヘルプ
 
-qni-cli のユーザとして
+qni-cli の利用者として
 利用できるコマンドを知るために
 最上位の CLI ヘルプを見たい
 
