@@ -1,6 +1,6 @@
-# Feature: qni bloch trajectory PNG
+# Feature: qni bloch の軌跡付き PNG
 
-qni-cli のユーザとして
+qni-cli の利用者として
 1 量子ビットの状態変化を静止画でも確認できるように
 qni bloch --png --trajectory でブロッホ球 PNG に軌跡を描きたい。
 
