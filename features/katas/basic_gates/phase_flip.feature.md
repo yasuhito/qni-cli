@@ -1,5 +1,5 @@
-# Feature: Quantum Katas BasicGates Task 1.5 PhaseFlip
-  Task 1.5 PhaseFlip: |1⟩ 成分にだけ位相 i を掛ける
+# Feature: Quantum Katas BasicGates 課題 1.5 PhaseFlip
+  課題 1.5 PhaseFlip: |1⟩ 成分にだけ位相 i を掛ける
 
   入力:
   1 量子ビットの状態 |ψ⟩ = α|0⟩ + β|1⟩
