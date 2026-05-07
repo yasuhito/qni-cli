@@ -59,7 +59,11 @@ export class KittyGraphicsEmitter {
 
 function payloadChunks(pngBytes: Buffer): Array<[string, 0 | 1]> {
   const encodedPng = pngBytes.toString('base64');
-  const chunks = encodedPng.match(new RegExp(`.{1,${CHUNK_SIZE}}`, 'gu')) ?? [];
+  const chunks: string[] = [];
+
+  for (let start = 0; start < encodedPng.length; start += CHUNK_SIZE) {
+    chunks.push(encodedPng.slice(start, start + CHUNK_SIZE));
+  }
 
   return chunks.map((chunk, index) => [chunk, index < chunks.length - 1 ? 1 : 0]);
 }

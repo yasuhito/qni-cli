@@ -97,7 +97,7 @@ export function runBlochCommand(argv: string[], context: CommandHandlerContext):
     render(options, context);
     return 0;
   } catch (error) {
-    if (error instanceof CircuitFileError || error instanceof SimulatorError || error instanceof Error) {
+    if (error instanceof CircuitFileError || error instanceof SimulatorError) {
       process.stderr.write(`${error.message}\n`);
       return 1;
     }
@@ -154,26 +154,26 @@ function parseBlochOptions(args: string[]): BlochOptions | undefined {
 
 function validateOptions(options: BlochOptions): void {
   if ([options.png, options.apng, options.inline].filter(Boolean).length !== 1) {
-    throw new Error('choose exactly one of --png, --apng, or --inline');
+    throw new SimulatorError('choose exactly one of --png, --apng, or --inline');
   }
 
   if (options.animate && !options.inline) {
-    throw new Error('--animate is supported only with --inline');
+    throw new SimulatorError('--animate is supported only with --inline');
   }
 
   if (options.dark && options.light) {
-    throw new Error('choose at most one of --dark or --light');
+    throw new SimulatorError('choose at most one of --dark or --light');
   }
 
   if (options.inline) {
     if ((options.output ?? '').length > 0) {
-      throw new Error('--output is not supported with --inline');
+      throw new SimulatorError('--output is not supported with --inline');
     }
     return;
   }
 
   if ((options.output ?? '').length === 0) {
-    throw new Error('--output is required');
+    throw new SimulatorError('--output is required');
   }
 }
 
@@ -211,7 +211,7 @@ function renderInline(options: BlochOptions, context: CommandHandlerContext, fra
       showTrail: options.trajectory,
       theme: theme(options)
     });
-    new KittyGraphicsEmitter().emitAnimation(renderedFrames as Buffer[]);
+    new KittyGraphicsEmitter().emitAnimation(renderedFrames);
     return;
   }
 
@@ -223,7 +223,7 @@ function renderInline(options: BlochOptions, context: CommandHandlerContext, fra
     showTrail: options.trajectory,
     theme: theme(options)
   });
-  new KittyGraphicsEmitter().emitPngFrame(renderedFrame as Buffer);
+  new KittyGraphicsEmitter().emitPngFrame(renderedFrame);
 }
 
 function ensureSupportedTerminal(env: NodeJS.ProcessEnv): void {

@@ -57,7 +57,7 @@ function captureDispatcherRun(
   process.stderr.write = ((
     chunk: string | Uint8Array,
     encodingOrCallback?: BufferEncoding | ((error?: Error | null) => void),
-    callback?: BufferEncoding | ((error?: Error | null) => void)
+    callback?: (error?: Error | null) => void
   ): boolean => {
     stderr += Buffer.isBuffer(chunk) ? chunk.toString('utf8') : chunk.toString();
     if (typeof encodingOrCallback === 'function') {
@@ -134,9 +134,7 @@ describe('bloch command TypeScript route', () => {
         cols: [['H']]
       };
       await writeCircuit(dir, circuit);
-      const oracleDir = await mkdtemp(path.join(tmpdir(), 'qni-cli-bloch-oracle-'));
-
-      try {
+      await withTempDir(async (oracleDir) => {
         await writeCircuit(oracleDir, circuit);
 
         const result = captureDispatcherRun(dir, ['bloch', '--png', '--output', 'bloch.png'], { ...process.env, PATH: '' });
@@ -151,9 +149,7 @@ describe('bloch command TypeScript route', () => {
         assert.equal(metadata.width, 512);
         assert.equal(metadata.height, 512);
         assert.equal(metadata.colorType, 6);
-      } finally {
-        await rm(oracleDir, { force: true, recursive: true });
-      }
+      });
     });
   });
 
@@ -164,9 +160,7 @@ describe('bloch command TypeScript route', () => {
         cols: [['X']]
       };
       await writeCircuit(dir, circuit);
-      const oracleDir = await mkdtemp(path.join(tmpdir(), 'qni-cli-bloch-oracle-'));
-
-      try {
+      await withTempDir(async (oracleDir) => {
         await writeCircuit(oracleDir, circuit);
         const argv = ['bloch', '--png', '--trajectory', '--light', '--output', 'bloch-trajectory.png'];
 
@@ -180,9 +174,7 @@ describe('bloch command TypeScript route', () => {
           await readFile(path.join(dir, 'bloch-trajectory.png')),
           await readFile(path.join(oracleDir, 'bloch-trajectory.png'))
         );
-      } finally {
-        await rm(oracleDir, { force: true, recursive: true });
-      }
+      });
     });
   });
 
@@ -193,9 +185,7 @@ describe('bloch command TypeScript route', () => {
         cols: [['X^½']]
       };
       await writeCircuit(dir, circuit);
-      const oracleDir = await mkdtemp(path.join(tmpdir(), 'qni-cli-bloch-oracle-'));
-
-      try {
+      await withTempDir(async (oracleDir) => {
         await writeCircuit(oracleDir, circuit);
         const argv = ['bloch', '--png', '--trajectory', '--light', '--output', 'bloch-trajectory.png'];
 
@@ -209,9 +199,7 @@ describe('bloch command TypeScript route', () => {
           await readFile(path.join(dir, 'bloch-trajectory.png')),
           await readFile(path.join(oracleDir, 'bloch-trajectory.png'))
         );
-      } finally {
-        await rm(oracleDir, { force: true, recursive: true });
-      }
+      });
     });
   });
 
@@ -222,9 +210,7 @@ describe('bloch command TypeScript route', () => {
         cols: [['Ry(π/2)']]
       };
       await writeCircuit(dir, circuit);
-      const oracleDir = await mkdtemp(path.join(tmpdir(), 'qni-cli-bloch-oracle-'));
-
-      try {
+      await withTempDir(async (oracleDir) => {
         await writeCircuit(oracleDir, circuit);
         const argv = ['bloch', '--apng', '--output', 'bloch.png'];
 
@@ -238,9 +224,7 @@ describe('bloch command TypeScript route', () => {
         assert.equal(result.stderr, oracle.stderr);
         assert.equal(metadata.frameCount, oracleMetadata.frameCount);
         assert.ok(metadata.frameCount >= 2);
-      } finally {
-        await rm(oracleDir, { force: true, recursive: true });
-      }
+      });
     });
   });
 
@@ -251,9 +235,7 @@ describe('bloch command TypeScript route', () => {
         cols: [['H']]
       };
       await writeCircuit(dir, circuit);
-      const oracleDir = await mkdtemp(path.join(tmpdir(), 'qni-cli-bloch-oracle-'));
-
-      try {
+      await withTempDir(async (oracleDir) => {
         await writeCircuit(oracleDir, circuit);
         const argv = ['bloch', '--inline'];
         const env = { ...process.env, QNI_TEST_FORCE_INLINE: '1' };
@@ -265,9 +247,7 @@ describe('bloch command TypeScript route', () => {
         assert.equal(result.stderr, oracle.stderr);
         assert.equal([...result.stdout.matchAll(/\u001b_G/gu)].length, [...oracle.stdout.matchAll(/\u001b_G/gu)].length);
         assert.match(result.stdout, /^\u001b_G/u);
-      } finally {
-        await rm(oracleDir, { force: true, recursive: true });
-      }
+      });
     });
   });
 
@@ -278,9 +258,7 @@ describe('bloch command TypeScript route', () => {
         cols: [[1, 1]]
       };
       await writeCircuit(dir, circuit);
-      const oracleDir = await mkdtemp(path.join(tmpdir(), 'qni-cli-bloch-oracle-'));
-
-      try {
+      await withTempDir(async (oracleDir) => {
         await writeCircuit(oracleDir, circuit);
         const argv = ['bloch', '--png', '--output', 'bloch.png'];
 
@@ -290,9 +268,7 @@ describe('bloch command TypeScript route', () => {
         assert.equal(result.exitStatus, oracle.exitStatus);
         assert.equal(result.stdout, oracle.stdout);
         assert.equal(result.stderr, oracle.stderr);
-      } finally {
-        await rm(oracleDir, { force: true, recursive: true });
-      }
+      });
     });
   });
 

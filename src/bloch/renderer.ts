@@ -9,6 +9,9 @@ export type BlochRenderFormat = 'apng' | 'inline_frames' | 'inline_png' | 'png';
 export type BlochTheme = 'dark' | 'light';
 
 type RenderResult = Buffer[] | Buffer | null;
+type FileRenderRequest = BlochRenderRequest & { readonly format: 'apng' | 'png' };
+type InlineFramesRenderRequest = BlochRenderRequest & { readonly format: 'inline_frames' };
+type InlinePngRenderRequest = BlochRenderRequest & { readonly format: 'inline_png' };
 
 export interface BlochRenderRequest {
   readonly env: NodeJS.ProcessEnv;
@@ -31,6 +34,9 @@ const HELPER_ENV = {
   UV_CACHE_DIR: path.join(tmpdir(), 'qni-cli-uv-cache')
 };
 
+export function renderBloch(request: FileRenderRequest): null;
+export function renderBloch(request: InlineFramesRenderRequest): Buffer[];
+export function renderBloch(request: InlinePngRenderRequest): Buffer;
 export function renderBloch(request: BlochRenderRequest): RenderResult {
   for (const command of helperCommands(request.projectRoot)) {
     const result = runWithHelper(command, request);
