@@ -1,5 +1,5 @@
 # Feature: Quantum Katas BasicGates Task 1.6 PhaseChange
-  Task 1.6 PhaseChange: |1⟩ 成分に一般角の位相を掛ける
+  タスク 1.6 PhaseChange: |1⟩ 成分に一般角の位相を掛ける
 
   入力:
   角度 θ
