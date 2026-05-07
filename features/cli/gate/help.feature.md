@@ -1,6 +1,6 @@
-# Feature: gate コマンドのヘルプ表示
+# Feature: `gate` コマンドのヘルプ表示
 
-qni-cli のユーザとして、指定した circuit slot のゲート取得方法を確認するために、
+qni-cli のユーザとして、指定した回路スロットのゲート取得方法を確認するために、
 `qni gate` の使い方をヘルプで見たい。
 
 ## Scenario: qni gate は成功する
@@ -8,7 +8,7 @@ qni-cli のユーザとして、指定した circuit slot のゲート取得方�
 - When "qni gate" を実行
 - Then コマンドは成功
 
-## Scenario: qni gate は gate コマンドの使い方を表示
+## Scenario: qni gate は `gate` コマンドの使い方を表示
 
 - When "qni gate" を実行
 - Then 標準出力:
@@ -35,7 +35,7 @@ qni-cli のユーザとして、指定した circuit slot のゲート取得方�
 - When "qni gate --help" を実行
 - Then コマンドは成功
 
-## Scenario: qni gate --help は gate コマンドの使い方を表示
+## Scenario: qni gate --help は `gate` コマンドの使い方を表示
 
 - When "qni gate --help" を実行
 - Then 標準出力:
