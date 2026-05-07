@@ -1,6 +1,6 @@
 # Feature: qni export のヘルプ表示
 
-qni-cli のユーザとして
+qni-cli の利用者として
 出力形式ごとの使い方を迷わず選べるように
 qni export のヘルプで利用できる出力形式とオプションを確認したい。
 
