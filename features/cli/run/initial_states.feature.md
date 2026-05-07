@@ -1,6 +1,6 @@
-# Feature: qni run initial states
+# Feature: qni run の初期状態
 
-qni-cli のユーザとして
+qni-cli の利用者として
 qni state set で指定した初期状態から数値実行するために
 qni run が変数解決済みの初期状態を使うことを確認したい。
 
@@ -18,7 +18,7 @@ qni run が変数解決済みの初期状態を使うことを確認したい。
   0.8,0.6
   ```
 
-## Scenario: qni run は短い initial_state を |0> suffix qubits で拡張して数値実行する
+## Scenario: qni run は短い initial_state を後続の |0> 量子ビットで拡張して数値実行する
 
 - Given 次の circuit.json がある:
 
