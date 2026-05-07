@@ -1,6 +1,6 @@
 # Feature: qni clear コマンド
 
-qni-cli のユーザとして
+qni-cli の利用者として
 回路を最初から作り直せるようにするために
 qni clear を実行したい
 
