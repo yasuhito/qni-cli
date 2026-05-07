@@ -38,6 +38,7 @@ module Qni
       'X' => { axis: [1.0, 0.0, 0.0], angle: Math::PI },
       'Y' => { axis: [0.0, 1.0, 0.0], angle: Math::PI },
       'Z' => { axis: [0.0, 0.0, 1.0], angle: Math::PI },
+      'X^½' => { axis: [1.0, 0.0, 0.0], angle: Math::PI / 2 },
       '√X' => { axis: [1.0, 0.0, 0.0], angle: Math::PI / 2 }
     }.freeze
 

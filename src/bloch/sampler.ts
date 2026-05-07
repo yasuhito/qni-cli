@@ -54,6 +54,7 @@ const FIXED_BLOCH_ROTATIONS = new Map<string, BlochRotation>([
   ['T', { axis: [0, 0, 1], angle: Math.PI / 4 }],
   ['T†', { axis: [0, 0, 1], angle: -(Math.PI / 4) }],
   ['X', { axis: [1, 0, 0], angle: Math.PI }],
+  ['X^½', { axis: [1, 0, 0], angle: Math.PI / 2 }],
   ['Y', { axis: [0, 1, 0], angle: Math.PI }],
   ['Z', { axis: [0, 0, 1], angle: Math.PI }],
   ['√X', { axis: [1, 0, 0], angle: Math.PI / 2 }]

@@ -186,6 +186,35 @@ describe('bloch command TypeScript route', () => {
     });
   });
 
+  it('renders sqrt-X trajectory PNG bytes like the Ruby oracle', async () => {
+    await withTempDir(async (dir) => {
+      const circuit = {
+        qubits: 1,
+        cols: [['X^½']]
+      };
+      await writeCircuit(dir, circuit);
+      const oracleDir = await mkdtemp(path.join(tmpdir(), 'qni-cli-bloch-oracle-'));
+
+      try {
+        await writeCircuit(oracleDir, circuit);
+        const argv = ['bloch', '--png', '--trajectory', '--light', '--output', 'bloch-trajectory.png'];
+
+        const result = captureDispatcherRun(dir, argv, { ...process.env, PATH: '' });
+        const oracle = rubyOracle(oracleDir, argv);
+
+        assert.equal(result.exitStatus, 0);
+        assert.equal(result.stdout, oracle.stdout);
+        assert.equal(result.stderr, oracle.stderr);
+        assert.deepEqual(
+          await readFile(path.join(dir, 'bloch-trajectory.png')),
+          await readFile(path.join(oracleDir, 'bloch-trajectory.png'))
+        );
+      } finally {
+        await rm(oracleDir, { force: true, recursive: true });
+      }
+    });
+  });
+
   it('renders APNG frame count like the Ruby oracle', async () => {
     await withTempDir(async (dir) => {
       const circuit = {
