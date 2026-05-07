@@ -1,5 +1,5 @@
-# Feature: Quantum Katas BasicGates Task 1.7 GlobalPhaseChange
-  Task 1.7 GlobalPhaseChange: 状態全体に -1 を掛ける
+# Feature: Quantum Katas BasicGates 課題 1.7 GlobalPhaseChange
+  課題 1.7 GlobalPhaseChange: 状態全体に -1 を掛ける
 
   入力:
   1 量子ビットの状態 |ψ⟩ = α|0⟩ + β|1⟩
@@ -8,8 +8,8 @@
   状態を -α|0⟩ - β|1⟩ に変える
 
   注意:
-  単独の qubit ではグローバル位相は観測できないが、
-  qni の symbolic 表示では状態全体に -1 が掛かった形を読める
+  単独の量子ビットではグローバル位相は観測できないが、
+  qni の記号表示では状態全体に -1 が掛かった形を読める
 
 ## Scenario: グローバル位相変化は |0> を -|0> に変える
 - Given 初期状態ベクトルは:
