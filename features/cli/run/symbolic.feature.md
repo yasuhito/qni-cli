@@ -1,4 +1,4 @@
-# Feature: qni run symbolic の出力
+# Feature: qni run --symbolic の出力
 
 qni-cli の利用者として
 ket 形式や名前付き基底で状態を読めるように
@@ -18,7 +18,7 @@ qni run --symbolic と --basis の表示を確認したい。
 
 ## Scenario: qni run --symbolic は Bell 状態の |Φ⁻⟩ を表示
 
-- Given 空の 2 qubit 回路がある
+- Given 空の 2 量子ビット回路がある
 - And "qni add H --qubit 0 --step 0" を実行
 - And "qni add X --control 0 --qubit 1 --step 1" を実行
 - And "qni add Z --qubit 0 --step 2" を実行
@@ -144,7 +144,7 @@ qni run --symbolic と --basis の表示を確認したい。
 
 ## Scenario: qni run --symbolic は 2 量子ビットの空回路を ket 形式で表示
 
-- Given 空の 2 qubit 回路がある
+- Given 空の 2 量子ビット回路がある
 - When "qni run --symbolic" を実行
 - Then 標準出力:
 
@@ -172,13 +172,13 @@ qni run --symbolic と --basis の表示を確認したい。
 
 ## Scenario: qni run --symbolic は 3 量子ビット回路を計算基底で表示 は成功
 
-- Given 空の 3 qubit 回路がある
+- Given 空の 3 量子ビット回路がある
 - When "qni run --symbolic" を実行
 - Then コマンドは成功
 
 ## Scenario: qni run --symbolic は 3 量子ビット回路を計算基底で表示
 
-- Given 空の 3 qubit 回路がある
+- Given 空の 3 量子ビット回路がある
 - When "qni run --symbolic" を実行
 - Then 標準出力:
 
