@@ -1,5 +1,5 @@
-# Feature: Quantum Katas BasicGates 課題 1.7 GlobalPhaseChange
-  課題 1.7 GlobalPhaseChange: 状態全体に -1 を掛ける
+# Feature: Quantum Katas BasicGates Task 1.7 GlobalPhaseChange
+  Task 1.7 GlobalPhaseChange: 状態全体に -1 を掛ける
 
   入力:
   1 量子ビットの状態 |ψ⟩ = α|0⟩ + β|1⟩
