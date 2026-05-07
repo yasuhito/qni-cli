@@ -1,4 +1,4 @@
-# Feature: Quantum Katas BasicGates 課題 1.10 BellStateChange3
+# Feature: Quantum Katas BasicGates Task 1.10 BellStateChange3
   課題 1.10 BellStateChange3: |Φ⁺⟩ を |Ψ⁻⟩ に変える
 
   入力:
