@@ -1,6 +1,6 @@
 # Feature: qni run の 2 量子ビットゲート
 
-qni-cli のユーザとして
+qni-cli の利用者として
 2 量子ビットゲートの数値状態ベクトルを確認するために
 qni run が SWAP と CNOT の結果を表示することを検証したい。
 
