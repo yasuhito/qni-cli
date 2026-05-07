@@ -1,10 +1,15 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { CircuitFileError, currentCircuitFile } from '../circuit_file';
+import { CircuitFileError, currentCircuitFile, type CircuitData } from '../circuit_file';
 import type { CommandHandlerContext } from '../dispatcher';
+import { CircleNotationPng } from '../export/circle_notation_png';
+import { PngExporter, type PngTransparency } from '../export/png_exporter';
 import { QCircuitLatex, validateCaptionOptions, type ExportTheme } from '../export/qcircuit_latex';
+import { StateVectorLatex } from '../export/state_vector_latex';
 import { runRubyFallbackSync } from '../process/process_compatibility';
+import { Simulator } from '../simulator';
+import { renderSymbolicStateVector } from '../symbolic_state_renderer';
 
 const HELP_TEXT = `Usage:
   qni export --latex-source [--output=PATH]
@@ -64,6 +69,7 @@ interface ExportOptions {
   readonly output?: string;
   readonly png: boolean;
   readonly stateVector: boolean;
+  readonly transparent: boolean;
 }
 
 const BOOLEAN_OPTIONS = new Map<string, (options: MutableExportOptions) => void>([
@@ -82,14 +88,18 @@ const BOOLEAN_OPTIONS = new Map<string, (options: MutableExportOptions) => void>
   ['--light', (options) => {
     options.light = true;
   }],
-  ['--no-transparent', () => undefined],
+  ['--no-transparent', (options) => {
+    options.transparent = false;
+  }],
   ['--png', (options) => {
     options.png = true;
   }],
   ['--state-vector', (options) => {
     options.stateVector = true;
   }],
-  ['--transparent', () => undefined]
+  ['--transparent', (options) => {
+    options.transparent = true;
+  }]
 ]);
 
 const VALUE_OPTIONS = new Map<string, (options: MutableExportOptions, value: string) => void>([
@@ -131,13 +141,25 @@ export function runExportCommand(argv: string[], context: CommandHandlerContext)
   }
 
   try {
-    if (!typeScriptLatexSource(options)) {
+    if (!typeScriptExport(options)) {
       return rubyFallback(argv, context);
     }
 
     validateOptions(options);
 
-    const latexSource = new QCircuitLatex(currentCircuitFile(context.cwd).load(), {
+    const circuit = currentCircuitFile(context.cwd).load();
+
+    if (options.stateVector) {
+      writeStateVectorPng(circuit, options, context);
+      return 0;
+    }
+
+    if (options.circleNotation) {
+      writeCircleNotationPng(circuit, options, context);
+      return 0;
+    }
+
+    const latexSource = new QCircuitLatex(circuit, {
       caption: options.caption,
       captionFormat: options.captionFormat,
       captionPosition: options.captionPosition,
@@ -171,7 +193,8 @@ function parseExportOptions(args: string[]): ExportOptions | undefined {
     latexSource: false,
     light: false,
     png: false,
-    stateVector: false
+    stateVector: false,
+    transparent: true
   };
 
   for (let index = 0; index < args.length; index += 1) {
@@ -276,8 +299,16 @@ function theme(options: ExportOptions): ExportTheme {
   return options.light ? 'light' : 'dark';
 }
 
+function typeScriptExport(options: ExportOptions): boolean {
+  return typeScriptLatexSource(options) || typeScriptSpecialPng(options);
+}
+
 function typeScriptLatexSource(options: ExportOptions): boolean {
   return options.latexSource && !options.png && !options.stateVector && !options.circleNotation;
+}
+
+function typeScriptSpecialPng(options: ExportOptions): boolean {
+  return options.png && (options.stateVector || options.circleNotation);
 }
 
 function writeLatexSource(latexSource: string, options: ExportOptions, cwd: string): void {
@@ -290,4 +321,44 @@ function writeLatexSource(latexSource: string, options: ExportOptions, cwd: stri
 
   mkdirSync(path.dirname(outputPath), { recursive: true });
   writeFileSync(outputPath, `${latexSource}\n`);
+}
+
+function writeStateVectorPng(circuit: CircuitData, options: ExportOptions, context: CommandHandlerContext): void {
+  const latexFormula = renderSymbolicStateVector({
+    circuit,
+    env: context.env,
+    format: 'latex',
+    projectRoot: context.projectRoot
+  });
+  const latexSource = new StateVectorLatex({
+    latexFormula,
+    theme: theme(options)
+  }).render();
+
+  new PngExporter({
+    env: context.env,
+    latexSource,
+    options: {
+      transparency: pngTransparency(options)
+    },
+    outputPath: outputPath(options, context.cwd)
+  }).export();
+}
+
+function writeCircleNotationPng(circuit: CircuitData, options: ExportOptions, context: CommandHandlerContext): void {
+  new CircleNotationPng({
+    env: context.env,
+    outputPath: outputPath(options, context.cwd),
+    projectRoot: context.projectRoot,
+    stateVector: new Simulator(circuit).exportPayload(),
+    theme: theme(options)
+  }).export();
+}
+
+function outputPath(options: ExportOptions, cwd: string): string {
+  return path.resolve(cwd, options.output ?? '');
+}
+
+function pngTransparency(options: ExportOptions): PngTransparency {
+  return options.transparent ? 'transparent' : 'opaque';
 }
