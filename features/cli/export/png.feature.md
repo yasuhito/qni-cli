@@ -46,3 +46,21 @@ qni export --png で通常の回路図を PNG 形式で書き出したい。
 - Given "qni add H --qubit 1 --step 1" を実行
 - When "qni export --png --output circuit.png" を実行
 - Then "circuit.png" の画像サイズは 128x128 である
+
+## Scenario: qni export --png は pdflatex 未導入環境で失敗する
+
+- Given "qni add H --qubit 0 --step 0" を実行
+- Given 環境変数 "PATH" を "" に設定する
+- When "qni export --png --output circuit.png" を実行
+- Then コマンドは失敗
+
+## Scenario: qni export --png は pdflatex 未導入環境で互換エラーを表示する
+
+- Given "qni add H --qubit 0 --step 0" を実行
+- Given 環境変数 "PATH" を "" に設定する
+- When "qni export --png --output circuit.png" を実行
+- Then 標準エラー:
+
+  ```text
+  pdflatex is required for qni export --png
+  ```
