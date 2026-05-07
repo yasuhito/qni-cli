@@ -1,6 +1,6 @@
 # Feature: qni state set
 
-qni-cli のユーザとして
+qni-cli の利用者として
 任意の初期状態ベクトルを保存するために
 qni state set を使いたい
 
