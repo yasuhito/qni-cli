@@ -682,7 +682,7 @@ print(json.dumps(module.label_metrics()))
   return pythonJson(script, [helperPath]);
 }
 
-Given('空の 1 qubit 回路がある', function () {
+Given(/^空の 1 (?:qubit |量子ビット)回路がある$/, function () {
   writeCircuitJson(this.scenarioDir, {
     qubits: 1,
     cols: [[1]]
@@ -1033,7 +1033,7 @@ Then('{string} と {string} は異なるファイル内容である', function (
   assert.notDeepEqual(fs.readFileSync(actualLhsPath), fs.readFileSync(actualRhsPath));
 });
 
-Then('circle notation renderer では振幅 {float} の位相針の長さは外円の半径に等しい', function (real) {
+Then(/^(?:circle notation renderer では|circle notation の描画処理では)振幅 (\d+(?:\.\d+)?) の位相針の長さは外円の半径に等しい$/, function (real) {
   const metrics = circleNotationPhaseMetrics(real, 0.0);
   const actual = metrics.needle_length;
   const expected = metrics.outer_radius;
@@ -1048,7 +1048,7 @@ Then('circle notation renderer では振幅 {float} の位相針の長さは外�
   );
 });
 
-Then('circle notation renderer では外円の輪郭線は内側へ食い込まない', function () {
+Then(/^(?:circle notation renderer では|circle notation の描画処理では)外円の輪郭線は内側へ食い込まない$/, function () {
   const metrics = circleNotationOutlineMetrics();
   const actual = metrics.outline_inner_edge;
   const expected = metrics.intended_radius;
@@ -1063,7 +1063,7 @@ Then('circle notation renderer では外円の輪郭線は内側へ食い込ま�
   );
 });
 
-Then('circle notation renderer では正の実数振幅の位相針は上を向く', function () {
+Then(/^(?:circle notation renderer では|circle notation の描画処理では)正の実数振幅の位相針は上を向く$/, function () {
   const metrics = circleNotationPhaseMetrics(1.0, 0.0);
 
   assert.ok(
@@ -1075,7 +1075,7 @@ Then('circle notation renderer では正の実数振幅の位相針は上を向�
   );
 });
 
-Then('circle notation renderer では正の虚数振幅の位相針は左を向く', function () {
+Then(/^(?:circle notation renderer では|circle notation の描画処理では)正の虚数振幅の位相針は左を向く$/, function () {
   const metrics = circleNotationPhaseMetrics(0.0, 1.0);
 
   assert.ok(
@@ -1087,13 +1087,13 @@ Then('circle notation renderer では正の虚数振幅の位相針は左を向�
   );
 });
 
-Then('circle notation renderer では振幅 0 のとき位相針は描画されない', function () {
+Then(/^(?:circle notation renderer では|circle notation の描画処理では)振幅 0 のとき位相針は描画されない$/, function () {
   const metrics = circleNotationPhaseMetrics(0.0, 0.0);
 
   assert.equal(metrics.phase_visible, false);
 });
 
-Then('circle notation renderer では振幅 0 のとき中心ドットも描画されない', function () {
+Then(/^(?:circle notation renderer では|circle notation の描画処理では)振幅 0 のとき中心ドットも描画されない$/, function () {
   const metrics = circleNotationPhaseMetrics(0.0, 0.0);
 
   assert.equal(metrics.center_dot_visible, false);
