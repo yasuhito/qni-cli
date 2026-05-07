@@ -1,8 +1,8 @@
-# Feature: qni export LaTeX source
+# Feature: qni export の LaTeX ソース出力
 
-qni-cli のユーザとして
+qni-cli の利用者として
 外部の LaTeX ツールで回路図を利用できるように
-qni export --latex-source で qcircuit LaTeX を出力したい。
+qni export --latex-source で qcircuit 形式の LaTeX を出力したい。
 
 ## Scenario: qni export --latex-source は成功する
 
@@ -10,7 +10,7 @@ qni export --latex-source で qcircuit LaTeX を出力したい。
 - When "qni export --latex-source" を実行
 - Then コマンドは成功
 
-## Scenario: qni export --latex-source は qcircuit package を出力する
+## Scenario: qni export --latex-source は qcircuit パッケージを出力する
 
 - Given "qni add H --qubit 0 --step 0" を実行
 - When "qni export --latex-source" を実行
@@ -20,7 +20,7 @@ qni export --latex-source で qcircuit LaTeX を出力したい。
   \usepackage[braket, qm]{qcircuit}
   ```
 
-## Scenario: qni export --latex-source は xcolor package を出力する
+## Scenario: qni export --latex-source は xcolor パッケージを出力する
 
 - Given "qni add H --qubit 0 --step 0" を実行
 - When "qni export --latex-source" を実行
@@ -40,7 +40,7 @@ qni export --latex-source で qcircuit LaTeX を出力したい。
   \Qcircuit
   ```
 
-## Scenario: qni export --latex-source は H gate を LaTeX として出力する
+## Scenario: qni export --latex-source は H ゲートを LaTeX として出力する
 
 - Given "qni add H --qubit 0 --step 0" を実行
 - When "qni export --latex-source" を実行
@@ -50,7 +50,7 @@ qni export --latex-source で qcircuit LaTeX を出力したい。
   \gate{\mathrm{H}}
   ```
 
-## Scenario: qni export --latex-source はデフォルトで dark theme の色を出力する
+## Scenario: qni export --latex-source はデフォルトでダークテーマの色を出力する
 
 - Given "qni add H --qubit 0 --step 0" を実行
 - When "qni export --latex-source" を実行
@@ -66,7 +66,7 @@ qni export --latex-source で qcircuit LaTeX を出力したい。
 - When "qni export --latex-source --light" を実行
 - Then コマンドは成功
 
-## Scenario: qni export --latex-source --light は light theme の色を出力する
+## Scenario: qni export --latex-source --light はライトテーマの色を出力する
 
 - Given "qni add H --qubit 0 --step 0" を実行
 - When "qni export --latex-source --light" を実行
@@ -76,7 +76,7 @@ qni export --latex-source で qcircuit LaTeX を出力したい。
   \color{black}
   ```
 
-## Scenario: qni export --latex-source --light は dark theme の色を出力しない
+## Scenario: qni export --latex-source --light はダークテーマの色を出力しない
 
 - Given "qni add H --qubit 0 --step 0" を実行
 - When "qni export --latex-source --light" を実行
@@ -86,7 +86,7 @@ qni export --latex-source で qcircuit LaTeX を出力したい。
   \color{white}
   ```
 
-## Scenario: qni export --latex-source は CNOT control を出力する
+## Scenario: qni export --latex-source は CNOT の制御点を出力する
 
 - Given "qni add X --control 0 --qubit 1 --step 0" を実行
 - When "qni export --latex-source" を実行
@@ -96,7 +96,7 @@ qni export --latex-source で qcircuit LaTeX を出力したい。
   \ctrl{1}
   ```
 
-## Scenario: qni export --latex-source は CNOT target を出力する
+## Scenario: qni export --latex-source は CNOT の標的を出力する
 
 - Given "qni add X --control 0 --qubit 1 --step 0" を実行
 - When "qni export --latex-source" を実行
