@@ -1,8 +1,8 @@
-# Feature: qni state help
+# Feature: qni state のヘルプ
 
-qni-cli のユーザとして
+qni-cli の利用者として
 初期状態ベクトルの管理方法を知るために
-qni state の help を見たい
+qni state のヘルプを見たい
 
 ## Scenario: qni state は成功する
 
