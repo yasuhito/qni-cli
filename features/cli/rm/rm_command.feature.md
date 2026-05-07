@@ -1,9 +1,9 @@
 # Feature: rm コマンドでゲートを削除
 
 qni-cli のユーザとして、試行錯誤しながら回路を編集するために、
-指定した step と qubit のゲートを `qni rm` で削除したい。
+指定したステップと量子ビットのゲートを `qni rm` で削除したい。
 
-## Scenario: 単一 qubit gate を削除する
+## Scenario: 単一量子ビットゲートを削除する
 
 - Given "qni add H --qubit 0 --step 0" を実行
 - When "qni rm --qubit 0 --step 0" を実行
@@ -24,7 +24,7 @@ qni-cli のユーザとして、試行錯誤しながら回路を編集するた
 - When "qni rm --qubit 0 --step 0" を実行
 - Then 標準出力は空
 
-## Scenario: 削除後に先頭 step は auto-shrink される
+## Scenario: 削除後に先頭ステップは自動縮小される
 
 - Given "qni add H --qubit 0 --step 0" を実行
 - And "qni add X --qubit 0 --step 1" を実行
@@ -40,7 +40,7 @@ qni-cli のユーザとして、試行錯誤しながら回路を編集するた
   }
   ```
 
-## Scenario: 削除後に先頭 qubit は auto-shrink される
+## Scenario: 削除後に先頭量子ビットは自動縮小される
 
 - Given "qni add H --qubit 0 --step 0" を実行
 - And "qni add X --qubit 1 --step 0" を実行
@@ -56,7 +56,7 @@ qni-cli のユーザとして、試行錯誤しながら回路を編集するた
   }
   ```
 
-## Scenario: CNOT の control を指定すると operation 全体を削除する
+## Scenario: CNOT の制御側を指定すると操作全体を削除する
 
 - Given "qni add X --control 0 --qubit 1 --step 0" を実行
 - When "qni rm --qubit 0 --step 0" を実行
@@ -71,7 +71,7 @@ qni-cli のユーザとして、試行錯誤しながら回路を編集するた
   }
   ```
 
-## Scenario: CNOT の target を指定すると operation 全体を削除する
+## Scenario: CNOT の対象側を指定すると操作全体を削除する
 
 - Given "qni add X --control 0 --qubit 1 --step 0" を実行
 - When "qni rm --qubit 1 --step 0" を実行
@@ -86,7 +86,7 @@ qni-cli のユーザとして、試行錯誤しながら回路を編集するた
   }
   ```
 
-## Scenario: SWAP の片方を指定すると operation 全体を削除する
+## Scenario: SWAP の片方を指定すると操作全体を削除する
 
 - Given "qni add SWAP --qubit 0,1 --step 0" を実行
 - When "qni rm --qubit 0 --step 0" を実行
@@ -101,7 +101,7 @@ qni-cli のユーザとして、試行錯誤しながら回路を編集するた
   }
   ```
 
-## Scenario: 同じ step の独立 gate は指定 qubit だけ削除する
+## Scenario: 同じステップの独立したゲートは指定した量子ビットだけ削除する
 
 - Given "qni add H --qubit 0 --step 0" を実行
 - And "qni add X --qubit 1 --step 0" を実行
@@ -117,7 +117,7 @@ qni-cli のユーザとして、試行錯誤しながら回路を編集するた
   }
   ```
 
-## Scenario: 空 slot の削除は失敗する
+## Scenario: 空スロットの削除は失敗する
 
 - Given 次の circuit.json がある:
 
@@ -137,7 +137,7 @@ qni-cli のユーザとして、試行錯誤しながら回路を編集するた
   slot is empty: cols[0][1]
   ```
 
-## Scenario: 存在しない slot の削除は失敗する
+## Scenario: 存在しないスロットの削除は失敗する
 
 - Given "qni add H --qubit 0 --step 0" を実行
 - When "qni rm --qubit 0 --step 1" を実行
@@ -156,7 +156,7 @@ qni-cli のユーザとして、試行錯誤しながら回路を編集するた
   circuit.json does not exist
   ```
 
-## Scenario: QNI_USE_RUBY=1 の qni rm は Ruby fallback で gate を削除する
+## Scenario: QNI_USE_RUBY=1 の qni rm は Ruby fallback でゲートを削除する
 
 - Given 環境変数 "QNI_USE_RUBY" を "1" に設定する
 - And "qni add H --qubit 0 --step 0" を実行
