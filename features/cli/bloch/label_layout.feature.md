@@ -1,6 +1,6 @@
-# Feature: qni bloch label layout
+# Feature: qni bloch のラベル配置
 
-qni-cli のユーザとして
+qni-cli の利用者として
 ブロッホ球の軸ラベルと状態ラベルを読み分けられるように
 qni bloch のラベルを重ならない位置に配置してほしい。
 
