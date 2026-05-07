@@ -1,6 +1,6 @@
 # Feature: qni export のエラー
 
-qni-cli のユーザとして
+qni-cli の利用者として
 誤ったオプションの組み合わせをすぐ直せるように
 qni export が明確なエラーを返してほしい。
 
@@ -46,7 +46,7 @@ qni export が明確なエラーを返してほしい。
 
 ## Scenario: qni export --circle-notation --png は 3 量子ビット回路では失敗する
 
-- Given 空の 3 qubit 回路がある
+- Given 空の 3 量子ビット回路がある
 - When "qni export --circle-notation --png --output circles.png" を実行
 - Then コマンドは失敗して標準エラー:
 

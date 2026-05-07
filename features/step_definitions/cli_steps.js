@@ -707,7 +707,7 @@ Given('初期状態ベクトルは:', function (docString) {
   writeInitialStateVector(this.scenarioDir, docStringContent(docString));
 });
 
-Given('空の 3 qubit 回路がある', function () {
+Given(/^空の 3 (?:qubit 回路|量子ビット回路)がある$/, function () {
   writeCircuitJson(this.scenarioDir, {
     qubits: 3,
     cols: [[1, 1, 1]]
