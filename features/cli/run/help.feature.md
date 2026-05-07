@@ -1,6 +1,6 @@
-# Feature: qni run ヘルプ
+# Feature: qni run のヘルプ表示
 
-qni-cli のユーザとして
+qni-cli の利用者として
 状態ベクトル表示のオプションを迷わず選べるように
 qni run のヘルプで利用できるオプションを確認したい。
 
