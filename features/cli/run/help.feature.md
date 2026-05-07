@@ -1,8 +1,8 @@
-# Feature: qni run help
+# Feature: qni run ヘルプ
 
 qni-cli のユーザとして
-状態ベクトル表示の option を迷わず選べるように
-qni run の help で利用できる option を確認したい。
+状態ベクトル表示のオプションを迷わず選べるように
+qni run のヘルプで利用できるオプションを確認したい。
 
 ## Scenario: qni run --help は成功する
 
