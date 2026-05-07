@@ -1,7 +1,7 @@
 # Feature: qni state 短縮表記
 
 qni-cli の利用者として
-よく使う 1 量子ビットの初期状態を短い表記で保存するために
+よく使う 1 量子ビットの初期状態を短縮表記で保存するために
 qni state set の短縮表記を使いたい
 
 ## Scenario: qni state set は |+> の保存に成功する
