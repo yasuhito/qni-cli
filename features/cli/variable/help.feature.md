@@ -9,7 +9,7 @@ qni variable のヘルプを見たい
 - When "qni variable" を実行
 - Then コマンドは成功
 
-## Scenario: qni variable は qni variable の使い方を表示
+## Scenario: qni variable は variable コマンドの使い方を表示
 
 - When "qni variable" を実行
 - Then 標準出力:
@@ -41,7 +41,7 @@ qni variable のヘルプを見たい
 - When "qni variable --help" を実行
 - Then コマンドは成功
 
-## Scenario: qni variable --help は qni variable の使い方を表示
+## Scenario: qni variable --help は variable コマンドの使い方を表示
 
 - When "qni variable --help" を実行
 - Then 標準出力:
