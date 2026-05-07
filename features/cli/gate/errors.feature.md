@@ -1,6 +1,6 @@
 # Feature: gate コマンドのエラー表示
 
-qni-cli のユーザーとして、`qni gate` の入力エラーを理解するために、
+qni-cli のユーザとして、`qni gate` の入力エラーを理解するために、
 `gate` コマンドの量子ビット検証エラーを確認したい。
 
 ## Scenario: qni gate は量子ビット番号が整数でないと失敗する
