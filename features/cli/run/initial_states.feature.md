@@ -1,6 +1,6 @@
 # Feature: qni run の初期状態
 
-qni-cli のユーザとして
+qni-cli の利用者として
 qni state set で指定した初期状態から数値実行するために
 qni run が変数解決済みの初期状態を使うことを確認したい。
 
