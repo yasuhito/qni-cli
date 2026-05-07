@@ -1,5 +1,5 @@
-# Feature: Quantum Katas BasicGates Task 1.3 SignFlip
-  Task 1.3 SignFlip: |+⟩ を |-⟩ に、|-⟩ を |+⟩ に変える
+# Feature: Quantum Katas BasicGates 課題 1.3 SignFlip
+  課題 1.3 SignFlip: |+⟩ を |-⟩ に、|-⟩ を |+⟩ に変える
 
   入力:
   1 量子ビットの状態 |ψ⟩ = α|0⟩ + β|1⟩
