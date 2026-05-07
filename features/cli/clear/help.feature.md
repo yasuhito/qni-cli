@@ -1,8 +1,8 @@
-# Feature: qni clear help
+# Feature: qni clear のヘルプ表示
 
 qni-cli のユーザとして
 clear コマンドの使い方を知るために
-qni clear の help を見たい
+qni clear のヘルプを見たい
 
 ## Scenario: qni clear --help は成功する
 
