@@ -1,6 +1,6 @@
 # Feature: qni export の LaTeX ソース出力
 
-qni-cli のユーザーとして
+qni-cli のユーザとして
 外部の LaTeX ツールで回路図を利用できるように
 qni export --latex-source で qcircuit 形式の LaTeX を出力したい。
 
