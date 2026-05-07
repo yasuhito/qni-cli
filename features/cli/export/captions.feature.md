@@ -1,8 +1,8 @@
-# Feature: qni export captions
+# Feature: qni export のキャプション
 
-qni-cli のユーザとして
+qni-cli の利用者として
 回路図に説明を添えてノートや資料へ貼れるように
-qni export の caption option を使いたい。
+qni export のキャプションオプションを使いたい。
 
 ## Scenario: qni export --latex-source --caption は成功する
 
@@ -10,7 +10,7 @@ qni export の caption option を使いたい。
 - When "qni export --latex-source --caption 'CNOT before cut'" を実行
 - Then コマンドは成功
 
-## Scenario: qni export --latex-source --caption は回路の下に caption を出力する
+## Scenario: qni export --latex-source --caption は回路の下にキャプションを出力する
 
 - Given "qni add H --qubit 0 --step 0" を実行
 - When "qni export --latex-source --caption 'CNOT before cut'" を実行
@@ -26,7 +26,7 @@ qni export の caption option を使いたい。
 - When "qni export --latex-source --caption 'Top caption' --caption-position top" を実行
 - Then コマンドは成功
 
-## Scenario: qni export --latex-source --caption-position top は caption を回路より前に出力する
+## Scenario: qni export --latex-source --caption-position top はキャプションを回路より前に出力する
 
 - Given "qni add H --qubit 0 --step 0" を実行
 - When "qni export --latex-source --caption 'Top caption' --caption-position top" を実行
