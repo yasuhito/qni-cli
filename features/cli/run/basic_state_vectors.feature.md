@@ -1,7 +1,7 @@
-# Feature: qni run basic state vectors
+# Feature: qni run の基本的な状態ベクトル
 
-qni-cli のユーザとして
-空回路と固定 1 qubit gate の数値状態ベクトルを確認するために
+qni-cli のユーザーとして
+空回路と固定 1 量子ビットゲートの数値状態ベクトルを確認するために
 qni run の標準出力を責務別に検証したい。
 
 
@@ -23,7 +23,7 @@ qni run の標準出力を責務別に検証したい。
 
 ## Scenario: qni run は何もゲートを適用しない |0> の状態ベクトルを標準出力に表示
 
-- Given 空の 1 qubit 回路がある
+- Given 空の 1 量子ビット回路がある
 - When "qni run" を実行
 - Then 標準出力:
 
@@ -111,7 +111,7 @@ qni run の標準出力を責務別に検証したい。
   0.5+0.5i,0.5-0.5i
   ```
 
-## Scenario: qni run は Phase ゲートの状態ベクトルを標準出力に表示
+## Scenario: qni run は位相ゲートの状態ベクトルを標準出力に表示
 
 - Given "qni add P --angle π/3 --qubit 0 --step 0" を実行
 - When "qni run" を実行
@@ -250,7 +250,7 @@ qni run の標準出力を責務別に検証したい。
   0.5-0.5i,0.5+0.5i
   ```
 
-## Scenario: qni run は |1> に Phase ゲートを適用した状態ベクトルを標準出力に表示
+## Scenario: qni run は |1> に位相ゲートを適用した状態ベクトルを標準出力に表示
 
 - Given "qni add X --qubit 0 --step 0" を実行
 - And "qni add P --angle π/3 --qubit 0 --step 1" を実行
