@@ -1,6 +1,6 @@
 # Feature: qni view の ASCII 回路パーサ
 
-qni-cli のユーザーとして、Markdown の機能ファイルから回路図を入力できるように、
+qni-cli のユーザとして、Markdown の機能ファイルから回路図を入力できるように、
 qni view の ASCII 回路パーサで circuit.json を作りたい。
 
 ## Scenario: 空回路の ASCII 回路図を読み込める
