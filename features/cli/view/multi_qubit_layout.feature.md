@@ -1,7 +1,7 @@
-# Feature: qni view の multi qubit layout 表示
+# Feature: qni view の複数量子ビット配置表示
 
-qni-cli のユーザとして、複数 qubit の回路を確認するために、
-qni view で qubit 間の接続や同一 step の gate 配置が分かる表示を見たい。
+qni-cli のユーザーとして、複数量子ビットの回路を確認するために、
+qni view で量子ビット間の接続や同一ステップのゲート配置が分かる表示を見たい。
 
 ## Scenario: qni view は SWAP ゲートを表示
 
@@ -15,7 +15,7 @@ qni view で qubit 間の接続や同一 step の gate 配置が分かる表示�
   q1: ─X─
   ```
 
-## Scenario: 同じ step の 2 qubit に H がある回路を表示
+## Scenario: 同じステップの 2 量子ビットに H がある回路を表示
 
 - Given "qni add H --qubit 0 --step 0" を実行
 - And "qni add H --qubit 1 --step 0" を実行
@@ -29,4 +29,3 @@ qni view で qubit 間の接続や同一 step の gate 配置が分かる表示�
   q1: ┤ H ├
       └───┘
   ```
-
