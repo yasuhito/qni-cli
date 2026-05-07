@@ -1,5 +1,5 @@
 # Feature: Quantum Katas Superposition Task 1.8 GHZ_State
-  Task 1.8 GHZ_State: N qubit の GHZ 状態を作る
+  Task 1.8 GHZ_State: N 量子ビットの GHZ 状態を作る
 
   入力:
   N 量子ビットの状態 |0...0⟩
@@ -7,8 +7,8 @@
   目標:
   状態を (|0...0⟩ + |1...1⟩) / sqrt(2) に変える
 
-  この task では、最初の qubit を H で重ね合わせにし、
-  その値を残りの qubit に順に CNOT で伝えると、
+  この課題では、最初の量子ビットを H で重ね合わせにし、
+  その値を残りの量子ビットに順に CNOT で伝えると、
   GHZ 状態が作れることを小さい N から確かめる。
 
 ## Scenario: N = 1 のとき GHZ 状態は計算基底の重ね合わせになる
@@ -80,7 +80,7 @@
   ```
 
 ## Scenario: N = 3 のとき GHZ 状態は |000> と |111> の重ね合わせになる
-- Given 空の 3 qubit 回路がある
+- Given 空の 3 量子ビット回路がある
 - When 次の回路を適用:
   ```
       ┌───┐          
