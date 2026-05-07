@@ -1,5 +1,5 @@
 # Feature: Quantum Katas Superposition Task 1.5 AllBasisVectorsWithPhases_TwoQubits
-  課題 1.5 AllBasisVectorsWithPhases_TwoQubits: |00⟩ を位相付きの一様重ね合わせに変える
+  Task 1.5 AllBasisVectorsWithPhases_TwoQubits: |00⟩ を位相付きの一様重ね合わせに変える
 
   入力:
   2 量子ビットの状態 |00⟩
