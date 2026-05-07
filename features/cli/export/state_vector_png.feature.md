@@ -1,6 +1,6 @@
 # Feature: qni export state-vector PNG
 
-qni-cli のユーザとして
+qni-cli の利用者として
 回路の最終状態を数式画像として保存できるように
 qni export --state-vector --png を使いたい。
 
