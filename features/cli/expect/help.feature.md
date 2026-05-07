@@ -1,6 +1,6 @@
 # Feature: expect コマンドのヘルプ表示
 
-qni-cli のユーザとして、Pauli string の期待値計算方法を確認するために、
+qni-cli の利用者として、Pauli 文字列の期待値計算方法を確認するために、
 `qni expect` の使い方をヘルプで見たい。
 
 ## Scenario: qni expect は成功する
