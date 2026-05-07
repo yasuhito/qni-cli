@@ -1,7 +1,7 @@
-# Feature: qni run symbolic output
+# Feature: qni run symbolic の出力
 
-qni-cli のユーザとして
-ket 形式や named basis で状態を読めるように
+qni-cli の利用者として
+ket 形式や名前付き基底で状態を読めるように
 qni run --symbolic と --basis の表示を確認したい。
 
 
@@ -132,7 +132,7 @@ qni run --symbolic と --basis の表示を確認したい。
   cos(alpha)|0> + sin(alpha)|1>
   ```
 
-## Scenario: qni run --symbolic は具体的な π 角度も exact に表示
+## Scenario: qni run --symbolic は具体的な π 角度も厳密値として表示
 
 - Given "qni add Ry --angle π/2 --qubit 0 --step 0" を実行
 - When "qni run --symbolic" を実行
@@ -142,7 +142,7 @@ qni run --symbolic と --basis の表示を確認したい。
   sqrt(2)/2|0> + sqrt(2)/2|1>
   ```
 
-## Scenario: qni run --symbolic は 2 qubit の空回路を ket 形式で表示
+## Scenario: qni run --symbolic は 2 量子ビットの空回路を ket 形式で表示
 
 - Given 空の 2 qubit 回路がある
 - When "qni run --symbolic" を実行
@@ -152,7 +152,7 @@ qni run --symbolic と --basis の表示を確認したい。
   |00>
   ```
 
-## Scenario: qni run --symbolic は同じ step に 2 qubit の独立した H がある回路を ket 形式で表示
+## Scenario: qni run --symbolic は同じステップに 2 量子ビットの独立した H がある回路を ket 形式で表示
 
 - Given 次の回路図がある:
 
@@ -170,13 +170,13 @@ qni run --symbolic と --basis の表示を確認したい。
   1/2|00> + 1/2|01> + 1/2|10> + 1/2|11>
   ```
 
-## Scenario: qni run --symbolic は 3 qubit 回路を計算基底で表示 は成功
+## Scenario: qni run --symbolic は 3 量子ビット回路を計算基底で表示 は成功
 
 - Given 空の 3 qubit 回路がある
 - When "qni run --symbolic" を実行
 - Then コマンドは成功
 
-## Scenario: qni run --symbolic は 3 qubit 回路を計算基底で表示
+## Scenario: qni run --symbolic は 3 量子ビット回路を計算基底で表示
 
 - Given 空の 3 qubit 回路がある
 - When "qni run --symbolic" を実行
