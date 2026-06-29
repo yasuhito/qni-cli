@@ -1,5 +1,5 @@
-# Feature: Quantum Katas Superposition Task 1.1 PlusState
-  Task 1.1 PlusState: |0⟩ を |+⟩ に変える
+# Feature: Quantum Katas Superposition 課題 1.1 PlusState
+  課題 1.1 PlusState: |0⟩ を |+⟩ に変える
 
   入力:
   1 量子ビットの状態 |0⟩
@@ -7,7 +7,7 @@
   目標:
   状態を |+⟩ = (|0⟩ + |1⟩) / sqrt(2) に変える
 
-  この task では、Hadamard ゲート H が
+  この課題では、Hadamard ゲート H が
   計算基底の |0⟩ を x 基底の |+⟩ に変えることを確かめる。
 
 ## Scenario: H ゲートは |0> を計算基底の重ね合わせに変える
