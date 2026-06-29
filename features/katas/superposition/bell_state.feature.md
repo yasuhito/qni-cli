@@ -1,5 +1,5 @@
 # Feature: Quantum Katas Superposition Task 1.6 BellState
-  Task 1.6 BellState: |00⟩ から Bell 状態 |Φ⁺⟩ を作る
+  課題 1.6 BellState: |00⟩ から Bell 状態 |Φ⁺⟩ を作る
 
   入力:
   2 量子ビットの状態 |00⟩
@@ -7,9 +7,9 @@
   目標:
   状態を |Φ⁺⟩ = (|00⟩ + |11⟩) / sqrt(2) に変える
 
-  この task では、最初の qubit を H で重ね合わせにし、
-  その値を CNOT で 2 個目の qubit にコピーすると、
-  2 qubit がもつれた Bell 状態になることを確かめる。
+  この課題では、最初の量子ビットを H で重ね合わせにし、
+  その値を CNOT で 2 個目の量子ビットにコピーすると、
+  2 量子ビットがもつれた Bell 状態になることを確かめる。
 
 ## Scenario: H のあとに CNOT を適用すると |00> は計算基底の Bell 重ね合わせになる
 - Given 初期状態ベクトルは:

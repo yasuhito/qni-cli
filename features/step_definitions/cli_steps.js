@@ -1012,7 +1012,7 @@ Then('リポジトリファイル {string} は {string} を含む', function (fi
   );
 });
 
-Then('標準出力に dim 修飾付きラベル {string} を含む', function (label) {
+Then('標準出力に淡色修飾付きラベル {string} を含む', function (label) {
   const chars = [...label];
 
   assert.ok(chars.length >= 2, `label must have at least 2 characters: ${label}`);

@@ -1,6 +1,6 @@
 # Feature: qni state show
 
-qni-cli のユーザとして
+qni-cli の利用者として
 現在の初期状態ベクトルを確認するために
 qni state show を使いたい
 

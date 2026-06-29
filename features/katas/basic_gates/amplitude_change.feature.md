@@ -1,5 +1,5 @@
-# Feature: Quantum Katas BasicGates Task 1.4 AmplitudeChange
-  Task 1.4 AmplitudeChange: |0⟩ を cos(θ)|0⟩ + sin(θ)|1⟩ に変える
+# Feature: Quantum Katas BasicGates 課題 1.4 AmplitudeChange
+  課題 1.4 AmplitudeChange: |0⟩ を cos(θ)|0⟩ + sin(θ)|1⟩ に変える
 
   入力:
   角度 θ

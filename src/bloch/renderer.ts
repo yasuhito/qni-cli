@@ -29,6 +29,7 @@ interface HelperCommand {
 }
 
 const SETUP_MESSAGE = 'bloch rendering requires matplotlib and Pillow; run scripts/setup_symbolic_python.sh';
+const HELPER_MAX_BUFFER_BYTES = 64 * 1024 * 1024;
 const HELPER_ENV = {
   MPLCONFIGDIR: path.join(tmpdir(), 'qni-cli-matplotlib'),
   UV_CACHE_DIR: path.join(tmpdir(), 'qni-cli-uv-cache')
@@ -66,6 +67,7 @@ function runWithHelper(command: HelperCommand, request: BlochRenderRequest): Ren
       ...HELPER_ENV
     },
     input: JSON.stringify(payload(request)),
+    maxBuffer: HELPER_MAX_BUFFER_BYTES,
     stdio: ['pipe', 'pipe', 'pipe']
   });
 

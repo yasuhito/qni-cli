@@ -1,15 +1,15 @@
 # Feature: qni state Bell
 
-qni-cli のユーザとして
+qni-cli の利用者として
 Bell 基底の初期状態を保存・確認するために
-qni state set の Bell shorthand を使いたい
+qni state set の Bell 短縮表記を使いたい
 
 ## Scenario: qni state set は |Φ+> の保存に成功する
 
 - When "qni state set \"|Φ+>\"" を実行
 - Then コマンドは成功
 
-## Scenario: qni state show は |Φ+> を shorthand のまま表示する
+## Scenario: qni state show は |Φ+> を短縮表記のまま表示する
 
 - Given "qni state set \"|Φ+>\"" を実行
 - When "qni state show" を実行
@@ -19,7 +19,7 @@ qni state set の Bell shorthand を使いたい
   |Φ+>
   ```
 
-## Scenario: qni state set は |Φ+> を qubits 2 の circuit.json として保存する
+## Scenario: qni state set は |Φ+> を 2 量子ビットの circuit.json として保存する
 
 - When "qni state set \"|Φ+>\"" を実行
 - Then "circuit.json" の内容:
@@ -50,7 +50,7 @@ qni state set の Bell shorthand を使いたい
 - When "qni state set \"|Φ->\"" を実行
 - Then コマンドは成功
 
-## Scenario: qni state show は |Φ-> を shorthand のまま表示する
+## Scenario: qni state show は |Φ-> を短縮表記のまま表示する
 
 - Given "qni state set \"|Φ->\"" を実行
 - When "qni state show" を実行
@@ -65,7 +65,7 @@ qni state set の Bell shorthand を使いたい
 - When "qni state set \"|Ψ+>\"" を実行
 - Then コマンドは成功
 
-## Scenario: qni state show は |Ψ+> を shorthand のまま表示する
+## Scenario: qni state show は |Ψ+> を短縮表記のまま表示する
 
 - Given "qni state set \"|Ψ+>\"" を実行
 - When "qni state show" を実行
@@ -80,7 +80,7 @@ qni state set の Bell shorthand を使いたい
 - When "qni state set \"|Ψ->\"" を実行
 - Then コマンドは成功
 
-## Scenario: qni state show は |Ψ-> を shorthand のまま表示する
+## Scenario: qni state show は |Ψ-> を短縮表記のまま表示する
 
 - Given "qni state set \"|Ψ->\"" を実行
 - When "qni state show" を実行
