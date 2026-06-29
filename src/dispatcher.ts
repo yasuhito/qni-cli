@@ -5,8 +5,10 @@ import {
 import { runAddCommand } from './commands/add_command';
 import { runBenchmarkCommand } from './commands/benchmark_command';
 import { runBlochCommand } from './commands/bloch_command';
+import { runClearCommand } from './commands/clear_command';
 import { runExportCommand } from './commands/export_command';
 import { runGateCommand } from './commands/gate_command';
+import { runHelpCommand } from './commands/help_command';
 import { runExpectCommand } from './commands/expect_command';
 import { runRemoveCommand } from './commands/remove_command';
 import { runRunCommand } from './commands/run_command';
@@ -35,9 +37,14 @@ interface CommandRoute {
 }
 
 const TYPESCRIPT_ROUTES = new Map<string, CommandHandler>([
+  ['', runHelpCommand],
+  ['--help', runHelpCommand],
+  ['-h', runHelpCommand],
+  ['help', runHelpCommand],
   ['add', runAddCommand],
   ['benchmark', runBenchmarkCommand],
   ['bloch', runBlochCommand],
+  ['clear', runClearCommand],
   ['export', runExportCommand],
   ['expect', runExpectCommand],
   ['gate', runGateCommand],

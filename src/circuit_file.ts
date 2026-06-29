@@ -29,6 +29,10 @@ export class CircuitFile {
     this.filePath = filePath;
   }
 
+  clear(): void {
+    rmSync(this.filePath, { force: true });
+  }
+
   clearVariables(): boolean {
     const circuit = this.existingCircuit();
 
