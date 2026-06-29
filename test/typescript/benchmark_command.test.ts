@@ -132,6 +132,33 @@ describe('benchmark command TypeScript route', () => {
     });
   });
 
+  it('fails the StateFlip incorrect sample with human-readable failed check details', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, [
+        'benchmark',
+        'run',
+        'benchmarks/quantum-katas/basic-gates/state-flip.md',
+        'benchmarks/incorrect/quantum-katas/basic-gates/state-flip-wrong.qni'
+      ]);
+
+      assert.equal(result.exitStatus, 1, result.stderr);
+      assert.equal(result.stdout, [
+        'FAIL StateFlip',
+        'checks: 1',
+        'failed checks:',
+        '- run #1: state vector did not match expected amplitudes',
+        '  expected:',
+        '    |0>: 0',
+        '    |1>: 1',
+        '  actual:',
+        '    |0>: 0.7071067811865475',
+        '    |1>: 0.7071067811865475',
+        ''
+      ].join('\n'));
+      assert.equal(result.stderr, '');
+    });
+  });
+
   it('parses scientific notation in imaginary amplitudes during run checks', async () => {
     await withTempDir(async (dir) => {
       await writeFile(path.join(dir, 'task.md'), [

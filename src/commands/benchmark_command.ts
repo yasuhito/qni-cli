@@ -39,8 +39,15 @@ interface QniCommandResult {
 }
 
 interface BenchmarkResult {
-  readonly checkCount: number;
+  readonly checks: readonly BenchmarkCheckResult[];
   readonly status: 'passed' | 'failed';
+}
+
+interface BenchmarkCheckResult {
+  readonly actual: readonly ComplexAmplitude[];
+  readonly expected: readonly ComplexAmplitude[];
+  readonly status: 'passed' | 'failed';
+  readonly type: 'run';
 }
 
 class BenchmarkError extends Error {}
@@ -98,11 +105,11 @@ function evaluateBenchmark(options: {
 
   try {
     runSubmission(options.submissionPath, workDir, options.context);
-    const checksPassed = options.task.checks.items.every((check) => runCheckPassed(check, options.task, workDir, options.context));
+    const checks = options.task.checks.items.map((check) => runCheck(check, options.task, workDir, options.context));
 
     return {
-      checkCount: options.task.checks.items.length,
-      status: checksPassed ? 'passed' : 'failed'
+      checks,
+      status: checks.every((check) => check.status === 'passed') ? 'passed' : 'failed'
     };
   } finally {
     rmSync(workDir, { force: true, recursive: true });
@@ -142,32 +149,47 @@ function qniCommandsInSubmission(submissionPath: string): { argv: string[]; line
     });
 }
 
-function runCheckPassed(
+function runCheck(
   check: RunCheck,
   task: BenchmarkTask,
   workDir: string,
   context: CommandHandlerContext
-): boolean {
+): BenchmarkCheckResult {
   const result = runQni(['run'], workDir, context);
 
   if (result.exitStatus !== 0) {
     throw new BenchmarkError(`run check failed to execute for ${task.id}: ${result.stderr.trimEnd()}`);
   }
 
-  return stateVectorMatches(parseStateVector(result.stdout), check.expected, task.checks.tolerance);
+  const actual = parseStateVector(result.stdout);
+  const expected = expectedStateVector(check.expected, actual.length);
+
+  return {
+    actual,
+    expected,
+    status: stateVectorMatches(actual, expected, task.checks.tolerance) ? 'passed' : 'failed',
+    type: 'run'
+  };
+}
+
+function expectedStateVector(
+  expectedAmplitudes: readonly ExpectedAmplitude[],
+  vectorLength: number
+): ComplexAmplitude[] {
+  const expected = Array.from({ length: vectorLength }, () => ZERO_AMPLITUDE);
+
+  for (const item of expectedAmplitudes) {
+    expected[basisIndex(item.basis, vectorLength)] = item.amplitude;
+  }
+
+  return expected;
 }
 
 function stateVectorMatches(
   actual: readonly ComplexAmplitude[],
-  expectedAmplitudes: readonly ExpectedAmplitude[],
+  expected: readonly ComplexAmplitude[],
   tolerance: number
 ): boolean {
-  const expected = Array.from({ length: actual.length }, () => ZERO_AMPLITUDE);
-
-  for (const item of expectedAmplitudes) {
-    expected[basisIndex(item.basis, actual.length)] = item.amplitude;
-  }
-
   return actual.every((amplitude, index) => amplitudesClose(amplitude, expected[index] ?? ZERO_AMPLITUDE, tolerance));
 }
 
@@ -476,5 +498,62 @@ function writeHumanResult(task: BenchmarkTask, result: BenchmarkResult): void {
   const label = result.status === 'passed' ? 'PASS' : 'FAIL';
 
   process.stdout.write(`${label} ${task.title}\n`);
-  process.stdout.write(`checks: ${result.checkCount}\n`);
+  process.stdout.write(`checks: ${result.checks.length}\n`);
+  writeFailedCheckDetails(result);
+}
+
+function writeFailedCheckDetails(result: BenchmarkResult): void {
+  const failedChecks = result.checks
+    .map((check, index) => ({ check, index }))
+    .filter((item) => item.check.status === 'failed');
+
+  if (failedChecks.length === 0) {
+    return;
+  }
+
+  process.stdout.write('failed checks:\n');
+
+  for (const failedCheck of failedChecks) {
+    process.stdout.write(`${failedCheckLines(failedCheck.check, failedCheck.index).join('\n')}\n`);
+  }
+}
+
+function failedCheckLines(check: BenchmarkCheckResult, index: number): string[] {
+  return [
+    `- ${check.type} #${index + 1}: state vector did not match expected amplitudes`,
+    '  expected:',
+    ...stateVectorLines(check.expected).map((line) => `    ${line}`),
+    '  actual:',
+    ...stateVectorLines(check.actual).map((line) => `    ${line}`)
+  ];
+}
+
+function stateVectorLines(stateVector: readonly ComplexAmplitude[]): string[] {
+  return stateVector.map((amplitude, index) => `${basisLabel(index, stateVector.length)}: ${formatComplexAmplitude(amplitude)}`);
+}
+
+function basisLabel(index: number, vectorLength: number): string {
+  const width = Math.log2(vectorLength);
+
+  if (!Number.isInteger(width)) {
+    throw new BenchmarkError(`state vector length is not a power of two: ${vectorLength}`);
+  }
+
+  return `|${index.toString(2).padStart(width, '0')}>`;
+}
+
+function formatComplexAmplitude(amplitude: ComplexAmplitude): string {
+  if (amplitude.imaginary === 0) {
+    return formatNumber(amplitude.real);
+  }
+
+  if (amplitude.real === 0) {
+    return `${formatNumber(amplitude.imaginary)}i`;
+  }
+
+  return `${formatNumber(amplitude.real)}${amplitude.imaginary >= 0 ? '+' : ''}${formatNumber(amplitude.imaginary)}i`;
+}
+
+function formatNumber(value: number): string {
+  return Object.is(value, -0) ? '0' : String(value);
 }

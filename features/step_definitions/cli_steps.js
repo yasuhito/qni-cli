@@ -796,6 +796,17 @@ Then('コマンドは失敗', function () {
   assert.notEqual(this.lastCommand.code, 0, commandSuccessMessage(this.lastCommand));
 });
 
+Then('終了コードは {int}', function (expectedStatus) {
+  assert.equal(this.lastCommand.code, expectedStatus, [
+    `expected exit status ${expectedStatus}`,
+    `actual exit status: ${this.lastCommand.code}`,
+    'stdout:',
+    this.lastCommand.stdout,
+    'stderr:',
+    this.lastCommand.stderr
+  ].join('\n'));
+});
+
 Then('TypeScript route の終了ステータスは Ruby oracle と同じ', function () {
   assert.equal(this.routeComparison.typeScript.code, this.routeComparison.oracle.code);
 });
