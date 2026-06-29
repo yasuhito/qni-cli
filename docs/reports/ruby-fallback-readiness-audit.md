@@ -86,7 +86,7 @@
 - [x] README の通常セットアップ・Quick Start・開発手順を npm / Node 経路へ更新する。
 - [x] CI を Node ベースの通常検証へ切り替える。Ruby 基準比較を残す場合は、通常利用経路とは分ける。
 - [x] npm パッケージとしての Ruby fallback なしスモーク検証を追加する。
-- [ ] Ruby 基準比較の最終アーカイブまたは参照先を残す。
+- [x] Ruby 基準比較の最終アーカイブまたは参照先を残す（`docs/reports/ruby-comparison-archive.md`, `docs/reports/ruby-comparison-archive.json`）。
 - [ ] npm 配布で Ruby fallback を使わないリリースサイクルを1回完了する。
 - [ ] rollback plan と release note の要点を用意する。
 
@@ -107,6 +107,7 @@ Python 補助プログラム、`pdflatex`、`pdftocairo` は Ruby fallback で�
 ```bash
 npm run check
 npm run smoke:package
+npm run archive:ruby-comparison
 npm run build
 npm run test:ts
 npm run cucumber

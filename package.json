@@ -16,6 +16,7 @@
     "build": "tsc",
     "build:ts": "npm run build",
     "check": "npm run test:ts:node && npm run cucumber:node",
+    "archive:ruby-comparison": "npm run build && node scripts/archive_ruby_comparison.js",
     "check:ruby-legacy": "npm run test:ts && npm run cucumber",
     "smoke:package": "npm run build && node scripts/smoke_npm_package.js",
     "cucumber": "npm run build && cucumber-js --config cucumber-js.mjs --require \"features/support/**/*.js\" --require \"features/step_definitions/**/*.js\" --format progress \"features/**/*.feature.md\"",

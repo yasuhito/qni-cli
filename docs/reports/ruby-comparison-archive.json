@@ -1,0 +1,1232 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-06-29T21:40:13.132Z",
+  "source_commit": "0e7990c25a1a3538ea6d3f9cc33fd4b1a5818e38",
+  "status": "passed",
+  "summary": {
+    "total": 14,
+    "passed": 14,
+    "failed": 0
+  },
+  "runtimes": {
+    "node": "v26.2.0",
+    "ruby": "ruby 3.4.8 (2025-12-17 revision 995b59f666) +PRISM [x86_64-linux]",
+    "typescript": "Version 6.0.3"
+  },
+  "cases": [
+    {
+      "name": "top-level-help",
+      "command": "qni --help",
+      "mode": "ruby-vs-typescript",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "exit_status",
+          "passed": true
+        },
+        {
+          "name": "signal",
+          "passed": true
+        },
+        {
+          "name": "stdout",
+          "passed": true
+        },
+        {
+          "name": "stderr",
+          "passed": true
+        },
+        {
+          "name": "circuit_json",
+          "passed": true
+        },
+        {
+          "name": "files",
+          "passed": true
+        }
+      ],
+      "ruby": {
+        "command": "bundle exec bin/qni --help",
+        "exit_status": 0,
+        "signal": null,
+        "stderr": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "stdout": {
+          "preview": "qni commands:\n  qni add       # Add a gate to the circuit\n  qni bloch     # Render the current 1-qubit state on the Bloch sphere\n  qni clear     # Delete the current circuit file\n  qni expect    # Show expectation values of Pauli strings\n  qni export    # Export the circuit as qcircuit LaTeX or PNG\n  qni gate      # Show the gate at a circuit slot\n  qni rm        # Remove a gate from the circuit\n  qni run       # Show the state vector of the circuit\n  qni state     # Manage the initial state vec…",
+          "sha256": "da2860d2a0e98e52f1a07a35a55c682174fd947c5e35cb543abb22b8a7829412",
+          "size_bytes": 605
+        },
+        "snapshot": {
+          "files": {}
+        }
+      },
+      "typescript": {
+        "command": "node dist/bin/qni.js --help",
+        "exit_status": 0,
+        "signal": null,
+        "stderr": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "stdout": {
+          "preview": "qni commands:\n  qni add       # Add a gate to the circuit\n  qni bloch     # Render the current 1-qubit state on the Bloch sphere\n  qni clear     # Delete the current circuit file\n  qni expect    # Show expectation values of Pauli strings\n  qni export    # Export the circuit as qcircuit LaTeX or PNG\n  qni gate      # Show the gate at a circuit slot\n  qni rm        # Remove a gate from the circuit\n  qni run       # Show the state vector of the circuit\n  qni state     # Manage the initial state vec…",
+          "sha256": "0c8282393a16a73034429f08f1311fae617913db9e19a40b22b0be69f5c79ba6",
+          "size_bytes": 604
+        },
+        "snapshot": {
+          "files": {}
+        }
+      }
+    },
+    {
+      "name": "add-h",
+      "command": "qni add H --qubit 0 --step 0",
+      "mode": "ruby-vs-typescript",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "exit_status",
+          "passed": true
+        },
+        {
+          "name": "signal",
+          "passed": true
+        },
+        {
+          "name": "stdout",
+          "passed": true
+        },
+        {
+          "name": "stderr",
+          "passed": true
+        },
+        {
+          "name": "circuit_json",
+          "passed": true
+        },
+        {
+          "name": "files",
+          "passed": true
+        }
+      ],
+      "ruby": {
+        "command": "bundle exec bin/qni add H --qubit 0 --step 0",
+        "exit_status": 0,
+        "signal": null,
+        "stderr": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "stdout": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "snapshot": {
+          "circuit_json": {
+            "qubits": 1,
+            "cols": [
+              [
+                "H"
+              ]
+            ]
+          },
+          "files": {}
+        }
+      },
+      "typescript": {
+        "command": "node dist/bin/qni.js add H --qubit 0 --step 0",
+        "exit_status": 0,
+        "signal": null,
+        "stderr": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "stdout": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "snapshot": {
+          "circuit_json": {
+            "qubits": 1,
+            "cols": [
+              [
+                "H"
+              ]
+            ]
+          },
+          "files": {}
+        }
+      }
+    },
+    {
+      "name": "gate-h",
+      "command": "qni gate --qubit 0 --step 0",
+      "mode": "ruby-vs-typescript",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "exit_status",
+          "passed": true
+        },
+        {
+          "name": "signal",
+          "passed": true
+        },
+        {
+          "name": "stdout",
+          "passed": true
+        },
+        {
+          "name": "stderr",
+          "passed": true
+        },
+        {
+          "name": "circuit_json",
+          "passed": true
+        },
+        {
+          "name": "files",
+          "passed": true
+        }
+      ],
+      "ruby": {
+        "command": "bundle exec bin/qni gate --qubit 0 --step 0",
+        "exit_status": 0,
+        "signal": null,
+        "stderr": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "stdout": {
+          "preview": "H\n",
+          "sha256": "d98c786cff70da9d10a2c49cf9d849025d3669b95dd56cc7c27c1ebf4cbabc2c",
+          "size_bytes": 2
+        },
+        "snapshot": {
+          "circuit_json": {
+            "qubits": 1,
+            "cols": [
+              [
+                "H"
+              ]
+            ]
+          },
+          "files": {}
+        }
+      },
+      "typescript": {
+        "command": "node dist/bin/qni.js gate --qubit 0 --step 0",
+        "exit_status": 0,
+        "signal": null,
+        "stderr": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "stdout": {
+          "preview": "H\n",
+          "sha256": "d98c786cff70da9d10a2c49cf9d849025d3669b95dd56cc7c27c1ebf4cbabc2c",
+          "size_bytes": 2
+        },
+        "snapshot": {
+          "circuit_json": {
+            "qubits": 1,
+            "cols": [
+              [
+                "H"
+              ]
+            ]
+          },
+          "files": {}
+        }
+      }
+    },
+    {
+      "name": "rm-controlled",
+      "command": "qni rm --qubit 1 --step 0",
+      "mode": "ruby-vs-typescript",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "exit_status",
+          "passed": true
+        },
+        {
+          "name": "signal",
+          "passed": true
+        },
+        {
+          "name": "stdout",
+          "passed": true
+        },
+        {
+          "name": "stderr",
+          "passed": true
+        },
+        {
+          "name": "circuit_json",
+          "passed": true
+        },
+        {
+          "name": "files",
+          "passed": true
+        }
+      ],
+      "ruby": {
+        "command": "bundle exec bin/qni rm --qubit 1 --step 0",
+        "exit_status": 0,
+        "signal": null,
+        "stderr": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "stdout": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "snapshot": {
+          "circuit_json": {
+            "qubits": 1,
+            "cols": [
+              [
+                1
+              ]
+            ]
+          },
+          "files": {}
+        }
+      },
+      "typescript": {
+        "command": "node dist/bin/qni.js rm --qubit 1 --step 0",
+        "exit_status": 0,
+        "signal": null,
+        "stderr": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "stdout": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "snapshot": {
+          "circuit_json": {
+            "qubits": 1,
+            "cols": [
+              [
+                1
+              ]
+            ]
+          },
+          "files": {}
+        }
+      }
+    },
+    {
+      "name": "state-set",
+      "command": "qni state set alpha|0> + beta|1>",
+      "mode": "ruby-vs-typescript",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "exit_status",
+          "passed": true
+        },
+        {
+          "name": "signal",
+          "passed": true
+        },
+        {
+          "name": "stdout",
+          "passed": true
+        },
+        {
+          "name": "stderr",
+          "passed": true
+        },
+        {
+          "name": "circuit_json",
+          "passed": true
+        },
+        {
+          "name": "files",
+          "passed": true
+        }
+      ],
+      "ruby": {
+        "command": "bundle exec bin/qni state set alpha|0> + beta|1>",
+        "exit_status": 0,
+        "signal": null,
+        "stderr": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "stdout": {
+          "preview": "0\n",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "size_bytes": 2
+        },
+        "snapshot": {
+          "circuit_json": {
+            "qubits": 1,
+            "cols": [
+              [
+                1
+              ]
+            ],
+            "initial_state": {
+              "format": "ket_sum_v1",
+              "terms": [
+                {
+                  "basis": "0",
+                  "coefficient": "alpha"
+                },
+                {
+                  "basis": "1",
+                  "coefficient": "beta"
+                }
+              ]
+            }
+          },
+          "files": {}
+        }
+      },
+      "typescript": {
+        "command": "node dist/bin/qni.js state set alpha|0> + beta|1>",
+        "exit_status": 0,
+        "signal": null,
+        "stderr": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "stdout": {
+          "preview": "0\n",
+          "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+          "size_bytes": 2
+        },
+        "snapshot": {
+          "circuit_json": {
+            "qubits": 1,
+            "cols": [
+              [
+                1
+              ]
+            ],
+            "initial_state": {
+              "format": "ket_sum_v1",
+              "terms": [
+                {
+                  "basis": "0",
+                  "coefficient": "alpha"
+                },
+                {
+                  "basis": "1",
+                  "coefficient": "beta"
+                }
+              ]
+            }
+          },
+          "files": {}
+        }
+      }
+    },
+    {
+      "name": "run-numeric-bell",
+      "command": "qni run",
+      "mode": "ruby-vs-typescript",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "exit_status",
+          "passed": true
+        },
+        {
+          "name": "signal",
+          "passed": true
+        },
+        {
+          "name": "stdout",
+          "passed": true
+        },
+        {
+          "name": "stderr",
+          "passed": true
+        },
+        {
+          "name": "circuit_json",
+          "passed": true
+        },
+        {
+          "name": "files",
+          "passed": true
+        }
+      ],
+      "ruby": {
+        "command": "bundle exec bin/qni run",
+        "exit_status": 0,
+        "signal": null,
+        "stderr": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "stdout": {
+          "preview": "0.7071067811865475,0.0,0.0,0.7071067811865475\n",
+          "sha256": "161317d7f994ff5ec6af50599db8d16466b0af53c2e97e7b6fcec5ab335abf39",
+          "size_bytes": 46
+        },
+        "snapshot": {
+          "circuit_json": {
+            "qubits": 2,
+            "cols": [
+              [
+                "H",
+                1
+              ],
+              [
+                "•",
+                "X"
+              ]
+            ]
+          },
+          "files": {}
+        }
+      },
+      "typescript": {
+        "command": "node dist/bin/qni.js run",
+        "exit_status": 0,
+        "signal": null,
+        "stderr": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "stdout": {
+          "preview": "0.7071067811865475,0.0,0.0,0.7071067811865475\n",
+          "sha256": "161317d7f994ff5ec6af50599db8d16466b0af53c2e97e7b6fcec5ab335abf39",
+          "size_bytes": 46
+        },
+        "snapshot": {
+          "circuit_json": {
+            "qubits": 2,
+            "cols": [
+              [
+                "H",
+                1
+              ],
+              [
+                "•",
+                "X"
+              ]
+            ]
+          },
+          "files": {}
+        }
+      }
+    },
+    {
+      "name": "run-symbolic-h",
+      "command": "qni run --symbolic",
+      "mode": "ruby-vs-typescript",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "exit_status",
+          "passed": true
+        },
+        {
+          "name": "signal",
+          "passed": true
+        },
+        {
+          "name": "stdout",
+          "passed": true
+        },
+        {
+          "name": "stderr",
+          "passed": true
+        },
+        {
+          "name": "circuit_json",
+          "passed": true
+        },
+        {
+          "name": "files",
+          "passed": true
+        }
+      ],
+      "ruby": {
+        "command": "bundle exec bin/qni run --symbolic",
+        "exit_status": 0,
+        "signal": null,
+        "stderr": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "stdout": {
+          "preview": "sqrt(2)/2|0> + sqrt(2)/2|1>\n",
+          "sha256": "b80d3a1ddccb468396d8d5f41d73048fcd712f2d20bb661f98cf06e71427fd0a",
+          "size_bytes": 28
+        },
+        "snapshot": {
+          "circuit_json": {
+            "qubits": 1,
+            "cols": [
+              [
+                "H"
+              ]
+            ]
+          },
+          "files": {}
+        }
+      },
+      "typescript": {
+        "command": "node dist/bin/qni.js run --symbolic",
+        "exit_status": 0,
+        "signal": null,
+        "stderr": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "stdout": {
+          "preview": "sqrt(2)/2|0> + sqrt(2)/2|1>\n",
+          "sha256": "b80d3a1ddccb468396d8d5f41d73048fcd712f2d20bb661f98cf06e71427fd0a",
+          "size_bytes": 28
+        },
+        "snapshot": {
+          "circuit_json": {
+            "qubits": 1,
+            "cols": [
+              [
+                "H"
+              ]
+            ]
+          },
+          "files": {}
+        }
+      }
+    },
+    {
+      "name": "expect-bell",
+      "command": "qni expect ZZ XX",
+      "mode": "ruby-vs-typescript",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "exit_status",
+          "passed": true
+        },
+        {
+          "name": "signal",
+          "passed": true
+        },
+        {
+          "name": "stdout",
+          "passed": true
+        },
+        {
+          "name": "stderr",
+          "passed": true
+        },
+        {
+          "name": "circuit_json",
+          "passed": true
+        },
+        {
+          "name": "files",
+          "passed": true
+        }
+      ],
+      "ruby": {
+        "command": "bundle exec bin/qni expect ZZ XX",
+        "exit_status": 0,
+        "signal": null,
+        "stderr": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "stdout": {
+          "preview": "ZZ=1.0\nXX=1.0\n",
+          "sha256": "e06acaa84c67b91e64d28b91a462405453a541c9ab104ee3232e5ca1dbee7ab2",
+          "size_bytes": 14
+        },
+        "snapshot": {
+          "circuit_json": {
+            "qubits": 2,
+            "cols": [
+              [
+                "H",
+                1
+              ],
+              [
+                "•",
+                "X"
+              ]
+            ]
+          },
+          "files": {}
+        }
+      },
+      "typescript": {
+        "command": "node dist/bin/qni.js expect ZZ XX",
+        "exit_status": 0,
+        "signal": null,
+        "stderr": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "stdout": {
+          "preview": "ZZ=1.0\nXX=1.0\n",
+          "sha256": "e06acaa84c67b91e64d28b91a462405453a541c9ab104ee3232e5ca1dbee7ab2",
+          "size_bytes": 14
+        },
+        "snapshot": {
+          "circuit_json": {
+            "qubits": 2,
+            "cols": [
+              [
+                "H",
+                1
+              ],
+              [
+                "•",
+                "X"
+              ]
+            ]
+          },
+          "files": {}
+        }
+      }
+    },
+    {
+      "name": "view-mixed",
+      "command": "qni view",
+      "mode": "ruby-vs-typescript",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "exit_status",
+          "passed": true
+        },
+        {
+          "name": "signal",
+          "passed": true
+        },
+        {
+          "name": "stdout",
+          "passed": true
+        },
+        {
+          "name": "stderr",
+          "passed": true
+        },
+        {
+          "name": "circuit_json",
+          "passed": true
+        },
+        {
+          "name": "files",
+          "passed": true
+        }
+      ],
+      "ruby": {
+        "command": "bundle exec bin/qni view",
+        "exit_status": 0,
+        "signal": null,
+        "stderr": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "stdout": {
+          "preview": "               pi/4\n    ┌───┐     ┌───┐\nq0: ┤ H ├──■──┤ Ry├\n    └───┘┌─┴─┐├───┤\nq1: ─────┤ X ├┤ T†├\n         └───┘└───┘\n",
+          "sha256": "90b34cdae3e1bdc21303963f2761f28f8553c6af02095fc56826c302cc5dc7d1",
+          "size_bytes": 228
+        },
+        "snapshot": {
+          "circuit_json": {
+            "qubits": 2,
+            "cols": [
+              [
+                "H",
+                1
+              ],
+              [
+                "•",
+                "X"
+              ],
+              [
+                "Ry(pi/4)",
+                "T†"
+              ]
+            ]
+          },
+          "files": {}
+        }
+      },
+      "typescript": {
+        "command": "node dist/bin/qni.js view",
+        "exit_status": 0,
+        "signal": null,
+        "stderr": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "stdout": {
+          "preview": "               pi/4\n    ┌───┐     ┌───┐\nq0: ┤ H ├──■──┤ Ry├\n    └───┘┌─┴─┐├───┤\nq1: ─────┤ X ├┤ T†├\n         └───┘└───┘\n",
+          "sha256": "90b34cdae3e1bdc21303963f2761f28f8553c6af02095fc56826c302cc5dc7d1",
+          "size_bytes": 228
+        },
+        "snapshot": {
+          "circuit_json": {
+            "qubits": 2,
+            "cols": [
+              [
+                "H",
+                1
+              ],
+              [
+                "•",
+                "X"
+              ],
+              [
+                "Ry(pi/4)",
+                "T†"
+              ]
+            ]
+          },
+          "files": {}
+        }
+      }
+    },
+    {
+      "name": "export-latex-source",
+      "command": "qni export --latex-source --light",
+      "mode": "ruby-vs-typescript",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "exit_status",
+          "passed": true
+        },
+        {
+          "name": "signal",
+          "passed": true
+        },
+        {
+          "name": "stdout",
+          "passed": true
+        },
+        {
+          "name": "stderr",
+          "passed": true
+        },
+        {
+          "name": "circuit_json",
+          "passed": true
+        },
+        {
+          "name": "files",
+          "passed": true
+        }
+      ],
+      "ruby": {
+        "command": "bundle exec bin/qni export --latex-source --light",
+        "exit_status": 0,
+        "signal": null,
+        "stderr": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "stdout": {
+          "preview": "\\documentclass[border=24px]{standalone}\n\n\\usepackage[braket, qm]{qcircuit}\n\\usepackage{graphicx}\n\\usepackage{textcomp}\n\\usepackage{xcolor}\n\n\\begin{document}\n\\color{black}\n\\begin{tabular}{c}\n\\scalebox{1.0}{\n\\Qcircuit @C=0.55em @R=2.2em @!R { \\\\\n  \\push{q0: \\ket{0}} & \\gate{\\mathrm{H}} & \\qw\\\\\n\\\\ }\n}\n\\\\[0.8em]\n\\end{tabular}\n\\end{document}\n",
+          "sha256": "a2509f42470125b2181ad563b6b02f1cbef274e259100cdfce06c0211c066153",
+          "size_bytes": 339
+        },
+        "snapshot": {
+          "circuit_json": {
+            "qubits": 1,
+            "cols": [
+              [
+                "H"
+              ]
+            ]
+          },
+          "files": {}
+        }
+      },
+      "typescript": {
+        "command": "node dist/bin/qni.js export --latex-source --light",
+        "exit_status": 0,
+        "signal": null,
+        "stderr": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "stdout": {
+          "preview": "\\documentclass[border=24px]{standalone}\n\n\\usepackage[braket, qm]{qcircuit}\n\\usepackage{graphicx}\n\\usepackage{textcomp}\n\\usepackage{xcolor}\n\n\\begin{document}\n\\color{black}\n\\begin{tabular}{c}\n\\scalebox{1.0}{\n\\Qcircuit @C=0.55em @R=2.2em @!R { \\\\\n  \\push{q0: \\ket{0}} & \\gate{\\mathrm{H}} & \\qw\\\\\n\\\\ }\n}\n\\\\[0.8em]\n\\end{tabular}\n\\end{document}\n",
+          "sha256": "a2509f42470125b2181ad563b6b02f1cbef274e259100cdfce06c0211c066153",
+          "size_bytes": 339
+        },
+        "snapshot": {
+          "circuit_json": {
+            "qubits": 1,
+            "cols": [
+              [
+                "H"
+              ]
+            ]
+          },
+          "files": {}
+        }
+      }
+    },
+    {
+      "name": "export-png",
+      "command": "qni export --png --light --output circuit.png",
+      "mode": "ruby-vs-typescript",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "exit_status",
+          "passed": true
+        },
+        {
+          "name": "signal",
+          "passed": true
+        },
+        {
+          "name": "stdout",
+          "passed": true
+        },
+        {
+          "name": "stderr",
+          "passed": true
+        },
+        {
+          "name": "circuit_json",
+          "passed": true
+        },
+        {
+          "name": "files",
+          "passed": true
+        }
+      ],
+      "ruby": {
+        "command": "bundle exec bin/qni export --png --light --output circuit.png",
+        "exit_status": 0,
+        "signal": null,
+        "stderr": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "stdout": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "snapshot": {
+          "circuit_json": {
+            "qubits": 1,
+            "cols": [
+              [
+                "H"
+              ]
+            ]
+          },
+          "files": {
+            "circuit.png": {
+              "exists": true,
+              "sha256": "b64582f483f1ded96ebf99acdb95b2a2f04b0cbcf372345d7fe1c2fb9d89b20a",
+              "size_bytes": 365,
+              "png": {
+                "color_type": 6,
+                "frame_count": 0,
+                "height": 64,
+                "signature": "89504e470d0a1a0a",
+                "width": 64
+              }
+            }
+          }
+        }
+      },
+      "typescript": {
+        "command": "node dist/bin/qni.js export --png --light --output circuit.png",
+        "exit_status": 0,
+        "signal": null,
+        "stderr": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "stdout": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "snapshot": {
+          "circuit_json": {
+            "qubits": 1,
+            "cols": [
+              [
+                "H"
+              ]
+            ]
+          },
+          "files": {
+            "circuit.png": {
+              "exists": true,
+              "sha256": "b64582f483f1ded96ebf99acdb95b2a2f04b0cbcf372345d7fe1c2fb9d89b20a",
+              "size_bytes": 365,
+              "png": {
+                "color_type": 6,
+                "frame_count": 0,
+                "height": 64,
+                "signature": "89504e470d0a1a0a",
+                "width": 64
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "bloch-png",
+      "command": "qni bloch --png --light --output bloch.png",
+      "mode": "ruby-vs-typescript",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "exit_status",
+          "passed": true
+        },
+        {
+          "name": "signal",
+          "passed": true
+        },
+        {
+          "name": "stdout",
+          "passed": true
+        },
+        {
+          "name": "stderr",
+          "passed": true
+        },
+        {
+          "name": "circuit_json",
+          "passed": true
+        },
+        {
+          "name": "files",
+          "passed": true
+        }
+      ],
+      "ruby": {
+        "command": "bundle exec bin/qni bloch --png --light --output bloch.png",
+        "exit_status": 0,
+        "signal": null,
+        "stderr": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "stdout": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "snapshot": {
+          "circuit_json": {
+            "qubits": 1,
+            "cols": [
+              [
+                "H"
+              ]
+            ]
+          },
+          "files": {
+            "bloch.png": {
+              "exists": true,
+              "sha256": "91285bc893f070e84436e79717ab4ea5aa6138e48efd4b4b864fb814b2c5d5f0",
+              "size_bytes": 39334,
+              "png": {
+                "color_type": 6,
+                "frame_count": 0,
+                "height": 512,
+                "signature": "89504e470d0a1a0a",
+                "width": 512
+              }
+            }
+          }
+        }
+      },
+      "typescript": {
+        "command": "node dist/bin/qni.js bloch --png --light --output bloch.png",
+        "exit_status": 0,
+        "signal": null,
+        "stderr": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "stdout": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "snapshot": {
+          "circuit_json": {
+            "qubits": 1,
+            "cols": [
+              [
+                "H"
+              ]
+            ]
+          },
+          "files": {
+            "bloch.png": {
+              "exists": true,
+              "sha256": "91285bc893f070e84436e79717ab4ea5aa6138e48efd4b4b864fb814b2c5d5f0",
+              "size_bytes": 39334,
+              "png": {
+                "color_type": 6,
+                "frame_count": 0,
+                "height": 512,
+                "signature": "89504e470d0a1a0a",
+                "width": 512
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "clear-circuit",
+      "command": "qni clear",
+      "mode": "ruby-vs-typescript",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "exit_status",
+          "passed": true
+        },
+        {
+          "name": "signal",
+          "passed": true
+        },
+        {
+          "name": "stdout",
+          "passed": true
+        },
+        {
+          "name": "stderr",
+          "passed": true
+        },
+        {
+          "name": "circuit_json",
+          "passed": true
+        },
+        {
+          "name": "files",
+          "passed": true
+        }
+      ],
+      "ruby": {
+        "command": "bundle exec bin/qni clear",
+        "exit_status": 0,
+        "signal": null,
+        "stderr": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "stdout": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "snapshot": {
+          "circuit_json": null,
+          "files": {}
+        }
+      },
+      "typescript": {
+        "command": "node dist/bin/qni.js clear",
+        "exit_status": 0,
+        "signal": null,
+        "stderr": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "stdout": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "snapshot": {
+          "circuit_json": null,
+          "files": {}
+        }
+      }
+    },
+    {
+      "name": "benchmark-run-state-flip",
+      "command": "qni benchmark run <repo>/benchmarks/quantum-katas/basic-gates/state-flip.md <repo>/benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni",
+      "mode": "typescript-only",
+      "status": "passed",
+      "checks": [
+        {
+          "name": "exit_status",
+          "passed": true
+        },
+        {
+          "actual": "PASS StateFlip",
+          "expected": "PASS StateFlip",
+          "name": "stdout_includes",
+          "passed": true
+        }
+      ],
+      "typescript": {
+        "command": "node dist/bin/qni.js benchmark run <repo>/benchmarks/quantum-katas/basic-gates/state-flip.md <repo>/benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni",
+        "exit_status": 0,
+        "signal": null,
+        "stderr": {
+          "preview": "",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size_bytes": 0
+        },
+        "stdout": {
+          "preview": "PASS StateFlip\nchecks: 1\n",
+          "sha256": "f33599cc654879f90c08852683c5f687ea67ba5c9edaf2501b6d5417f32cf975",
+          "size_bytes": 25
+        },
+        "snapshot": {
+          "files": {}
+        }
+      }
+    }
+  ]
+}
