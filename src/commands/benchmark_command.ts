@@ -206,12 +206,16 @@ function parseComplexAmplitude(text: string): ComplexAmplitude {
 
 function lastSignIndex(value: string): number {
   for (let index = value.length - 1; index > 0; index -= 1) {
-    if (value[index] === '+' || value[index] === '-') {
+    if ((value[index] === '+' || value[index] === '-') && !exponentSign(value, index)) {
       return index;
     }
   }
 
   return -1;
+}
+
+function exponentSign(value: string, index: number): boolean {
+  return value[index - 1] === 'e' || value[index - 1] === 'E';
 }
 
 function basisIndex(basis: string, vectorLength: number): number {
@@ -252,7 +256,7 @@ function captureCommandRun(callback: () => number): QniCommandResult {
     encodingOrCallback?: BufferEncoding | ((error?: Error | null) => void),
     callback?: (error?: Error | null) => void
   ): boolean => {
-    stdout += Buffer.isBuffer(chunk) ? chunk.toString('utf8') : chunk.toString();
+    stdout += streamChunkText(chunk);
     if (typeof encodingOrCallback === 'function') {
       encodingOrCallback();
     }
@@ -267,7 +271,7 @@ function captureCommandRun(callback: () => number): QniCommandResult {
     encodingOrCallback?: BufferEncoding | ((error?: Error | null) => void),
     callback?: BufferEncoding | ((error?: Error | null) => void)
   ): boolean => {
-    stderr += Buffer.isBuffer(chunk) ? chunk.toString('utf8') : chunk.toString();
+    stderr += streamChunkText(chunk);
     if (typeof encodingOrCallback === 'function') {
       encodingOrCallback();
     }
@@ -287,6 +291,10 @@ function captureCommandRun(callback: () => number): QniCommandResult {
     process.stdout.write = originalStdoutWrite;
     process.stderr.write = originalStderrWrite;
   }
+}
+
+export function streamChunkText(chunk: string | Uint8Array): string {
+  return typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf8');
 }
 
 function loadBenchmarkTask(taskPath: string): BenchmarkTask {
