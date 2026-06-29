@@ -1,8 +1,8 @@
-# Feature: qni view help
+# Feature: qni view のヘルプ
 
 qni-cli のユーザとして
 回路表示コマンドの使い方を迷わず確認できるように
-qni view の help を表示したい。
+qni view のヘルプを表示したい。
 
 ## Scenario: qni view --help は成功する
 
