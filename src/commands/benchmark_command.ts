@@ -5,6 +5,7 @@ import { parseDocument } from 'yaml';
 
 import type { CommandHandler, CommandHandlerContext } from '../dispatcher';
 import { runAddCommand } from './add_command';
+import { runExpectCommand } from './expect_command';
 import { runRunCommand } from './run_command';
 
 interface BenchmarkTask {
@@ -20,18 +21,30 @@ interface AllowedCommand {
 }
 
 interface BenchmarkChecks {
-  readonly items: readonly RunCheck[];
+  readonly items: readonly BenchmarkCheck[];
   readonly tolerance: number;
 }
+
+type BenchmarkCheck = ExpectCheck | RunCheck;
 
 interface RunCheck {
   readonly expected: readonly ExpectedAmplitude[];
   readonly type: 'run';
 }
 
+interface ExpectCheck {
+  readonly expected: readonly ExpectedExpectation[];
+  readonly type: 'expect';
+}
+
 interface ExpectedAmplitude {
   readonly amplitude: ComplexAmplitude;
   readonly basis: string;
+}
+
+interface ExpectedExpectation {
+  readonly pauli: string;
+  readonly value: number;
 }
 
 interface ExpectedStateVector {
@@ -82,14 +95,27 @@ interface BenchmarkResult {
   readonly status: BenchmarkStatus;
 }
 
-interface BenchmarkCheckResult {
+type BenchmarkCheckResult = ExpectCheckResult | RunCheckResult;
+
+interface RunCheckResult {
   readonly mismatches: MismatchSummary;
   readonly status: 'passed' | 'failed';
   readonly type: 'run';
 }
 
+interface ExpectCheckResult {
+  readonly mismatches: ExpectationMismatchSummary;
+  readonly status: 'passed' | 'failed';
+  readonly type: 'expect';
+}
+
 interface MismatchSummary {
   readonly displayed: readonly AmplitudeMismatch[];
+  readonly omittedCount: number;
+}
+
+interface ExpectationMismatchSummary {
+  readonly displayed: readonly ExpectationMismatch[];
   readonly omittedCount: number;
 }
 
@@ -99,14 +125,22 @@ interface AmplitudeMismatch {
   readonly expected: ComplexAmplitude;
 }
 
+interface ExpectationMismatch {
+  readonly actual: ComplexAmplitude;
+  readonly expected: number;
+  readonly pauli: string;
+}
+
 class BenchmarkError extends Error {}
 
 const QNI_COMMAND_HANDLERS = new Map<string, CommandHandler>([
   ['add', runAddCommand],
+  ['expect', runExpectCommand],
   ['run', runRunCommand]
 ]);
 const USAGE = 'Usage: qni benchmark run <task-file> <submission-file> [--json]\n';
 const MAX_FAILED_AMPLITUDE_DETAILS = 16;
+const MAX_FAILED_EXPECTATION_DETAILS = 16;
 const ZERO_AMPLITUDE: ComplexAmplitude = { imaginary: 0, real: 0 };
 
 export function runBenchmarkCommand(argv: string[], context: CommandHandlerContext): number {
@@ -215,7 +249,7 @@ function evaluateBenchmark(options: {
 
   try {
     runSubmission(submissionCommands, workDir, options.context);
-    const checks = options.task.checks.items.map((check) => runCheck(check, options.task, workDir, options.context));
+    const checks = options.task.checks.items.map((check) => runBenchmarkCheck(check, options.task, workDir, options.context));
 
     return {
       checks,
@@ -272,12 +306,26 @@ function commandAllowed(command: SubmissionCommand, allowed: AllowedCommand): bo
   return allowed.argv.every((word, index) => command.argv[index] === word);
 }
 
-function runCheck(
-  check: RunCheck,
+function runBenchmarkCheck(
+  check: BenchmarkCheck,
   task: BenchmarkTask,
   workDir: string,
   context: CommandHandlerContext
 ): BenchmarkCheckResult {
+  switch (check.type) {
+    case 'expect':
+      return runExpectCheck(check, task, workDir, context);
+    case 'run':
+      return runRunCheck(check, task, workDir, context);
+  }
+}
+
+function runRunCheck(
+  check: RunCheck,
+  task: BenchmarkTask,
+  workDir: string,
+  context: CommandHandlerContext
+): RunCheckResult {
   const result = runQni(['run'], workDir, context);
 
   if (result.exitStatus !== 0) {
@@ -292,6 +340,28 @@ function runCheck(
     mismatches,
     status: mismatches.displayed.length === 0 && mismatches.omittedCount === 0 ? 'passed' : 'failed',
     type: 'run'
+  };
+}
+
+function runExpectCheck(
+  check: ExpectCheck,
+  task: BenchmarkTask,
+  workDir: string,
+  context: CommandHandlerContext
+): ExpectCheckResult {
+  const result = runQni(['expect', ...check.expected.map((item) => item.pauli)], workDir, context);
+
+  if (result.exitStatus !== 0) {
+    throw new BenchmarkError(`expect check failed to execute for ${task.id}: ${result.stderr.trimEnd()}`);
+  }
+
+  const actual = parseExpectationValues(result.stdout);
+  const mismatches = expectationMismatchSummary(actual, check.expected, task.checks.tolerance);
+
+  return {
+    mismatches,
+    status: mismatches.displayed.length === 0 && mismatches.omittedCount === 0 ? 'passed' : 'failed',
+    type: 'expect'
   };
 }
 
@@ -345,6 +415,62 @@ function stateVectorMismatchSummary(
 function amplitudesClose(actual: ComplexAmplitude, expected: ComplexAmplitude, tolerance: number): boolean {
   return Math.abs(actual.real - expected.real) <= tolerance &&
     Math.abs(actual.imaginary - expected.imaginary) <= tolerance;
+}
+
+function expectationMismatchSummary(
+  actual: ReadonlyMap<string, ComplexAmplitude>,
+  expected: readonly ExpectedExpectation[],
+  tolerance: number
+): ExpectationMismatchSummary {
+  const displayed: ExpectationMismatch[] = [];
+  let mismatchCount = 0;
+
+  for (const item of expected) {
+    const actualValue = actual.get(item.pauli) ?? ZERO_AMPLITUDE;
+
+    if (expectationClose(actualValue, item.value, tolerance)) {
+      continue;
+    }
+
+    mismatchCount += 1;
+
+    if (displayed.length < MAX_FAILED_EXPECTATION_DETAILS) {
+      displayed.push({
+        actual: actualValue,
+        expected: item.value,
+        pauli: item.pauli
+      });
+    }
+  }
+
+  return {
+    displayed,
+    omittedCount: mismatchCount - displayed.length
+  };
+}
+
+function expectationClose(actual: ComplexAmplitude, expected: number, tolerance: number): boolean {
+  return Math.abs(actual.real - expected) <= tolerance && Math.abs(actual.imaginary) <= tolerance;
+}
+
+function parseExpectationValues(stdout: string): ReadonlyMap<string, ComplexAmplitude> {
+  const text = stdout.trim();
+
+  if (text.length === 0) {
+    throw new BenchmarkError('qni expect produced empty expectation output');
+  }
+
+  return new Map(text.split(/\r?\n/u).map(parseExpectationValueLine));
+}
+
+function parseExpectationValueLine(line: string): [string, ComplexAmplitude] {
+  const match = /^(?<pauli>[IXYZ]+)=(?<value>.+)$/u.exec(line.trim());
+
+  if (!match?.groups) {
+    throw new BenchmarkError(`qni expect produced unparsable output: ${line}`);
+  }
+
+  return [match.groups.pauli, parseComplexAmplitude(match.groups.value)];
 }
 
 function parseStateVector(stdout: string): ComplexAmplitude[] {
@@ -465,9 +591,10 @@ export function streamChunkText(chunk: string | Uint8Array): string {
   return typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf8');
 }
 
+type FrontmatterRecord = Readonly<Record<string, unknown>>;
+
 function loadBenchmarkTask(taskPath: string): BenchmarkTask {
-  const frontmatter = frontmatterOf(readFileSync(taskPath, 'utf8'));
-  validateYamlFrontmatter(frontmatter);
+  const frontmatter = frontmatterRecord(frontmatterOf(readFileSync(taskPath, 'utf8')));
 
   return {
     allowedCommands: parseAllowedCommands(frontmatter),
@@ -487,20 +614,28 @@ function frontmatterOf(markdown: string): string {
   return match.groups.frontmatter;
 }
 
-function validateYamlFrontmatter(frontmatter: string): void {
+function frontmatterRecord(frontmatter: string): FrontmatterRecord {
   const document = parseDocument(frontmatter);
   const firstError = document.errors[0];
 
   if (firstError) {
     throw new BenchmarkError(`invalid YAML frontmatter: ${firstYamlErrorLine(firstError)}`);
   }
+
+  const value = document.toJS() as unknown;
+
+  if (!isRecord(value)) {
+    throw new BenchmarkError('YAML frontmatter must be a mapping');
+  }
+
+  return value;
 }
 
 function firstYamlErrorLine(error: Error): string {
   return error.message.split(/\r?\n/u)[0] ?? error.message;
 }
 
-function parseAllowedCommands(frontmatter: string): AllowedCommand[] {
+function parseAllowedCommands(frontmatter: FrontmatterRecord): AllowedCommand[] {
   return frontmatterListValues(frontmatter, 'allowed_commands').map((source) => {
     const argv = splitCommandLine(source);
 
@@ -515,111 +650,154 @@ function parseAllowedCommands(frontmatter: string): AllowedCommand[] {
   });
 }
 
-function frontmatterListValues(frontmatter: string, key: string): string[] {
-  const lines = frontmatter.split(/\r?\n/u);
-  const keyPattern = key.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
-  const sectionHeader = new RegExp(`^${keyPattern}:\\s*(?:#.*)?$`, 'u');
-  const startIndex = lines.findIndex((line) => sectionHeader.test(line));
+function frontmatterListValues(frontmatter: FrontmatterRecord, key: string): string[] {
+  const value = requiredValue(frontmatter, key);
 
-  if (startIndex === -1) {
-    throw new BenchmarkError(`${key} is required`);
-  }
-
-  const values: string[] = [];
-
-  for (const line of lines.slice(startIndex + 1)) {
-    if (/^\S/u.test(line)) {
-      break;
-    }
-
-    const match = /^\s+-\s*(?<value>.+?)\s*$/u.exec(line);
-    if (match?.groups) {
-      values.push(match.groups.value);
-    }
-  }
-
-  if (values.length === 0) {
+  if (!Array.isArray(value)) {
     throw new BenchmarkError(`${key} must list at least one item`);
   }
 
-  return values;
+  if (value.length === 0) {
+    throw new BenchmarkError(`${key} must list at least one item`);
+  }
+
+  return value.map((item) => stringListValue(item, key));
 }
 
-function parseChecks(frontmatter: string): BenchmarkChecks {
+function parseChecks(frontmatter: FrontmatterRecord): BenchmarkChecks {
+  const checks = recordValue(frontmatter, 'checks');
+
   return {
-    items: parseRunChecks(frontmatter),
-    tolerance: checksTolerance(frontmatter)
+    items: parseCheckItems(checks),
+    tolerance: checksTolerance(checks)
   };
 }
 
-function checksTolerance(frontmatter: string): number {
-  const match = /^\s+tolerance:\s*(?<value>\S+)\s*$/mu.exec(frontmatter);
-
-  if (!match?.groups) {
-    throw new BenchmarkError('checks.tolerance is required');
-  }
-
-  return parseNumber(match.groups.value);
+function checksTolerance(checks: FrontmatterRecord): number {
+  return parseNumber(requiredValue(checks, 'tolerance', 'checks.tolerance is required'));
 }
 
-function parseRunChecks(frontmatter: string): RunCheck[] {
-  if (!/^\s+-\s+type:\s*run\s*$/mu.test(frontmatter)) {
-    throw new BenchmarkError('at least one run check is required');
+function parseCheckItems(checks: FrontmatterRecord): BenchmarkCheck[] {
+  const items = requiredValue(checks, 'items', 'checks.items is required');
+
+  if (!Array.isArray(items) || items.length === 0) {
+    throw new BenchmarkError('checks.items must list at least one item');
   }
 
-  return [{ expected: parseExpectedAmplitudes(frontmatter), type: 'run' }];
+  return items.map(parseCheckItem);
 }
 
-function parseExpectedAmplitudes(frontmatter: string): ExpectedAmplitude[] {
-  const matches = [...frontmatter.matchAll(
-    /^\s+-\s+basis:\s*(?<basis>.+?)\s*\r?\n\s+amplitude:\s*\r?\n\s+real:\s*(?<real>\S+)\s*\r?\n\s+imaginary:\s*(?<imaginary>\S+)\s*$/gmu
-  )];
+function parseCheckItem(item: unknown): BenchmarkCheck {
+  const check = requiredRecord(item, 'checks.items entries must be mappings');
+  const type = scalarValue(check, 'type');
 
-  if (matches.length === 0) {
-    throw new BenchmarkError('run check expected amplitudes are required');
+  switch (type) {
+    case 'expect':
+      return { expected: parseExpectedExpectations(check), type: 'expect' };
+    case 'run':
+      return { expected: parseExpectedAmplitudes(check), type: 'run' };
+    default:
+      throw new BenchmarkError(`unsupported check type: ${type}`);
   }
+}
 
-  return matches.map((match) => {
-    const groups = match.groups ?? {};
+function parseExpectedAmplitudes(check: FrontmatterRecord): ExpectedAmplitude[] {
+  const expected = expectedList(check, 'run check expected amplitudes are required');
+
+  return expected.map((item) => {
+    const entry = requiredRecord(item, 'run check expected amplitudes must be mappings');
+    const amplitude = recordValue(entry, 'amplitude');
 
     return {
       amplitude: {
-        imaginary: parseNumber(groups.imaginary ?? ''),
-        real: parseNumber(groups.real ?? '')
+        imaginary: parseNumber(requiredValue(amplitude, 'imaginary')),
+        real: parseNumber(requiredValue(amplitude, 'real'))
       },
-      basis: unquote(groups.basis ?? '')
+      basis: scalarValue(entry, 'basis')
     };
   });
 }
 
-function scalarValue(frontmatter: string, key: string): string {
-  const match = new RegExp(`^${key}:\\s*(?<value>.+?)\\s*$`, 'mu').exec(frontmatter);
+function parseExpectedExpectations(check: FrontmatterRecord): ExpectedExpectation[] {
+  const expected = expectedList(check, 'expect check expected values are required');
 
-  if (!match?.groups) {
-    throw new BenchmarkError(`${key} is required`);
-  }
+  return expected.map((item) => {
+    const entry = requiredRecord(item, 'expect check expected values must be mappings');
+    const pauli = scalarValue(entry, 'pauli').toUpperCase();
 
-  return unquote(match.groups.value);
+    if (pauli.length === 0) {
+      throw new BenchmarkError('expect check pauli must not be empty');
+    }
+
+    return {
+      pauli,
+      value: parseNumber(requiredValue(entry, 'value'))
+    };
+  });
 }
 
-function parseNumber(value: string): number {
-  const result = Number(value);
+function expectedList(check: FrontmatterRecord, errorMessage: string): readonly unknown[] {
+  const expected = check.expected;
+
+  if (!Array.isArray(expected) || expected.length === 0) {
+    throw new BenchmarkError(errorMessage);
+  }
+
+  return expected;
+}
+
+function recordValue(record: FrontmatterRecord, key: string): FrontmatterRecord {
+  return requiredRecord(requiredValue(record, key), `${key} must be a mapping`);
+}
+
+function requiredRecord(value: unknown, errorMessage: string): FrontmatterRecord {
+  if (!isRecord(value)) {
+    throw new BenchmarkError(errorMessage);
+  }
+
+  return value;
+}
+
+function requiredValue(record: FrontmatterRecord, key: string, errorMessage = `${key} is required`): unknown {
+  const value = record[key];
+
+  if (value === undefined) {
+    throw new BenchmarkError(errorMessage);
+  }
+
+  return value;
+}
+
+function scalarValue(record: FrontmatterRecord, key: string): string {
+  const value = requiredValue(record, key);
+
+  if (typeof value !== 'string') {
+    throw new BenchmarkError(`${key} must be a string`);
+  }
+
+  return value;
+}
+
+function stringListValue(value: unknown, key: string): string {
+  if (typeof value !== 'string') {
+    throw new BenchmarkError(`${key} entries must be strings`);
+  }
+
+  return value;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function parseNumber(value: unknown): number {
+  const result = typeof value === 'number' ? value : Number(String(value));
 
   if (Number.isNaN(result)) {
-    throw new BenchmarkError(`invalid number: ${value}`);
+    throw new BenchmarkError(`invalid number: ${String(value)}`);
   }
 
   return result;
-}
-
-function unquote(value: string): string {
-  const trimmed = value.trim();
-
-  if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
-    return trimmed.slice(1, -1);
-  }
-
-  return trimmed;
 }
 
 function resolveInputPath(filePath: string, context: CommandHandlerContext): string {
@@ -780,15 +958,33 @@ function writeFailedCheckDetails(result: BenchmarkResult): void {
 }
 
 function failedCheckLines(check: BenchmarkCheckResult, index: number): string[] {
+  switch (check.type) {
+    case 'expect':
+      return failedExpectationCheckLines(check, index);
+    case 'run':
+      return failedRunCheckLines(check, index);
+  }
+}
+
+function failedRunCheckLines(check: RunCheckResult, index: number): string[] {
   return [
     `- ${check.type} #${index + 1}: state vector did not match expected amplitudes`,
     '  expected / actual mismatches:',
-    ...displayedMismatches(check.mismatches.displayed),
-    ...omittedMismatchLines(check.mismatches.omittedCount)
+    ...displayedAmplitudeMismatches(check.mismatches.displayed),
+    ...omittedAmplitudeMismatchLines(check.mismatches.omittedCount)
   ];
 }
 
-function displayedMismatches(mismatches: readonly AmplitudeMismatch[]): string[] {
+function failedExpectationCheckLines(check: ExpectCheckResult, index: number): string[] {
+  return [
+    `- ${check.type} #${index + 1}: expectation values did not match expected values`,
+    '  expected / actual mismatches:',
+    ...displayedExpectationMismatches(check.mismatches.displayed),
+    ...omittedExpectationMismatchLines(check.mismatches.omittedCount)
+  ];
+}
+
+function displayedAmplitudeMismatches(mismatches: readonly AmplitudeMismatch[]): string[] {
   return mismatches
     .slice(0, MAX_FAILED_AMPLITUDE_DETAILS)
     .map((mismatch) => [
@@ -798,12 +994,30 @@ function displayedMismatches(mismatches: readonly AmplitudeMismatch[]): string[]
     ].join(' '));
 }
 
-function omittedMismatchLines(omittedCount: number): string[] {
+function displayedExpectationMismatches(mismatches: readonly ExpectationMismatch[]): string[] {
+  return mismatches
+    .slice(0, MAX_FAILED_EXPECTATION_DETAILS)
+    .map((mismatch) => [
+      `  - ${mismatch.pauli}:`,
+      `expected ${formatNumber(mismatch.expected)},`,
+      `actual ${formatComplexAmplitude(mismatch.actual)}`
+    ].join(' '));
+}
+
+function omittedAmplitudeMismatchLines(omittedCount: number): string[] {
   if (omittedCount <= 0) {
     return [];
   }
 
   return [`  ... ${omittedCount} more mismatched amplitudes omitted`];
+}
+
+function omittedExpectationMismatchLines(omittedCount: number): string[] {
+  if (omittedCount <= 0) {
+    return [];
+  }
+
+  return [`  ... ${omittedCount} more mismatched expectation values omitted`];
 }
 
 function basisLabel(index: number, vectorLength: number): string {

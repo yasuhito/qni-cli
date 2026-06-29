@@ -445,6 +445,84 @@ describe('benchmark command TypeScript route', () => {
     });
   });
 
+  it('passes the BellState solution using an expect check', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, [
+        'benchmark',
+        'run',
+        'benchmarks/quantum-katas/superposition/bell-state.md',
+        'benchmarks/solutions/quantum-katas/superposition/bell-state.qni'
+      ]);
+
+      assert.equal(result.exitStatus, 0, result.stderr);
+      assert.equal(result.stdout, 'PASS BellState\nchecks: 1\n');
+      assert.equal(result.stderr, '');
+    });
+  });
+
+  it('writes JSON expect check status for the BellState solution', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, [
+        'benchmark',
+        'run',
+        'benchmarks/quantum-katas/superposition/bell-state.md',
+        'benchmarks/solutions/quantum-katas/superposition/bell-state.qni',
+        '--json'
+      ]);
+      const payload = JSON.parse(result.stdout) as Record<string, unknown>;
+
+      assert.equal(result.exitStatus, 0, result.stderr);
+      assert.deepEqual(payload, {
+        taskId: 'superposition/bell-state',
+        title: 'BellState',
+        submission: 'benchmarks/solutions/quantum-katas/superposition/bell-state.qni',
+        status: 'passed',
+        exitCode: 0,
+        checks: [{ type: 'expect', status: 'passed' }]
+      });
+      assert.equal(result.stderr, '');
+    });
+  });
+
+  it('uses checks.tolerance from the task file during expect checks', async () => {
+    await withTempDir(async (dir) => {
+      const taskLines = (tolerance: string) => [
+        '---',
+        'id: numeric/expect-tolerance',
+        'title: ExpectTolerance',
+        'source: test',
+        'difficulty: smoke',
+        'allowed_commands:',
+        '  - qni add',
+        'checks:',
+        `  tolerance: ${tolerance}`,
+        '  items:',
+        '    - type: expect',
+        '      expected:',
+        '        - pauli: ZZ',
+        '          value: 0.999999999999',
+        '---',
+        '',
+        'Prepare a Bell state.'
+      ].join('\n');
+      await writeFile(path.join(dir, 'loose.md'), taskLines('1e-11'));
+      await writeFile(path.join(dir, 'tight.md'), taskLines('1e-13'));
+      await writeFile(path.join(dir, 'submission.qni'), [
+        'qni add H --qubit 0 --step 0',
+        'qni add X --control 0 --qubit 1 --step 1',
+        ''
+      ].join('\n'));
+
+      const loose = captureDispatcherRun(dir, ['benchmark', 'run', 'loose.md', 'submission.qni']);
+      const tight = captureDispatcherRun(dir, ['benchmark', 'run', 'tight.md', 'submission.qni']);
+
+      assert.equal(loose.exitStatus, 0, loose.stderr);
+      assert.equal(tight.exitStatus, 1, tight.stderr);
+      assert.ok(tight.stdout.includes('FAIL ExpectTolerance\n'));
+      assert.ok(tight.stdout.includes('- expect #1: expectation values did not match expected values\n'));
+    });
+  });
+
   it('fails the StateFlip incorrect sample with human-readable failed check details', async () => {
     await withTempDir(async (dir) => {
       const result = captureDispatcherRun(dir, [
