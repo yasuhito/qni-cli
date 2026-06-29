@@ -56,6 +56,37 @@ qni benchmark run で最小の合格判定を実行したい。
   PASS PlusState
   ```
 
+## Scenario: BellState 課題ファイルがある
+
+- Then リポジトリファイル "benchmarks/quantum-katas/superposition/bell-state.md" は存在する
+
+## Scenario: BellState 標準解がある
+
+- Then リポジトリファイル "benchmarks/solutions/quantum-katas/superposition/bell-state.qni" は存在する
+
+## Scenario: BellState 標準解は合格する
+
+- When "qni benchmark run benchmarks/quantum-katas/superposition/bell-state.md benchmarks/solutions/quantum-katas/superposition/bell-state.qni" を実行
+- Then コマンドは成功
+
+## Scenario: BellState 標準解の合格が表示される
+
+- When "qni benchmark run benchmarks/quantum-katas/superposition/bell-state.md benchmarks/solutions/quantum-katas/superposition/bell-state.qni" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  PASS BellState
+  ```
+
+## Scenario: BellState 標準解の JSON は expect 検証を含む
+
+- When "qni benchmark run benchmarks/quantum-katas/superposition/bell-state.md benchmarks/solutions/quantum-katas/superposition/bell-state.qni --json" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  "type": "expect"
+  ```
+
 ## Scenario: StateFlip の不許可サンプルがある
 
 - Then リポジトリファイル "benchmarks/disallowed/quantum-katas/basic-gates/state-flip-disallowed.qni" は存在する
