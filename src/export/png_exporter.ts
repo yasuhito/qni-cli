@@ -138,8 +138,12 @@ function commandErrorMessage(command: string, result: SpawnSyncReturns<Buffer>, 
     return missingMessage;
   }
 
-  const detail = [result.stdout, result.stderr]
-    .map((output) => output.toString('utf8').trim())
+  const detail = [
+    result.error?.message,
+    result.stdout?.toString('utf8'),
+    result.stderr?.toString('utf8')
+  ]
+    .map((output) => output?.trim() ?? '')
     .filter((output) => output.length > 0)
     .join('\n');
 

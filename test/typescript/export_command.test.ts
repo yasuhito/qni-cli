@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, it } from 'node:test';
@@ -152,7 +152,7 @@ async function pathWithOnly(parentDir: string, commands: string[]): Promise<stri
 }
 
 function commandPath(command: string): string {
-  return execFileSync('bash', ['-lc', `command -v ${command}`], { encoding: 'utf8' }).trim();
+  return execFileSync('bash', ['-lc', 'command -v -- "$1"', 'bash', command], { encoding: 'utf8' }).trim();
 }
 
 describe('export command TypeScript route', () => {
@@ -423,6 +423,28 @@ describe('export command TypeScript route', () => {
       assert.equal(result.stdout, oracle.stdout);
       assert.equal(result.stderr, oracle.stderr);
       assert.equal(result.stderr, 'pdflatex is required for qni export --png\n');
+    });
+  });
+
+  it('reports pdflatex spawn errors with the underlying cause', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        qubits: 1,
+        cols: [['H']]
+      });
+
+      const pathDir = path.join(dir, 'path-denied-pdflatex');
+      const pdfLatexPath = path.join(pathDir, 'pdflatex');
+
+      await mkdir(pathDir, { recursive: true });
+      await writeFile(pdfLatexPath, '#!/bin/sh\n');
+      await chmod(pdfLatexPath, 0o644);
+
+      const result = captureDispatcherRun(dir, ['export', '--png', '--output', 'circuit.png'], { PATH: pathDir });
+
+      assert.equal(result.exitStatus, 1);
+      assert.equal(result.stdout, '');
+      assert.match(result.stderr, /^pdflatex failed: .*EACCES\n$/u);
     });
   });
 
