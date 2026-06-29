@@ -63,7 +63,9 @@
 - 特に「安全な `.qni` 実行」「frontmatter の読み取り」「検証ロジック」は失敗モードが違うため、同じ issue に詰め込まず、レビューしやすい単位に分ける。
 - issue の実装順序は、feature → 課題ファイル3つ → frontmatter parser → `.qni` 安全実行 → checks → CLI出力/JSON とする。
 - 新機能前に feature を置くリポジトリ規則に従い、先に `qni benchmark run` の振る舞いを固定してから、評価データ、読み取り、実行、検証、出力の順に積む。
-- `/to-issues` 方針に合わせて vertical slice issue として GitHub issue #251〜#258 を作成済み。実装は #251 から始める。
+- `/to-issues` 方針に合わせて vertical slice issue として GitHub issue #251〜#258 を作成済み。
+- #251〜#258 は完了済みで、MVP受け入れ確認も完了した。結果は `docs/reports/benchmark-mvp-acceptance.md` に記録した。
+- 次の開発対象として、ベンチマークスイートを一括実行する GitHub issue #270 を作成済み。
 - MVPでは、AIに `.qni` を生成させるための最小プロンプトテンプレートを `benchmarks/prompts/` に置く。
 - 評価ランナーはAIを直接呼ばないが、課題ファイルから `.qni` 提出物を作る標準手順を残し、人間、Pi、Codex、Claudeなどの違いを超えて同じ条件で提出物を作れるようにする。
 - MVPでは、標準解 `.qni` を `benchmarks/solutions/` に含めるが、課題ファイルとは分離する。
