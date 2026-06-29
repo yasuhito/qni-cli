@@ -1,6 +1,6 @@
 import { currentCircuitFile } from '../circuit_file';
 import type { CommandHandlerContext } from '../dispatcher';
-import { CommandError } from './command_error';
+import { CommandError, reportCommandRouteError } from './command_error';
 
 const HELP_TEXT = `Usage:
   qni variable set NAME ANGLE
@@ -47,8 +47,7 @@ export function runVariableCommand(argv: string[], context: CommandHandlerContex
 
     return 0;
   } catch (error) {
-    process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
-    return 1;
+    return reportCommandRouteError(error);
   }
 }
 
