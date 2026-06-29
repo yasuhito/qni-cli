@@ -3,7 +3,13 @@ import path from 'node:path';
 
 import { CircuitFileError, currentCircuitFile } from '../circuit_file';
 import type { CommandHandlerContext } from '../dispatcher';
-import { QCircuitLatex, validateCaptionOptions, type ExportTheme } from '../export/qcircuit_latex';
+import {
+  QCircuitLatex,
+  qcircuitRenderedColumnCount,
+  validateCaptionOptions,
+  type ExportTheme
+} from '../export/qcircuit_latex';
+import { circuitPngHeight, circuitPngWidth, PngExporter } from '../export/png_exporter';
 import { runRubyFallbackSync } from '../process/process_compatibility';
 
 const HELP_TEXT = `Usage:
@@ -64,6 +70,7 @@ interface ExportOptions {
   readonly output?: string;
   readonly png: boolean;
   readonly stateVector: boolean;
+  readonly transparent: boolean;
 }
 
 const BOOLEAN_OPTIONS = new Map<string, (options: MutableExportOptions) => void>([
@@ -82,14 +89,18 @@ const BOOLEAN_OPTIONS = new Map<string, (options: MutableExportOptions) => void>
   ['--light', (options) => {
     options.light = true;
   }],
-  ['--no-transparent', () => undefined],
+  ['--no-transparent', (options) => {
+    options.transparent = false;
+  }],
   ['--png', (options) => {
     options.png = true;
   }],
   ['--state-vector', (options) => {
     options.stateVector = true;
   }],
-  ['--transparent', () => undefined]
+  ['--transparent', (options) => {
+    options.transparent = true;
+  }]
 ]);
 
 const VALUE_OPTIONS = new Map<string, (options: MutableExportOptions, value: string) => void>([
@@ -131,13 +142,14 @@ export function runExportCommand(argv: string[], context: CommandHandlerContext)
   }
 
   try {
-    if (!typeScriptLatexSource(options)) {
+    if (!typeScriptRegularCircuitExport(options)) {
       return rubyFallback(argv, context);
     }
 
     validateOptions(options);
 
-    const latexSource = new QCircuitLatex(currentCircuitFile(context.cwd).load(), {
+    const circuit = currentCircuitFile(context.cwd).load();
+    const latexSource = new QCircuitLatex(circuit, {
       caption: options.caption,
       captionFormat: options.captionFormat,
       captionPosition: options.captionPosition,
@@ -145,7 +157,12 @@ export function runExportCommand(argv: string[], context: CommandHandlerContext)
       theme: theme(options)
     }).render();
 
-    writeLatexSource(latexSource, options, context.cwd);
+    if (options.png) {
+      writePng(latexSource, options, context, qcircuitRenderedColumnCount(circuit), circuit.qubits);
+    } else {
+      writeLatexSource(latexSource, options, context.cwd);
+    }
+
     return 0;
   } catch (error) {
     if (error instanceof CircuitFileError || error instanceof Error) {
@@ -171,7 +188,8 @@ function parseExportOptions(args: string[]): ExportOptions | undefined {
     latexSource: false,
     light: false,
     png: false,
-    stateVector: false
+    stateVector: false,
+    transparent: true
   };
 
   for (let index = 0; index < args.length; index += 1) {
@@ -276,8 +294,12 @@ function theme(options: ExportOptions): ExportTheme {
   return options.light ? 'light' : 'dark';
 }
 
-function typeScriptLatexSource(options: ExportOptions): boolean {
-  return options.latexSource && !options.png && !options.stateVector && !options.circleNotation;
+function typeScriptRegularCircuitExport(options: ExportOptions): boolean {
+  return (options.latexSource || regularCircuitPng(options)) && !options.stateVector && !options.circleNotation;
+}
+
+function regularCircuitPng(options: ExportOptions): boolean {
+  return options.png && !options.latexSource;
 }
 
 function writeLatexSource(latexSource: string, options: ExportOptions, cwd: string): void {
@@ -290,4 +312,28 @@ function writeLatexSource(latexSource: string, options: ExportOptions, cwd: stri
 
   mkdirSync(path.dirname(outputPath), { recursive: true });
   writeFileSync(outputPath, `${latexSource}\n`);
+}
+
+function writePng(
+  latexSource: string,
+  options: ExportOptions,
+  context: CommandHandlerContext,
+  columns: number,
+  qubits: number
+): void {
+  const outputPath = path.resolve(context.cwd, options.output ?? '');
+  const exporterOptions = captionPresent(options)
+    ? {}
+    : {
+        targetHeight: circuitPngHeight(qubits),
+        targetWidth: circuitPngWidth(columns)
+      };
+
+  new PngExporter(latexSource, {
+    cwd: context.cwd,
+    env: context.env,
+    outputPath,
+    transparent: options.transparent,
+    ...exporterOptions
+  }).export();
 }

@@ -114,7 +114,7 @@ function runNodeQniCommand(scenarioDir, command, extraEnv = {}) {
   }
 
   return new Promise((resolve, reject) => {
-    const child = spawn('node', [NODE_QNI_BIN, ...argv.slice(1)], {
+    const child = spawn(process.execPath, [NODE_QNI_BIN, ...argv.slice(1)], {
       cwd: scenarioDir,
       env: scenarioEnv(extraEnv)
     });
@@ -147,7 +147,7 @@ function runQniCommandInTty(scenarioDir, command, extraEnv = {}) {
     throw new Error(`command must start with qni: ${command}`);
   }
 
-  const ttyCommand = ['node', NODE_QNI_BIN, ...argv.slice(1)]
+  const ttyCommand = [process.execPath, NODE_QNI_BIN, ...argv.slice(1)]
     .map(shellQuote)
     .join(' ');
 
