@@ -231,7 +231,7 @@ describe('benchmark command TypeScript route', () => {
       const payload = JSON.parse(result.stdout) as Record<string, unknown>;
 
       assert.equal(result.exitStatus, 0);
-      assert.deepEqual(payload, {
+      assert.deepStrictEqual(payload, {
         taskId: 'basic-gates/state-flip',
         title: 'StateFlip',
         submission: 'benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni',
@@ -255,7 +255,7 @@ describe('benchmark command TypeScript route', () => {
       const payload = JSON.parse(result.stdout) as Record<string, unknown>;
 
       assert.equal(result.exitStatus, 1);
-      assert.deepEqual(payload, {
+      assert.deepStrictEqual(payload, {
         taskId: 'basic-gates/state-flip',
         title: 'StateFlip',
         submission: 'benchmarks/incorrect/quantum-katas/basic-gates/state-flip-wrong.qni',
@@ -279,7 +279,7 @@ describe('benchmark command TypeScript route', () => {
       const payload = JSON.parse(result.stdout) as Record<string, unknown>;
 
       assert.equal(result.exitStatus, 2);
-      assert.deepEqual(payload, {
+      assert.deepStrictEqual(payload, {
         taskId: 'basic-gates/state-flip',
         title: 'StateFlip',
         submission: 'benchmarks/disallowed/quantum-katas/basic-gates/state-flip-disallowed.qni',

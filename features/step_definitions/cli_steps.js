@@ -998,7 +998,7 @@ Then('標準出力は次の JSON と一致する:', function (docString) {
   const actual = JSON.parse(this.lastCommand.stdout);
   const expected = JSON.parse(docStringContent(docString));
 
-  assert.deepEqual(actual, expected);
+  assert.deepStrictEqual(actual, expected);
 });
 
 Then('標準エラー:', function (docString) {
