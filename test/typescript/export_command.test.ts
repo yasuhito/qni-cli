@@ -268,6 +268,114 @@ describe('export command TypeScript route', () => {
     });
   });
 
+  it('exports state-vector PNG like the Ruby oracle without invoking Ruby fallback', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        qubits: 1,
+        cols: [['H']]
+      });
+
+      const result = captureDispatcherRun(dir, [
+        'export',
+        '--state-vector',
+        '--png',
+        '--light',
+        '--output',
+        'typescript-state.png'
+      ]);
+      const oracle = await rubyOracle(dir, [
+        'export',
+        '--state-vector',
+        '--png',
+        '--light',
+        '--output',
+        'ruby-state.png'
+      ]);
+      const typeScriptPng = await pngStableProperties(path.join(dir, 'typescript-state.png'));
+      const rubyPng = await pngStableProperties(path.join(dir, 'ruby-state.png'));
+
+      assert.equal(result.exitStatus, oracle.exitStatus);
+      assert.equal(result.stdout, oracle.stdout);
+      assert.equal(result.stderr, oracle.stderr);
+      assert.deepEqual(typeScriptPng, rubyPng);
+      assert.equal(typeScriptPng.transparent, true);
+    });
+  });
+
+  it('exports circle-notation PNG like the Ruby oracle through the retained Python helper contract', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        qubits: 2,
+        cols: [[1, 1]],
+        initial_state: {
+          format: 'ket_sum_v1',
+          terms: [{ basis: 'Φ+', coefficient: '1' }]
+        }
+      });
+
+      const result = captureDispatcherRun(dir, [
+        'export',
+        '--circle-notation',
+        '--png',
+        '--light',
+        '--output',
+        'typescript-circles.png'
+      ]);
+      const oracle = await rubyOracle(dir, [
+        'export',
+        '--circle-notation',
+        '--png',
+        '--light',
+        '--output',
+        'ruby-circles.png'
+      ]);
+      const typeScriptPng = await pngStableProperties(path.join(dir, 'typescript-circles.png'));
+      const rubyPng = await pngStableProperties(path.join(dir, 'ruby-circles.png'));
+
+      assert.equal(result.exitStatus, oracle.exitStatus);
+      assert.equal(result.stdout, oracle.stdout);
+      assert.equal(result.stderr, oracle.stderr);
+      assert.deepEqual(typeScriptPng, rubyPng);
+      assert.equal(typeScriptPng.transparent, true);
+    });
+  });
+
+  it('writes distinct state-vector and circle-notation PNG contents on the TypeScript route', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        qubits: 2,
+        cols: [[1, 1]],
+        initial_state: {
+          format: 'ket_sum_v1',
+          terms: [{ basis: 'Φ+', coefficient: '1' }]
+        }
+      });
+
+      const circleResult = captureDispatcherRun(dir, [
+        'export',
+        '--circle-notation',
+        '--png',
+        '--output',
+        'circles.png'
+      ]);
+      const stateResult = captureDispatcherRun(dir, [
+        'export',
+        '--state-vector',
+        '--png',
+        '--output',
+        'state.png'
+      ]);
+
+      assert.equal(circleResult.exitStatus, 0);
+      assert.equal(circleResult.stdout, '');
+      assert.equal(circleResult.stderr, '');
+      assert.equal(stateResult.exitStatus, 0);
+      assert.equal(stateResult.stdout, '');
+      assert.equal(stateResult.stderr, '');
+      assert.notDeepEqual(await readFile(path.join(dir, 'circles.png')), await readFile(path.join(dir, 'state.png')));
+    });
+  });
+
   it('prints export help without invoking Ruby fallback', async () => {
     await withTempDir(async (dir) => {
       const result = captureDispatcherRun(dir, ['export', '--help'], { PATH: '' });
@@ -464,40 +572,6 @@ describe('export command TypeScript route', () => {
       assert.equal(result.stdout, oracle.stdout);
       assert.equal(result.stderr, oracle.stderr);
       assert.equal(result.stderr, 'pdftocairo is required for qni export --png\n');
-    });
-  });
-
-  it('keeps state-vector PNG export on Ruby fallback', async () => {
-    await withTempDir(async (dir) => {
-      await writeCircuit(dir, {
-        qubits: 1,
-        cols: [['H']]
-      });
-
-      const result = captureDispatcherRun(dir, ['export', '--state-vector', '--png', '--output', 'state.png'], {
-        PATH: ''
-      });
-
-      assert.equal(result.exitStatus, 127);
-      assert.equal(result.stdout, '');
-      assert.equal(result.stderr, 'spawnSync bundle ENOENT\n');
-    });
-  });
-
-  it('keeps circle-notation PNG export on Ruby fallback', async () => {
-    await withTempDir(async (dir) => {
-      await writeCircuit(dir, {
-        qubits: 1,
-        cols: [['H']]
-      });
-
-      const result = captureDispatcherRun(dir, ['export', '--circle-notation', '--png', '--output', 'circles.png'], {
-        PATH: ''
-      });
-
-      assert.equal(result.exitStatus, 127);
-      assert.equal(result.stdout, '');
-      assert.equal(result.stderr, 'spawnSync bundle ENOENT\n');
     });
   });
 

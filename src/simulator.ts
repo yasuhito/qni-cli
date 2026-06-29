@@ -5,6 +5,16 @@ import { InitialStateError, initialStateQubitCount, resolveNumericInitialState }
 
 export class SimulatorError extends Error {}
 
+export interface StateVectorExportPayload {
+  readonly amplitudes: readonly StateVectorExportedAmplitude[];
+  readonly qubits: number;
+}
+
+export interface StateVectorExportedAmplitude {
+  readonly imag: number;
+  readonly real: number;
+}
+
 type GateOperator = (zero: Complex, one: Complex) => [Complex, Complex];
 
 const CONTROL_SYMBOL = '•';
@@ -48,6 +58,10 @@ export class Simulator {
     return pauliStrings
       .map((pauliString) => `${pauliString}=${StateVector.formatAmplitude(stateVector.expectation(pauliString))}`)
       .join('\n');
+  }
+
+  exportPayload(): StateVectorExportPayload {
+    return this.stateVector().exportPayload();
   }
 
   private stateVector(): StateVector {
@@ -179,6 +193,16 @@ class StateVector {
 
   toCsv(): string {
     return this.amplitudes.map((amplitude) => StateVector.formatAmplitude(amplitude)).join(',');
+  }
+
+  exportPayload(): StateVectorExportPayload {
+    return {
+      amplitudes: this.amplitudes.map((amplitude) => ({
+        imag: normalizedScalar(amplitude.imaginary),
+        real: normalizedScalar(amplitude.real)
+      })),
+      qubits: this.qubits
+    };
   }
 
   private applyGateLayout(layout: SingleQubitGateLayout): StateVector {
