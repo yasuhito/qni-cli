@@ -115,6 +115,14 @@ bundle exec bin/qni run --symbolic --basis x
 bundle exec bin/qni expect ZZ XX
 ```
 
+### Run benchmark submissions
+
+`qni benchmark run` evaluates `.qni` submissions against benchmark task files. See `docs/benchmark.md` for the MVP smoke-set prompt and examples.
+
+```bash
+bundle exec bin/qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni
+```
+
 ## Export Images
 
 If ASCII output is not enough, use `export` or `bloch` to generate images.

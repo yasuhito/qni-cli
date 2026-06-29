@@ -276,3 +276,39 @@ qni benchmark run で最小の合格判定を実行したい。
   ```text
   "exitCode": 3
   ```
+
+## Scenario: .qni 生成用プロンプトがある
+
+- Then リポジトリファイル "benchmarks/prompts/qni-solution.md" は存在する
+
+## Scenario: .qni 生成用プロンプトは課題本文を読むよう求める
+
+- Then リポジトリファイル "benchmarks/prompts/qni-solution.md" は "課題本文" を含む
+
+## Scenario: .qni 生成用プロンプトは .qni 形式だけで回答するよう求める
+
+- Then リポジトリファイル "benchmarks/prompts/qni-solution.md" は "`.qni` 形式だけ" を含む
+
+## Scenario: MVP手順は StateFlip 標準解の実行例を示す
+
+- Then リポジトリファイル "docs/benchmark.md" は "qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni" を含む
+
+## Scenario: MVP手順は PlusState 標準解の実行例を示す
+
+- Then リポジトリファイル "docs/benchmark.md" は "qni benchmark run benchmarks/quantum-katas/superposition/plus-state.md benchmarks/solutions/quantum-katas/superposition/plus-state.qni" を含む
+
+## Scenario: MVP手順は BellState 標準解の実行例を示す
+
+- Then リポジトリファイル "docs/benchmark.md" は "qni benchmark run benchmarks/quantum-katas/superposition/bell-state.md benchmarks/solutions/quantum-katas/superposition/bell-state.qni" を含む
+
+## Scenario: MVP手順は不正解サンプルの実行例を示す
+
+- Then リポジトリファイル "docs/benchmark.md" は "qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/incorrect/quantum-katas/basic-gates/state-flip-wrong.qni" を含む
+
+## Scenario: MVP手順は不許可サンプルの実行例を示す
+
+- Then リポジトリファイル "docs/benchmark.md" は "qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/disallowed/quantum-katas/basic-gates/state-flip-disallowed.qni" を含む
+
+## Scenario: MVP手順は --json の実行例を示す
+
+- Then リポジトリファイル "docs/benchmark.md" は "qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni --json" を含む
