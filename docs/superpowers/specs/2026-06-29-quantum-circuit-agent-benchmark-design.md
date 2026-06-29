@@ -66,6 +66,14 @@ Quantum Katas 由来の独自ベンチマークは、既存のLLMコード生成
 
 ## 参考URL
 
+### AI研究支援エージェントの参考
+
+- PhysicsIntern ブログ: https://huggingface.co/blog/dlouapre/physics-intern
+- PhysicsIntern Space: https://huggingface.co/spaces/huggingface/physics-intern
+- PhysicsIntern skills dataset: https://huggingface.co/datasets/introvoyz041/physics-intern-skills
+
+### 量子回路ベンチマークの参考
+
 - QCircuitBench: https://github.com/EstelYang/QCircuitBench
 - QuanBench: https://github.com/GuoXiaoYu1125/Quanbench
 - QuanBench+: https://huggingface.co/datasets/Jawadkotaich/quanbench-plus
