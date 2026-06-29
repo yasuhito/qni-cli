@@ -7,9 +7,15 @@ import { runAddCommand } from './add_command';
 import { runRunCommand } from './run_command';
 
 interface BenchmarkTask {
+  readonly allowedCommands: readonly AllowedCommand[];
   readonly checks: BenchmarkChecks;
   readonly id: string;
   readonly title: string;
+}
+
+interface AllowedCommand {
+  readonly argv: readonly string[];
+  readonly source: string;
 }
 
 interface BenchmarkChecks {
@@ -38,9 +44,20 @@ interface QniCommandResult {
   readonly stdout: string;
 }
 
+interface SubmissionCommand {
+  readonly argv: string[];
+  readonly lineNumber: number;
+  readonly source: string;
+}
+
+interface DisallowedSubmission {
+  readonly command: SubmissionCommand;
+}
+
 interface BenchmarkResult {
   readonly checkCount: number;
-  readonly status: 'passed' | 'failed';
+  readonly disallowedSubmission?: DisallowedSubmission;
+  readonly status: 'passed' | 'failed' | 'disallowed';
 }
 
 class BenchmarkError extends Error {}
@@ -71,7 +88,7 @@ export function runBenchmarkCommand(argv: string[], context: CommandHandlerConte
     });
 
     writeHumanResult(task, result);
-    return result.status === 'passed' ? 0 : 1;
+    return exitCodeForResult(result);
   } catch (error) {
     process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
     return 3;
@@ -89,15 +106,37 @@ function parseBenchmarkRequest(argv: readonly string[]): { submissionFile: strin
   };
 }
 
+function exitCodeForResult(result: BenchmarkResult): number {
+  switch (result.status) {
+    case 'passed':
+      return 0;
+    case 'failed':
+      return 1;
+    case 'disallowed':
+      return 2;
+  }
+}
+
 function evaluateBenchmark(options: {
   readonly context: CommandHandlerContext;
   readonly submissionPath: string;
   readonly task: BenchmarkTask;
 }): BenchmarkResult {
+  const submissionCommands = qniCommandsInSubmission(options.submissionPath);
+  const disallowedSubmission = disallowedSubmissionCommand(submissionCommands, options.task.allowedCommands);
+
+  if (disallowedSubmission) {
+    return {
+      checkCount: 0,
+      disallowedSubmission,
+      status: 'disallowed'
+    };
+  }
+
   const workDir = mkdtempSync(path.join(tmpdir(), 'qni-benchmark-'));
 
   try {
-    runSubmission(options.submissionPath, workDir, options.context);
+    runSubmission(submissionCommands, workDir, options.context);
     const checksPassed = options.task.checks.items.every((check) => runCheckPassed(check, options.task, workDir, options.context));
 
     return {
@@ -109,8 +148,8 @@ function evaluateBenchmark(options: {
   }
 }
 
-function runSubmission(submissionPath: string, workDir: string, context: CommandHandlerContext): void {
-  for (const command of qniCommandsInSubmission(submissionPath)) {
+function runSubmission(commands: readonly SubmissionCommand[], workDir: string, context: CommandHandlerContext): void {
+  for (const command of commands) {
     const result = runQni(command.argv, workDir, context);
 
     if (result.exitStatus !== 0) {
@@ -122,7 +161,7 @@ function runSubmission(submissionPath: string, workDir: string, context: Command
   }
 }
 
-function qniCommandsInSubmission(submissionPath: string): { argv: string[]; lineNumber: number; source: string }[] {
+function qniCommandsInSubmission(submissionPath: string): SubmissionCommand[] {
   return readFileSync(submissionPath, 'utf8')
     .split(/\r?\n/u)
     .map((line, index) => ({ lineNumber: index + 1, source: line.trim() }))
@@ -140,6 +179,19 @@ function qniCommandsInSubmission(submissionPath: string): { argv: string[]; line
         source: line.source
       };
     });
+}
+
+function disallowedSubmissionCommand(
+  commands: readonly SubmissionCommand[],
+  allowedCommands: readonly AllowedCommand[]
+): DisallowedSubmission | undefined {
+  const command = commands.find((candidate) => !allowedCommands.some((allowed) => commandAllowed(candidate, allowed)));
+
+  return command ? { command } : undefined;
+}
+
+function commandAllowed(command: SubmissionCommand, allowed: AllowedCommand): boolean {
+  return allowed.argv.every((word, index) => command.argv[index] === word);
 }
 
 function runCheckPassed(
@@ -301,6 +353,7 @@ function loadBenchmarkTask(taskPath: string): BenchmarkTask {
   const frontmatter = frontmatterOf(readFileSync(taskPath, 'utf8'));
 
   return {
+    allowedCommands: parseAllowedCommands(frontmatter),
     checks: parseChecks(frontmatter),
     id: scalarValue(frontmatter, 'id'),
     title: scalarValue(frontmatter, 'title')
@@ -315,6 +368,51 @@ function frontmatterOf(markdown: string): string {
   }
 
   return match.groups.frontmatter;
+}
+
+function parseAllowedCommands(frontmatter: string): AllowedCommand[] {
+  return frontmatterListValues(frontmatter, 'allowed_commands').map((source) => {
+    const argv = splitCommandLine(source);
+
+    if (argv[0] !== 'qni' || argv.length < 2) {
+      throw new BenchmarkError(`allowed_commands entries must start with a qni subcommand: ${source}`);
+    }
+
+    return {
+      argv: argv.slice(1),
+      source: argv.join(' ')
+    };
+  });
+}
+
+function frontmatterListValues(frontmatter: string, key: string): string[] {
+  const lines = frontmatter.split(/\r?\n/u);
+  const keyPattern = key.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+  const sectionHeader = new RegExp(`^${keyPattern}:\\s*(?:#.*)?$`, 'u');
+  const startIndex = lines.findIndex((line) => sectionHeader.test(line));
+
+  if (startIndex === -1) {
+    throw new BenchmarkError(`${key} is required`);
+  }
+
+  const values: string[] = [];
+
+  for (const line of lines.slice(startIndex + 1)) {
+    if (/^\S/u.test(line)) {
+      break;
+    }
+
+    const match = /^\s+-\s*(?<value>.+?)\s*$/u.exec(line);
+    if (match?.groups) {
+      values.push(match.groups.value);
+    }
+  }
+
+  if (values.length === 0) {
+    throw new BenchmarkError(`${key} must list at least one item`);
+  }
+
+  return values;
 }
 
 function parseChecks(frontmatter: string): BenchmarkChecks {
@@ -473,8 +571,23 @@ function splitCommandLine(command: string): string[] {
 }
 
 function writeHumanResult(task: BenchmarkTask, result: BenchmarkResult): void {
+  if (result.status === 'disallowed') {
+    writeDisallowedResult(task, result);
+    return;
+  }
+
   const label = result.status === 'passed' ? 'PASS' : 'FAIL';
 
   process.stdout.write(`${label} ${task.title}\n`);
   process.stdout.write(`checks: ${result.checkCount}\n`);
+}
+
+function writeDisallowedResult(task: BenchmarkTask, result: BenchmarkResult): void {
+  const rejected = result.disallowedSubmission?.command;
+
+  process.stdout.write(`DISALLOWED ${task.title}\n`);
+  if (rejected) {
+    process.stdout.write(`rejected: line ${rejected.lineNumber}: ${rejected.source}\n`);
+  }
+  process.stdout.write(`allowed commands: ${task.allowedCommands.map((command) => command.source).join(', ')}\n`);
 }
