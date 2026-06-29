@@ -1,5 +1,6 @@
 import { currentCircuitFile } from '../circuit_file';
 import type { CommandHandlerContext } from '../dispatcher';
+import { thorArgumentsError } from './thor_compatibility';
 
 const HELP_TEXT = `Usage:
   qni clear
@@ -20,8 +21,7 @@ export function runClearCommand(argv: string[], context: CommandHandlerContext):
     }
 
     if (argv.length > 1) {
-      process.stderr.write(`ERROR: "qni clear" was called with arguments ${rubyArray(argv.slice(1))}\n`);
-      process.stderr.write('Usage: "qni clear"\n');
+      process.stderr.write(`${thorArgumentsError('qni clear', argv.slice(1), 'qni clear')}\n`);
       return 1;
     }
 
@@ -31,8 +31,4 @@ export function runClearCommand(argv: string[], context: CommandHandlerContext):
     process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
     return 1;
   }
-}
-
-function rubyArray(values: readonly string[]): string {
-  return `[${values.map((value) => `"${value}"`).join(', ')}]`;
 }

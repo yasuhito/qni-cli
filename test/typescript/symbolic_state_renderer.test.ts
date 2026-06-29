@@ -335,6 +335,32 @@ describe('run command symbolic TypeScript route', () => {
     });
   });
 
+  it('prints run help without invoking Ruby fallback', async () => {
+    await withTempDir(async (dir) => {
+      const bin = path.join(dir, 'bin');
+      await writeExecutable(path.join(bin, 'bundle'), '#!/bin/sh\necho RUBY_FALLBACK_INVOKED >&2\nexit 42\n');
+
+      const result = captureDispatcherRun(dir, ['run', '--help'], { PATH: bin });
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stderr, '');
+      assert.match(result.stdout, /^Usage:\n  qni run \[--symbolic\] \[--basis=BASIS\]/u);
+    });
+  });
+
+  it('rejects unknown run options without invoking Ruby fallback', async () => {
+    await withTempDir(async (dir) => {
+      const bin = path.join(dir, 'bin');
+      await writeExecutable(path.join(bin, 'bundle'), '#!/bin/sh\necho RUBY_FALLBACK_INVOKED >&2\nexit 42\n');
+
+      const result = captureDispatcherRun(dir, ['run', '--bad'], { PATH: bin });
+
+      assert.equal(result.exitStatus, 1);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, 'ERROR: "qni simulate" was called with arguments ["--bad"]\nUsage: "qni run"\n');
+    });
+  });
+
   it('rejects --basis without --symbolic before helper execution', async () => {
     await withTempDir(async (dir) => {
       const bin = path.join(dir, 'bin');

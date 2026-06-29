@@ -575,7 +575,22 @@ describe('export command TypeScript route', () => {
     });
   });
 
-  it('leaves value-like option ambiguity on Ruby fallback', async () => {
+  it('rejects unknown options without invoking Ruby fallback', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        qubits: 1,
+        cols: [['H']]
+      });
+
+      const result = captureDispatcherRun(dir, ['export', '--bad'], { PATH: '' });
+
+      assert.equal(result.exitStatus, 1);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, 'ERROR: "qni export" was called with arguments ["--bad"]\nUsage: "qni export"\n');
+    });
+  });
+
+  it('handles value-like option ambiguity without invoking Ruby fallback', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
         qubits: 1,
@@ -584,9 +599,10 @@ describe('export command TypeScript route', () => {
 
       const result = captureDispatcherRun(dir, ['export', '--latex-source', '--output', '--light'], { PATH: '' });
 
-      assert.equal(result.exitStatus, 127);
+      assert.equal(result.exitStatus, 0);
       assert.equal(result.stdout, '');
-      assert.equal(result.stderr, 'spawnSync bundle ENOENT\n');
+      assert.equal(result.stderr, '');
+      assert.match(await readFile(path.join(dir, 'output'), 'utf8'), /\\Qcircuit/u);
     });
   });
 

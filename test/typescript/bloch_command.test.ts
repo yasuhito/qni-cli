@@ -272,6 +272,21 @@ describe('bloch command TypeScript route', () => {
     });
   });
 
+  it('rejects unknown options without invoking Ruby fallback', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        qubits: 1,
+        cols: [['H']]
+      });
+
+      const result = captureDispatcherRun(dir, ['bloch', '--bad'], { PATH: '' });
+
+      assert.equal(result.exitStatus, 1);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, 'ERROR: "qni bloch" was called with arguments ["--bad"]\nUsage: "qni bloch"\n');
+    });
+  });
+
   it('honors QNI_USE_RUBY for bloch', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {

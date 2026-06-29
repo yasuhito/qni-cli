@@ -7,9 +7,8 @@
 
 #83 の Ruby fallback / Ruby 実行時依存削除には、まだ入らない。
 
-公開コマンド本体の多くは TypeScript 実装へ移行済みだが、次の理由で #83 の削除条件は未達である。
+公開コマンド本体は TypeScript 実装または維持する非 Ruby 補助プログラム境界へ移行済みだが、次の理由で #83 の削除条件は未達である。
 
-- 一部の TypeScript コマンド実装が、ヘルプ、不正オプション、未対応入力で `runRubyFallbackSync` を呼び出している。
 - dispatcher-level の Ruby fallback と `QNI_USE_RUBY=1` がまだ残っている。
 - `README.md`、`.github/workflows/ci.yml`、`Rakefile` は通常の開発・検証経路として Ruby / Bundler を要求している。
 - `Gemfile`、`bin/qni`、`lib/qni/**`、Ruby テスト群が Ruby 基準実装・履歴検証用に残っている。
@@ -20,7 +19,7 @@
 - #272: `qni clear` を TypeScript route に移行する。
 - #273: `qni` / `qni --help` / `qni -h` / `qni help ...` を TypeScript route に移行する。
 
-残る主な実装阻害要因は #274 に切り出した。
+その後、#274 でコマンド内部の Ruby fallback 分岐もなくした。
 
 ## 公開コマンドと現在の境界
 
@@ -28,37 +27,30 @@
 | --- | --- | --- |
 | `qni`, `qni --help`, `qni -h` | TypeScript route | `QNI_USE_RUBY=1` の強制 fallback は #83 まで残す。 |
 | `qni help ...` | TypeScript route | 既存仕様どおり失敗する。 |
-| `qni add` | TypeScript 実装 + 一部 Ruby fallback | `qni add --help`、未対応ゲート名、未知オプションなどの fallback を #274 でなくす。 |
+| `qni add` | TypeScript 実装 | Ruby fallback 削除の直接阻害要因なし。 |
 | `qni benchmark` | TypeScript 実装 | Ruby fallback 削除の直接阻害要因なし。 |
-| `qni bloch` | TypeScript 実装 + Python 画像補助プログラム + 一部 Ruby fallback | Python 補助プログラムは維持する非 Ruby 境界。未知オプションなどの fallback を #274 でなくす。 |
+| `qni bloch` | TypeScript 実装 + Python 画像補助プログラム | Python 補助プログラムは維持する非 Ruby 境界。 |
 | `qni clear` | TypeScript route | #272 で移行。 |
-| `qni expect` | TypeScript 実装 + 一部 Ruby fallback | ヘルプ、引数なし、不正オプションの fallback を #274 でなくす。 |
-| `qni export` | TypeScript 実装 + `pdflatex` / `pdftocairo` / Python 補助プログラム + 一部 Ruby fallback | 外部ツールと Python 補助プログラムは維持する非 Ruby 境界。Ruby fallback 分岐は #274 でなくす。 |
+| `qni expect` | TypeScript 実装 | Ruby fallback 削除の直接阻害要因なし。 |
+| `qni export` | TypeScript 実装 + `pdflatex` / `pdftocairo` / Python 補助プログラム | 外部ツールと Python 補助プログラムは維持する非 Ruby 境界。 |
 | `qni gate` | TypeScript 実装 | Ruby fallback 削除の直接阻害要因なし。 |
 | `qni rm` | TypeScript 実装 | Ruby fallback 削除の直接阻害要因なし。 |
-| `qni run` | TypeScript 数値実行 + Python 記号計算補助プログラム + 一部 Ruby fallback | Python 補助プログラムは維持する非 Ruby 境界。ヘルプ、不正オプションの fallback を #274 でなくす。 |
+| `qni run` | TypeScript 数値実行 + Python 記号計算補助プログラム | Python 補助プログラムは維持する非 Ruby 境界。 |
 | `qni state` | TypeScript 実装 | Ruby fallback 削除の直接阻害要因なし。 |
 | `qni variable` | TypeScript 実装 | Ruby fallback 削除の直接阻害要因なし。 |
-| `qni view` | TypeScript 実装 + 一部 Ruby fallback | 不正引数の fallback を #274 でなくす。 |
-| 未知の最上位コマンド | dispatcher-level Ruby fallback | #274 または #83 前の最終整備で TypeScript エラーにする。 |
+| `qni view` | TypeScript 実装 | Ruby fallback 削除の直接阻害要因なし。 |
+| 未知の最上位コマンド | TypeScript エラー | Ruby fallback 削除の直接阻害要因なし。 |
 
 ## 残っている Ruby fallback / Ruby 実行時依存の参照
 
 ### 実行時 fallback
 
 - `src/dispatcher.ts`
-  - `chooseCommandImplementation` の結果が Ruby の場合、`runRubyFallbackSync` を呼ぶ。
+  - `QNI_USE_RUBY=1` の場合だけ `runRubyFallbackSync` を呼ぶ。
 - `src/process/process_compatibility.ts`
   - `QNI_USE_RUBY=1` 判定、`bundle exec bin/qni` 呼び出し、同期・非同期 fallback 実行を保持している。
-- `src/commands/add_command.ts`
-- `src/commands/bloch_command.ts`
-- `src/commands/expect_command.ts`
-- `src/commands/export_command.ts`
-- `src/commands/run_command.ts`
-- `src/commands/view_command.ts`
-  - コマンド内部の一部入力で `runRubyFallbackSync` を呼ぶ。#274 の対象。
-- `src/ruby_delegate.ts`
-  - 現在の参照は見当たらない。#83 か #274 で削除候補として確認する。
+
+`src/commands/**/*.ts` からは `runRubyFallbackSync` の参照を削除済みである。
 
 ### Ruby 実装・検証資産
 
@@ -87,9 +79,9 @@
 
 ## #83 に進む前のチェックリスト
 
-- [ ] #274 を完了し、`src/commands/**/*.ts` から `runRubyFallbackSync` import をなくす。
-- [ ] 未知の最上位コマンドを TypeScript 側で処理し、dispatcher が通常入力で Ruby に委譲しないことを確認する。
-- [ ] `QNI_USE_RUBY=1` なしの npm エントリーポイントで cucumber-js Markdown 機能ファイルが通ることを確認する。
+- [x] #274 を完了し、`src/commands/**/*.ts` から `runRubyFallbackSync` import をなくす。
+- [x] 未知の最上位コマンドを TypeScript 側で処理し、dispatcher が通常入力で Ruby に委譲しないことを確認する。
+- [x] `QNI_USE_RUBY=1` なしの npm エントリーポイントで cucumber-js Markdown 機能ファイルが通ることを確認する。
 - [ ] Node ベースの全体チェックを定義する。少なくとも `npm run build`、`npm run test:ts`、`npm run cucumber` を含める。
 - [ ] `bundle exec rake check` を最終 cleanup 前の履歴検証として残すのか、Node ベース全体チェックへ置き換えるのかを決める。
 - [ ] README の通常セットアップ・Quick Start・開発手順を npm / Node 経路へ更新する。
@@ -103,7 +95,6 @@
 - dispatcher の Ruby fallback 経路。
 - `QNI_USE_RUBY` override。
 - `src/process/process_compatibility.ts` の Ruby fallback 専用 API。
-- `src/ruby_delegate.ts`。
 - `bin/qni`、`lib/qni/**`、Ruby テスト、Ruby 品質チェック設定。
 - README と現在の利用ドキュメントに残る Ruby 通常経路の説明。
 

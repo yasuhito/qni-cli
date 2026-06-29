@@ -208,6 +208,21 @@ Examples:
     });
   });
 
+  it('rejects unknown options without invoking Ruby fallback', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        qubits: 1,
+        cols: [['H']]
+      });
+
+      const result = captureDispatcherRun(dir, ['view', '--bad'], { PATH: '' });
+
+      assert.equal(result.exitStatus, 1);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, 'ERROR: "qni view" was called with arguments ["--bad"]\nUsage: "qni view"\n');
+    });
+  });
+
   it('honors QNI_USE_RUBY for view', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {

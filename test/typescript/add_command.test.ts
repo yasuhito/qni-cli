@@ -378,13 +378,16 @@ describe('add command TypeScript route', () => {
     });
   });
 
-  it('leaves unknown option handling on Ruby fallback', async () => {
+  it('rejects unknown options without invoking Ruby fallback', async () => {
     await withTempDir(async (dir) => {
-      const result = captureDispatcherRun(dir, ['add', 'H', '--qubit', '0', '--step', '0', '--unexpected']);
+      const result = captureDispatcherRun(dir, ['add', 'H', '--qubit', '0', '--step', '0', '--unexpected'], { PATH: '' });
 
-      assert.equal(result.exitStatus, 127);
+      assert.equal(result.exitStatus, 1);
       assert.equal(result.stdout, '');
-      assert.equal(result.stderr, 'spawnSync bundle ENOENT\n');
+      assert.equal(
+        result.stderr,
+        'ERROR: "qni add" was called with arguments ["H", "--unexpected"]\nUsage: "qni add GATE --qubit=N --step=N --qubit=QUBIT --step=N"\n'
+      );
     });
   });
 
@@ -394,7 +397,7 @@ describe('add command TypeScript route', () => {
 
       assert.equal(result.exitStatus, 1);
       assert.equal(result.stdout, '');
-      assert.equal(result.stderr, 'unknown option: 0\n');
+      assert.equal(result.stderr, "No value provided for option '--qubit'\n");
     });
   });
 

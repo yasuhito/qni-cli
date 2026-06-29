@@ -1,7 +1,42 @@
 import { AngleExpression, AngleExpressionError } from '../angle_expression';
 import { CircuitFileError, currentCircuitFile } from '../circuit_file';
 import type { CommandHandlerContext } from '../dispatcher';
-import { runRubyFallbackSync } from '../process/process_compatibility';
+import { thorArgumentsError } from './thor_compatibility';
+
+const HELP_TEXT = `Usage:
+  qni add GATE --qubit=N --step=N
+  qni add GATE --control=CONTROL --qubit=N --step=N
+  qni add ANGLED_GATE --angle=ANGLE --qubit=N --step=N
+  qni add ANGLED_GATE --angle=ANGLE --control=CONTROL --qubit=N --step=N
+  qni add SWAP --qubit=N,N --step=N
+
+Overview:
+  Add a gate to ./circuit.json.
+  If ./circuit.json does not exist, qni creates the smallest circuit that can hold the gate.
+  step and qubit are 0-based indices.
+  Supported gates: H, X, Y, Z, S, S†, T, T†, √X, P, Rx, Ry, Rz, SWAP.
+  With --control, GATE is placed on --qubit and "•" is placed on each control qubit.
+  CNOT is written as qni add X --control 0 --qubit 1 --step 0.
+  ANGLED_GATE can be P, Rx, Ry, or Rz and is saved as GATE(angle).
+  SWAP uses exactly two target qubits and writes "Swap" to both slots.
+
+Options:
+  --step=N             # 0-based step index
+  --qubit=N            # 0-based qubit index
+  [--control=CONTROL]  # comma-separated control qubit indices
+  [--angle=ANGLE]      # angle for P, Rx, Ry, or Rz, such as π/3 or pi/3
+
+Examples:
+  qni add H --qubit 0 --step 0
+  qni add X --qubit 1 --step 3
+  qni add X --control 0 --qubit 1 --step 0
+  qni add H --control 0 --qubit 2 --step 4
+  qni add √X --qubit 0 --step 1
+  qni add S† --qubit 1 --step 2
+  qni add P --angle π/3 --qubit 0 --step 1
+  qni add Rx --angle π/2 --qubit 0 --step 2
+  qni add Rz --angle pi/4 --control 0 --qubit 1 --step 3
+  qni add SWAP --qubit 0,1 --step 0`;
 
 const FIXED_GATES = new Map<string, string>([
   ['H', 'H'],
@@ -33,18 +68,15 @@ interface AddOptions {
 }
 
 export function runAddCommand(argv: string[], context: CommandHandlerContext): number {
-  if (!typeScriptAdd(argv)) {
-    return runRubyFallbackSync({
-      argv,
-      cwd: context.cwd,
-      env: context.env,
-      projectRoot: context.projectRoot
-    }).exitStatus ?? 1;
+  if (argv.length === 1 || argv[1] === '--help' || argv[1] === '-h') {
+    process.stdout.write(`${HELP_TEXT}\n`);
+    return 0;
   }
 
   try {
-    const gate = normalizedSupportedGate(argv[1]);
-    const options = parseAddOptions(argv.slice(2));
+    const gateArgument = argv[1] ?? '';
+    const gate = normalizedSupportedGate(gateArgument);
+    const options = parseAddOptions(gateArgument, argv.slice(2));
     validateAngleUsage(gate, options);
     const circuitFile = currentCircuitFile(context.cwd);
 
@@ -65,22 +97,6 @@ export function runAddCommand(argv: string[], context: CommandHandlerContext): n
     process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
     return 1;
   }
-}
-
-function typeScriptAdd(argv: string[]): boolean {
-  if (argv.length < 2) {
-    return false;
-  }
-
-  if (argv[1] === '--help' || argv[1] === '-h') {
-    return false;
-  }
-
-  if (!supportedGateName(argv[1])) {
-    return false;
-  }
-
-  return knownAddOptionsOnly(argv.slice(2));
 }
 
 function normalizedSupportedGate(gate: string): string {
@@ -106,30 +122,7 @@ function normalizedGateName(gate: string): string {
   return gate.toUpperCase();
 }
 
-function supportedGateName(gate: string): boolean {
-  const normalizedName = normalizedGateName(gate);
-
-  return FIXED_GATES.has(normalizedName) || ANGLED_GATES.has(normalizedName) || normalizedName === 'SWAP';
-}
-
-function knownAddOptionsOnly(args: string[]): boolean {
-  for (let index = 0; index < args.length; index += 1) {
-    const arg = args[index];
-    const match = /^--(?<name>angle|control|qubit|step)(?:=.*)?$/u.exec(arg);
-
-    if (arg.startsWith('--') && !match?.groups) {
-      return false;
-    }
-
-    if (match?.groups && !arg.includes('=')) {
-      index += 1;
-    }
-  }
-
-  return true;
-}
-
-function parseAddOptions(args: string[]): AddOptions {
+function parseAddOptions(gateArgument: string, args: string[]): AddOptions {
   const values = new Map<string, string>();
 
   for (let index = 0; index < args.length; index += 1) {
@@ -137,12 +130,15 @@ function parseAddOptions(args: string[]): AddOptions {
     const match = /^--(?<name>angle|control|qubit|step)(?:=(?<value>.*))?$/u.exec(arg);
 
     if (!match?.groups) {
-      throw new CircuitFileError(`unknown option: ${arg}`);
+      throw new CircuitFileError(thorArgumentsError('qni add', [gateArgument, arg], 'qni add GATE --qubit=N --step=N --qubit=QUBIT --step=N'));
     }
 
     const value = match.groups.value ?? args[index + 1];
 
     if (match.groups.value === undefined) {
+      if (value === undefined || value.startsWith('--')) {
+        throw new CircuitFileError(`No value provided for option '--${match.groups.name}'`);
+      }
       index += 1;
     }
 

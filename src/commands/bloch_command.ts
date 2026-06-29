@@ -5,8 +5,8 @@ import type { CommandHandlerContext } from '../dispatcher';
 import { BlochSampler } from '../bloch/sampler';
 import { renderBloch, type BlochRenderFormat, type BlochTheme } from '../bloch/renderer';
 import { KittyGraphicsEmitter } from '../bloch/kitty_graphics_emitter';
-import { runRubyFallbackSync } from '../process/process_compatibility';
 import { SimulatorError } from '../simulator';
+import { thorArgumentsError } from './thor_compatibility';
 
 const HELP_TEXT = `Usage:
   qni bloch --png --output bloch.png
@@ -86,13 +86,8 @@ export function runBlochCommand(argv: string[], context: CommandHandlerContext):
     return 0;
   }
 
-  const options = parseBlochOptions(argv.slice(1));
-
-  if (!options) {
-    return rubyFallback(argv, context);
-  }
-
   try {
+    const options = parseBlochOptions(argv.slice(1));
     validateOptions(options);
     render(options, context);
     return 0;
@@ -110,7 +105,7 @@ function helpRequest(argv: string[]): boolean {
   return argv.length === 1 || (argv.length === 2 && (argv[1] === '--help' || argv[1] === '-h'));
 }
 
-function parseBlochOptions(args: string[]): BlochOptions | undefined {
+function parseBlochOptions(args: string[]): BlochOptions {
   const options: MutableBlochOptions = {
     animate: false,
     apng: false,
@@ -128,22 +123,18 @@ function parseBlochOptions(args: string[]): BlochOptions | undefined {
     if (name === '--output') {
       const value = inlineValue ?? args[index + 1];
 
-      if (value === undefined || (inlineValue === undefined && value.startsWith('-'))) {
-        return undefined;
-      }
-
-      if (inlineValue === undefined) {
+      if (inlineValue === undefined && value !== undefined && !value.startsWith('-')) {
         index += 1;
       }
 
-      options.output = value;
+      options.output = inlineValue ?? (value === undefined || value.startsWith('-') ? 'output' : value);
       continue;
     }
 
     const booleanSetter = BOOLEAN_OPTIONS.get(arg);
 
     if (!booleanSetter) {
-      return undefined;
+      throw new SimulatorError(thorArgumentsError('qni bloch', [arg], 'qni bloch'));
     }
 
     booleanSetter(options);
@@ -240,15 +231,6 @@ function ensureSupportedTerminal(env: NodeJS.ProcessEnv): void {
 
 function ghosttyTerminal(env: NodeJS.ProcessEnv): boolean {
   return env.TERM_PROGRAM?.toLowerCase() === 'ghostty' || env.TERM?.includes('ghostty') === true;
-}
-
-function rubyFallback(argv: string[], context: CommandHandlerContext): number {
-  return runRubyFallbackSync({
-    argv,
-    cwd: context.cwd,
-    env: context.env,
-    projectRoot: context.projectRoot
-  }).exitStatus ?? 1;
 }
 
 function theme(options: BlochOptions): BlochTheme {

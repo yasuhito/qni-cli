@@ -1,5 +1,5 @@
 import {
-  chooseCommandImplementation,
+  rubyFallbackForced,
   runRubyFallbackSync
 } from './process/process_compatibility';
 import { runAddCommand } from './commands/add_command';
@@ -92,19 +92,13 @@ export class Dispatcher {
   }
 
   private routeFor(argv: string[]): CommandRoute {
-    const implementation = chooseCommandImplementation({
-      argv,
-      env: this.env,
-      migratedCommands: new Set(TYPESCRIPT_ROUTES.keys())
-    });
-
-    if (implementation.kind === 'typescript') {
-      return {
-        handler: TYPESCRIPT_ROUTES.get(implementation.command),
-        target: 'typescript'
-      };
+    if (rubyFallbackForced(this.env)) {
+      return { target: 'ruby' };
     }
 
-    return { target: 'ruby' };
+    return {
+      handler: TYPESCRIPT_ROUTES.get(argv[0] ?? '') ?? runHelpCommand,
+      target: 'typescript'
+    };
   }
 }

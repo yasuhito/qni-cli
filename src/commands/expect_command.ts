@@ -1,16 +1,26 @@
 import { currentCircuitFile } from '../circuit_file';
 import type { CommandHandlerContext } from '../dispatcher';
-import { runRubyFallbackSync } from '../process/process_compatibility';
 import { Simulator } from '../simulator';
 
+const HELP_TEXT = `Usage:
+  qni expect PAULI_STRING [PAULI_STRING...]
+
+Overview:
+  Calculate expectation values from ./circuit.json.
+  qni simulates the whole circuit and evaluates each Pauli string on the resulting state.
+  Each PAULI_STRING must use only I, X, Y, and Z.
+  The length of each PAULI_STRING must match the circuit qubit count.
+  Output is one line per observable in the form PAULI_STRING=value.
+
+Examples:
+  qni expect Z
+  qni expect ZZ XX
+  qni expect ZZI IZZ XXX`;
+
 export function runExpectCommand(argv: string[], context: CommandHandlerContext): number {
-  if (!typeScriptExpect(argv)) {
-    return runRubyFallbackSync({
-      argv,
-      cwd: context.cwd,
-      env: context.env,
-      projectRoot: context.projectRoot
-    }).exitStatus ?? 1;
+  if (argv.length === 1 || (argv.length === 2 && (argv[1] === '--help' || argv[1] === '-h'))) {
+    process.stdout.write(`${HELP_TEXT}\n`);
+    return 0;
   }
 
   try {
@@ -21,8 +31,4 @@ export function runExpectCommand(argv: string[], context: CommandHandlerContext)
     process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
     return 1;
   }
-}
-
-function typeScriptExpect(argv: readonly string[]): boolean {
-  return argv.length > 1 && argv[0] === 'expect' && argv.slice(1).every((arg) => !arg.startsWith('-'));
 }

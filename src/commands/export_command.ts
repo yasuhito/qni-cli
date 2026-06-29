@@ -12,8 +12,8 @@ import {
 } from '../export/qcircuit_latex';
 import { circuitPngHeight, circuitPngWidth, PngExporter } from '../export/png_exporter';
 import { StateVectorLatex } from '../export/state_vector_latex';
-import { runRubyFallbackSync } from '../process/process_compatibility';
 import { Simulator } from '../simulator';
+import { thorArgumentsError } from './thor_compatibility';
 import { renderSymbolicStateVector } from '../symbolic_state_renderer';
 
 const HELP_TEXT = `Usage:
@@ -115,6 +115,11 @@ const VALUE_OPTIONS = new Map<string, (options: MutableExportOptions, value: str
     options.captionPosition = value;
   }],
   ['--caption-size', (options, value) => {
+    if (value.length === 0) {
+      options.captionSizeError = "No value provided for option '--caption-size'";
+      return;
+    }
+
     const captionSize = parseCaptionSize(value);
 
     if (captionSize === undefined) {
@@ -139,17 +144,8 @@ export function runExportCommand(argv: string[], context: CommandHandlerContext)
     return 0;
   }
 
-  const options = parseExportOptions(argv.slice(1));
-
-  if (!options) {
-    return rubyFallback(argv, context);
-  }
-
   try {
-    if (!typeScriptExport(options)) {
-      return rubyFallback(argv, context);
-    }
-
+    const options = parseExportOptions(argv.slice(1));
     validateOptions(options);
 
     const circuit = currentCircuitFile(context.cwd).load();
@@ -193,7 +189,7 @@ function helpRequest(argv: string[]): boolean {
   return argv.length === 1 || (argv.length === 2 && (argv[1] === '--help' || argv[1] === '-h'));
 }
 
-function parseExportOptions(args: string[]): ExportOptions | undefined {
+function parseExportOptions(args: string[]): ExportOptions {
   const options: MutableExportOptions = {
     captionFormat: 'text',
     captionPosition: 'bottom',
@@ -213,24 +209,20 @@ function parseExportOptions(args: string[]): ExportOptions | undefined {
     const valueSetter = VALUE_OPTIONS.get(name);
 
     if (valueSetter) {
-      const value = inlineValue ?? args[index + 1];
+      const value = optionValue(name, inlineValue, args[index + 1]);
 
-      if (value === undefined || (inlineValue === undefined && optionLikeValue(name, value))) {
-        return undefined;
-      }
-
-      if (inlineValue === undefined) {
+      if (inlineValue === undefined && value.consumeNext) {
         index += 1;
       }
 
-      valueSetter(options, value ?? '');
+      valueSetter(options, value.value);
       continue;
     }
 
     const booleanSetter = BOOLEAN_OPTIONS.get(arg);
 
     if (!booleanSetter) {
-      return undefined;
+      throw new Error(thorArgumentsError('qni export', [arg], 'qni export'));
     }
 
     booleanSetter(options);
@@ -284,8 +276,31 @@ function captionPresent(options: ExportOptions): boolean {
   return (options.caption ?? '').length > 0;
 }
 
-function optionLikeValue(optionName: string, value: string): boolean {
-  return value.startsWith('-') && (optionName !== '--caption-size' || parseCaptionSize(value) === undefined);
+function optionValue(optionName: string, inlineValue: string | undefined, nextValue: string | undefined): {
+  readonly consumeNext: boolean;
+  readonly value: string;
+} {
+  if (inlineValue !== undefined) {
+    return { consumeNext: false, value: inlineValue };
+  }
+
+  if (optionName === '--caption-size') {
+    if (nextValue === undefined || optionLikeCaptionSizeValue(nextValue)) {
+      return { consumeNext: false, value: '' };
+    }
+
+    return { consumeNext: true, value: nextValue };
+  }
+
+  if (nextValue === undefined || nextValue.startsWith('-')) {
+    return { consumeNext: false, value: optionName.slice(2) };
+  }
+
+  return { consumeNext: true, value: nextValue };
+}
+
+function optionLikeCaptionSizeValue(value: string): boolean {
+  return value.startsWith('-') && parseCaptionSize(value) === undefined;
 }
 
 function parseCaptionSize(value: string): number | undefined {
@@ -296,29 +311,8 @@ function parseCaptionSize(value: string): number | undefined {
   return Math.trunc(Number(value));
 }
 
-function rubyFallback(argv: string[], context: CommandHandlerContext): number {
-  return runRubyFallbackSync({
-    argv,
-    cwd: context.cwd,
-    env: context.env,
-    projectRoot: context.projectRoot
-  }).exitStatus ?? 1;
-}
-
 function theme(options: ExportOptions): ExportTheme {
   return options.light ? 'light' : 'dark';
-}
-
-function typeScriptExport(options: ExportOptions): boolean {
-  return typeScriptRegularCircuitExport(options) || options.stateVector || options.circleNotation;
-}
-
-function typeScriptRegularCircuitExport(options: ExportOptions): boolean {
-  return (options.latexSource || regularCircuitPng(options)) && !options.stateVector && !options.circleNotation;
-}
-
-function regularCircuitPng(options: ExportOptions): boolean {
-  return options.png && !options.latexSource;
 }
 
 function writeLatexSource(latexSource: string, options: ExportOptions, cwd: string): void {

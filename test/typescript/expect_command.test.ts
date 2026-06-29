@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, it } from 'node:test';
@@ -12,22 +12,8 @@ interface CapturedRun {
   readonly stdout: string;
 }
 
-const HELP_TEXT = `qni commands:
-  qni add       # Add a gate to the circuit
-  qni bloch     # Render the current 1-qubit state on the Bloch sphere
-  qni clear     # Delete the current circuit file
-  qni expect    # Show expectation values of Pauli strings
-  qni export    # Export the circuit as qcircuit LaTeX or PNG
-  qni gate      # Show the gate at a circuit slot
-  qni rm        # Remove a gate from the circuit
-  qni run       # Show the state vector of the circuit
-  qni state     # Manage the initial state vector
-  qni variable  # Manage symbolic angle variables
-  qni view      # Render the circuit as ASCII art
-`;
-
 async function withTempDir<T>(callback: (dir: string) => Promise<T>): Promise<T> {
-  const dir = await mkdtemp(path.join(tmpdir(), 'qni-cli-help-'));
+  const dir = await mkdtemp(path.join(tmpdir(), 'qni-cli-expect-'));
 
   try {
     return await callback(dir);
@@ -86,57 +72,30 @@ function captureDispatcherRun(
   }
 }
 
-describe('top-level help TypeScript route', () => {
-  it('prints the command list without invoking Ruby fallback', async () => {
+async function writeCircuit(dir: string): Promise<void> {
+  await writeFile(path.join(dir, 'circuit.json'), '{"qubits":1,"cols":[[1]]}\n');
+}
+
+describe('expect command TypeScript route', () => {
+  it('prints expect help without invoking Ruby fallback', async () => {
     await withTempDir(async (dir) => {
-      const result = captureDispatcherRun(dir, []);
+      const result = captureDispatcherRun(dir, ['expect']);
 
       assert.equal(result.exitStatus, 0);
-      assert.equal(result.stdout, HELP_TEXT);
       assert.equal(result.stderr, '');
+      assert.match(result.stdout, /^Usage:\n  qni expect PAULI_STRING \[PAULI_STRING\.\.\.\]/u);
     });
   });
 
-  it('prints the command list for --help without invoking Ruby fallback', async () => {
+  it('treats dash-prefixed observables like the Ruby command without invoking fallback', async () => {
     await withTempDir(async (dir) => {
-      const result = captureDispatcherRun(dir, ['--help']);
+      await writeCircuit(dir);
 
-      assert.equal(result.exitStatus, 0);
-      assert.equal(result.stdout, HELP_TEXT);
-      assert.equal(result.stderr, '');
-    });
-  });
-
-  it('rejects qni help subcommands like the Ruby command', async () => {
-    await withTempDir(async (dir) => {
-      const result = captureDispatcherRun(dir, ['help', 'add']);
+      const result = captureDispatcherRun(dir, ['expect', '--bad']);
 
       assert.equal(result.exitStatus, 1);
       assert.equal(result.stdout, '');
-      assert.equal(result.stderr, 'qni help is not available; use qni or qni COMMAND --help\n');
-    });
-  });
-
-  it('rejects unknown commands without invoking Ruby fallback', async () => {
-    await withTempDir(async (dir) => {
-      const result = captureDispatcherRun(dir, ['__missing_command__'], { PATH: '' });
-
-      assert.equal(result.exitStatus, 1);
-      assert.equal(result.stdout, '');
-      assert.equal(result.stderr, 'Could not find command "__missing_command__".\n');
-    });
-  });
-
-  it('honors QNI_USE_RUBY for top-level help', async () => {
-    await withTempDir(async (dir) => {
-      const result = captureDispatcherRun(dir, [], {
-        PATH: '',
-        QNI_USE_RUBY: '1'
-      });
-
-      assert.equal(result.exitStatus, 127);
-      assert.equal(result.stdout, '');
-      assert.equal(result.stderr, 'spawnSync bundle ENOENT\n');
+      assert.equal(result.stderr, 'Pauli string length must match qubit count: --BAD\n');
     });
   });
 });
