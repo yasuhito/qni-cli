@@ -28,3 +28,9 @@ qni bloch --png --trajectory でブロッホ球 PNG に軌跡を描きたい。
 - When "qni bloch --png --light --output bloch.png" を実行
 - When "qni bloch --png --trajectory --light --output bloch-trajectory.png" を実行
 - Then "bloch.png" と "bloch-trajectory.png" は異なるファイル内容である
+
+## Scenario: qni bloch --png --trajectory は √X ゲートのブロッホ球 PNG に軌跡色を描く
+
+- Given "qni add √X --qubit 0 --step 0" を実行
+- When "qni bloch --png --trajectory --light --output bloch-trajectory.png" を実行
+- Then "bloch-trajectory.png" は色 "#0f766e" のピクセルを含む
