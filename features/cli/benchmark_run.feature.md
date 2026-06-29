@@ -23,3 +23,17 @@ qni benchmark run で最小の合格判定を実行したい。
 - Given "circuit.json" は存在しない
 - When "qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni" を実行
 - Then "circuit.json" は存在しない
+
+## Scenario: PlusState 標準解は合格する
+
+- When "qni benchmark run benchmarks/quantum-katas/superposition/plus-state.md benchmarks/solutions/quantum-katas/superposition/plus-state.qni" を実行
+- Then コマンドは成功
+
+## Scenario: PlusState 標準解の合格が表示される
+
+- When "qni benchmark run benchmarks/quantum-katas/superposition/plus-state.md benchmarks/solutions/quantum-katas/superposition/plus-state.qni" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  PASS PlusState
+  ```
