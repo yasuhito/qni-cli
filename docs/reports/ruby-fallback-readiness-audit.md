@@ -1,7 +1,7 @@
 # Ruby fallback 削除前の準備状況棚卸し
 
 作成日: 2026-06-29
-関連: #83, #271, #272, #273, #274, #275
+関連: #83, #271, #272, #273, #274, #275, #277, #278
 
 ## 結論
 
@@ -12,7 +12,7 @@
 - dispatcher-level の Ruby fallback と `QNI_USE_RUBY=1` がまだ残っている。
 - `README.md`、`.github/workflows/ci.yml`、`Rakefile` は Node 通常経路と Ruby legacy 経路に分離済みだが、Ruby legacy 経路は #83 まで残っている。
 - `Gemfile`、`bin/qni`、`lib/qni/**`、Ruby テスト群が Ruby 基準実装・履歴検証用に残っている。
-- npm 配布で Ruby fallback を使わないリリースサイクルをまだ完了していない。
+- npm 配布で Ruby fallback を使わないリリースサイクルをまだ完了していない（記録先: `docs/reports/ruby-fallback-free-release-cycle.md`）。
 
 この棚卸し中に、Ruby fallback 削除前の小さな阻害要因として `qni clear` と最上位ヘルプを切り出した。
 
@@ -87,8 +87,8 @@
 - [x] CI を Node ベースの通常検証へ切り替える。Ruby 基準比較を残す場合は、通常利用経路とは分ける。
 - [x] npm パッケージとしての Ruby fallback なしスモーク検証を追加する。
 - [x] Ruby 基準比較の最終アーカイブまたは参照先を残す（`docs/reports/ruby-comparison-archive.md`, `docs/reports/ruby-comparison-archive.json`）。
-- [ ] npm 配布で Ruby fallback を使わないリリースサイクルを1回完了する。
-- [ ] rollback plan と release note の要点を用意する。
+- [ ] npm 配布で Ruby fallback を使わないリリースサイクルを1回完了する（記録先: `docs/reports/ruby-fallback-free-release-cycle.md`）。
+- [x] rollback plan と release note の要点を用意する（`docs/releases/ruby-fallback-removal.md`）。
 
 ## #83 で削除する候補
 
@@ -115,4 +115,4 @@ bundle exec rake check
 rg -n "runRubyFallback|QNI_USE_RUBY|bundle exec bin/qni|bundle exec rake|Gemfile|bin/qni|lib/qni|ruby/setup-ruby" README.md docs src test features package.json .github Gemfile Rakefile bin lib
 ```
 
-このレポートを追加した変更では、最終確認として `bundle exec rake check` を実行する。
+このレポートを追加・更新する変更では、最終確認として `bundle exec rake check` を実行する。
