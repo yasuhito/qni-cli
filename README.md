@@ -186,6 +186,12 @@ npm run test:ts
 npm run cucumber
 ```
 
+Before a release, run the npm package smoke test. It builds the project, packs the npm tarball, installs it into a temporary project, and verifies representative `qni` commands with a failing `bundle` shim at the front of `PATH` so Ruby fallback usage is detected.
+
+```bash
+npm run smoke:package
+```
+
 Ruby fallback and Ruby oracle checks remain available as a legacy lane until #83 removes the Ruby runtime dependency:
 
 ```bash
