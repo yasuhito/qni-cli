@@ -33,6 +33,16 @@ interface ExpectedAmplitude {
   readonly basis: string;
 }
 
+interface ExpectedStateVector {
+  readonly amplitudes: ReadonlyMap<number, ComplexAmplitude>;
+  readonly vectorLength: number;
+}
+
+interface BasisMetadata {
+  readonly index: number;
+  readonly vectorLength: number;
+}
+
 interface ComplexAmplitude {
   readonly imaginary: number;
   readonly real: number;
@@ -55,9 +65,26 @@ interface DisallowedSubmission {
 }
 
 interface BenchmarkResult {
-  readonly checkCount: number;
+  readonly checks: readonly BenchmarkCheckResult[];
   readonly disallowedSubmission?: DisallowedSubmission;
   readonly status: 'passed' | 'failed' | 'disallowed';
+}
+
+interface BenchmarkCheckResult {
+  readonly mismatches: MismatchSummary;
+  readonly status: 'passed' | 'failed';
+  readonly type: 'run';
+}
+
+interface MismatchSummary {
+  readonly displayed: readonly AmplitudeMismatch[];
+  readonly omittedCount: number;
+}
+
+interface AmplitudeMismatch {
+  readonly actual: ComplexAmplitude;
+  readonly basis: string;
+  readonly expected: ComplexAmplitude;
 }
 
 class BenchmarkError extends Error {}
@@ -67,6 +94,7 @@ const QNI_COMMAND_HANDLERS = new Map<string, CommandHandler>([
   ['run', runRunCommand]
 ]);
 const USAGE = 'Usage: qni benchmark run <task-file> <submission-file>\n';
+const MAX_FAILED_AMPLITUDE_DETAILS = 16;
 const ZERO_AMPLITUDE: ComplexAmplitude = { imaginary: 0, real: 0 };
 
 export function runBenchmarkCommand(argv: string[], context: CommandHandlerContext): number {
@@ -127,7 +155,7 @@ function evaluateBenchmark(options: {
 
   if (disallowedSubmission) {
     return {
-      checkCount: 0,
+      checks: [],
       disallowedSubmission,
       status: 'disallowed'
     };
@@ -137,11 +165,11 @@ function evaluateBenchmark(options: {
 
   try {
     runSubmission(submissionCommands, workDir, options.context);
-    const checksPassed = options.task.checks.items.every((check) => runCheckPassed(check, options.task, workDir, options.context));
+    const checks = options.task.checks.items.map((check) => runCheck(check, options.task, workDir, options.context));
 
     return {
-      checkCount: options.task.checks.items.length,
-      status: checksPassed ? 'passed' : 'failed'
+      checks,
+      status: checks.every((check) => check.status === 'passed') ? 'passed' : 'failed'
     };
   } finally {
     rmSync(workDir, { force: true, recursive: true });
@@ -194,33 +222,74 @@ function commandAllowed(command: SubmissionCommand, allowed: AllowedCommand): bo
   return allowed.argv.every((word, index) => command.argv[index] === word);
 }
 
-function runCheckPassed(
+function runCheck(
   check: RunCheck,
   task: BenchmarkTask,
   workDir: string,
   context: CommandHandlerContext
-): boolean {
+): BenchmarkCheckResult {
   const result = runQni(['run'], workDir, context);
 
   if (result.exitStatus !== 0) {
     throw new BenchmarkError(`run check failed to execute for ${task.id}: ${result.stderr.trimEnd()}`);
   }
 
-  return stateVectorMatches(parseStateVector(result.stdout), check.expected, task.checks.tolerance);
+  const actual = parseStateVector(result.stdout);
+  const expected = expectedStateVector(check.expected);
+  const mismatches = stateVectorMismatchSummary(actual, expected, task.checks.tolerance);
+
+  return {
+    mismatches,
+    status: mismatches.displayed.length === 0 && mismatches.omittedCount === 0 ? 'passed' : 'failed',
+    type: 'run'
+  };
 }
 
-function stateVectorMatches(
-  actual: readonly ComplexAmplitude[],
-  expectedAmplitudes: readonly ExpectedAmplitude[],
-  tolerance: number
-): boolean {
-  const expected = Array.from({ length: actual.length }, () => ZERO_AMPLITUDE);
+function expectedStateVector(expectedAmplitudes: readonly ExpectedAmplitude[]): ExpectedStateVector {
+  const amplitudes = new Map<number, ComplexAmplitude>();
+  let vectorLength = 1;
 
   for (const item of expectedAmplitudes) {
-    expected[basisIndex(item.basis, actual.length)] = item.amplitude;
+    const basis = basisMetadata(item.basis);
+    amplitudes.set(basis.index, item.amplitude);
+    vectorLength = Math.max(vectorLength, basis.vectorLength);
   }
 
-  return actual.every((amplitude, index) => amplitudesClose(amplitude, expected[index] ?? ZERO_AMPLITUDE, tolerance));
+  return { amplitudes, vectorLength };
+}
+
+function stateVectorMismatchSummary(
+  actual: readonly ComplexAmplitude[],
+  expected: ExpectedStateVector,
+  tolerance: number
+): MismatchSummary {
+  const displayed: AmplitudeMismatch[] = [];
+  let mismatchCount = 0;
+  const vectorLength = Math.max(actual.length, expected.vectorLength);
+
+  for (let index = 0; index < vectorLength; index += 1) {
+    const amplitude = actual[index] ?? ZERO_AMPLITUDE;
+    const expectedAmplitude = expected.amplitudes.get(index) ?? ZERO_AMPLITUDE;
+
+    if (amplitudesClose(amplitude, expectedAmplitude, tolerance)) {
+      continue;
+    }
+
+    mismatchCount += 1;
+
+    if (displayed.length < MAX_FAILED_AMPLITUDE_DETAILS) {
+      displayed.push({
+        actual: amplitude,
+        basis: basisLabel(index, vectorLength),
+        expected: expectedAmplitude
+      });
+    }
+  }
+
+  return {
+    displayed,
+    omittedCount: mismatchCount - displayed.length
+  };
 }
 
 function amplitudesClose(actual: ComplexAmplitude, expected: ComplexAmplitude, tolerance: number): boolean {
@@ -270,20 +339,17 @@ function exponentSign(value: string, index: number): boolean {
   return value[index - 1] === 'e' || value[index - 1] === 'E';
 }
 
-function basisIndex(basis: string, vectorLength: number): number {
+function basisMetadata(basis: string): BasisMetadata {
   const match = /^\|(?<bits>[01]+)>$/u.exec(basis);
 
   if (!match?.groups) {
     throw new BenchmarkError(`unsupported basis label: ${basis}`);
   }
 
-  const index = Number.parseInt(match.groups.bits, 2);
-
-  if (index >= vectorLength) {
-    throw new BenchmarkError(`basis label is outside the state vector: ${basis}`);
-  }
-
-  return index;
+  return {
+    index: Number.parseInt(match.groups.bits, 2),
+    vectorLength: 2 ** match.groups.bits.length
+  };
 }
 
 function runQni(argv: readonly string[], cwd: string, context: CommandHandlerContext): QniCommandResult {
@@ -579,7 +645,77 @@ function writeHumanResult(task: BenchmarkTask, result: BenchmarkResult): void {
   const label = result.status === 'passed' ? 'PASS' : 'FAIL';
 
   process.stdout.write(`${label} ${task.title}\n`);
-  process.stdout.write(`checks: ${result.checkCount}\n`);
+  process.stdout.write(`checks: ${result.checks.length}\n`);
+  writeFailedCheckDetails(result);
+}
+
+function writeFailedCheckDetails(result: BenchmarkResult): void {
+  const failedChecks = result.checks
+    .map((check, index) => ({ check, index }))
+    .filter((item) => item.check.status === 'failed');
+
+  if (failedChecks.length === 0) {
+    return;
+  }
+
+  process.stdout.write('failed checks:\n');
+
+  for (const failedCheck of failedChecks) {
+    process.stdout.write(`${failedCheckLines(failedCheck.check, failedCheck.index).join('\n')}\n`);
+  }
+}
+
+function failedCheckLines(check: BenchmarkCheckResult, index: number): string[] {
+  return [
+    `- ${check.type} #${index + 1}: state vector did not match expected amplitudes`,
+    '  expected / actual mismatches:',
+    ...displayedMismatches(check.mismatches.displayed),
+    ...omittedMismatchLines(check.mismatches.omittedCount)
+  ];
+}
+
+function displayedMismatches(mismatches: readonly AmplitudeMismatch[]): string[] {
+  return mismatches
+    .slice(0, MAX_FAILED_AMPLITUDE_DETAILS)
+    .map((mismatch) => [
+      `  - ${mismatch.basis}:`,
+      `expected ${formatComplexAmplitude(mismatch.expected)},`,
+      `actual ${formatComplexAmplitude(mismatch.actual)}`
+    ].join(' '));
+}
+
+function omittedMismatchLines(omittedCount: number): string[] {
+  if (omittedCount <= 0) {
+    return [];
+  }
+
+  return [`  ... ${omittedCount} more mismatched amplitudes omitted`];
+}
+
+function basisLabel(index: number, vectorLength: number): string {
+  const width = Math.log2(vectorLength);
+
+  if (!Number.isInteger(width)) {
+    throw new BenchmarkError(`state vector length is not a power of two: ${vectorLength}`);
+  }
+
+  return `|${index.toString(2).padStart(width, '0')}>`;
+}
+
+function formatComplexAmplitude(amplitude: ComplexAmplitude): string {
+  if (amplitude.imaginary === 0) {
+    return formatNumber(amplitude.real);
+  }
+
+  if (amplitude.real === 0) {
+    return `${formatNumber(amplitude.imaginary)}i`;
+  }
+
+  return `${formatNumber(amplitude.real)}${amplitude.imaginary >= 0 ? '+' : ''}${formatNumber(amplitude.imaginary)}i`;
+}
+
+function formatNumber(value: number): string {
+  return Object.is(value, -0) ? '0' : String(value);
 }
 
 function writeDisallowedResult(task: BenchmarkTask, result: BenchmarkResult): void {

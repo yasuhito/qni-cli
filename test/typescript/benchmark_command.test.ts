@@ -197,6 +197,40 @@ describe('benchmark command TypeScript route', () => {
     });
   });
 
+  it('fails instead of aborting when the actual state vector is shorter than expected', async () => {
+    await withTempDir(async (dir) => {
+      await writeFile(path.join(dir, 'task.md'), [
+        '---',
+        'id: output/short-actual',
+        'title: ShortActual',
+        'source: test',
+        'difficulty: smoke',
+        'allowed_commands:',
+        '  - qni add',
+        'checks:',
+        '  tolerance: 1e-12',
+        '  items:',
+        '    - type: run',
+        '      expected:',
+        '        - basis: "|10>"',
+        '          amplitude:',
+        '            real: 1',
+        '            imaginary: 0',
+        '---',
+        '',
+        'Prepare a two-qubit state.'
+      ].join('\n'));
+      await writeFile(path.join(dir, 'submission.qni'), 'qni add X --qubit 0 --step 0\n');
+
+      const result = captureDispatcherRun(dir, ['benchmark', 'run', 'task.md', 'submission.qni']);
+
+      assert.equal(result.exitStatus, 1, result.stderr);
+      assert.ok(result.stdout.includes('FAIL ShortActual\n'));
+      assert.ok(result.stdout.includes('  - |10>: expected 1, actual 0\n'));
+      assert.equal(result.stderr, '');
+    });
+  });
+
   it('passes the PlusState solution using the task tolerance for rounded amplitudes', async () => {
     await withTempDir(async (dir) => {
       const result = captureDispatcherRun(dir, [
@@ -208,6 +242,74 @@ describe('benchmark command TypeScript route', () => {
 
       assert.equal(result.exitStatus, 0, result.stderr);
       assert.equal(result.stdout, 'PASS PlusState\nchecks: 1\n');
+      assert.equal(result.stderr, '');
+    });
+  });
+
+  it('fails the StateFlip incorrect sample with human-readable failed check details', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, [
+        'benchmark',
+        'run',
+        'benchmarks/quantum-katas/basic-gates/state-flip.md',
+        'benchmarks/incorrect/quantum-katas/basic-gates/state-flip-wrong.qni'
+      ]);
+
+      assert.equal(result.exitStatus, 1, result.stderr);
+      assert.equal(result.stdout, [
+        'FAIL StateFlip',
+        'checks: 1',
+        'failed checks:',
+        '- run #1: state vector did not match expected amplitudes',
+        '  expected / actual mismatches:',
+        '  - |0>: expected 0, actual 0.7071067811865475',
+        '  - |1>: expected 1, actual 0.7071067811865475',
+        ''
+      ].join('\n'));
+      assert.equal(result.stderr, '');
+    });
+  });
+
+  it('limits failed check details to mismatched amplitudes that fit human-readable output', async () => {
+    await withTempDir(async (dir) => {
+      await writeFile(path.join(dir, 'task.md'), [
+        '---',
+        'id: output/large-failure',
+        'title: LargeFailure',
+        'source: test',
+        'difficulty: smoke',
+        'allowed_commands:',
+        '  - qni add',
+        'checks:',
+        '  tolerance: 1e-12',
+        '  items:',
+        '    - type: run',
+        '      expected:',
+        '        - basis: "|00000>"',
+        '          amplitude:',
+        '            real: 1',
+        '            imaginary: 0',
+        '---',
+        '',
+        'Keep the five-qubit zero state.'
+      ].join('\n'));
+      await writeFile(path.join(dir, 'submission.qni'), [
+        'qni add H --qubit 0 --step 0',
+        'qni add H --qubit 1 --step 0',
+        'qni add H --qubit 2 --step 0',
+        'qni add H --qubit 3 --step 0',
+        'qni add H --qubit 4 --step 0',
+        ''
+      ].join('\n'));
+
+      const result = captureDispatcherRun(dir, ['benchmark', 'run', 'task.md', 'submission.qni']);
+      const detailLines = result.stdout
+        .split('\n')
+        .filter((line) => line.startsWith('  - |'));
+
+      assert.equal(result.exitStatus, 1, result.stderr);
+      assert.equal(detailLines.length, 16);
+      assert.ok(result.stdout.includes('  ... 16 more mismatched amplitudes omitted\n'));
       assert.equal(result.stderr, '');
     });
   });

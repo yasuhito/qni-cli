@@ -56,3 +56,22 @@ qni benchmark run で最小の合格判定を実行したい。
   DISALLOWED StateFlip
   rejected: line 1: qni run
   ```
+
+## Scenario: StateFlip 不正解サンプルは終了コード 1 で不合格になる
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/incorrect/quantum-katas/basic-gates/state-flip-wrong.qni" を実行
+- Then 終了コードは 1
+
+## Scenario: StateFlip 不正解サンプルは不合格と失敗したチェックを表示する
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/incorrect/quantum-katas/basic-gates/state-flip-wrong.qni" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  FAIL StateFlip
+  checks: 1
+  failed checks:
+  - run #1: state vector did not match expected amplitudes
+    expected / actual mismatches:
+    - |0>: expected 0, actual 0.7071067811865475
+  ```
