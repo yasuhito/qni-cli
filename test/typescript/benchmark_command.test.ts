@@ -197,6 +197,40 @@ describe('benchmark command TypeScript route', () => {
     });
   });
 
+  it('fails instead of aborting when the actual state vector is shorter than expected', async () => {
+    await withTempDir(async (dir) => {
+      await writeFile(path.join(dir, 'task.md'), [
+        '---',
+        'id: output/short-actual',
+        'title: ShortActual',
+        'source: test',
+        'difficulty: smoke',
+        'allowed_commands:',
+        '  - qni add',
+        'checks:',
+        '  tolerance: 1e-12',
+        '  items:',
+        '    - type: run',
+        '      expected:',
+        '        - basis: "|10>"',
+        '          amplitude:',
+        '            real: 1',
+        '            imaginary: 0',
+        '---',
+        '',
+        'Prepare a two-qubit state.'
+      ].join('\n'));
+      await writeFile(path.join(dir, 'submission.qni'), 'qni add X --qubit 0 --step 0\n');
+
+      const result = captureDispatcherRun(dir, ['benchmark', 'run', 'task.md', 'submission.qni']);
+
+      assert.equal(result.exitStatus, 1, result.stderr);
+      assert.ok(result.stdout.includes('FAIL ShortActual\n'));
+      assert.ok(result.stdout.includes('  - |10>: expected 1, actual 0\n'));
+      assert.equal(result.stderr, '');
+    });
+  });
+
   it('passes the PlusState solution using the task tolerance for rounded amplitudes', async () => {
     await withTempDir(async (dir) => {
       const result = captureDispatcherRun(dir, [

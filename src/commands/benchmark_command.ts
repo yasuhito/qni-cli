@@ -33,6 +33,16 @@ interface ExpectedAmplitude {
   readonly basis: string;
 }
 
+interface ExpectedStateVector {
+  readonly amplitudes: ReadonlyMap<number, ComplexAmplitude>;
+  readonly vectorLength: number;
+}
+
+interface BasisMetadata {
+  readonly index: number;
+  readonly vectorLength: number;
+}
+
 interface ComplexAmplitude {
   readonly imaginary: number;
   readonly real: number;
@@ -225,7 +235,7 @@ function runCheck(
   }
 
   const actual = parseStateVector(result.stdout);
-  const expected = expectedStateVector(check.expected, actual.length);
+  const expected = expectedStateVector(check.expected);
   const mismatches = stateVectorMismatchSummary(actual, expected, task.checks.tolerance);
 
   return {
@@ -235,32 +245,34 @@ function runCheck(
   };
 }
 
-function expectedStateVector(
-  expectedAmplitudes: readonly ExpectedAmplitude[],
-  vectorLength: number
-): ReadonlyMap<number, ComplexAmplitude> {
-  const expected = new Map<number, ComplexAmplitude>();
+function expectedStateVector(expectedAmplitudes: readonly ExpectedAmplitude[]): ExpectedStateVector {
+  const amplitudes = new Map<number, ComplexAmplitude>();
+  let vectorLength = 1;
 
   for (const item of expectedAmplitudes) {
-    expected.set(basisIndex(item.basis, vectorLength), item.amplitude);
+    const basis = basisMetadata(item.basis);
+    amplitudes.set(basis.index, item.amplitude);
+    vectorLength = Math.max(vectorLength, basis.vectorLength);
   }
 
-  return expected;
+  return { amplitudes, vectorLength };
 }
 
 function stateVectorMismatchSummary(
   actual: readonly ComplexAmplitude[],
-  expected: ReadonlyMap<number, ComplexAmplitude>,
+  expected: ExpectedStateVector,
   tolerance: number
 ): MismatchSummary {
   const displayed: AmplitudeMismatch[] = [];
   let mismatchCount = 0;
+  const vectorLength = Math.max(actual.length, expected.vectorLength);
 
-  actual.forEach((amplitude, index) => {
-    const expectedAmplitude = expected.get(index) ?? ZERO_AMPLITUDE;
+  for (let index = 0; index < vectorLength; index += 1) {
+    const amplitude = actual[index] ?? ZERO_AMPLITUDE;
+    const expectedAmplitude = expected.amplitudes.get(index) ?? ZERO_AMPLITUDE;
 
     if (amplitudesClose(amplitude, expectedAmplitude, tolerance)) {
-      return;
+      continue;
     }
 
     mismatchCount += 1;
@@ -268,11 +280,11 @@ function stateVectorMismatchSummary(
     if (displayed.length < MAX_FAILED_AMPLITUDE_DETAILS) {
       displayed.push({
         actual: amplitude,
-        basis: basisLabel(index, actual.length),
+        basis: basisLabel(index, vectorLength),
         expected: expectedAmplitude
       });
     }
-  });
+  }
 
   return {
     displayed,
@@ -327,20 +339,17 @@ function exponentSign(value: string, index: number): boolean {
   return value[index - 1] === 'e' || value[index - 1] === 'E';
 }
 
-function basisIndex(basis: string, vectorLength: number): number {
+function basisMetadata(basis: string): BasisMetadata {
   const match = /^\|(?<bits>[01]+)>$/u.exec(basis);
 
   if (!match?.groups) {
     throw new BenchmarkError(`unsupported basis label: ${basis}`);
   }
 
-  const index = Number.parseInt(match.groups.bits, 2);
-
-  if (index >= vectorLength) {
-    throw new BenchmarkError(`basis label is outside the state vector: ${basis}`);
-  }
-
-  return index;
+  return {
+    index: Number.parseInt(match.groups.bits, 2),
+    vectorLength: 2 ** match.groups.bits.length
+  };
 }
 
 function runQni(argv: readonly string[], cwd: string, context: CommandHandlerContext): QniCommandResult {
