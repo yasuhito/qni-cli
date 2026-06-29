@@ -40,6 +40,17 @@ qni export --png で通常の回路図を PNG 形式で書き出したい。
 - When "qni export --png --output circuit.png" を実行
 - Then "circuit.png" の画像サイズは 64x64 である
 
+## Scenario: qni export --png は列なし回路を最小幅で書き出す
+
+- Given 次の circuit.json がある:
+
+  ```json
+  { "qubits": 1, "cols": [] }
+  ```
+
+- When "qni export --png --output circuit.png" を実行
+- Then "circuit.png" の画像サイズは 192x64 である
+
 ## Scenario: qni export --png は 2x2 回路を 128x128 で書き出す
 
 - Given "qni add H --qubit 0 --step 0" を実行

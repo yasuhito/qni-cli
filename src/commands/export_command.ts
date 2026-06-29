@@ -3,7 +3,12 @@ import path from 'node:path';
 
 import { CircuitFileError, currentCircuitFile } from '../circuit_file';
 import type { CommandHandlerContext } from '../dispatcher';
-import { QCircuitLatex, validateCaptionOptions, type ExportTheme } from '../export/qcircuit_latex';
+import {
+  QCircuitLatex,
+  qcircuitRenderedColumnCount,
+  validateCaptionOptions,
+  type ExportTheme
+} from '../export/qcircuit_latex';
 import { circuitPngHeight, circuitPngWidth, PngExporter } from '../export/png_exporter';
 import { runRubyFallbackSync } from '../process/process_compatibility';
 
@@ -153,7 +158,7 @@ export function runExportCommand(argv: string[], context: CommandHandlerContext)
     }).render();
 
     if (options.png) {
-      writePng(latexSource, options, context, circuit.cols.length, circuit.qubits);
+      writePng(latexSource, options, context, qcircuitRenderedColumnCount(circuit), circuit.qubits);
     } else {
       writeLatexSource(latexSource, options, context.cwd);
     }

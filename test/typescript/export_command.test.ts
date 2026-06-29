@@ -325,6 +325,23 @@ describe('export command TypeScript route', () => {
     });
   });
 
+  it('sizes an empty regular PNG from the rendered qcircuit columns', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        qubits: 1,
+        cols: []
+      });
+
+      const result = captureDispatcherRun(dir, ['export', '--png', '--light', '--output', 'empty.png']);
+      const typeScriptPng = await pngStableProperties(path.join(dir, 'empty.png'));
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, '');
+      assert.deepEqual(typeScriptPng, { height: 64, transparent: true, width: 192 });
+    });
+  });
+
   it('renders caption PNG like the Ruby oracle', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
