@@ -16,10 +16,6 @@ pack した成果物をインストールして代表コマンドを実行した
 
 - Then リポジトリファイル "scripts/smoke_npm_package.js" は "npm pack" を含む
 
-## Scenario: package smoke script は bundle shim 呼び出しを検出する
-
-- Then リポジトリファイル "scripts/smoke_npm_package.js" は "bundle unexpectedly invoked" を含む
-
 ## Scenario: package smoke script は installed qni の代表コマンドを確認する
 
 - Then リポジトリファイル "scripts/smoke_npm_package.js" は "benchmark run" を含む

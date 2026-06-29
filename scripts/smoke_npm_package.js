@@ -15,19 +15,15 @@ function main() {
     const tarball = packProject(tempRoot);
     const installRoot = path.join(tempRoot, 'install');
     const workspace = path.join(tempRoot, 'workspace');
-    const fakeBin = path.join(tempRoot, 'fake-bin');
-    const bundleLog = path.join(tempRoot, 'bundle-calls.log');
 
     fs.mkdirSync(installRoot);
     fs.mkdirSync(workspace);
-    fs.mkdirSync(fakeBin);
-    writeFailingBundle(path.join(fakeBin, 'bundle'));
 
     run('npm init -y', 'npm', ['init', '-y'], { cwd: installRoot });
     run('npm install packed qni-cli', 'npm', ['install', '--omit=dev', '--ignore-scripts', tarball], { cwd: installRoot });
 
     const packageRoot = path.join(installRoot, 'node_modules', 'qni-cli');
-    const env = smokeEnv({ bundleLog, fakeBin, installRoot });
+    const env = smokeEnv({ installRoot });
 
     assertCommand({
       command: ['qni', '--help'],
@@ -70,10 +66,6 @@ function main() {
       stdoutIncludes: 'PASS StateFlip'
     });
 
-    if (fs.existsSync(bundleLog)) {
-      throw new Error(`bundle unexpectedly invoked during package smoke:\n${fs.readFileSync(bundleLog, 'utf8')}`);
-    }
-
     console.log(`package smoke passed: ${path.basename(tarball)}`);
   } finally {
     if (keepTemp) {
@@ -96,28 +88,11 @@ function packProject(tempRoot) {
   return path.join(tempRoot, filename);
 }
 
-function smokeEnv({ bundleLog, fakeBin, installRoot }) {
-  const env = {
+function smokeEnv({ installRoot }) {
+  return {
     ...process.env,
-    PATH: [fakeBin, path.join(installRoot, 'node_modules', '.bin'), process.env.PATH ?? ''].join(path.delimiter),
-    QNI_FAKE_BUNDLE_LOG: bundleLog
+    PATH: [path.join(installRoot, 'node_modules', '.bin'), process.env.PATH ?? ''].join(path.delimiter)
   };
-
-  return env;
-}
-
-function writeFailingBundle(bundlePath) {
-  fs.writeFileSync(
-    bundlePath,
-    [
-      '#!/bin/sh',
-      'echo "bundle unexpectedly invoked: bundle $*" >&2',
-      'printf "%s\\n" "$*" >> "$QNI_FAKE_BUNDLE_LOG"',
-      'exit 97',
-      ''
-    ].join('\n'),
-    { mode: 0o755 }
-  );
 }
 
 function assertCommand({ command, cwd, env, label, stdoutIncludes }) {

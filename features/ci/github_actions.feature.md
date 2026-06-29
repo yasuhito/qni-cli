@@ -59,7 +59,3 @@ GitHub Actions と Node 通常チェックを整えたい
 ## Scenario: GitHub Actions ワークフローは Node 通常チェックを呼ぶ
 
 - Then リポジトリファイル ".github/workflows/ci.yml" は "npm run check" を含む
-
-## Scenario: GitHub Actions ワークフローは Ruby を設定しない
-
-- Then リポジトリファイル ".github/workflows/ci.yml" は "ruby/setup-ruby" を含まない

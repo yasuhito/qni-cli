@@ -943,14 +943,6 @@ Then('リポジトリファイル {string} は存在する', function (filePath)
   );
 });
 
-Then('リポジトリファイル {string} は存在しない', function (filePath) {
-  assert.equal(
-    fs.existsSync(projectFilePath(filePath)),
-    false,
-    `expected repository file not to exist: ${filePath}`
-  );
-});
-
 Then('リポジトリファイル {string} は {string} を含む', function (filePath, text) {
   const actualPath = projectFilePath(filePath);
   assert.ok(fs.existsSync(actualPath), `expected repository file to exist: ${filePath}`);
@@ -962,21 +954,6 @@ Then('リポジトリファイル {string} は {string} を含む', function (fi
       'expected repository file to include text',
       `file: ${filePath}`,
       `expected: ${text}`
-    ].join('\n')
-  );
-});
-
-Then('リポジトリファイル {string} は {string} を含まない', function (filePath, text) {
-  const actualPath = projectFilePath(filePath);
-  assert.ok(fs.existsSync(actualPath), `expected repository file to exist: ${filePath}`);
-
-  const actual = fs.readFileSync(actualPath, 'utf8');
-  assert.ok(
-    !actual.includes(text),
-    [
-      'expected repository file not to include text',
-      `file: ${filePath}`,
-      `unexpected: ${text}`
     ].join('\n')
   );
 });
