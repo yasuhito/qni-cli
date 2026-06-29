@@ -387,7 +387,9 @@ function parseAllowedCommands(frontmatter: string): AllowedCommand[] {
 
 function frontmatterListValues(frontmatter: string, key: string): string[] {
   const lines = frontmatter.split(/\r?\n/u);
-  const startIndex = lines.findIndex((line) => line === `${key}:`);
+  const keyPattern = key.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+  const sectionHeader = new RegExp(`^${keyPattern}:\\s*(?:#.*)?$`, 'u');
+  const startIndex = lines.findIndex((line) => sectionHeader.test(line));
 
   if (startIndex === -1) {
     throw new BenchmarkError(`${key} is required`);
