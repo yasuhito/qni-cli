@@ -28,6 +28,10 @@ Node.js / TypeScript 経路だけで qni CLI を保守したい
 
 - Then リポジトリファイル "Gemfile" は存在しない
 
+## Scenario: Ruby version file は削除されている
+
+- Then リポジトリファイル ".ruby-version" は存在しない
+
 ## Scenario: Ruby CLI entrypoint は削除されている
 
 - Then リポジトリファイル "bin/qni" は存在しない
