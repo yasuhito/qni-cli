@@ -28,47 +28,5 @@ jobs:
       - name: Set up symbolic Python runtime
         run: scripts/setup_symbolic_python.sh
 
-      - name: Run Node normal check suite
+      - name: Run Node check suite
         run: npm run check
-
-  legacy-ruby-check:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-
-      - name: Cache Ruby dependencies
-        uses: actions/cache@v4
-        with:
-          path: .bundle/vendor
-          key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-gems-
-
-      - name: Install Ruby dependencies
-        run: |
-          bundle config set path .bundle/vendor
-          bundle install
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Install JavaScript dependencies
-        run: npm ci
-
-      - name: Install system packages
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y texlive-latex-base texlive-latex-extra poppler-utils
-
-      - name: Set up symbolic Python runtime
-        run: scripts/setup_symbolic_python.sh
-
-      - name: Run Ruby legacy check suite
-        run: bundle exec rake check

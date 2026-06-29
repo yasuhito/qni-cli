@@ -93,7 +93,6 @@ function scenarioEnv(extraEnv = {}) {
   return {
     ...process.env,
     ...extraEnv,
-    BUNDLE_GEMFILE: path.join(PROJECT_ROOT, 'Gemfile'),
     MPLCONFIGDIR
   };
 }
@@ -172,26 +171,6 @@ function runQniCommandInTty(scenarioDir, command, extraEnv = {}) {
       });
     });
   });
-}
-
-function copiedScenarioDir(sourceDir) {
-  const targetDir = fs.mkdtempSync(path.join(os.tmpdir(), 'qni-cli-oracle-'));
-  fs.cpSync(sourceDir, targetDir, { recursive: true });
-  return targetDir;
-}
-
-async function runRubyOracleComparison(world, command, runCommand) {
-  const oracleDir = copiedScenarioDir(world.scenarioDir);
-  world.tempDirs ||= [];
-  world.tempDirs.push(oracleDir);
-
-  const commandEnv = world.commandEnv || {};
-  world.routeComparison = {
-    oracle: await runCommand(oracleDir, command, { ...commandEnv, QNI_USE_RUBY: '1' }),
-    oracleDir,
-    typeScript: await runCommand(world.scenarioDir, command, commandEnv),
-    typeScriptDir: world.scenarioDir
-  };
 }
 
 function normalizeMultilineText(value) {
@@ -309,27 +288,27 @@ function appendAsciiCircuitJson(scenarioDir, asciiArt) {
 }
 
 function directInitialState(state) {
-  const script = [
-    'begin',
-    '  initial_state = Qni::InitialState.parse(STDIN.read.sub(/\\n+\\z/, ""))',
-    '  puts JSON.generate(ok: true, qubits: initial_state.qubits, state: initial_state.to_h)',
-    'rescue Qni::InitialState::Error => e',
-    '  puts JSON.generate(ok: false, error: e.message)',
-    'end'
-  ].join('\n');
+  const {
+    InitialStateError,
+    initialStateQubitCount,
+    parseInitialState
+  } = require(path.join(PROJECT_ROOT, 'dist', 'initial_state.js'));
 
-  const result = JSON.parse(execFileSync(
-    'bundle',
-    ['exec', 'ruby', '-Ilib', '-rjson', '-rqni/initial_state', '-e', script],
-    {
-      cwd: PROJECT_ROOT,
-      env: scenarioEnv(),
-      input: state,
-      encoding: 'utf8'
+  try {
+    const parsedState = parseInitialState(state);
+
+    return {
+      ok: true,
+      qubits: initialStateQubitCount(parsedState),
+      state: parsedState
+    };
+  } catch (error) {
+    if (error instanceof InitialStateError) {
+      return undefined;
     }
-  ));
 
-  return result.ok ? result : undefined;
+    throw error;
+  }
 }
 
 function initialStateVectorCols(state) {
@@ -780,14 +759,6 @@ When('{string} を TTY で実行', async function (command) {
   this.lastCommand = await runQniCommandInTty(this.scenarioDir, command, this.commandEnv);
 });
 
-When('TypeScript route と Ruby oracle で {string} を比較実行', async function (command) {
-  await runRubyOracleComparison(this, command, runQniCommand);
-});
-
-When('TypeScript route と Ruby oracle で {string} を TTY 比較実行', async function (command) {
-  await runRubyOracleComparison(this, command, runQniCommandInTty);
-});
-
 Then('コマンドは成功', function () {
   assert.equal(this.lastCommand.code, 0, commandFailureMessage(this.lastCommand));
 });
@@ -809,53 +780,6 @@ Then('終了コードは {int}', function (expectedCode) {
       this.lastCommand.stderr
     ].join('\n')
   );
-});
-
-Then('TypeScript route の終了ステータスは Ruby oracle と同じ', function () {
-  assert.equal(this.routeComparison.typeScript.code, this.routeComparison.oracle.code);
-});
-
-Then('TypeScript route の標準出力は Ruby oracle と同じ', function () {
-  assert.equal(this.routeComparison.typeScript.stdout, this.routeComparison.oracle.stdout);
-});
-
-Then('TypeScript route の標準エラーは Ruby oracle と同じ', function () {
-  assert.equal(this.routeComparison.typeScript.stderr, this.routeComparison.oracle.stderr);
-});
-
-Then('TypeScript route の {string} の画像サイズは Ruby oracle と同じ', function (filePath) {
-  const actual = pngMetadata(path.join(this.routeComparison.typeScriptDir, filePath));
-  const expected = pngMetadata(path.join(this.routeComparison.oracleDir, filePath));
-
-  assert.deepEqual([actual.width, actual.height], [expected.width, expected.height]);
-});
-
-Then('TypeScript route の {string} の透過属性は Ruby oracle と同じ', function (filePath) {
-  const actual = pngMetadata(path.join(this.routeComparison.typeScriptDir, filePath));
-  const expected = pngMetadata(path.join(this.routeComparison.oracleDir, filePath));
-
-  assert.equal(actual.transparent, expected.transparent);
-});
-
-Then('TypeScript route の {string} の色 {string} の有無は Ruby oracle と同じ', function (filePath, hexColor) {
-  const actual = imageIncludesColor(path.join(this.routeComparison.typeScriptDir, filePath), hexColor);
-  const expected = imageIncludesColor(path.join(this.routeComparison.oracleDir, filePath), hexColor);
-
-  assert.equal(actual, expected);
-});
-
-Then('TypeScript route の {string} の APNG フレーム数は Ruby oracle と同じ', function (filePath) {
-  const actual = apngMetadata(path.join(this.routeComparison.typeScriptDir, filePath), filePath);
-  const expected = apngMetadata(path.join(this.routeComparison.oracleDir, filePath), filePath);
-
-  assert.equal(actual.frameCount, expected.frameCount);
-});
-
-Then('TypeScript route の Kitty graphics escape sequence 数は Ruby oracle と同じ', function () {
-  const actualCount = [...this.routeComparison.typeScript.stdout.matchAll(/\u001b_G/gu)].length;
-  const expectedCount = [...this.routeComparison.oracle.stdout.matchAll(/\u001b_G/gu)].length;
-
-  assert.equal(actualCount, expectedCount);
 });
 
 Then('標準出力は空', function () {
@@ -1019,6 +943,14 @@ Then('リポジトリファイル {string} は存在する', function (filePath)
   );
 });
 
+Then('リポジトリファイル {string} は存在しない', function (filePath) {
+  assert.equal(
+    fs.existsSync(projectFilePath(filePath)),
+    false,
+    `expected repository file not to exist: ${filePath}`
+  );
+});
+
 Then('リポジトリファイル {string} は {string} を含む', function (filePath, text) {
   const actualPath = projectFilePath(filePath);
   assert.ok(fs.existsSync(actualPath), `expected repository file to exist: ${filePath}`);
@@ -1030,6 +962,21 @@ Then('リポジトリファイル {string} は {string} を含む', function (fi
       'expected repository file to include text',
       `file: ${filePath}`,
       `expected: ${text}`
+    ].join('\n')
+  );
+});
+
+Then('リポジトリファイル {string} は {string} を含まない', function (filePath, text) {
+  const actualPath = projectFilePath(filePath);
+  assert.ok(fs.existsSync(actualPath), `expected repository file to exist: ${filePath}`);
+
+  const actual = fs.readFileSync(actualPath, 'utf8');
+  assert.ok(
+    !actual.includes(text),
+    [
+      'expected repository file not to include text',
+      `file: ${filePath}`,
+      `unexpected: ${text}`
     ].join('\n')
   );
 });

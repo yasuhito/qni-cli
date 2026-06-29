@@ -71,7 +71,7 @@ function main() {
     });
 
     if (fs.existsSync(bundleLog)) {
-      throw new Error(`Ruby fallback was invoked during package smoke:\n${fs.readFileSync(bundleLog, 'utf8')}`);
+      throw new Error(`bundle unexpectedly invoked during package smoke:\n${fs.readFileSync(bundleLog, 'utf8')}`);
     }
 
     console.log(`package smoke passed: ${path.basename(tarball)}`);
@@ -103,7 +103,6 @@ function smokeEnv({ bundleLog, fakeBin, installRoot }) {
     QNI_FAKE_BUNDLE_LOG: bundleLog
   };
 
-  delete env.QNI_USE_RUBY;
   return env;
 }
 
@@ -112,7 +111,7 @@ function writeFailingBundle(bundlePath) {
     bundlePath,
     [
       '#!/bin/sh',
-      'echo "Ruby fallback unexpectedly invoked: bundle $*" >&2',
+      'echo "bundle unexpectedly invoked: bundle $*" >&2',
       'printf "%s\\n" "$*" >> "$QNI_FAKE_BUNDLE_LOG"',
       'exit 97',
       ''

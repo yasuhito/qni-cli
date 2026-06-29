@@ -91,10 +91,6 @@ async function writeCircuit(dir: string, circuit: unknown): Promise<void> {
   await writeFile(path.join(dir, 'circuit.json'), `${JSON.stringify(circuit, null, 2)}\n`);
 }
 
-function rubyOracle(dir: string, argv: string[], env: NodeJS.ProcessEnv = process.env): CapturedRun {
-  return captureDispatcherRun(dir, argv, { ...env, QNI_USE_RUBY: '1' });
-}
-
 async function pngMetadata(filePath: string): Promise<PngMetadata> {
   const bytes = await readFile(filePath);
   assert.equal(bytes.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
@@ -127,152 +123,116 @@ async function pngMetadata(filePath: string): Promise<PngMetadata> {
 }
 
 describe('bloch command TypeScript route', () => {
-  it('renders PNG stable properties like the Ruby oracle without invoking Ruby fallback', async () => {
+  it('renders PNG stable properties through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
-      const circuit = {
+      await writeCircuit(dir, {
         qubits: 1,
         cols: [['H']]
-      };
-      await writeCircuit(dir, circuit);
-      await withTempDir(async (oracleDir) => {
-        await writeCircuit(oracleDir, circuit);
-
-        const result = captureDispatcherRun(dir, ['bloch', '--png', '--output', 'bloch.png'], { ...process.env, PATH: '' });
-        const oracle = rubyOracle(oracleDir, ['bloch', '--png', '--output', 'bloch.png']);
-        const metadata = await pngMetadata(path.join(dir, 'bloch.png'));
-        const oracleMetadata = await pngMetadata(path.join(oracleDir, 'bloch.png'));
-
-        assert.equal(result.exitStatus, oracle.exitStatus);
-        assert.equal(result.stdout, oracle.stdout);
-        assert.equal(result.stderr, oracle.stderr);
-        assert.deepEqual(metadata, oracleMetadata);
-        assert.equal(metadata.width, 512);
-        assert.equal(metadata.height, 512);
-        assert.equal(metadata.colorType, 6);
       });
+
+      const result = captureDispatcherRun(dir, ['bloch', '--png', '--output', 'bloch.png'], { ...process.env, PATH: '' });
+      const metadata = await pngMetadata(path.join(dir, 'bloch.png'));
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, '');
+      assert.equal(metadata.width, 512);
+      assert.equal(metadata.height, 512);
+      assert.equal(metadata.colorType, 6);
     });
   });
 
-  it('renders trajectory PNG bytes like the Ruby oracle', async () => {
+  it('renders trajectory PNG output', async () => {
     await withTempDir(async (dir) => {
-      const circuit = {
+      await writeCircuit(dir, {
         qubits: 1,
         cols: [['X']]
-      };
-      await writeCircuit(dir, circuit);
-      await withTempDir(async (oracleDir) => {
-        await writeCircuit(oracleDir, circuit);
-        const argv = ['bloch', '--png', '--trajectory', '--light', '--output', 'bloch-trajectory.png'];
-
-        const result = captureDispatcherRun(dir, argv, { ...process.env, PATH: '' });
-        const oracle = rubyOracle(oracleDir, argv);
-
-        assert.equal(result.exitStatus, 0);
-        assert.equal(result.stdout, oracle.stdout);
-        assert.equal(result.stderr, oracle.stderr);
-        assert.deepEqual(
-          await readFile(path.join(dir, 'bloch-trajectory.png')),
-          await readFile(path.join(oracleDir, 'bloch-trajectory.png'))
-        );
       });
+      const argv = ['bloch', '--png', '--trajectory', '--light', '--output', 'bloch-trajectory.png'];
+
+      const result = captureDispatcherRun(dir, argv, { ...process.env, PATH: '' });
+      const metadata = await pngMetadata(path.join(dir, 'bloch-trajectory.png'));
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, '');
+      assert.equal(metadata.width, 512);
+      assert.equal(metadata.height, 512);
     });
   });
 
-  it('renders sqrt-X trajectory PNG bytes like the Ruby oracle', async () => {
+  it('renders sqrt-X trajectory PNG output', async () => {
     await withTempDir(async (dir) => {
-      const circuit = {
+      await writeCircuit(dir, {
         qubits: 1,
         cols: [['X^½']]
-      };
-      await writeCircuit(dir, circuit);
-      await withTempDir(async (oracleDir) => {
-        await writeCircuit(oracleDir, circuit);
-        const argv = ['bloch', '--png', '--trajectory', '--light', '--output', 'bloch-trajectory.png'];
-
-        const result = captureDispatcherRun(dir, argv, { ...process.env, PATH: '' });
-        const oracle = rubyOracle(oracleDir, argv);
-
-        assert.equal(result.exitStatus, 0);
-        assert.equal(result.stdout, oracle.stdout);
-        assert.equal(result.stderr, oracle.stderr);
-        assert.deepEqual(
-          await readFile(path.join(dir, 'bloch-trajectory.png')),
-          await readFile(path.join(oracleDir, 'bloch-trajectory.png'))
-        );
       });
+      const argv = ['bloch', '--png', '--trajectory', '--light', '--output', 'bloch-trajectory.png'];
+
+      const result = captureDispatcherRun(dir, argv, { ...process.env, PATH: '' });
+      const metadata = await pngMetadata(path.join(dir, 'bloch-trajectory.png'));
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, '');
+      assert.equal(metadata.width, 512);
+      assert.equal(metadata.height, 512);
     });
   });
 
-  it('renders APNG frame count like the Ruby oracle', async () => {
+  it('renders APNG frame count through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
-      const circuit = {
+      await writeCircuit(dir, {
         qubits: 1,
         cols: [['Ry(π/2)']]
-      };
-      await writeCircuit(dir, circuit);
-      await withTempDir(async (oracleDir) => {
-        await writeCircuit(oracleDir, circuit);
-        const argv = ['bloch', '--apng', '--output', 'bloch.png'];
-
-        const result = captureDispatcherRun(dir, argv, { ...process.env, PATH: '' });
-        const oracle = rubyOracle(oracleDir, argv);
-        const metadata = await pngMetadata(path.join(dir, 'bloch.png'));
-        const oracleMetadata = await pngMetadata(path.join(oracleDir, 'bloch.png'));
-
-        assert.equal(result.exitStatus, oracle.exitStatus);
-        assert.equal(result.stdout, oracle.stdout);
-        assert.equal(result.stderr, oracle.stderr);
-        assert.equal(metadata.frameCount, oracleMetadata.frameCount);
-        assert.ok(metadata.frameCount >= 2);
       });
+      const argv = ['bloch', '--apng', '--output', 'bloch.png'];
+
+      const result = captureDispatcherRun(dir, argv, { ...process.env, PATH: '' });
+      const metadata = await pngMetadata(path.join(dir, 'bloch.png'));
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, '');
+      assert.ok(metadata.frameCount >= 2);
     });
   });
 
-  it('emits inline Kitty graphics escape sequences like the Ruby oracle', async () => {
+  it('emits inline Kitty graphics escape sequences', async () => {
     await withTempDir(async (dir) => {
-      const circuit = {
+      await writeCircuit(dir, {
         qubits: 1,
         cols: [['H']]
-      };
-      await writeCircuit(dir, circuit);
-      await withTempDir(async (oracleDir) => {
-        await writeCircuit(oracleDir, circuit);
-        const argv = ['bloch', '--inline'];
-        const env = { ...process.env, QNI_TEST_FORCE_INLINE: '1' };
-
-        const result = captureDispatcherRun(dir, argv, { ...env, PATH: '' });
-        const oracle = rubyOracle(oracleDir, argv, env);
-
-        assert.equal(result.exitStatus, oracle.exitStatus);
-        assert.equal(result.stderr, oracle.stderr);
-        assert.equal([...result.stdout.matchAll(/\u001b_G/gu)].length, [...oracle.stdout.matchAll(/\u001b_G/gu)].length);
-        assert.match(result.stdout, /^\u001b_G/u);
       });
+      const argv = ['bloch', '--inline'];
+      const env = { ...process.env, QNI_TEST_FORCE_INLINE: '1' };
+
+      const result = captureDispatcherRun(dir, argv, { ...env, PATH: '' });
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stderr, '');
+      assert.ok([...result.stdout.matchAll(/\u001b_G/gu)].length >= 1);
+      assert.match(result.stdout, /^\u001b_G/u);
     });
   });
 
-  it('reports errors like the Ruby oracle', async () => {
+  it('reports errors for unsupported multi-qubit circuits', async () => {
     await withTempDir(async (dir) => {
-      const circuit = {
+      await writeCircuit(dir, {
         qubits: 2,
         cols: [[1, 1]]
-      };
-      await writeCircuit(dir, circuit);
-      await withTempDir(async (oracleDir) => {
-        await writeCircuit(oracleDir, circuit);
-        const argv = ['bloch', '--png', '--output', 'bloch.png'];
-
-        const result = captureDispatcherRun(dir, argv, { ...process.env, PATH: '' });
-        const oracle = rubyOracle(oracleDir, argv);
-
-        assert.equal(result.exitStatus, oracle.exitStatus);
-        assert.equal(result.stdout, oracle.stdout);
-        assert.equal(result.stderr, oracle.stderr);
       });
+      const argv = ['bloch', '--png', '--output', 'bloch.png'];
+
+      const result = captureDispatcherRun(dir, argv, { ...process.env, PATH: '' });
+
+      assert.equal(result.exitStatus, 1);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, 'bloch currently supports only 1-qubit circuits\n');
     });
   });
 
-  it('rejects unknown options without invoking Ruby fallback', async () => {
+  it('rejects unknown options through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
         qubits: 1,
@@ -284,23 +244,6 @@ describe('bloch command TypeScript route', () => {
       assert.equal(result.exitStatus, 1);
       assert.equal(result.stdout, '');
       assert.equal(result.stderr, 'ERROR: "qni bloch" was called with arguments ["--bad"]\nUsage: "qni bloch"\n');
-    });
-  });
-
-  it('honors QNI_USE_RUBY for bloch', async () => {
-    await withTempDir(async (dir) => {
-      await writeCircuit(dir, {
-        qubits: 1,
-        cols: [['H']]
-      });
-
-      const result = captureDispatcherRun(dir, ['bloch', '--png', '--output', 'bloch.png'], {
-        PATH: '',
-        QNI_USE_RUBY: '1'
-      });
-
-      assert.equal(result.exitStatus, 127);
-      assert.match(result.stderr, /spawnSync bundle ENOENT/u);
     });
   });
 });

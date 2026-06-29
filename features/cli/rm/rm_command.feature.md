@@ -156,22 +156,6 @@ qni-cli の利用者として、試行錯誤しながら回路を編集するた
   circuit.json does not exist
   ```
 
-## Scenario: QNI_USE_RUBY=1 の qni rm は Ruby fallback でゲートを削除する
-
-- Given 環境変数 "QNI_USE_RUBY" を "1" に設定する
-- And "qni add H --qubit 0 --step 0" を実行
-- When "qni rm --qubit 0 --step 0" を実行
-- Then "circuit.json" の内容:
-
-  ```json
-  {
-    "qubits": 1,
-    "cols": [
-      [1]
-    ]
-  }
-  ```
-
 ## Scenario: qni rm --help は rm コマンドの使い方を表示
 
 - When "qni rm --help" を実行

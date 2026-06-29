@@ -87,7 +87,7 @@ function captureDispatcherRun(
 }
 
 describe('top-level help TypeScript route', () => {
-  it('prints the command list without invoking Ruby fallback', async () => {
+  it('prints the command list through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
       const result = captureDispatcherRun(dir, []);
 
@@ -97,7 +97,7 @@ describe('top-level help TypeScript route', () => {
     });
   });
 
-  it('prints the command list for --help without invoking Ruby fallback', async () => {
+  it('prints the command list for --help through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
       const result = captureDispatcherRun(dir, ['--help']);
 
@@ -117,26 +117,13 @@ describe('top-level help TypeScript route', () => {
     });
   });
 
-  it('rejects unknown commands without invoking Ruby fallback', async () => {
+  it('rejects unknown commands through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
       const result = captureDispatcherRun(dir, ['__missing_command__'], { PATH: '' });
 
       assert.equal(result.exitStatus, 1);
       assert.equal(result.stdout, '');
       assert.equal(result.stderr, 'Could not find command "__missing_command__".\n');
-    });
-  });
-
-  it('honors QNI_USE_RUBY for top-level help', async () => {
-    await withTempDir(async (dir) => {
-      const result = captureDispatcherRun(dir, [], {
-        PATH: '',
-        QNI_USE_RUBY: '1'
-      });
-
-      assert.equal(result.exitStatus, 127);
-      assert.equal(result.stdout, '');
-      assert.equal(result.stderr, 'spawnSync bundle ENOENT\n');
     });
   });
 });

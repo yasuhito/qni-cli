@@ -73,7 +73,7 @@ function captureDispatcherRun(
 }
 
 describe('state command TypeScript route', () => {
-  it('sets a ket-sum initial state without invoking Ruby fallback', async () => {
+  it('sets a ket-sum initial state through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
       const circuitPath = path.join(dir, 'circuit.json');
       const result = captureDispatcherRun(dir, ['state', 'set', 'alpha|0> + beta|1>']);
@@ -143,7 +143,7 @@ describe('state command TypeScript route', () => {
     });
   });
 
-  it('rejects invalid state expressions with the Ruby oracle message', async () => {
+  it('rejects invalid state expressions with the stable CLI message', async () => {
     await withTempDir(async (dir) => {
       const result = captureDispatcherRun(dir, ['state', 'set', 'foo']);
 
@@ -153,7 +153,7 @@ describe('state command TypeScript route', () => {
     });
   });
 
-  it('rejects an empty state expression before parsing with the Ruby oracle message', async () => {
+  it('rejects an empty state expression before parsing with the stable CLI message', async () => {
     await withTempDir(async (dir) => {
       const result = captureDispatcherRun(dir, ['state', 'set', '']);
 
@@ -199,7 +199,7 @@ describe('state command TypeScript route', () => {
     });
   });
 
-  it('shows a stored initial state without invoking Ruby fallback', async () => {
+  it('shows a stored initial state through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
       await writeFile(
         path.join(dir, 'circuit.json'),
@@ -228,7 +228,7 @@ describe('state command TypeScript route', () => {
     });
   });
 
-  it('clears only the stored initial state without invoking Ruby fallback', async () => {
+  it('clears only the stored initial state through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
       const circuitPath = path.join(dir, 'circuit.json');
       await writeFile(
@@ -265,26 +265,6 @@ describe('state command TypeScript route', () => {
           theta: 'π/4'
         }
       });
-    });
-  });
-
-  it('honors QNI_USE_RUBY for state set', async () => {
-    await withTempDir(async (dir) => {
-      const result = captureDispatcherRun(dir, ['state', 'set', '1|0>'], { PATH: '', QNI_USE_RUBY: '1' });
-
-      assert.equal(result.exitStatus, 127);
-      assert.equal(result.stdout, '');
-      assert.equal(result.stderr, 'spawnSync bundle ENOENT\n');
-    });
-  });
-
-  it('honors QNI_USE_RUBY for migrated state subcommands', async () => {
-    await withTempDir(async (dir) => {
-      const result = captureDispatcherRun(dir, ['state', 'show'], { PATH: '', QNI_USE_RUBY: '1' });
-
-      assert.equal(result.exitStatus, 127);
-      assert.equal(result.stdout, '');
-      assert.equal(result.stderr, 'spawnSync bundle ENOENT\n');
     });
   });
 });

@@ -1,7 +1,3 @@
-import {
-  rubyFallbackForced,
-  runRubyFallbackSync
-} from './process/process_compatibility';
 import { runAddCommand } from './commands/add_command';
 import { runBenchmarkCommand } from './commands/benchmark_command';
 import { runBlochCommand } from './commands/bloch_command';
@@ -23,7 +19,7 @@ export interface CommandHandlerContext {
 }
 
 export type CommandHandler = (argv: string[], context: CommandHandlerContext) => number;
-export type RouteTarget = 'ruby' | 'typescript';
+export type RouteTarget = 'typescript';
 
 export interface DispatcherOptions {
   cwd: string;
@@ -32,7 +28,7 @@ export interface DispatcherOptions {
 }
 
 interface CommandRoute {
-  handler?: CommandHandler;
+  handler: CommandHandler;
   target: RouteTarget;
 }
 
@@ -73,29 +69,14 @@ export class Dispatcher {
   run(argv: string[]): number {
     const route = this.routeFor(argv);
 
-    if (route.target === 'typescript' && route.handler) {
-      return route.handler(argv, {
-        cwd: this.cwd,
-        env: this.env,
-        projectRoot: this.projectRoot
-      });
-    }
-
-    const result = runRubyFallbackSync({
-      argv,
+    return route.handler(argv, {
       cwd: this.cwd,
       env: this.env,
       projectRoot: this.projectRoot
     });
-
-    return result.exitStatus ?? 1;
   }
 
   private routeFor(argv: string[]): CommandRoute {
-    if (rubyFallbackForced(this.env)) {
-      return { target: 'ruby' };
-    }
-
     return {
       handler: TYPESCRIPT_ROUTES.get(argv[0] ?? '') ?? runHelpCommand,
       target: 'typescript'

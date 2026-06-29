@@ -91,14 +91,6 @@ async function writeCircuit(dir: string, circuit: unknown): Promise<void> {
   await writeFile(path.join(dir, 'circuit.json'), `${JSON.stringify(circuit, null, 2)}\n`);
 }
 
-async function rubyOracle(dir: string, argv: string[]): Promise<CapturedRun> {
-  return captureDispatcherRun(dir, argv, { ...process.env, QNI_USE_RUBY: '1' });
-}
-
-async function rubyOracleWithEnv(dir: string, argv: string[], env: NodeJS.ProcessEnv): Promise<CapturedRun> {
-  return captureDispatcherRun(dir, argv, { ...process.env, ...env, QNI_USE_RUBY: '1' });
-}
-
 async function pngStableProperties(filePath: string): Promise<PngStableProperties> {
   const png = await readFile(filePath);
   const signature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
@@ -156,7 +148,7 @@ function commandPath(command: string): string {
 }
 
 describe('export command TypeScript route', () => {
-  it('renders qcircuit LaTeX source like the Ruby oracle without invoking Ruby fallback', async () => {
+  it('renders qcircuit LaTeX source for controlled and swap operations', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
         qubits: 2,
@@ -167,40 +159,44 @@ describe('export command TypeScript route', () => {
       });
 
       const result = captureDispatcherRun(dir, ['export', '--latex-source'], { PATH: '' });
-      const oracle = await rubyOracle(dir, ['export', '--latex-source']);
 
       assert.equal(result.exitStatus, 0);
       assert.equal(result.stderr, '');
-      assert.equal(result.stdout, oracle.stdout);
+      assert.match(result.stdout, /\\Qcircuit/u);
+      assert.match(result.stdout, /\\ctrl\{1\}/u);
+      assert.match(result.stdout, /\\qswap/u);
     });
   });
 
-  it('renders captioned light-theme LaTeX source like the Ruby oracle', async () => {
+  it('renders captioned light-theme LaTeX source', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
         qubits: 1,
         cols: [['H']]
       });
 
-      const argv = [
-        'export',
-        '--latex-source',
-        '--caption',
-        'π & CNOT',
-        '--caption-position',
-        'top',
-        '--light'
-      ];
-      const result = captureDispatcherRun(dir, argv, { PATH: '' });
-      const oracle = await rubyOracle(dir, argv);
+      const result = captureDispatcherRun(
+        dir,
+        [
+          'export',
+          '--latex-source',
+          '--caption',
+          'π & CNOT',
+          '--caption-position',
+          'top',
+          '--light'
+        ],
+        { PATH: '' }
+      );
 
       assert.equal(result.exitStatus, 0);
       assert.equal(result.stderr, '');
-      assert.equal(result.stdout, oracle.stdout);
+      assert.match(result.stdout, /\$\\pi\$ \\& CNOT/u);
+      assert.match(result.stdout, /\\Qcircuit/u);
     });
   });
 
-  it('rejects malformed --caption-size values like the Ruby oracle without invoking Ruby fallback', async () => {
+  it('rejects malformed --caption-size values', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
         qubits: 1,
@@ -208,43 +204,45 @@ describe('export command TypeScript route', () => {
       });
 
       for (const value of ['1abc', 'abc', 'NaN', 'Infinity', '0x10', '5.', '-1', '-1.5', '.5']) {
-        const argv = ['export', '--latex-source', '--caption-size', value];
-        const result = captureDispatcherRun(dir, argv, { PATH: '' });
-        const oracle = await rubyOracle(dir, argv);
+        const result = captureDispatcherRun(dir, ['export', '--latex-source', '--caption-size', value], { PATH: '' });
 
-        assert.equal(result.exitStatus, oracle.exitStatus, value);
-        assert.equal(result.stdout, oracle.stdout, value);
-        assert.equal(result.stderr, oracle.stderr, value);
+        assert.equal(result.exitStatus, 1, value);
+        assert.equal(result.stdout, '', value);
+        assert.match(result.stderr, /--caption-size/u, value);
       }
     });
   });
 
-  it('reports malformed controlled and swap steps like the Ruby oracle', async () => {
+  it('reports malformed controlled and swap steps', async () => {
     await withTempDir(async (dir) => {
-      for (const circuit of [
-        {
-          qubits: 3,
-          cols: [['•', 'H', 'X']]
-        },
-        {
-          qubits: 3,
-          cols: [['Swap', 'Swap', 'H']]
-        }
-      ]) {
+      for (const [circuit, message] of [
+        [
+          {
+            qubits: 3,
+            cols: [['•', 'H', 'X']]
+          },
+          'unsupported controlled step'
+        ],
+        [
+          {
+            qubits: 3,
+            cols: [['Swap', 'Swap', 'H']]
+          },
+          'unsupported swap step'
+        ]
+      ] as const) {
         await writeCircuit(dir, circuit);
 
-        const argv = ['export', '--latex-source'];
-        const result = captureDispatcherRun(dir, argv, { PATH: '' });
-        const oracle = await rubyOracle(dir, argv);
+        const result = captureDispatcherRun(dir, ['export', '--latex-source'], { PATH: '' });
 
-        assert.equal(result.exitStatus, oracle.exitStatus);
-        assert.equal(result.stdout, oracle.stdout);
-        assert.equal(result.stderr, oracle.stderr);
+        assert.equal(result.exitStatus, 1);
+        assert.equal(result.stdout, '');
+        assert.match(result.stderr, new RegExp(message, 'u'));
       }
     });
   });
 
-  it('writes LaTeX source to --output without stdout like Ruby', async () => {
+  it('writes LaTeX source to --output without stdout', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
         qubits: 1,
@@ -255,20 +253,16 @@ describe('export command TypeScript route', () => {
         PATH: ''
       });
       const output = await readFile(path.join(dir, 'nested', 'circuit.tex'), 'utf8');
-      const oracle = await rubyOracle(dir, ['export', '--latex-source', '--output', 'nested/circuit.tex']);
-      const oracleOutput = await readFile(path.join(dir, 'nested', 'circuit.tex'), 'utf8');
 
       assert.equal(result.exitStatus, 0);
       assert.equal(result.stdout, '');
       assert.equal(result.stderr, '');
-      assert.equal(output, oracleOutput);
-      assert.equal(oracle.exitStatus, 0);
-      assert.equal(oracle.stdout, '');
-      assert.equal(oracle.stderr, '');
+      assert.match(output, /\\Qcircuit/u);
+      assert.match(output, /T/u);
     });
   });
 
-  it('exports state-vector PNG like the Ruby oracle without invoking Ruby fallback', async () => {
+  it('exports state-vector PNG through the retained Python helper contract', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
         qubits: 1,
@@ -281,28 +275,20 @@ describe('export command TypeScript route', () => {
         '--png',
         '--light',
         '--output',
-        'typescript-state.png'
+        'state.png'
       ]);
-      const oracle = await rubyOracle(dir, [
-        'export',
-        '--state-vector',
-        '--png',
-        '--light',
-        '--output',
-        'ruby-state.png'
-      ]);
-      const typeScriptPng = await pngStableProperties(path.join(dir, 'typescript-state.png'));
-      const rubyPng = await pngStableProperties(path.join(dir, 'ruby-state.png'));
+      const statePng = await pngStableProperties(path.join(dir, 'state.png'));
 
-      assert.equal(result.exitStatus, oracle.exitStatus);
-      assert.equal(result.stdout, oracle.stdout);
-      assert.equal(result.stderr, oracle.stderr);
-      assert.deepEqual(typeScriptPng, rubyPng);
-      assert.equal(typeScriptPng.transparent, true);
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, '');
+      assert.equal(statePng.transparent, true);
+      assert.ok(statePng.width > 0);
+      assert.ok(statePng.height > 0);
     });
   });
 
-  it('exports circle-notation PNG like the Ruby oracle through the retained Python helper contract', async () => {
+  it('exports circle-notation PNG through the retained Python helper contract', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
         qubits: 2,
@@ -319,24 +305,16 @@ describe('export command TypeScript route', () => {
         '--png',
         '--light',
         '--output',
-        'typescript-circles.png'
+        'circles.png'
       ]);
-      const oracle = await rubyOracle(dir, [
-        'export',
-        '--circle-notation',
-        '--png',
-        '--light',
-        '--output',
-        'ruby-circles.png'
-      ]);
-      const typeScriptPng = await pngStableProperties(path.join(dir, 'typescript-circles.png'));
-      const rubyPng = await pngStableProperties(path.join(dir, 'ruby-circles.png'));
+      const circlePng = await pngStableProperties(path.join(dir, 'circles.png'));
 
-      assert.equal(result.exitStatus, oracle.exitStatus);
-      assert.equal(result.stdout, oracle.stdout);
-      assert.equal(result.stderr, oracle.stderr);
-      assert.deepEqual(typeScriptPng, rubyPng);
-      assert.equal(typeScriptPng.transparent, true);
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, '');
+      assert.equal(circlePng.transparent, true);
+      assert.ok(circlePng.width > 0);
+      assert.ok(circlePng.height > 0);
     });
   });
 
@@ -376,7 +354,7 @@ describe('export command TypeScript route', () => {
     });
   });
 
-  it('prints export help without invoking Ruby fallback', async () => {
+  it('prints export help', async () => {
     await withTempDir(async (dir) => {
       const result = captureDispatcherRun(dir, ['export', '--help'], { PATH: '' });
 
@@ -387,49 +365,37 @@ describe('export command TypeScript route', () => {
     });
   });
 
-  it('renders regular transparent PNG like the Ruby oracle through TypeScript subprocesses', async () => {
+  it('renders regular transparent PNG through TypeScript subprocesses', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
         qubits: 1,
         cols: [['H']]
       });
 
-      const argv = ['export', '--png', '--light', '--output', 'typescript.png'];
-      const oracleArgv = ['export', '--png', '--light', '--output', 'ruby.png'];
-      const result = captureDispatcherRun(dir, argv);
-      const oracle = await rubyOracle(dir, oracleArgv);
-      const typeScriptPng = await pngStableProperties(path.join(dir, 'typescript.png'));
-      const rubyPng = await pngStableProperties(path.join(dir, 'ruby.png'));
+      const result = captureDispatcherRun(dir, ['export', '--png', '--light', '--output', 'circuit.png']);
+      const png = await pngStableProperties(path.join(dir, 'circuit.png'));
 
-      assert.equal(result.exitStatus, oracle.exitStatus);
+      assert.equal(result.exitStatus, 0);
       assert.equal(result.stdout, '');
       assert.equal(result.stderr, '');
-      assert.equal(oracle.stdout, '');
-      assert.equal(oracle.stderr, '');
-      assert.deepEqual(typeScriptPng, rubyPng);
-      assert.deepEqual(typeScriptPng, { height: 64, transparent: true, width: 64 });
+      assert.deepEqual(png, { height: 64, transparent: true, width: 64 });
     });
   });
 
-  it('renders regular opaque PNG like the Ruby oracle', async () => {
+  it('renders regular opaque PNG', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
         qubits: 1,
         cols: [['H']]
       });
 
-      const argv = ['export', '--png', '--light', '--no-transparent', '--output', 'typescript.png'];
-      const oracleArgv = ['export', '--png', '--light', '--no-transparent', '--output', 'ruby.png'];
-      const result = captureDispatcherRun(dir, argv);
-      const oracle = await rubyOracle(dir, oracleArgv);
-      const typeScriptPng = await pngStableProperties(path.join(dir, 'typescript.png'));
-      const rubyPng = await pngStableProperties(path.join(dir, 'ruby.png'));
+      const result = captureDispatcherRun(dir, ['export', '--png', '--light', '--no-transparent', '--output', 'circuit.png']);
+      const png = await pngStableProperties(path.join(dir, 'circuit.png'));
 
-      assert.equal(result.exitStatus, oracle.exitStatus);
-      assert.equal(result.stdout, oracle.stdout);
-      assert.equal(result.stderr, oracle.stderr);
-      assert.deepEqual(typeScriptPng, rubyPng);
-      assert.deepEqual(typeScriptPng, { height: 64, transparent: false, width: 64 });
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, '');
+      assert.deepEqual(png, { height: 64, transparent: false, width: 64 });
     });
   });
 
@@ -441,23 +407,23 @@ describe('export command TypeScript route', () => {
       });
 
       const result = captureDispatcherRun(dir, ['export', '--png', '--light', '--output', 'empty.png']);
-      const typeScriptPng = await pngStableProperties(path.join(dir, 'empty.png'));
+      const png = await pngStableProperties(path.join(dir, 'empty.png'));
 
       assert.equal(result.exitStatus, 0);
       assert.equal(result.stdout, '');
       assert.equal(result.stderr, '');
-      assert.deepEqual(typeScriptPng, { height: 64, transparent: true, width: 192 });
+      assert.deepEqual(png, { height: 64, transparent: true, width: 192 });
     });
   });
 
-  it('renders caption PNG like the Ruby oracle', async () => {
+  it('renders caption PNG', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
         qubits: 2,
         cols: [['•', 'X']]
       });
 
-      const argv = [
+      const result = captureDispatcherRun(dir, [
         'export',
         '--png',
         '--light',
@@ -466,32 +432,27 @@ describe('export command TypeScript route', () => {
         '--caption-position',
         'top',
         '--output',
-        'typescript.png'
-      ];
-      const oracleArgv = [...argv.slice(0, -1), 'ruby.png'];
-      const result = captureDispatcherRun(dir, argv);
-      const oracle = await rubyOracle(dir, oracleArgv);
-      const typeScriptPng = await pngStableProperties(path.join(dir, 'typescript.png'));
-      const rubyPng = await pngStableProperties(path.join(dir, 'ruby.png'));
+        'caption.png'
+      ]);
+      const png = await pngStableProperties(path.join(dir, 'caption.png'));
 
-      assert.equal(result.exitStatus, oracle.exitStatus);
+      assert.equal(result.exitStatus, 0);
       assert.equal(result.stdout, '');
       assert.equal(result.stderr, '');
-      assert.equal(oracle.stdout, '');
-      assert.equal(oracle.stderr, '');
-      assert.deepEqual(typeScriptPng, rubyPng);
-      assert.equal(typeScriptPng.transparent, true);
+      assert.equal(png.transparent, true);
+      assert.ok(png.height > 64);
+      assert.ok(png.width >= 64);
     });
   });
 
-  it('renders caption opaque PNG like the Ruby oracle', async () => {
+  it('renders caption opaque PNG', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
         qubits: 2,
         cols: [['•', 'X']]
       });
 
-      const argv = [
+      const result = captureDispatcherRun(dir, [
         'export',
         '--png',
         '--light',
@@ -499,37 +460,31 @@ describe('export command TypeScript route', () => {
         'CNOT before cut',
         '--no-transparent',
         '--output',
-        'typescript.png'
-      ];
-      const oracleArgv = [...argv.slice(0, -1), 'ruby.png'];
-      const result = captureDispatcherRun(dir, argv);
-      const oracle = await rubyOracle(dir, oracleArgv);
-      const typeScriptPng = await pngStableProperties(path.join(dir, 'typescript.png'));
-      const rubyPng = await pngStableProperties(path.join(dir, 'ruby.png'));
+        'caption.png'
+      ]);
+      const png = await pngStableProperties(path.join(dir, 'caption.png'));
 
-      assert.equal(result.exitStatus, oracle.exitStatus);
-      assert.equal(result.stdout, oracle.stdout);
-      assert.equal(result.stderr, oracle.stderr);
-      assert.deepEqual(typeScriptPng, rubyPng);
-      assert.equal(typeScriptPng.transparent, false);
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, '');
+      assert.equal(png.transparent, false);
+      assert.ok(png.height > 64);
+      assert.ok(png.width >= 64);
     });
   });
 
-  it('reports missing pdflatex like the Ruby oracle without invoking Ruby fallback', async () => {
+  it('reports missing pdflatex', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
         qubits: 1,
         cols: [['H']]
       });
 
-      const missingPdfLatexPath = await pathWithOnly(dir, ['bundle']);
-      const argv = ['export', '--png', '--output', 'circuit.png'];
-      const result = captureDispatcherRun(dir, argv, { PATH: missingPdfLatexPath });
-      const oracle = await rubyOracleWithEnv(dir, argv, { PATH: missingPdfLatexPath });
+      const missingPdfLatexPath = await pathWithOnly(dir, []);
+      const result = captureDispatcherRun(dir, ['export', '--png', '--output', 'circuit.png'], { PATH: missingPdfLatexPath });
 
-      assert.equal(result.exitStatus, oracle.exitStatus);
-      assert.equal(result.stdout, oracle.stdout);
-      assert.equal(result.stderr, oracle.stderr);
+      assert.equal(result.exitStatus, 1);
+      assert.equal(result.stdout, '');
       assert.equal(result.stderr, 'pdflatex is required for qni export --png\n');
     });
   });
@@ -556,26 +511,23 @@ describe('export command TypeScript route', () => {
     });
   });
 
-  it('reports missing pdftocairo like the Ruby oracle', async () => {
+  it('reports missing pdftocairo', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
         qubits: 1,
         cols: [['H']]
       });
 
-      const missingPdfToCairoPath = await pathWithOnly(dir, ['bundle', 'pdflatex']);
-      const argv = ['export', '--png', '--output', 'circuit.png'];
-      const result = captureDispatcherRun(dir, argv, { PATH: missingPdfToCairoPath });
-      const oracle = await rubyOracleWithEnv(dir, argv, { PATH: missingPdfToCairoPath });
+      const missingPdfToCairoPath = await pathWithOnly(dir, ['pdflatex']);
+      const result = captureDispatcherRun(dir, ['export', '--png', '--output', 'circuit.png'], { PATH: missingPdfToCairoPath });
 
-      assert.equal(result.exitStatus, oracle.exitStatus);
-      assert.equal(result.stdout, oracle.stdout);
-      assert.equal(result.stderr, oracle.stderr);
+      assert.equal(result.exitStatus, 1);
+      assert.equal(result.stdout, '');
       assert.equal(result.stderr, 'pdftocairo is required for qni export --png\n');
     });
   });
 
-  it('rejects unknown options without invoking Ruby fallback', async () => {
+  it('rejects unknown options', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
         qubits: 1,
@@ -590,7 +542,7 @@ describe('export command TypeScript route', () => {
     });
   });
 
-  it('handles value-like option ambiguity without invoking Ruby fallback', async () => {
+  it('handles value-like option ambiguity', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
         qubits: 1,
@@ -603,39 +555,6 @@ describe('export command TypeScript route', () => {
       assert.equal(result.stdout, '');
       assert.equal(result.stderr, '');
       assert.match(await readFile(path.join(dir, 'output'), 'utf8'), /\\Qcircuit/u);
-    });
-  });
-
-  it('honors QNI_USE_RUBY for export', async () => {
-    await withTempDir(async (dir) => {
-      await writeCircuit(dir, {
-        qubits: 1,
-        cols: [['H']]
-      });
-
-      const result = captureDispatcherRun(dir, ['export', '--latex-source'], { PATH: '', QNI_USE_RUBY: '1' });
-
-      assert.equal(result.exitStatus, 127);
-      assert.equal(result.stdout, '');
-      assert.equal(result.stderr, 'spawnSync bundle ENOENT\n');
-    });
-  });
-
-  it('honors QNI_USE_RUBY for regular PNG export', async () => {
-    await withTempDir(async (dir) => {
-      await writeCircuit(dir, {
-        qubits: 1,
-        cols: [['H']]
-      });
-
-      const result = captureDispatcherRun(dir, ['export', '--png', '--output', 'circuit.png'], {
-        PATH: '',
-        QNI_USE_RUBY: '1'
-      });
-
-      assert.equal(result.exitStatus, 127);
-      assert.equal(result.stdout, '');
-      assert.equal(result.stderr, 'spawnSync bundle ENOENT\n');
     });
   });
 });

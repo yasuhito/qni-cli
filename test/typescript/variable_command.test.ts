@@ -69,7 +69,7 @@ function captureDispatcherRun(cwd: string, argv: string[]): CapturedRun {
 }
 
 describe('variable command TypeScript route', () => {
-  it('lists variables without invoking Ruby fallback', async () => {
+  it('lists variables through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
       await writeFile(
         path.join(dir, 'circuit.json'),
@@ -95,7 +95,7 @@ describe('variable command TypeScript route', () => {
     });
   });
 
-  it('sets variables in circuit.json without invoking Ruby fallback', async () => {
+  it('sets variables in circuit.json through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
       await writeFile(
         path.join(dir, 'circuit.json'),

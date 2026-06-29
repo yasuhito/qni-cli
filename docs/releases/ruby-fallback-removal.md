@@ -1,12 +1,12 @@
-# Ruby fallback 削除リリース案内（draft）
+# Ruby fallback 削除リリース案内
 
 ## 状態
 
-この文書は #83 用のリリース案内の下書きです。Ruby fallback と Ruby 実行時依存の削除は、Ruby fallback なし npm リリースサイクルが 1 回完了した後に実施します。
+status: completed
+
+このリリースで qni CLI から Ruby fallback と Ruby 実行時依存を削除しました。通常の `qni` コマンドは npm パッケージに含まれる TypeScript / Node.js 実装だけで動作します。
 
 ## 利用者向け概要
-
-このリリースでは、qni CLI から Ruby fallback を削除します。通常の `qni` コマンドは npm パッケージに含まれる TypeScript / Node.js 実装だけで動作します。
 
 削除後は次の挙動になります。
 
@@ -33,42 +33,37 @@ qni add H --qubit 0 --step 0
 qni run
 ```
 
-`QNI_USE_RUBY=1 qni ...` を運用手順に含めている場合は、環境変数を削除してください。互換性確認が必要な場合は、削除前に保存済みの Ruby 比較アーカイブを参照します。
+互換性確認が必要な場合は、削除前に保存済みの Ruby 比較アーカイブを参照します。
 
 - `docs/reports/ruby-comparison-archive.md`
 - `docs/reports/ruby-comparison-archive.json`
 
 ## 非 Ruby 補助境界
 
-Ruby fallback は削除しますが、Ruby ではない補助プログラムは引き続き残します。これらは CLI の一部機能を実現するための明示的な境界であり、Ruby fallback ではありません。
+Ruby fallback は削除しましたが、Ruby ではない補助プログラムは引き続き残します。これらは CLI の一部機能を実現するための明示的な境界であり、Ruby fallback ではありません。
 
 - `libexec/*.py`: 記号計算や描画補助で使う Python 実装。
 - `scripts/setup_symbolic_python.sh`: Python 実行環境の準備。
 - `pdflatex` / `pdftocairo`: PNG / LaTeX 系の出力で使う外部コマンド。
 
-## 事前検証
+## 削除前の証跡
 
-Ruby fallback 削除リリース前に、少なくとも次を最新の作業木で通します。
+削除前に次の証跡を保存済みです。
+
+- Ruby 比較アーカイブ: `docs/reports/ruby-comparison-archive.md`
+- Ruby fallback なし npm リリースサイクル記録: `docs/reports/ruby-fallback-free-release-cycle.md`
+- 準備状況棚卸し: `docs/reports/ruby-fallback-readiness-audit.md`
+
+## 削除後の検証
+
+Ruby fallback 削除後は Node 経路だけを検証します。
 
 ```bash
 npm run check
 npm run smoke:package
-npm run archive:ruby-comparison
-bundle exec rake check
 ```
 
-Ruby fallback 削除後は Ruby 比較と旧 Ruby 検証を実行できないため、削除直前の最終証跡として上記結果を課題またはリリースノートに残します。
-
-## npm リリースサイクル完了条件
-
-#83 の削除に進む前に、Ruby fallback を使わない npm リリースサイクルを 1 回完了します。記録は `docs/reports/ruby-fallback-free-release-cycle.md` に残します。
-
-完了条件は次の通りです。
-
-- リリース候補または公開 npm パッケージを npm 経路でインストールできる。
-- `npm run smoke:package` 相当の検証で、`bundle` shim を失敗させても代表コマンドが成功する。
-- `qni --help`、基本的な回路編集、`qni run`、`qni benchmark run` が npm パッケージ経路で成功する。
-- リリースサイクル中に `QNI_USE_RUBY=1` や `bundle exec bin/qni` への回避が不要だったことを記録する。
+`npm run check` は TypeScript テスト、cucumber-js Markdown 機能ファイル、npm パッケージスモーク検証を実行します。
 
 ## 切り戻し手順
 
@@ -76,7 +71,7 @@ Ruby fallback 削除後に重大な問題が見つかった場合は、次の順
 
 1. 問題が TypeScript 実装、npm パッケージング、外部補助コマンドのどこにあるかを切り分ける。
 2. 直近の Ruby fallback 削除コミットを revert するブランチを作成する。
-3. revert 後に `npm run check`、`npm run smoke:package`、必要なら `bundle exec rake check` を実行する。
+3. revert 後に `npm run check` と `npm run smoke:package` を実行する。
 4. npm パッケージの問題として公開済みの場合は、修正版のパッチリリースを作る。公開済みパッケージを消す前提にしない。
 5. リリースノートに、影響範囲、回避方法、修正版バージョン、再発防止を追記する。
 
@@ -86,14 +81,13 @@ Ruby fallback 削除後に重大な問題が見つかった場合は、次の順
 git revert <ruby-fallback-removal-commit>
 npm run check
 npm run smoke:package
-bundle exec rake check
 ```
 
 ## 削除後の確認観点
 
 Ruby fallback 削除後は、次を確認します。
 
-- `rg -n "QNI_USE_RUBY|runRubyFallback|bundle exec bin/qni" src package.json README.md docs .github` で通常経路に Ruby fallback が残っていない。
+- 通常の実行経路に Ruby fallback 呼び出しが残っていない。
 - npm パッケージの `files` に Ruby 実装・Gemfile・Ruby テストが含まれていない。
 - README の通常インストール・利用手順が Ruby を要求していない。
 - CI の通常 check が Node 経路で完結している。
@@ -102,3 +96,4 @@ Ruby fallback 削除後は、次を確認します。
 
 - #83 Ruby fallback と Ruby runtime dependency を削除する
 - #277 Ruby 基準比較の最終アーカイブを作成する
+- #279 Ruby fallback なし npm リリースサイクルを記録する

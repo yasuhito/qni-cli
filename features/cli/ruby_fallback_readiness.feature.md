@@ -1,10 +1,10 @@
-# Feature: Ruby fallback 削除前の CLI エラー互換性
+# Feature: CLI エラー互換性
 
 qni-cli のメンテナとして
-Ruby fallback を削除する前に TypeScript 経路だけで CLI エラーを返せるように
+TypeScript 経路だけで安定した CLI エラーを返せるように
 代表的なヘルプ・不正引数・未知コマンドの挙動を固定したい
 
-## Scenario: 未知の最上位コマンドは Ruby fallback なしでエラーを表示する
+## Scenario: 未知の最上位コマンドは安定したエラーを表示する
 
 - When "qni __missing_command__" を実行
 - Then 標準エラー:
@@ -13,7 +13,7 @@ Ruby fallback を削除する前に TypeScript 経路だけで CLI エラーを�
   Could not find command "__missing_command__".
   ```
 
-## Scenario: add の未知オプションは Ruby 互換のエラーを表示する
+## Scenario: add の未知オプションは互換エラーを表示する
 
 - When "qni add H --qubit 0 --step 0 --unexpected" を実行
 - Then 標準エラー:
@@ -23,7 +23,7 @@ Ruby fallback を削除する前に TypeScript 経路だけで CLI エラーを�
   Usage: "qni add GATE --qubit=N --step=N --qubit=QUBIT --step=N"
   ```
 
-## Scenario: run の未知オプションは Ruby 互換のエラーを表示する
+## Scenario: run の未知オプションは互換エラーを表示する
 
 - When "qni run --bad" を実行
 - Then 標準エラー:
@@ -33,7 +33,7 @@ Ruby fallback を削除する前に TypeScript 経路だけで CLI エラーを�
   Usage: "qni run"
   ```
 
-## Scenario: export の未知オプションは Ruby 互換のエラーを表示する
+## Scenario: export の未知オプションは互換エラーを表示する
 
 - When "qni export --bad" を実行
 - Then 標準エラー:
@@ -43,7 +43,7 @@ Ruby fallback を削除する前に TypeScript 経路だけで CLI エラーを�
   Usage: "qni export"
   ```
 
-## Scenario: view の未知オプションは Ruby 互換のエラーを表示する
+## Scenario: view の未知オプションは互換エラーを表示する
 
 - When "qni view --bad" を実行
 - Then 標準エラー:

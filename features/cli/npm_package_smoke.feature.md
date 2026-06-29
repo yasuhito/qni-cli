@@ -1,8 +1,8 @@
-# Feature: npm パッケージの Ruby fallback なしスモーク検証
+# Feature: npm パッケージのスモーク検証
 
 qni-cli のメンテナとして
-Ruby fallback を削除する前に npm パッケージとしての通常経路を確認できるように
-pack した成果物をインストールして Ruby fallback なしで代表コマンドを実行したい
+npm パッケージとしての通常経路を確認できるように
+pack した成果物をインストールして代表コマンドを実行したい
 
 ## Scenario: package smoke script が定義されている
 
@@ -16,9 +16,9 @@ pack した成果物をインストールして Ruby fallback なしで代表コ
 
 - Then リポジトリファイル "scripts/smoke_npm_package.js" は "npm pack" を含む
 
-## Scenario: package smoke script は Ruby fallback 呼び出しを検出する
+## Scenario: package smoke script は bundle shim 呼び出しを検出する
 
-- Then リポジトリファイル "scripts/smoke_npm_package.js" は "Ruby fallback unexpectedly invoked" を含む
+- Then リポジトリファイル "scripts/smoke_npm_package.js" は "bundle unexpectedly invoked" を含む
 
 ## Scenario: package smoke script は installed qni の代表コマンドを確認する
 

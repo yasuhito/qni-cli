@@ -50,14 +50,3 @@ qni-cli の利用者として、回路内のスロットを安全に確認する
   ```text
   slot does not exist: cols[1][0]
   ```
-
-## Scenario: QNI_USE_RUBY=1 の qni gate は保存済みゲートを表示する
-
-- Given 環境変数 "QNI_USE_RUBY" を "1" に設定する
-- Given "qni add H --qubit 0 --step 0" を実行
-- When "qni gate --qubit 0 --step 0" を実行
-- Then 標準出力:
-
-  ```text
-  H
-  ```

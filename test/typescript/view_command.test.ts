@@ -112,7 +112,7 @@ function withStreamTty<T>(options: { stderr: boolean; stdout: boolean }, callbac
 }
 
 describe('view command TypeScript route', () => {
-  it('renders a single-qubit gate without invoking Ruby fallback', async () => {
+  it('renders a single-qubit gate through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
         qubits: 1,
@@ -135,7 +135,7 @@ describe('view command TypeScript route', () => {
     });
   });
 
-  it('renders controlled and angled gates like the Ruby oracle', async () => {
+  it('renders controlled and angled gates with stable ASCII art', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
         qubits: 2,
@@ -176,7 +176,7 @@ describe('view command TypeScript route', () => {
     });
   });
 
-  it('reports a missing circuit without invoking Ruby fallback', async () => {
+  it('reports a missing circuit through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
       const result = captureDispatcherRun(dir, ['view']);
 
@@ -186,7 +186,7 @@ describe('view command TypeScript route', () => {
     });
   });
 
-  it('prints view help without invoking Ruby fallback', async () => {
+  it('prints view help through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
       const result = captureDispatcherRun(dir, ['view', '--help']);
 
@@ -208,7 +208,7 @@ Examples:
     });
   });
 
-  it('rejects unknown options without invoking Ruby fallback', async () => {
+  it('rejects unknown options through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
         qubits: 1,
@@ -220,31 +220,6 @@ Examples:
       assert.equal(result.exitStatus, 1);
       assert.equal(result.stdout, '');
       assert.equal(result.stderr, 'ERROR: "qni view" was called with arguments ["--bad"]\nUsage: "qni view"\n');
-    });
-  });
-
-  it('honors QNI_USE_RUBY for view', async () => {
-    await withTempDir(async (dir) => {
-      await writeCircuit(dir, {
-        qubits: 1,
-        cols: [['T†']]
-      });
-
-      const result = withStreamTty({ stderr: false, stdout: false }, () =>
-        captureDispatcherRun(dir, ['view'], { ...process.env, QNI_USE_RUBY: '1' })
-      );
-
-      assert.equal(result.exitStatus, 0);
-      assert.equal(result.stderr, '');
-      assert.equal(
-        result.stdout,
-        [
-          '    ┌───┐',
-          'q0: ┤ T†├',
-          '    └───┘',
-          ''
-        ].join('\n')
-      );
     });
   });
 });

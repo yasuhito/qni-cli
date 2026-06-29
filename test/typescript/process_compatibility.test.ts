@@ -6,12 +6,7 @@ import { Writable } from 'node:stream';
 import { describe, it } from 'node:test';
 
 import {
-  chooseCommandImplementation,
   commandLineArgs,
-  createRubyFallbackInvocation,
-  rubyFallbackSyncStdio,
-  runRubyFallback,
-  runRubyFallbackSync,
   runSubprocess
 } from '../../src/process/process_compatibility';
 
@@ -39,36 +34,6 @@ async function withTempDir<T>(callback: (dir: string) => Promise<T>): Promise<T>
     return await callback(dir);
   } finally {
     await rm(dir, { force: true, recursive: true });
-  }
-}
-
-function withProcessTty<T>(isTTY: boolean, callback: () => T): T {
-  const stdoutDescriptor = Object.getOwnPropertyDescriptor(process.stdout, 'isTTY');
-  const stderrDescriptor = Object.getOwnPropertyDescriptor(process.stderr, 'isTTY');
-
-  Object.defineProperty(process.stdout, 'isTTY', {
-    configurable: true,
-    value: isTTY
-  });
-  Object.defineProperty(process.stderr, 'isTTY', {
-    configurable: true,
-    value: isTTY
-  });
-
-  try {
-    return callback();
-  } finally {
-    if (stdoutDescriptor) {
-      Object.defineProperty(process.stdout, 'isTTY', stdoutDescriptor);
-    } else {
-      Reflect.deleteProperty(process.stdout, 'isTTY');
-    }
-
-    if (stderrDescriptor) {
-      Object.defineProperty(process.stderr, 'isTTY', stderrDescriptor);
-    } else {
-      Reflect.deleteProperty(process.stderr, 'isTTY');
-    }
   }
 }
 
@@ -102,7 +67,7 @@ describe('runSubprocess', () => {
           'const payload = {',
           '  cwd: process.cwd(),',
           '  argv: process.argv.slice(2),',
-          '  env: process.env.QNI_COMPAT_TEST',
+          '  env: process.env.QNI_COMPAT_TEST,',
           '};',
           'process.stdout.write(JSON.stringify(payload));'
         ].join('\n')
@@ -127,125 +92,7 @@ describe('runSubprocess', () => {
   });
 });
 
-describe('Ruby fallback process compatibility', () => {
-  it('builds a Ruby fallback invocation that preserves cwd, argv, and env', () => {
-    const invocation = createRubyFallbackInvocation({
-      argv: ['run', '--symbolic'],
-      cwd: '/tmp/qni-work',
-      env: { PATH: '/usr/bin', QNI_USE_RUBY: '1' },
-      projectRoot: '/repo/qni-cli'
-    });
-
-    assert.equal(invocation.command, 'bundle');
-    assert.deepEqual(invocation.args, ['exec', '/repo/qni-cli/bin/qni', 'run', '--symbolic']);
-    assert.equal(invocation.cwd, '/tmp/qni-work');
-    assert.equal(invocation.env.BUNDLE_GEMFILE, '/repo/qni-cli/Gemfile');
-    assert.equal(invocation.env.PATH, '/usr/bin');
-    assert.equal(invocation.env.QNI_USE_RUBY, '1');
-  });
-
-  it('forwards Ruby fallback stdout', async () => {
-    await withTempDir(async (dir) => {
-      const stdout = new StringSink();
-      const stderr = new StringSink();
-      const result = await runRubyFallback({
-        argv: ['clear', '--help'],
-        cwd: dir,
-        projectRoot: process.cwd(),
-        stderr,
-        stdout
-      });
-
-      assert.equal(result.exitStatus, 0);
-      assert.match(stdout.text(), /^Usage:\n  qni clear\n/u);
-      assert.equal(stderr.text(), '');
-    });
-  });
-
-  it('forwards Ruby fallback stderr and exit status', async () => {
-    await withTempDir(async (dir) => {
-      const stdout = new StringSink();
-      const stderr = new StringSink();
-      const result = await runRubyFallback({
-        argv: ['__missing_command__'],
-        cwd: dir,
-        projectRoot: process.cwd(),
-        stderr,
-        stdout
-      });
-
-      assert.equal(result.exitStatus, 1);
-      assert.equal(stdout.text(), '');
-      assert.equal(stderr.text(), 'Could not find command "__missing_command__".\n');
-    });
-  });
-
-  it('supports synchronous Ruby fallback for process.exit based dispatchers', () => {
-    const stdout = new StringSink();
-    const stderr = new StringSink();
-    const result = runRubyFallbackSync({
-      argv: ['clear', '--help'],
-      cwd: process.cwd(),
-      projectRoot: process.cwd(),
-      stderr,
-      stdout
-    });
-
-    assert.equal(result.exitStatus, 0);
-    assert.equal(result.signal, null);
-    assert.match(stdout.text(), /^Usage:\n  qni clear\n/u);
-    assert.equal(stderr.text(), '');
-  });
-
-  it('inherits TTY streams for synchronous Ruby fallback when no custom stream is supplied', () => {
-    withProcessTty(true, () => {
-      assert.deepEqual(rubyFallbackSyncStdio({}), ['ignore', 'inherit', 'inherit']);
-      assert.deepEqual(rubyFallbackSyncStdio({ stdout: new StringSink() }), ['ignore', 'pipe', 'inherit']);
-      assert.deepEqual(rubyFallbackSyncStdio({ stderr: new StringSink() }), ['ignore', 'inherit', 'pipe']);
-    });
-  });
-
-  it('pipes synchronous Ruby fallback streams for non-TTY parents', () => {
-    withProcessTty(false, () => {
-      assert.deepEqual(rubyFallbackSyncStdio({}), ['ignore', 'pipe', 'pipe']);
-    });
-  });
-});
-
-describe('dispatcher-facing helpers', () => {
-  it('forces the Ruby implementation when QNI_USE_RUBY is 1', () => {
-    assert.deepEqual(
-      chooseCommandImplementation({
-        argv: ['clear'],
-        env: { QNI_USE_RUBY: '1' },
-        migratedCommands: new Set(['clear'])
-      }),
-      { kind: 'ruby', reason: 'forced-by-env' }
-    );
-  });
-
-  it('chooses Ruby fallback for commands that are not migrated', () => {
-    assert.deepEqual(
-      chooseCommandImplementation({
-        argv: ['bloch'],
-        env: {},
-        migratedCommands: new Set(['clear'])
-      }),
-      { command: 'bloch', kind: 'ruby', reason: 'unmigrated-command' }
-    );
-  });
-
-  it('chooses TypeScript for migrated commands when Ruby is not forced', () => {
-    assert.deepEqual(
-      chooseCommandImplementation({
-        argv: ['clear'],
-        env: {},
-        migratedCommands: new Set(['clear'])
-      }),
-      { command: 'clear', kind: 'typescript' }
-    );
-  });
-
+describe('commandLineArgs', () => {
   it('normalizes direct node and npm bin argv shapes', () => {
     assert.deepEqual(commandLineArgs(['/usr/bin/node', '/repo/dist/cli.js', 'add', 'H']), [
       'add',

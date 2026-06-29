@@ -86,13 +86,12 @@ qni-cli project rules:
 - Features do not exist unless represented by `features/*.feature` or `features/*.feature.md`.
 - When adding or changing a feature, update the feature file first.
 - Cucumber scenarios may have only one `Then`; validation `And` after `Then` counts as another `Then`. Split scenarios instead.
-- Do not silence Reek warnings in `.reek.yml` unless refactoring would make responsibility/readability worse.
 - If qni CLI lacks a naturally needed capability, prefer feature-first qni-cli growth over awkward workarounds.
-- Fresh full validation before commit/push/PR/handoff is `bundle exec rake check`.
+- Fresh full validation before commit/push/PR/handoff is `npm run check`.
 
 qni-cli validation policy:
 - Start with targeted checks appropriate to the change.
-- Run `bundle exec rake check` once before final commit/push/PR, and again only after later code changes or review-feedback changes.
+- Run `npm run check` once before final commit/push/PR, and again only after later code changes or review-feedback changes.
 - For pure file moves, verify the old path is gone, the new path exists, references are updated if needed, then run the full check before handoff.
 - Never mark validation complete from stale or previous runs.
 

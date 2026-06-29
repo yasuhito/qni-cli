@@ -92,7 +92,7 @@ async function readCircuit(circuitPath: string): Promise<unknown> {
 }
 
 describe('add command TypeScript route', () => {
-  it('adds fixed single-qubit gates without invoking Ruby fallback', async () => {
+  it('adds fixed single-qubit gates through the TypeScript route', async () => {
     const examples = [
       ['H', 'H'],
       ['X', 'X'],
@@ -161,7 +161,7 @@ describe('add command TypeScript route', () => {
     });
   });
 
-  it('adds angled gates without invoking Ruby fallback', async () => {
+  it('adds angled gates through the TypeScript route', async () => {
     const examples = [
       ['P', 'π/3', 'P(π/3)'],
       ['Rx', 'pi/4', 'Rx(π/4)'],
@@ -193,7 +193,7 @@ describe('add command TypeScript route', () => {
     }
   });
 
-  it('adds controlled gates without invoking Ruby fallback', async () => {
+  it('adds controlled gates through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
       const result = captureDispatcherRun(dir, ['add', 'X', '--control', '0', '--qubit', '1', '--step', '0']);
 
@@ -207,7 +207,7 @@ describe('add command TypeScript route', () => {
     });
   });
 
-  it('adds multi-control gates without invoking Ruby fallback', async () => {
+  it('adds multi-control gates through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
       const result = captureDispatcherRun(dir, ['add', 'X', '--control', '0,1', '--qubit', '2', '--step', '0']);
 
@@ -221,7 +221,7 @@ describe('add command TypeScript route', () => {
     });
   });
 
-  it('adds controlled angled gates without invoking Ruby fallback', async () => {
+  it('adds controlled angled gates through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
       const result = captureDispatcherRun(dir, [
         'add',
@@ -246,7 +246,7 @@ describe('add command TypeScript route', () => {
     });
   });
 
-  it('adds SWAP without invoking Ruby fallback', async () => {
+  it('adds SWAP through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
       const result = captureDispatcherRun(dir, ['add', 'SWAP', '--qubit', '0,1', '--step', '0']);
 
@@ -297,7 +297,7 @@ describe('add command TypeScript route', () => {
     }
   });
 
-  it('rejects invalid controlled gate placement without invoking Ruby fallback', async () => {
+  it('rejects invalid controlled gate placement through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
       const duplicateControl = captureDispatcherRun(dir, [
         'add',
@@ -331,7 +331,7 @@ describe('add command TypeScript route', () => {
     });
   });
 
-  it('rejects invalid SWAP targets without invoking Ruby fallback', async () => {
+  it('rejects invalid SWAP targets through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
       const missingTargets = captureDispatcherRun(dir, ['add', 'SWAP', '--step', '0']);
 
@@ -353,7 +353,7 @@ describe('add command TypeScript route', () => {
     });
   });
 
-  it('rejects invalid angle usage without invoking Ruby fallback', async () => {
+  it('rejects invalid angle usage through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
       const missingAngle = captureDispatcherRun(dir, ['add', 'Rx', '--qubit', '0', '--step', '0']);
 
@@ -378,7 +378,7 @@ describe('add command TypeScript route', () => {
     });
   });
 
-  it('rejects unknown options without invoking Ruby fallback', async () => {
+  it('rejects unknown options through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
       const result = captureDispatcherRun(dir, ['add', 'H', '--qubit', '0', '--step', '0', '--unexpected'], { PATH: '' });
 
@@ -391,26 +391,13 @@ describe('add command TypeScript route', () => {
     });
   });
 
-  it('rejects malformed fixed gate options without invoking Ruby fallback', async () => {
+  it('rejects malformed fixed gate options through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
       const result = captureDispatcherRun(dir, ['add', 'H', '--qubit', '--step', '0']);
 
       assert.equal(result.exitStatus, 1);
       assert.equal(result.stdout, '');
       assert.equal(result.stderr, "No value provided for option '--qubit'\n");
-    });
-  });
-
-  it('honors QNI_USE_RUBY for add', async () => {
-    await withTempDir(async (dir) => {
-      const result = captureDispatcherRun(dir, ['add', 'H', '--qubit', '0', '--step', '0'], {
-        PATH: '',
-        QNI_USE_RUBY: '1'
-      });
-
-      assert.equal(result.exitStatus, 127);
-      assert.equal(result.stdout, '');
-      assert.equal(result.stderr, 'spawnSync bundle ENOENT\n');
     });
   });
 });

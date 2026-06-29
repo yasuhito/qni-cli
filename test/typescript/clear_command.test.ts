@@ -95,7 +95,7 @@ async function circuitExists(dir: string): Promise<boolean> {
 }
 
 describe('clear command TypeScript route', () => {
-  it('deletes circuit.json without invoking Ruby fallback', async () => {
+  it('deletes circuit.json through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
       const circuitPath = path.join(dir, 'circuit.json');
       await writeFile(circuitPath, '{"qubits":1,"cols":[["H"]]}\n');
@@ -120,7 +120,7 @@ describe('clear command TypeScript route', () => {
     });
   });
 
-  it('prints clear help without invoking Ruby fallback', async () => {
+  it('prints clear help through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
       const result = captureDispatcherRun(dir, ['clear', '--help']);
 
@@ -140,23 +140,6 @@ describe('clear command TypeScript route', () => {
         result.stderr,
         'ERROR: "qni clear" was called with arguments ["--bad", "foo"]\nUsage: "qni clear"\n'
       );
-    });
-  });
-
-  it('honors QNI_USE_RUBY for clear', async () => {
-    await withTempDir(async (dir) => {
-      const circuitPath = path.join(dir, 'circuit.json');
-      await writeFile(circuitPath, '{"qubits":1,"cols":[["H"]]}\n');
-
-      const result = captureDispatcherRun(dir, ['clear'], {
-        PATH: '',
-        QNI_USE_RUBY: '1'
-      });
-
-      assert.equal(result.exitStatus, 127);
-      assert.equal(result.stdout, '');
-      assert.equal(result.stderr, 'spawnSync bundle ENOENT\n');
-      assert.equal(await readFile(circuitPath, 'utf8'), '{"qubits":1,"cols":[["H"]]}\n');
     });
   });
 });

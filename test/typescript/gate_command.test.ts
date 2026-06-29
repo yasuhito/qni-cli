@@ -73,7 +73,7 @@ function captureDispatcherRun(
 }
 
 describe('gate command TypeScript route', () => {
-  it('shows the stored gate without invoking Ruby fallback', async () => {
+  it('shows the stored gate through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
       await writeFile(
         path.join(dir, 'circuit.json'),
@@ -95,7 +95,7 @@ describe('gate command TypeScript route', () => {
     });
   });
 
-  it('accepts plus-prefixed indices like Ruby without invoking Ruby fallback', async () => {
+  it('accepts plus-prefixed indices like Ruby through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
       await writeFile(
         path.join(dir, 'circuit.json'),
@@ -117,7 +117,7 @@ describe('gate command TypeScript route', () => {
     });
   });
 
-  it('reports Ruby-compatible slot errors without invoking Ruby fallback', async () => {
+  it('reports Ruby-compatible slot errors through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
       await writeFile(
         path.join(dir, 'circuit.json'),
@@ -139,7 +139,7 @@ describe('gate command TypeScript route', () => {
     });
   });
 
-  it('rejects decimal qubit values like Ruby without invoking Ruby fallback', async () => {
+  it('rejects decimal qubit values like Ruby through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
       await writeFile(
         path.join(dir, 'circuit.json'),
@@ -168,19 +168,6 @@ describe('gate command TypeScript route', () => {
       assert.equal(result.exitStatus, 1);
       assert.equal(result.stdout, '');
       assert.equal(result.stderr, 'unknown option: --wat\n');
-    });
-  });
-
-  it('honors QNI_USE_RUBY for gate', async () => {
-    await withTempDir(async (dir) => {
-      const result = captureDispatcherRun(dir, ['gate', '--qubit', '0', '--step', '0'], {
-        PATH: '',
-        QNI_USE_RUBY: '1'
-      });
-
-      assert.equal(result.exitStatus, 127);
-      assert.equal(result.stdout, '');
-      assert.equal(result.stderr, 'spawnSync bundle ENOENT\n');
     });
   });
 });

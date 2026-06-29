@@ -318,7 +318,7 @@ exit 1
 });
 
 describe('run command symbolic TypeScript route', () => {
-  it('runs --symbolic without invoking Ruby fallback', async () => {
+  it('runs --symbolic through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
       const bin = path.join(dir, 'bin');
       await writeCircuit(dir, {
@@ -335,7 +335,7 @@ describe('run command symbolic TypeScript route', () => {
     });
   });
 
-  it('prints run help without invoking Ruby fallback', async () => {
+  it('prints run help through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
       const bin = path.join(dir, 'bin');
       await writeExecutable(path.join(bin, 'bundle'), '#!/bin/sh\necho RUBY_FALLBACK_INVOKED >&2\nexit 42\n');
@@ -348,7 +348,7 @@ describe('run command symbolic TypeScript route', () => {
     });
   });
 
-  it('rejects unknown run options without invoking Ruby fallback', async () => {
+  it('rejects unknown run options through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
       const bin = path.join(dir, 'bin');
       await writeExecutable(path.join(bin, 'bundle'), '#!/bin/sh\necho RUBY_FALLBACK_INVOKED >&2\nexit 42\n');

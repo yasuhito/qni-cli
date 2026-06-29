@@ -10,7 +10,7 @@ Ruby fallback を削除するリリースで利用者が混乱しないように
 
 ## Scenario: リリース案内は影響範囲を説明する
 
-- Then リポジトリファイル "docs/releases/ruby-fallback-removal.md" は "Ruby fallback を削除" を含む
+- Then リポジトリファイル "docs/releases/ruby-fallback-removal.md" は "Ruby fallback と Ruby 実行時依存を削除" を含む
 
 ## Scenario: リリース案内は非 Ruby 補助境界を説明する
 

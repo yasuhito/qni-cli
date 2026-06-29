@@ -15,14 +15,10 @@
   "scripts": {
     "build": "tsc",
     "build:ts": "npm run build",
-    "check": "npm run test:ts:node && npm run cucumber:node",
-    "archive:ruby-comparison": "npm run build && node scripts/archive_ruby_comparison.js",
-    "check:ruby-legacy": "npm run test:ts && npm run cucumber",
+    "check": "npm run test:ts && npm run cucumber && npm run smoke:package",
     "smoke:package": "npm run build && node scripts/smoke_npm_package.js",
     "cucumber": "npm run build && cucumber-js --config cucumber-js.mjs --require \"features/support/**/*.js\" --require \"features/step_definitions/**/*.js\" --format progress \"features/**/*.feature.md\"",
-    "cucumber:node": "npm run build && QNI_SKIP_RUBY_FALLBACK_SCENARIOS=1 cucumber-js --config cucumber-js.mjs --require \"features/support/**/*.js\" --require \"features/step_definitions/**/*.js\" --format progress \"features/**/*.feature.md\"",
-    "test:ts": "tsc -p tsconfig.test.json && node --test \"tmp/typescript-tests/test/typescript/**/*.test.js\"",
-    "test:ts:node": "tsc -p tsconfig.test.json && node scripts/run_node_typescript_tests.js"
+    "test:ts": "node -e \"require('node:fs').rmSync('tmp/typescript-tests', {recursive: true, force: true})\" && tsc -p tsconfig.test.json && node --test \"tmp/typescript-tests/test/typescript/**/*.test.js\""
   },
   "devDependencies": {
     "@cucumber/cucumber": "^12.2.0",

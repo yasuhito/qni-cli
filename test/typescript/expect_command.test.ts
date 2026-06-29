@@ -77,7 +77,7 @@ async function writeCircuit(dir: string): Promise<void> {
 }
 
 describe('expect command TypeScript route', () => {
-  it('prints expect help without invoking Ruby fallback', async () => {
+  it('prints expect help through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
       const result = captureDispatcherRun(dir, ['expect']);
 

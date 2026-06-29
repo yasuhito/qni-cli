@@ -173,70 +173,19 @@ scripts/setup_symbolic_python.sh
 npm run check
 ```
 
-`npm run check` runs the Node-only TypeScript test subset and cucumber-js Markdown features except Ruby fallback scenarios.
+`npm run check` runs the TypeScript tests, cucumber-js Markdown features, and the npm package smoke test.
 Run `npm install` and `scripts/setup_symbolic_python.sh` first so the JavaScript BDD runner and image-related tests have the runtimes they need.
 
-Run individual Node checks:
+Run individual checks:
 
 ```bash
 npm run build
-npm run test:ts:node
-npm run cucumber:node
 npm run test:ts
 npm run cucumber
-```
-
-Before a release, run the npm package smoke test. It builds the project, packs the npm tarball, installs it into a temporary project, and verifies representative `qni` commands with a failing `bundle` shim at the front of `PATH` so Ruby fallback usage is detected.
-
-```bash
 npm run smoke:package
 ```
 
-Ruby fallback and Ruby oracle checks remain available as a legacy lane until #83 removes the Ruby runtime dependency:
-
-```bash
-bundle install
-bundle exec rake check
-npm run check:ruby-legacy
-```
-
-### TypeScript migration Ruby override
-
-`QNI_USE_RUBY=1` is an operational override for the TypeScript migration period.
-It exists for emergency rollback and release difference analysis while the
-TypeScript dispatcher and Ruby fallback are both present.
-
-When it is set, the dispatcher must bypass TypeScript routing and execute the Ruby fallback path for every `qni` command.
-This is meant to preserve the current Ruby behavior when comparing a release or temporarily avoiding a TypeScript-backed command regression.
-
-Use it by prefixing one command:
-
-The examples below assume the installed `qni` command. Inside this repository,
-put the variable before the Node entrypoint, for example
-`QNI_USE_RUBY=1 node dist/bin/qni.js run --symbolic`.
-The legacy Ruby executable can still be invoked directly for comparison as
-`QNI_USE_RUBY=1 bundle exec bin/qni run --symbolic`.
-
-```bash
-QNI_USE_RUBY=1 qni run --symbolic
-QNI_USE_RUBY=1 qni export --png --output circuit.png
-```
-
-For a longer comparison session, export it in the shell and unset it as soon as
-the comparison is complete:
-
-```bash
-export QNI_USE_RUBY=1
-qni view
-qni run
-unset QNI_USE_RUBY
-```
-
-Do not use this override in normal TypeScript regression checks.
-It can hide TypeScript regressions by forcing every command through Ruby.
-The TypeScript compatibility lane in CI must fail fast if `QNI_USE_RUBY` is set.
-
-Keep this section until the final Ruby fallback removal issue deletes the dispatcher fallback and Ruby runtime dependency.
+The package smoke test builds the project, packs the npm tarball, installs it into a temporary project, and verifies representative `qni` commands from the installed package.
 
 ## Notes
 

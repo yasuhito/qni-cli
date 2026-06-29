@@ -84,7 +84,7 @@ async function readCircuit(circuitPath: string): Promise<unknown> {
 }
 
 describe('rm command TypeScript route', () => {
-  it('removes a single-qubit gate without invoking Ruby fallback', async () => {
+  it('removes a single-qubit gate through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
       const circuitPath = await writeCircuit(dir, {
         qubits: 1,
@@ -171,19 +171,6 @@ describe('rm command TypeScript route', () => {
       assert.equal(result.stdout, '');
       assert.equal(result.stderr, 'slot is empty: cols[0][1]\n');
       assert.deepEqual(await readCircuit(circuitPath), originalCircuit);
-    });
-  });
-
-  it('honors QNI_USE_RUBY for rm', async () => {
-    await withTempDir(async (dir) => {
-      const result = captureDispatcherRun(dir, ['rm', '--qubit', '0', '--step', '0'], {
-        PATH: '',
-        QNI_USE_RUBY: '1'
-      });
-
-      assert.equal(result.exitStatus, 127);
-      assert.equal(result.stdout, '');
-      assert.equal(result.stderr, 'spawnSync bundle ENOENT\n');
     });
   });
 });

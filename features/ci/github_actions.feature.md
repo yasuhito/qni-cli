@@ -2,35 +2,19 @@
 
 qni-cli の保守者として
 プルリクエストごとに基本チェックを自動実行するために
-GitHub Actions と Node 通常チェック、Ruby legacy チェックを整えたい
+GitHub Actions と Node 通常チェックを整えたい
 
-## Scenario: npm check は Node 通常チェックとして定義されている
+## Scenario: npm check は TypeScript テストを実行する
 
-- Then リポジトリファイル "package.json" は "\"check\": \"npm run test:ts:node && npm run cucumber:node\"" を含む
+- Then リポジトリファイル "package.json" は "npm run test:ts" を含む
 
-## Scenario: Node 通常 Cucumber は Ruby fallback シナリオをスキップする
+## Scenario: npm check は cucumber-js を実行する
 
-- Then リポジトリファイル "package.json" は "QNI_SKIP_RUBY_FALLBACK_SCENARIOS=1" を含む
+- Then リポジトリファイル "package.json" は "npm run cucumber" を含む
 
-## Scenario: Ruby legacy チェックは明示的な npm script として残る
+## Scenario: npm check は package smoke を実行する
 
-- Then リポジトリファイル "package.json" は "\"check:ruby-legacy\": \"npm run test:ts && npm run cucumber\"" を含む
-
-## Scenario: rake check は Minitest タスクを定義する
-
-- Then リポジトリファイル "Rakefile" は "Rake::TestTask.new(:test)" を含む
-
-## Scenario: rake check の RuboCop 対象はテストを含む
-
-- Then リポジトリファイル "Rakefile" は "task.patterns = ['Rakefile', 'bin/*', 'features/**/*.rb', 'lib/**/*.rb', 'test/**/*.rb']" を含む
-
-## Scenario: rake check は cucumber-js タスクを含む
-
-- Then リポジトリファイル "Rakefile" は "task check: %i[rubocop flog flay reek typescript cucumber" を含む
-
-## Scenario: rake check は test タスクを含む
-
-- Then リポジトリファイル "Rakefile" は "cucumber test]" を含む
+- Then リポジトリファイル "package.json" は "npm run smoke:package" を含む
 
 ## Scenario: GitHub Actions ワークフローは存在する
 
@@ -68,18 +52,6 @@ GitHub Actions と Node 通常チェック、Ruby legacy チェックを整え�
 
 - Then リポジトリファイル ".github/workflows/ci.yml" は "npm ci" を含む
 
-## Scenario: GitHub Actions ワークフローは Bundler のパスを作業領域内にする
-
-- Then リポジトリファイル ".github/workflows/ci.yml" は "bundle config set path .bundle/vendor" を含む
-
-## Scenario: GitHub Actions ワークフローは Ruby の依存関係を入れる
-
-- Then リポジトリファイル ".github/workflows/ci.yml" は "bundle install" を含む
-
-## Scenario: GitHub Actions ワークフローは Ruby の依存関係をキャッシュする
-
-- Then リポジトリファイル ".github/workflows/ci.yml" は "actions/cache@v4" を含む
-
 ## Scenario: GitHub Actions ワークフローは記号計算用 Python を設定する
 
 - Then リポジトリファイル ".github/workflows/ci.yml" は "scripts/setup_symbolic_python.sh" を含む
@@ -88,6 +60,6 @@ GitHub Actions と Node 通常チェック、Ruby legacy チェックを整え�
 
 - Then リポジトリファイル ".github/workflows/ci.yml" は "npm run check" を含む
 
-## Scenario: GitHub Actions ワークフローは Ruby legacy チェックを呼ぶ
+## Scenario: GitHub Actions ワークフローは Ruby を設定しない
 
-- Then リポジトリファイル ".github/workflows/ci.yml" は "bundle exec rake check" を含む
+- Then リポジトリファイル ".github/workflows/ci.yml" は "ruby/setup-ruby" を含まない

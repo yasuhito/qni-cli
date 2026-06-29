@@ -1,7 +1,7 @@
 # Feature: TypeScript プロセス互換性ヘルパー
 
 qni-cli のメンテナとして
-TypeScript dispatcher から Ruby fallback を安全に呼び出せるようにするために
+Node.js / TypeScript 実装から外部補助プログラムを安全に呼び出せるように
 プロセス互換性ヘルパーの契約を明確にしたい
 
 ## Scenario: ヘルパーモジュールが存在する
@@ -14,7 +14,7 @@ TypeScript dispatcher から Ruby fallback を安全に呼び出せるように�
 
 ## Scenario: 全体チェックは TypeScript テストを実行する
 
-- Then リポジトリファイル "Rakefile" は "npm run test:ts" を含む
+- Then リポジトリファイル "package.json" は "npm run test:ts" を含む
 
 ## Scenario: TypeScript のシンボリックヘルパー境界が存在する
 
