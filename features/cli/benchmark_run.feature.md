@@ -38,6 +38,25 @@ qni benchmark run で最小の合格判定を実行したい。
   PASS PlusState
   ```
 
+## Scenario: StateFlip の不許可サンプルがある
+
+- Then リポジトリファイル "benchmarks/disallowed/quantum-katas/basic-gates/state-flip-disallowed.qni" は存在する
+
+## Scenario: StateFlip の不許可コマンドは終了コード 2 になる
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/disallowed/quantum-katas/basic-gates/state-flip-disallowed.qni" を実行
+- Then 終了コードは 2
+
+## Scenario: StateFlip の不許可コマンドは拒否された行を表示する
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/disallowed/quantum-katas/basic-gates/state-flip-disallowed.qni" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  DISALLOWED StateFlip
+  rejected: line 1: qni run
+  ```
+
 ## Scenario: StateFlip 不正解サンプルは終了コード 1 で不合格になる
 
 - When "qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/incorrect/quantum-katas/basic-gates/state-flip-wrong.qni" を実行

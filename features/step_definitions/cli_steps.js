@@ -114,7 +114,7 @@ function runNodeQniCommand(scenarioDir, command, extraEnv = {}) {
   }
 
   return new Promise((resolve, reject) => {
-    const child = spawn('node', [NODE_QNI_BIN, ...argv.slice(1)], {
+    const child = spawn(process.execPath, [NODE_QNI_BIN, ...argv.slice(1)], {
       cwd: scenarioDir,
       env: scenarioEnv(extraEnv)
     });
@@ -147,7 +147,7 @@ function runQniCommandInTty(scenarioDir, command, extraEnv = {}) {
     throw new Error(`command must start with qni: ${command}`);
   }
 
-  const ttyCommand = ['node', NODE_QNI_BIN, ...argv.slice(1)]
+  const ttyCommand = [process.execPath, NODE_QNI_BIN, ...argv.slice(1)]
     .map(shellQuote)
     .join(' ');
 
@@ -796,15 +796,19 @@ Then('コマンドは失敗', function () {
   assert.notEqual(this.lastCommand.code, 0, commandSuccessMessage(this.lastCommand));
 });
 
-Then('終了コードは {int}', function (expectedStatus) {
-  assert.equal(this.lastCommand.code, expectedStatus, [
-    `expected exit status ${expectedStatus}`,
-    `actual exit status: ${this.lastCommand.code}`,
-    'stdout:',
-    this.lastCommand.stdout,
-    'stderr:',
-    this.lastCommand.stderr
-  ].join('\n'));
+Then('終了コードは {int}', function (expectedCode) {
+  assert.equal(
+    this.lastCommand.code,
+    expectedCode,
+    [
+      `expected exit status: ${expectedCode}`,
+      `actual exit status: ${this.lastCommand.code}`,
+      'stdout:',
+      this.lastCommand.stdout,
+      'stderr:',
+      this.lastCommand.stderr
+    ].join('\n')
+  );
 });
 
 Then('TypeScript route の終了ステータスは Ruby oracle と同じ', function () {

@@ -82,6 +82,86 @@ describe('benchmark command TypeScript route', () => {
     assert.equal(streamChunkText(new Uint8Array([97, 98])), 'ab');
   });
 
+  it('rejects submission commands not listed in allowed_commands', async () => {
+    await withTempDir(async (dir) => {
+      await writeFile(path.join(dir, 'task.md'), [
+        '---',
+        'id: basic-gates/state-flip',
+        'title: StateFlip',
+        'source: test',
+        'difficulty: smoke',
+        'allowed_commands: # commands students may use',
+        '  - qni add',
+        'checks:',
+        '  tolerance: 1e-9',
+        '  items:',
+        '    - type: run',
+        '      expected:',
+        '        - basis: "|1>"',
+        '          amplitude:',
+        '            real: 1',
+        '            imaginary: 0',
+        '---',
+        '',
+        'Flip the state.'
+      ].join('\n'));
+      await writeFile(path.join(dir, 'submission.qni'), 'qni run\n');
+
+      const result = captureDispatcherRun(dir, ['benchmark', 'run', 'task.md', 'submission.qni']);
+
+      assert.equal(result.exitStatus, 2, result.stderr);
+      assert.equal(result.stdout, [
+        'DISALLOWED StateFlip',
+        'rejected: line 1: qni run',
+        'allowed commands: qni add',
+        ''
+      ].join('\n'));
+      assert.equal(result.stderr, '');
+    });
+  });
+
+  it('preflights the whole submission before executing allowed commands', async () => {
+    await withTempDir(async (dir) => {
+      await writeFile(path.join(dir, 'task.md'), [
+        '---',
+        'id: basic-gates/state-flip',
+        'title: StateFlip',
+        'source: test',
+        'difficulty: smoke',
+        'allowed_commands:   ',
+        '  - qni add',
+        'checks:',
+        '  tolerance: 1e-9',
+        '  items:',
+        '    - type: run',
+        '      expected:',
+        '        - basis: "|1>"',
+        '          amplitude:',
+        '            real: 1',
+        '            imaginary: 0',
+        '---',
+        '',
+        'Flip the state.'
+      ].join('\n'));
+      await writeFile(path.join(dir, 'submission.qni'), [
+        'qni add H --qubit nope --step 0',
+        'qni run',
+        ''
+      ].join('\n'));
+
+      const result = captureDispatcherRun(dir, ['benchmark', 'run', 'task.md', 'submission.qni']);
+
+      assert.equal(result.exitStatus, 2, result.stderr);
+      assert.equal(result.stdout, [
+        'DISALLOWED StateFlip',
+        'rejected: line 2: qni run',
+        'allowed commands: qni add',
+        ''
+      ].join('\n'));
+      assert.equal(result.stderr, '');
+    });
+  });
+
   it('uses checks.tolerance from the task file during run checks', async () => {
     await withTempDir(async (dir) => {
       const taskLines = (tolerance: string) => [
