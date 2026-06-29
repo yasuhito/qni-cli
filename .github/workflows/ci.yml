@@ -5,7 +5,33 @@ on:
   pull_request:
 
 jobs:
-  test:
+  node-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      - name: Install system packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y texlive-latex-base texlive-latex-extra poppler-utils
+
+      - name: Set up symbolic Python runtime
+        run: scripts/setup_symbolic_python.sh
+
+      - name: Run Node normal check suite
+        run: npm run check
+
+  legacy-ruby-check:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -44,5 +70,5 @@ jobs:
       - name: Set up symbolic Python runtime
         run: scripts/setup_symbolic_python.sh
 
-      - name: Run shared check suite
+      - name: Run Ruby legacy check suite
         run: bundle exec rake check

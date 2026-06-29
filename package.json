@@ -8,8 +8,12 @@
   "scripts": {
     "build": "tsc",
     "build:ts": "npm run build",
+    "check": "npm run test:ts:node && npm run cucumber:node",
+    "check:ruby-legacy": "npm run test:ts && npm run cucumber",
     "cucumber": "npm run build && cucumber-js --config cucumber-js.mjs --require \"features/support/**/*.js\" --require \"features/step_definitions/**/*.js\" --format progress \"features/**/*.feature.md\"",
-    "test:ts": "tsc -p tsconfig.test.json && node --test \"tmp/typescript-tests/test/typescript/**/*.test.js\""
+    "cucumber:node": "npm run build && QNI_SKIP_RUBY_FALLBACK_SCENARIOS=1 cucumber-js --config cucumber-js.mjs --require \"features/support/**/*.js\" --require \"features/step_definitions/**/*.js\" --format progress \"features/**/*.feature.md\"",
+    "test:ts": "tsc -p tsconfig.test.json && node --test \"tmp/typescript-tests/test/typescript/**/*.test.js\"",
+    "test:ts:node": "tsc -p tsconfig.test.json && node scripts/run_node_typescript_tests.js"
   },
   "devDependencies": {
     "@cucumber/cucumber": "^12.2.0",

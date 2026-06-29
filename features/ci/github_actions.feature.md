@@ -2,7 +2,19 @@
 
 qni-cli の保守者として
 プルリクエストごとに基本チェックを自動実行するために
-GitHub Actions と共通の rake 入口を整えたい
+GitHub Actions と Node 通常チェック、Ruby legacy チェックを整えたい
+
+## Scenario: npm check は Node 通常チェックとして定義されている
+
+- Then リポジトリファイル "package.json" は "\"check\": \"npm run test:ts:node && npm run cucumber:node\"" を含む
+
+## Scenario: Node 通常 Cucumber は Ruby fallback シナリオをスキップする
+
+- Then リポジトリファイル "package.json" は "QNI_SKIP_RUBY_FALLBACK_SCENARIOS=1" を含む
+
+## Scenario: Ruby legacy チェックは明示的な npm script として残る
+
+- Then リポジトリファイル "package.json" は "\"check:ruby-legacy\": \"npm run test:ts && npm run cucumber\"" を含む
 
 ## Scenario: rake check は Minitest タスクを定義する
 
@@ -72,6 +84,10 @@ GitHub Actions と共通の rake 入口を整えたい
 
 - Then リポジトリファイル ".github/workflows/ci.yml" は "scripts/setup_symbolic_python.sh" を含む
 
-## Scenario: GitHub Actions ワークフローは共通チェックを呼ぶ
+## Scenario: GitHub Actions ワークフローは Node 通常チェックを呼ぶ
+
+- Then リポジトリファイル ".github/workflows/ci.yml" は "npm run check" を含む
+
+## Scenario: GitHub Actions ワークフローは Ruby legacy チェックを呼ぶ
 
 - Then リポジトリファイル ".github/workflows/ci.yml" は "bundle exec rake check" を含む

@@ -1,6 +1,6 @@
 # qni-cli
 
-`qni-cli` is a Ruby CLI for editing, viewing, simulating, and exporting quantum circuits stored in `./circuit.json`.
+`qni-cli` is a TypeScript CLI for editing, viewing, simulating, and exporting quantum circuits stored in `./circuit.json`.
 
 ## What It Can Do
 
@@ -18,18 +18,18 @@
 
 ## Setup
 
-### 1. Install Ruby dependencies
-
-```bash
-bundle install
-```
-
-### 2. Install JavaScript test dependencies
+### 1. Install JavaScript dependencies
 
 Use Node.js 22 or another Node.js version supported by `@cucumber/cucumber`.
 
 ```bash
 npm install
+```
+
+### 2. Build the TypeScript CLI
+
+```bash
+npm run build
 ```
 
 ### 3. Set up the Python runtime for symbolic and image features
@@ -49,15 +49,15 @@ scripts/setup_symbolic_python.sh
 
 ## Quick Start
 
-Inside this repository, use the checked-out implementation via `bundle exec bin/qni`.
+Inside this repository, use the checked-out implementation via `node dist/bin/qni.js` after `npm run build`.
 
 ```bash
-bundle exec bin/qni add H --qubit 0 --step 0
-bundle exec bin/qni gate --qubit 0 --step 0
-bundle exec bin/qni add X --control 0 --qubit 1 --step 1
-bundle exec bin/qni rm --qubit 1 --step 1
-bundle exec bin/qni view
-bundle exec bin/qni run --symbolic --basis bell
+node dist/bin/qni.js add H --qubit 0 --step 0
+node dist/bin/qni.js gate --qubit 0 --step 0
+node dist/bin/qni.js add X --control 0 --qubit 1 --step 1
+node dist/bin/qni.js rm --qubit 1 --step 1
+node dist/bin/qni.js view
+node dist/bin/qni.js run --symbolic --basis bell
 ```
 
 `qni` always reads and writes `./circuit.json` in the current directory. `qni add` creates the smallest circuit that can hold the requested gate when the file does not exist.
@@ -67,10 +67,10 @@ bundle exec bin/qni run --symbolic --basis bell
 ### Build a circuit
 
 ```bash
-bundle exec bin/qni add H --qubit 0 --step 0
-bundle exec bin/qni add X --control 0 --qubit 1 --step 1
-bundle exec bin/qni add Rx --angle π/2 --qubit 0 --step 2
-bundle exec bin/qni add SWAP --qubit 0,1 --step 3
+node dist/bin/qni.js add H --qubit 0 --step 0
+node dist/bin/qni.js add X --control 0 --qubit 1 --step 1
+node dist/bin/qni.js add Rx --angle π/2 --qubit 0 --step 2
+node dist/bin/qni.js add SWAP --qubit 0,1 --step 3
 ```
 
 - `step` and `qubit` are 0-based
@@ -79,7 +79,7 @@ bundle exec bin/qni add SWAP --qubit 0,1 --step 3
 ### Read one gate
 
 ```bash
-bundle exec bin/qni gate --qubit 0 --step 0
+node dist/bin/qni.js gate --qubit 0 --step 0
 ```
 
 `qni gate` prints the serialized `circuit.json` cell value, such as `H`.
@@ -87,7 +87,7 @@ bundle exec bin/qni gate --qubit 0 --step 0
 ### Remove one gate operation
 
 ```bash
-bundle exec bin/qni rm --qubit 0 --step 0
+node dist/bin/qni.js rm --qubit 0 --step 0
 ```
 
 `qni rm` removes the operation at the specified slot. For controlled gates, selecting either a control or target removes the whole controlled operation. For `SWAP`, selecting either `Swap` slot removes both `Swap` cells.
@@ -95,24 +95,24 @@ bundle exec bin/qni rm --qubit 0 --step 0
 ### View the circuit
 
 ```bash
-bundle exec bin/qni view
+node dist/bin/qni.js view
 ```
 
 ### Manage the initial state
 
 ```bash
-bundle exec bin/qni state set "alpha|0> + beta|1>"
-bundle exec bin/qni state show
-bundle exec bin/qni state clear
+node dist/bin/qni.js state set "alpha|0> + beta|1>"
+node dist/bin/qni.js state show
+node dist/bin/qni.js state clear
 ```
 
 ### Inspect the state vector and expectation values
 
 ```bash
-bundle exec bin/qni run
-bundle exec bin/qni run --symbolic
-bundle exec bin/qni run --symbolic --basis x
-bundle exec bin/qni expect ZZ XX
+node dist/bin/qni.js run
+node dist/bin/qni.js run --symbolic
+node dist/bin/qni.js run --symbolic --basis x
+node dist/bin/qni.js expect ZZ XX
 ```
 
 ### Run benchmark submissions
@@ -120,7 +120,7 @@ bundle exec bin/qni expect ZZ XX
 `qni benchmark run` evaluates `.qni` submissions against benchmark task files. See `docs/benchmark.md` for the MVP smoke-set prompt and examples.
 
 ```bash
-bundle exec bin/qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni
+node dist/bin/qni.js benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni
 ```
 
 ## Export Images
@@ -130,13 +130,13 @@ If ASCII output is not enough, use `export` or `bloch` to generate images.
 ### Export the circuit diagram as PNG
 
 ```bash
-bundle exec bin/qni export --png --light --output circuit.png
+node dist/bin/qni.js export --png --light --output circuit.png
 ```
 
 Add a caption for notes, slides, or documentation. Use `--no-transparent` when the image should keep a white background in dark note themes:
 
 ```bash
-bundle exec bin/qni export --png --light --no-transparent \
+node dist/bin/qni.js export --png --light --no-transparent \
   --caption "CNOT before cut" \
   --caption-position bottom \
   --output circuit.png
@@ -145,47 +145,53 @@ bundle exec bin/qni export --png --light --no-transparent \
 ### Export the symbolic state vector as PNG
 
 ```bash
-bundle exec bin/qni export --state-vector --png --light --output state.png
+node dist/bin/qni.js export --state-vector --png --light --output state.png
 ```
 
 ### Export the final state as circle notation PNG
 
 ```bash
-bundle exec bin/qni export --circle-notation --png --light --output circles.png
+node dist/bin/qni.js export --circle-notation --png --light --output circles.png
 ```
 
 ### Export the Bloch sphere for a 1-qubit state
 
 ```bash
-bundle exec bin/qni bloch --png --trajectory --light --output bloch.png
-bundle exec bin/qni bloch --apng --light --output bloch.png
-bundle exec bin/qni bloch --inline
+node dist/bin/qni.js bloch --png --trajectory --light --output bloch.png
+node dist/bin/qni.js bloch --apng --light --output bloch.png
+node dist/bin/qni.js bloch --inline
 ```
 
 `qni bloch` currently supports only 1-qubit circuits with fully resolved numeric parameters.
 
 ## Development
 
-Run all checks:
+Run the normal Node check:
 
 ```bash
 scripts/setup_symbolic_python.sh
-bundle exec rake check
+npm run check
 ```
 
-`bundle exec rake check` runs RuboCop, Flog, Flay, Reek, cucumber-js Markdown features, and Minitest.
+`npm run check` runs the Node-only TypeScript test subset and cucumber-js Markdown features except Ruby fallback scenarios.
 Run `npm install` and `scripts/setup_symbolic_python.sh` first so the JavaScript BDD runner and image-related tests have the runtimes they need.
 
-Run individual checks:
+Run individual Node checks:
 
 ```bash
-bundle exec rake test
-bundle exec rake cucumber
+npm run build
+npm run test:ts:node
+npm run cucumber:node
+npm run test:ts
 npm run cucumber
-bundle exec rake rubocop
-bundle exec rake flog
-bundle exec rake flay
-bundle exec rake reek
+```
+
+Ruby fallback and Ruby oracle checks remain available as a legacy lane until #83 removes the Ruby runtime dependency:
+
+```bash
+bundle install
+bundle exec rake check
+npm run check:ruby-legacy
 ```
 
 ### TypeScript migration Ruby override
@@ -200,7 +206,9 @@ This is meant to preserve the current Ruby behavior when comparing a release or 
 Use it by prefixing one command:
 
 The examples below assume the installed `qni` command. Inside this repository,
-put the variable before `bundle exec bin/qni`, for example
+put the variable before the Node entrypoint, for example
+`QNI_USE_RUBY=1 node dist/bin/qni.js run --symbolic`.
+The legacy Ruby executable can still be invoked directly for comparison as
 `QNI_USE_RUBY=1 bundle exec bin/qni run --symbolic`.
 
 ```bash

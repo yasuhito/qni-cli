@@ -1,7 +1,7 @@
 # Ruby fallback 削除前の準備状況棚卸し
 
 作成日: 2026-06-29
-関連: #83, #271, #272, #273, #274
+関連: #83, #271, #272, #273, #274, #275
 
 ## 結論
 
@@ -10,7 +10,7 @@
 公開コマンド本体は TypeScript 実装または維持する非 Ruby 補助プログラム境界へ移行済みだが、次の理由で #83 の削除条件は未達である。
 
 - dispatcher-level の Ruby fallback と `QNI_USE_RUBY=1` がまだ残っている。
-- `README.md`、`.github/workflows/ci.yml`、`Rakefile` は通常の開発・検証経路として Ruby / Bundler を要求している。
+- `README.md`、`.github/workflows/ci.yml`、`Rakefile` は Node 通常経路と Ruby legacy 経路に分離済みだが、Ruby legacy 経路は #83 まで残っている。
 - `Gemfile`、`bin/qni`、`lib/qni/**`、Ruby テスト群が Ruby 基準実装・履歴検証用に残っている。
 - npm 配布で Ruby fallback を使わないリリースサイクルをまだ完了していない。
 
@@ -66,14 +66,13 @@
 ### CI とドキュメント
 
 - `.github/workflows/ci.yml`
-  - Ruby セットアップ、Bundler キャッシュ、`bundle exec rake check` を使っている。
+  - `node-check` は `npm run check` を使う。
+  - `legacy-ruby-check` は #83 まで `bundle exec rake check` を使う。
 - `README.md`
-  - `qni-cli` を Ruby CLI と説明している。
-  - セットアップで Ruby 依存のインストールを案内している。
-  - Quick Start と例が `bundle exec bin/qni` 前提になっている。
-  - `QNI_USE_RUBY=1` の運用説明が残っている。
+  - 通常セットアップ、Quick Start、開発手順は Node / npm 経路を案内している。
+  - `QNI_USE_RUBY=1` の運用説明は #83 まで legacy fallback 節として残っている。
 - `docs/benchmark.md`
-  - 開発中は `qni` を `bundle exec bin/qni` に読み替える説明がある。
+  - 開発中は `qni` を `node dist/bin/qni.js` に読み替える説明に更新済み。
 
 履歴として残す古い計画書や仕様書には Ruby への言及が多いが、#83 の通常利用手順から Ruby を外す対象は、まず README、CI、現在の利用ドキュメントに絞る。
 
@@ -82,10 +81,10 @@
 - [x] #274 を完了し、`src/commands/**/*.ts` から `runRubyFallbackSync` import をなくす。
 - [x] 未知の最上位コマンドを TypeScript 側で処理し、dispatcher が通常入力で Ruby に委譲しないことを確認する。
 - [x] `QNI_USE_RUBY=1` なしの npm エントリーポイントで cucumber-js Markdown 機能ファイルが通ることを確認する。
-- [ ] Node ベースの全体チェックを定義する。少なくとも `npm run build`、`npm run test:ts`、`npm run cucumber` を含める。
-- [ ] `bundle exec rake check` を最終 cleanup 前の履歴検証として残すのか、Node ベース全体チェックへ置き換えるのかを決める。
-- [ ] README の通常セットアップ・Quick Start・開発手順を npm / Node 経路へ更新する。
-- [ ] CI を Node ベースの通常検証へ切り替える。Ruby 基準比較を残す場合は、通常利用経路とは分ける。
+- [x] Node ベースの全体チェックを定義する。少なくとも `npm run build`、Node-only TypeScript tests、Ruby fallback シナリオを除く cucumber-js を含める。
+- [x] `bundle exec rake check` を最終 cleanup 前の履歴検証として残すのか、Node ベース全体チェックへ置き換えるのかを決める。
+- [x] README の通常セットアップ・Quick Start・開発手順を npm / Node 経路へ更新する。
+- [x] CI を Node ベースの通常検証へ切り替える。Ruby 基準比較を残す場合は、通常利用経路とは分ける。
 - [ ] Ruby 基準比較の最終アーカイブまたは参照先を残す。
 - [ ] npm 配布で Ruby fallback を使わないリリースサイクルを1回完了する。
 - [ ] rollback plan と release note の要点を用意する。
@@ -105,6 +104,7 @@ Python 補助プログラム、`pdflatex`、`pdftocairo` は Ruby fallback で�
 棚卸し・移行作業では次を使う。
 
 ```bash
+npm run check
 npm run build
 npm run test:ts
 npm run cucumber

@@ -22,6 +22,22 @@ task :typescript do
   sh 'npm run test:ts'
 end
 
+namespace :node do
+  desc 'Run the Node-only TypeScript test subset'
+  task :typescript do
+    sh 'npm run test:ts:node'
+  end
+
+  desc 'Run cucumber-js Markdown features without Ruby fallback scenarios'
+  task :cucumber do
+    sh 'npm run cucumber:node'
+  end
+end
+
+# Node-only normal check. Ruby fallback / oracle coverage remains in `rake check` until #83.
+desc 'Run Node-only normal checks'
+task node_check: %i[node:typescript node:cucumber]
+
 desc 'Run Minitest tests'
 Rake::TestTask.new(:test) do |task|
   task.libs << 'test'
