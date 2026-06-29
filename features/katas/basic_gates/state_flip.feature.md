@@ -1,5 +1,5 @@
-# Feature: Quantum Katas BasicGates Task 1.1 StateFlip
-  Task 1.1 StateFlip: |0⟩ を |1⟩ に、|1⟩ を |0⟩ に反転する
+# Feature: Quantum Katas BasicGates タスク 1.1 StateFlip
+  タスク 1.1 StateFlip: |0⟩ を |1⟩ に、|1⟩ を |0⟩ に反転する
 
   入力:
   1 量子ビットの状態 |ψ⟩ = α|0⟩ + β|1⟩
