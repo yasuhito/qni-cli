@@ -145,6 +145,11 @@ qni benchmark run で最小の合格判定を実行したい。
   error: allowed_commands is required
   ```
 
+## Scenario: YAML として壊れた課題ファイルは終了コード 3 になる
+
+- When "qni benchmark run benchmarks/invalid/quantum-katas/basic-gates/state-flip-malformed-frontmatter.md benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni" を実行
+- Then 終了コードは 3
+
 ## Scenario: 提出物の構文不備は終了コード 3 になる
 
 - When "qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/error/quantum-katas/basic-gates/state-flip-syntax-error.qni" を実行

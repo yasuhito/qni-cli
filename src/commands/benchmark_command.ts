@@ -1,6 +1,7 @@
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path = require('node:path');
+import { parseDocument } from 'yaml';
 
 import type { CommandHandler, CommandHandlerContext } from '../dispatcher';
 import { runAddCommand } from './add_command';
@@ -466,6 +467,7 @@ export function streamChunkText(chunk: string | Uint8Array): string {
 
 function loadBenchmarkTask(taskPath: string): BenchmarkTask {
   const frontmatter = frontmatterOf(readFileSync(taskPath, 'utf8'));
+  validateYamlFrontmatter(frontmatter);
 
   return {
     allowedCommands: parseAllowedCommands(frontmatter),
@@ -483,6 +485,19 @@ function frontmatterOf(markdown: string): string {
   }
 
   return match.groups.frontmatter;
+}
+
+function validateYamlFrontmatter(frontmatter: string): void {
+  const document = parseDocument(frontmatter);
+  const firstError = document.errors[0];
+
+  if (firstError) {
+    throw new BenchmarkError(`invalid YAML frontmatter: ${firstYamlErrorLine(firstError)}`);
+  }
+}
+
+function firstYamlErrorLine(error: Error): string {
+  return error.message.split(/\r?\n/u)[0] ?? error.message;
 }
 
 function parseAllowedCommands(frontmatter: string): AllowedCommand[] {

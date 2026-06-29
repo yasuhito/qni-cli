@@ -117,6 +117,43 @@ describe('benchmark command TypeScript route', () => {
     });
   });
 
+  it('classifies malformed YAML frontmatter as an error result', async () => {
+    await withTempDir(async (dir) => {
+      await writeFile(path.join(dir, 'task.md'), [
+        '---',
+        'id: basic-gates/state-flip',
+        'title: "StateFlip',
+        'source: test',
+        'difficulty: smoke',
+        'allowed_commands:',
+        '  - qni add',
+        'checks:',
+        '  tolerance: 1e-9',
+        '  items:',
+        '    - type: run',
+        '      expected:',
+        '        - basis: "|1>"',
+        '          amplitude:',
+        '            real: 1',
+        '            imaginary: 0',
+        '---',
+        '',
+        'Flip the state.'
+      ].join('\n'));
+
+      const result = captureDispatcherRun(dir, [
+        'benchmark',
+        'run',
+        'task.md',
+        'benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni'
+      ]);
+
+      assert.equal(result.exitStatus, 3);
+      assert.match(result.stdout, /^ERROR benchmark run\nerror: invalid YAML frontmatter: Missing closing "quote/mu);
+      assert.equal(result.stderr, '');
+    });
+  });
+
   it('classifies submission syntax errors as error results', async () => {
     await withTempDir(async (dir) => {
       await writeFile(path.join(dir, 'submission.qni'), 'qni add X --qubit "0 --step 0\n');
