@@ -64,6 +64,10 @@ export interface QCircuitLatexOptions extends QCircuitCaptionOptions {
   readonly theme: ExportTheme;
 }
 
+export function qcircuitRenderedColumnCount(circuit: Pick<CircuitData, 'cols'>): number {
+  return circuit.cols.length > 0 ? circuit.cols.length : EMPTY_CIRCUIT_MIN_COLUMNS;
+}
+
 class QCircuitCaption {
   static readonly DEFAULT_POSITION = 'bottom';
   static readonly DEFAULT_SIZE_PT = 12;
@@ -181,7 +185,7 @@ export class QCircuitLatex {
       return this.circuit.cols;
     }
 
-    return Array.from({ length: EMPTY_CIRCUIT_MIN_COLUMNS }, () =>
+    return Array.from({ length: qcircuitRenderedColumnCount(this.circuit) }, () =>
       Array.from({ length: this.circuit.qubits }, () => EMPTY_SLOT)
     );
   }

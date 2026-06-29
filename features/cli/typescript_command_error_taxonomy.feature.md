@@ -1,20 +1,20 @@
-# Feature: TypeScript command error taxonomy
+# Feature: TypeScript コマンドのエラー分類
 
 qni-cli のメンテナとして
-TypeScript command route の CLI validation error と circuit file domain error を分けるために
+TypeScript コマンド経路の CLI 検証エラーと回路ファイルのドメインエラーを分けるために
 ユーザー向けエラー互換性を保ったまま責務境界を明確にしたい
 
-## Scenario: CLI validation error class が存在する
+## Scenario: CLI 検証エラー用のクラスが存在する
 
 - Then リポジトリファイル "src/commands/command_error.ts" は "export class CommandError extends Error" を含む
 
-## Scenario: gate command validation error は失敗する
+## Scenario: gate コマンドの検証エラーは失敗する
 
 - Given 空の 1 qubit 回路がある
 - When "qni gate --qubit 1.0 --step 0" を実行
 - Then コマンドは失敗
 
-## Scenario: gate command validation error は stderr 互換性を保つ
+## Scenario: gate コマンドの検証エラーは標準エラー互換性を保つ
 
 - Given 空の 1 qubit 回路がある
 - When "qni gate --qubit 1.0 --step 0" を実行
@@ -24,12 +24,12 @@ TypeScript command route の CLI validation error と circuit file domain error 
   qubit must be an integer
   ```
 
-## Scenario: state command validation error は失敗する
+## Scenario: state コマンドの検証エラーは失敗する
 
 - When "qni state set \"\"" を実行
 - Then コマンドは失敗
 
-## Scenario: state command validation error は stderr 互換性を保つ
+## Scenario: state コマンドの検証エラーは標準エラー互換性を保つ
 
 - When "qni state set \"\"" を実行
 - Then 標準エラー:
@@ -38,12 +38,66 @@ TypeScript command route の CLI validation error と circuit file domain error 
   initial state expression is required
   ```
 
-## Scenario: variable command validation error は失敗する
+## Scenario: variable コマンドの検証エラーは失敗する
 
 - When "qni variable set theta" を実行
 - Then コマンドは失敗
 
-## Scenario: variable command validation error は stderr 互換性を保つ
+## Scenario: variable コマンドの検証エラーは標準エラー互換性を保つ
+
+- When "qni variable set theta" を実行
+- Then 標準エラー:
+
+  ```text
+  wrong number of arguments
+  ```
+
+## Scenario: gate コマンドの検証エラーは回路ファイルのドメインエラーより先に表示される
+
+- Given 次の circuit.json がある:
+
+  ```json
+  {
+    "qubits": 1,
+    "cols": "bad"
+  }
+  ```
+
+- When "qni gate --qubit 1.0 --step 0" を実行
+- Then 標準エラー:
+
+  ```text
+  qubit must be an integer
+  ```
+
+## Scenario: state コマンドの検証エラーは回路ファイルのドメインエラーより先に表示される
+
+- Given 次の circuit.json がある:
+
+  ```json
+  {
+    "qubits": 1,
+    "cols": "bad"
+  }
+  ```
+
+- When "qni state set \"\"" を実行
+- Then 標準エラー:
+
+  ```text
+  initial state expression is required
+  ```
+
+## Scenario: variable コマンドの検証エラーは回路ファイルのドメインエラーより先に表示される
+
+- Given 次の circuit.json がある:
+
+  ```json
+  {
+    "qubits": 1,
+    "cols": "bad"
+  }
+  ```
 
 - When "qni variable set theta" を実行
 - Then 標準エラー:

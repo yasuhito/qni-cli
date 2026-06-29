@@ -1,6 +1,6 @@
 import { currentCircuitFile } from '../circuit_file';
 import type { CommandHandlerContext } from '../dispatcher';
-import { CommandError } from './command_error';
+import { CommandError, reportCommandRouteError } from './command_error';
 
 const HELP_TEXT = `Usage:
   qni gate --qubit=N --step=N
@@ -33,8 +33,7 @@ export function runGateCommand(argv: string[], context: CommandHandlerContext): 
     process.stdout.write(`${currentCircuitFile(context.cwd).slotText(options.step, options.qubit)}\n`);
     return 0;
   } catch (error) {
-    process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
-    return 1;
+    return reportCommandRouteError(error);
   }
 }
 

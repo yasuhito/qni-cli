@@ -1,23 +1,17 @@
-import { spawnSync } from 'node:child_process';
-import { copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { spawnSync, type SpawnSyncReturns } from 'node:child_process';
 
-export class PngExporterError extends Error {}
-
-export type PngTransparency = 'opaque' | 'transparent';
+const CELL_SIZE_PX = 64;
 
 export interface PngExportOptions {
+  readonly cwd: string;
+  readonly env: NodeJS.ProcessEnv;
+  readonly outputPath: string;
   readonly targetHeight?: number;
   readonly targetWidth?: number;
-  readonly transparency?: PngTransparency;
-}
-
-export interface PngExporterOptions {
-  readonly env?: NodeJS.ProcessEnv;
-  readonly latexSource: string;
-  readonly options?: PngExportOptions;
-  readonly outputPath: string;
+  readonly transparent: boolean;
 }
 
 interface ArtifactPaths {
@@ -27,37 +21,38 @@ interface ArtifactPaths {
   readonly tex: string;
 }
 
-interface CommandResult {
-  readonly commandName: string;
-  readonly error?: NodeJS.ErrnoException;
-  readonly status: number | null;
-  readonly stderr: string;
-  readonly stdout: string;
+export function circuitPngHeight(qubits: number): number {
+  return qubits * CELL_SIZE_PX;
+}
+
+export function circuitPngWidth(columns: number): number {
+  return columns * CELL_SIZE_PX;
 }
 
 export class PngExporter {
-  static readonly CELL_SIZE_PX = 64;
-
+  private readonly cwd: string;
   private readonly env: NodeJS.ProcessEnv;
   private readonly latexSource: string;
-  private readonly options: PngExportOptions;
   private readonly outputPath: string;
+  private readonly targetHeight?: number;
+  private readonly targetWidth?: number;
+  private readonly transparent: boolean;
 
-  constructor(options: PngExporterOptions) {
-    this.env = options.env ?? {};
-    this.latexSource = options.latexSource;
+  constructor(latexSource: string, options: PngExportOptions) {
+    this.cwd = options.cwd;
+    this.env = options.env;
+    this.latexSource = latexSource;
     this.outputPath = options.outputPath;
-    this.options = {
-      targetHeight: options.options?.targetHeight,
-      targetWidth: options.options?.targetWidth,
-      transparency: options.options?.transparency ?? 'transparent'
-    };
+    this.targetHeight = options.targetHeight;
+    this.targetWidth = options.targetWidth;
+    this.transparent = options.transparent;
   }
 
   export(): void {
     mkdirSync(path.dirname(this.outputPath), { recursive: true });
 
-    const dir = mkdtempSync(path.join(tmpdir(), 'qni-export-'));
+    const dir = mkdtempSync(path.join(tmpdir(), 'qni-export'));
+
     try {
       this.exportFrom(dir);
     } finally {
@@ -71,50 +66,59 @@ export class PngExporter {
     writeFileSync(paths.tex, this.latexSource);
     this.compilePdf(dir, paths.tex);
     this.convertPdfToPng(paths.pdf, paths.pngBase);
-    copyFileSync(paths.png, this.outputPath);
+    cpSync(paths.png, this.outputPath);
   }
 
   private compilePdf(dir: string, texPath: string): void {
     this.runCommand(
-      ['pdflatex', '-interaction=nonstopmode', '-halt-on-error', '-output-directory', dir, texPath],
+      'pdflatex',
+      ['-interaction=nonstopmode', '-halt-on-error', '-output-directory', dir, texPath],
       'pdflatex is required for qni export --png'
     );
   }
 
   private convertPdfToPng(pdfPath: string, pngBasePath: string): void {
-    this.runCommand(this.pdfToPngCommand(pdfPath, pngBasePath), 'pdftocairo is required for qni export --png');
+    this.runCommand(
+      'pdftocairo',
+      [...this.pdfToPngBaseArgs(), ...this.pdfToPngSizeArgs(), pdfPath, pngBasePath],
+      'pdftocairo is required for qni export --png'
+    );
   }
 
-  private pdfToPngCommand(pdfPath: string, pngBasePath: string): string[] {
-    return [...this.pdfToPngBaseCommand(), ...this.pdfToPngSizeArgs(), pdfPath, pngBasePath];
-  }
+  private pdfToPngBaseArgs(): string[] {
+    const args = ['-singlefile', '-png', '-q'];
 
-  private pdfToPngBaseCommand(): string[] {
-    const command = ['pdftocairo', '-singlefile', '-png', '-q'];
-
-    if (this.options.transparency === 'transparent') {
-      command.push('-transp');
+    if (this.transparent) {
+      args.push('-transp');
     }
 
-    return command;
+    return args;
   }
 
   private pdfToPngSizeArgs(): string[] {
-    if (this.options.targetWidth === undefined || this.options.targetHeight === undefined) {
+    if (this.targetWidth === undefined || this.targetHeight === undefined) {
       return [];
     }
 
-    return ['-scale-to-x', String(this.options.targetWidth), '-scale-to-y', String(this.options.targetHeight)];
+    return ['-scale-to-x', String(this.targetWidth), '-scale-to-y', String(this.targetHeight)];
   }
 
-  private runCommand(command: readonly string[], missingMessage: string): void {
-    const result = captureCommand(command, this.env);
+  private runCommand(command: string, args: string[], missingMessage: string): void {
+    const result = spawnSync(command, args, {
+      cwd: this.cwd,
+      env: {
+        ...process.env,
+        ...this.env
+      }
+    });
 
-    if (commandSucceeded(result)) {
-      return;
+    if (result.error && nodeErrorCode(result.error) === 'ENOENT') {
+      throw new Error(missingMessage);
     }
 
-    throw new PngExporterError(errorMessage(result, missingMessage));
+    if (result.status !== 0) {
+      throw new Error(commandErrorMessage(command, result, missingMessage));
+    }
   }
 }
 
@@ -129,37 +133,27 @@ function artifactPaths(dir: string): ArtifactPaths {
   };
 }
 
-function captureCommand(command: readonly string[], env: NodeJS.ProcessEnv): CommandResult {
-  const result = spawnSync(command[0] ?? '', [...command.slice(1)], {
-    encoding: 'utf8',
-    env: {
-      ...process.env,
-      ...env
-    }
-  });
-
-  return {
-    commandName: command[0] ?? '',
-    error: result.error as NodeJS.ErrnoException | undefined,
-    status: result.status,
-    stderr: result.stderr ?? '',
-    stdout: result.stdout ?? ''
-  };
-}
-
-function commandSucceeded(result: CommandResult): boolean {
-  return result.error === undefined && result.status === 0;
-}
-
-function errorMessage(result: CommandResult, missingMessage: string): string {
-  if (result.error?.code === 'ENOENT' || result.status === 127) {
+function commandErrorMessage(command: string, result: SpawnSyncReturns<Buffer>, missingMessage: string): string {
+  if (result.status === 127) {
     return missingMessage;
   }
 
-  const detail = [result.stdout, result.stderr]
-    .map((output) => output.trim())
+  const detail = [
+    result.error?.message,
+    result.stdout?.toString('utf8'),
+    result.stderr?.toString('utf8')
+  ]
+    .map((output) => output?.trim() ?? '')
     .filter((output) => output.length > 0)
     .join('\n');
 
-  return detail.length === 0 ? `${result.commandName} failed` : `${result.commandName} failed: ${detail}`;
+  if (detail.length === 0) {
+    return `${command} failed`;
+  }
+
+  return `${command} failed: ${detail}`;
+}
+
+function nodeErrorCode(error: Error): string | undefined {
+  return 'code' in error && typeof error.code === 'string' ? error.code : undefined;
 }

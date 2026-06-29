@@ -1,7 +1,7 @@
-# Feature: qni view の単一 qubit gate 表示
+# Feature: qni view の単一量子ビットゲート表示
 
-qni-cli のユーザとして、1 qubit の量子回路を確認するために、
-qni view で単一 qubit gate のアスキーアート表示を見たい。
+qni-cli を使う人として、1 量子ビットの量子回路を確認するために、
+qni view で単一量子ビットゲートのアスキーアート表示を見たい。
 
 ## Scenario: qni view コマンドは成功
 
@@ -117,7 +117,7 @@ qni view で単一 qubit gate のアスキーアート表示を見たい。
       └───┘
   ```
 
-## Scenario: qni view は Phase ゲートを表示
+## Scenario: qni view は位相ゲートを表示
 
 - Given "qni add P --angle π/3 --qubit 0 --step 0" を実行
 - When "qni view" を実行
@@ -168,4 +168,3 @@ qni view で単一 qubit gate のアスキーアート表示を見たい。
   q0: ┤ Rz├
       └───┘
   ```
-

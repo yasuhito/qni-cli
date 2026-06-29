@@ -11,6 +11,10 @@ Before(function () {
 });
 
 After(function () {
+  for (const tempDir of this.tempDirs || []) {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+
   if (this.scenarioDir) {
     fs.rmSync(this.scenarioDir, { recursive: true, force: true });
   }

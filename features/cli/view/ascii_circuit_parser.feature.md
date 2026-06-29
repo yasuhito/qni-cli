@@ -1,6 +1,6 @@
 # Feature: qni view の ASCII 回路パーサ
 
-qni-cli のユーザとして、Markdown feature から回路図を入力できるように、
+qni-cli のユーザとして、Markdown の機能ファイルから回路図を入力できるように、
 qni view の ASCII 回路パーサで circuit.json を作りたい。
 
 ## Scenario: 空回路の ASCII 回路図を読み込める
@@ -159,7 +159,7 @@ qni view の ASCII 回路パーサで circuit.json を作りたい。
   1.0,0.0
   ```
 
-## Scenario: controlled X 回路の ASCII 回路図を読み込める
+## Scenario: 制御 X 回路の ASCII 回路図を読み込める
 
 - When 次の回路図を読み込もうとする:
 
@@ -172,7 +172,7 @@ qni view の ASCII 回路パーサで circuit.json を作りたい。
 
 - Then 読み込みは成功
 
-## Scenario: controlled X 回路の ASCII 回路図から circuit.json を作る
+## Scenario: 制御 X 回路の ASCII 回路図から circuit.json を作る
 
 - Given 次の回路図がある:
 
@@ -194,9 +194,9 @@ qni view の ASCII 回路パーサで circuit.json を作りたい。
   }
   ```
 
-## Scenario: controlled X 回路を |10> に適用して実行できる
+## Scenario: 制御 X 回路を |10> に適用して実行できる
 
-- Given 2 qubit の初期状態が "|10>" である
+- Given 2 量子ビットの初期状態が "|10>" である
 - When 次の回路図を適用:
 
   ```text
@@ -209,9 +209,9 @@ qni view の ASCII 回路パーサで circuit.json を作りたい。
 - When "qni run" を実行
 - Then コマンドは成功
 
-## Scenario: controlled X 回路を |10> に適用した実行結果は |11> になる
+## Scenario: 制御 X 回路を |10> に適用した実行結果は |11> になる
 
-- Given 2 qubit の初期状態が "|10>" である
+- Given 2 量子ビットの初期状態が "|10>" である
 - When 次の回路図を適用:
 
   ```text

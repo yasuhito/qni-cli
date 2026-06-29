@@ -28,6 +28,7 @@ interface HelperCommand {
 
 interface HelperResult {
   readonly error?: NodeJS.ErrnoException;
+  readonly signal: NodeJS.Signals | null;
   readonly status: number | null;
   readonly stderr: string;
 }
@@ -97,7 +98,7 @@ export class CircleNotationPng {
       return 'retry-with-next-command';
     }
 
-    throw new CircleNotationPngError(helperErrorMessage(result.stderr, result.status));
+    throw new CircleNotationPngError(helperErrorMessage(result.stderr, result.status, result.signal));
   }
 
   private captureHelper(command: HelperCommand): HelperResult {
@@ -115,6 +116,7 @@ export class CircleNotationPng {
 
     return {
       error: result.error as NodeJS.ErrnoException | undefined,
+      signal: result.signal,
       status: result.status,
       stderr: result.stderr ?? ''
     };
@@ -133,8 +135,9 @@ function retryableWithNextCommand(stderr: string): boolean {
   return stderr.includes("No module named 'matplotlib'") || stderr.includes("No module named 'PIL'");
 }
 
-function helperErrorMessage(stderr: string, status: number | null): string {
+function helperErrorMessage(stderr: string, status: number | null, signal: NodeJS.Signals | null): string {
   const message = stderr.trim();
+  const termination = status === null ? `signal ${signal ?? 'unknown'}` : `exit status ${status}`;
 
-  return message.length === 0 ? `circle-notation renderer failed with exit status ${status ?? ''}` : message;
+  return message.length === 0 ? `circle-notation renderer failed with ${termination}` : message;
 }

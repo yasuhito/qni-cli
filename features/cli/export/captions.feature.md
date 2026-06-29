@@ -55,3 +55,15 @@ qni export のキャプションオプションを使いたい。
 - Given "qni add X --control 0 --qubit 1 --step 0" を実行
 - When "qni export --png --light --caption 'CNOT before cut' --output circuit.png" を実行
 - Then "circuit.png" は PNG 画像である
+
+## Scenario: qni export --png --caption は透過 PNG を書き出す
+
+- Given "qni add X --control 0 --qubit 1 --step 0" を実行
+- When "qni export --png --light --caption 'CNOT before cut' --output circuit.png" を実行
+- Then "circuit.png" は透過 PNG 画像である
+
+## Scenario: qni export --png --caption --no-transparent は不透過 PNG を書き出す
+
+- Given "qni add X --control 0 --qubit 1 --step 0" を実行
+- When "qni export --png --light --caption 'CNOT before cut' --no-transparent --output circuit.png" を実行
+- Then "circuit.png" は不透過 PNG 画像である
