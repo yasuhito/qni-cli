@@ -64,10 +64,21 @@ interface DisallowedSubmission {
   readonly command: SubmissionCommand;
 }
 
+type BenchmarkOutputFormat = 'human' | 'json';
+
+type BenchmarkStatus = 'passed' | 'failed' | 'disallowed' | 'error';
+
+interface BenchmarkRequest {
+  readonly format: BenchmarkOutputFormat;
+  readonly submissionFile: string;
+  readonly taskFile: string;
+}
+
 interface BenchmarkResult {
   readonly checks: readonly BenchmarkCheckResult[];
   readonly disallowedSubmission?: DisallowedSubmission;
-  readonly status: 'passed' | 'failed' | 'disallowed';
+  readonly errorMessage?: string;
+  readonly status: BenchmarkStatus;
 }
 
 interface BenchmarkCheckResult {
@@ -93,7 +104,7 @@ const QNI_COMMAND_HANDLERS = new Map<string, CommandHandler>([
   ['add', runAddCommand],
   ['run', runRunCommand]
 ]);
-const USAGE = 'Usage: qni benchmark run <task-file> <submission-file>\n';
+const USAGE = 'Usage: qni benchmark run <task-file> <submission-file> [--json]\n';
 const MAX_FAILED_AMPLITUDE_DETAILS = 16;
 const ZERO_AMPLITUDE: ComplexAmplitude = { imaginary: 0, real: 0 };
 
@@ -105,33 +116,69 @@ export function runBenchmarkCommand(argv: string[], context: CommandHandlerConte
     return 3;
   }
 
+  let task: BenchmarkTask | undefined;
+
   try {
     const taskPath = resolveInputPath(request.taskFile, context);
     const submissionPath = resolveInputPath(request.submissionFile, context);
-    const task = loadBenchmarkTask(taskPath);
+    task = loadBenchmarkTask(taskPath);
     const result = evaluateBenchmark({
       context,
       submissionPath,
       task
     });
 
-    writeHumanResult(task, result);
+    writeBenchmarkResult({
+      format: request.format,
+      result,
+      submission: request.submissionFile,
+      task
+    });
     return exitCodeForResult(result);
   } catch (error) {
-    process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
-    return 3;
+    const result: BenchmarkResult = {
+      checks: [],
+      errorMessage: errorMessage(error),
+      status: 'error'
+    };
+
+    writeBenchmarkResult({
+      format: request.format,
+      result,
+      submission: request.submissionFile,
+      task
+    });
+    return exitCodeForResult(result);
   }
 }
 
-function parseBenchmarkRequest(argv: readonly string[]): { submissionFile: string; taskFile: string } | undefined {
-  if (argv.length !== 4 || argv[0] !== 'benchmark' || argv[1] !== 'run') {
+function parseBenchmarkRequest(argv: readonly string[]): BenchmarkRequest | undefined {
+  if (argv[0] !== 'benchmark' || argv[1] !== 'run') {
+    return undefined;
+  }
+
+  const args = argv.slice(2);
+  const jsonFlagCount = args.filter((arg) => arg === '--json').length;
+
+  if (jsonFlagCount > 1 || args.some((arg) => arg.startsWith('--') && arg !== '--json')) {
+    return undefined;
+  }
+
+  const positional = args.filter((arg) => arg !== '--json');
+
+  if (positional.length !== 2) {
     return undefined;
   }
 
   return {
-    submissionFile: argv[3] ?? '',
-    taskFile: argv[2] ?? ''
+    format: jsonFlagCount === 1 ? 'json' : 'human',
+    submissionFile: positional[1] ?? '',
+    taskFile: positional[0] ?? ''
   };
+}
+
+function errorMessage(error: unknown): string {
+  return (error instanceof Error ? error.message : String(error)).trimEnd();
 }
 
 function exitCodeForResult(result: BenchmarkResult): number {
@@ -142,6 +189,8 @@ function exitCodeForResult(result: BenchmarkResult): number {
       return 1;
     case 'disallowed':
       return 2;
+    case 'error':
+      return 3;
   }
 }
 
@@ -636,7 +685,30 @@ function splitCommandLine(command: string): string[] {
   return words;
 }
 
-function writeHumanResult(task: BenchmarkTask, result: BenchmarkResult): void {
+function writeBenchmarkResult(options: {
+  readonly format: BenchmarkOutputFormat;
+  readonly result: BenchmarkResult;
+  readonly submission: string;
+  readonly task?: BenchmarkTask;
+}): void {
+  if (options.format === 'json') {
+    writeJsonResult(options.task, options.submission, options.result);
+    return;
+  }
+
+  writeHumanResult(options.task, options.result);
+}
+
+function writeHumanResult(task: BenchmarkTask | undefined, result: BenchmarkResult): void {
+  if (result.status === 'error') {
+    writeErrorResult(task, result);
+    return;
+  }
+
+  if (!task) {
+    throw new BenchmarkError('benchmark task is unavailable');
+  }
+
   if (result.status === 'disallowed') {
     writeDisallowedResult(task, result);
     return;
@@ -647,6 +719,33 @@ function writeHumanResult(task: BenchmarkTask, result: BenchmarkResult): void {
   process.stdout.write(`${label} ${task.title}\n`);
   process.stdout.write(`checks: ${result.checks.length}\n`);
   writeFailedCheckDetails(result);
+}
+
+function writeJsonResult(task: BenchmarkTask | undefined, submission: string, result: BenchmarkResult): void {
+  const payload: Record<string, unknown> = {
+    taskId: task?.id ?? null,
+    title: task?.title ?? null,
+    submission,
+    status: result.status,
+    exitCode: exitCodeForResult(result),
+    checks: result.checks.map((check) => ({
+      type: check.type,
+      status: check.status
+    }))
+  };
+
+  if (result.errorMessage) {
+    payload.error = result.errorMessage;
+  }
+
+  process.stdout.write(`${JSON.stringify(payload, null, 2)}\n`);
+}
+
+function writeErrorResult(task: BenchmarkTask | undefined, result: BenchmarkResult): void {
+  process.stdout.write(`ERROR ${task?.title ?? 'benchmark run'}\n`);
+  if (result.errorMessage) {
+    process.stdout.write(`error: ${result.errorMessage}\n`);
+  }
 }
 
 function writeFailedCheckDetails(result: BenchmarkResult): void {
