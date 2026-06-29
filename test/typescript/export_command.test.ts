@@ -445,6 +445,23 @@ describe('export command TypeScript route', () => {
     });
   });
 
+  it('keeps circle-notation PNG export on Ruby fallback', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        qubits: 1,
+        cols: [['H']]
+      });
+
+      const result = captureDispatcherRun(dir, ['export', '--circle-notation', '--png', '--output', 'circles.png'], {
+        PATH: ''
+      });
+
+      assert.equal(result.exitStatus, 127);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, 'spawnSync bundle ENOENT\n');
+    });
+  });
+
   it('leaves value-like option ambiguity on Ruby fallback', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
@@ -468,6 +485,24 @@ describe('export command TypeScript route', () => {
       });
 
       const result = captureDispatcherRun(dir, ['export', '--latex-source'], { PATH: '', QNI_USE_RUBY: '1' });
+
+      assert.equal(result.exitStatus, 127);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, 'spawnSync bundle ENOENT\n');
+    });
+  });
+
+  it('honors QNI_USE_RUBY for regular PNG export', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        qubits: 1,
+        cols: [['H']]
+      });
+
+      const result = captureDispatcherRun(dir, ['export', '--png', '--output', 'circuit.png'], {
+        PATH: '',
+        QNI_USE_RUBY: '1'
+      });
 
       assert.equal(result.exitStatus, 127);
       assert.equal(result.stdout, '');
