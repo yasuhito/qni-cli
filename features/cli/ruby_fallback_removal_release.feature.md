@@ -24,6 +24,10 @@ Ruby fallback を削除するリリースで利用者が混乱しないように
 
 - Then リポジトリファイル "docs/reports/ruby-fallback-free-release-cycle.md" は存在する
 
+## Scenario: npm リリースサイクル記録は完了を示す
+
+- Then リポジトリファイル "docs/reports/ruby-fallback-free-release-cycle.md" は "status: passed" を含む
+
 ## Scenario: 準備状況棚卸しはリリース準備文書を参照する
 
 - Then リポジトリファイル "docs/reports/ruby-fallback-readiness-audit.md" は "docs/releases/ruby-fallback-removal.md" を含む

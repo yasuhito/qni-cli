@@ -5,14 +5,15 @@
 
 ## 結論
 
-#83 の Ruby fallback / Ruby 実行時依存削除には、まだ入らない。
+#83 の Ruby fallback / Ruby 実行時依存削除に進む前提条件は満たした。
 
-公開コマンド本体は TypeScript 実装または維持する非 Ruby 補助プログラム境界へ移行済みだが、次の理由で #83 の削除条件は未達である。
+公開コマンド本体は TypeScript 実装または維持する非 Ruby 補助プログラム境界へ移行済みであり、Ruby 比較アーカイブ、Ruby fallback なし npm リリースサイクル記録、リリース案内、切り戻し手順も保存済みである。
 
-- dispatcher-level の Ruby fallback と `QNI_USE_RUBY=1` がまだ残っている。
-- `README.md`、`.github/workflows/ci.yml`、`Rakefile` は Node 通常経路と Ruby legacy 経路に分離済みだが、Ruby legacy 経路は #83 まで残っている。
-- `Gemfile`、`bin/qni`、`lib/qni/**`、Ruby テスト群が Ruby 基準実装・履歴検証用に残っている。
-- npm 配布で Ruby fallback を使わないリリースサイクルをまだ完了していない（記録先: `docs/reports/ruby-fallback-free-release-cycle.md`）。
+#83 本体では、準備済みの証跡を参照しながら次を削除する。
+
+- dispatcher-level の Ruby fallback と `QNI_USE_RUBY=1`。
+- `README.md`、`.github/workflows/ci.yml`、`Rakefile` に残る Ruby legacy 経路。
+- `Gemfile`、`bin/qni`、`lib/qni/**`、Ruby テスト群などの Ruby 基準実装・履歴検証用資産。
 
 この棚卸し中に、Ruby fallback 削除前の小さな阻害要因として `qni clear` と最上位ヘルプを切り出した。
 
@@ -87,7 +88,7 @@
 - [x] CI を Node ベースの通常検証へ切り替える。Ruby 基準比較を残す場合は、通常利用経路とは分ける。
 - [x] npm パッケージとしての Ruby fallback なしスモーク検証を追加する。
 - [x] Ruby 基準比較の最終アーカイブまたは参照先を残す（`docs/reports/ruby-comparison-archive.md`, `docs/reports/ruby-comparison-archive.json`）。
-- [ ] npm 配布で Ruby fallback を使わないリリースサイクルを1回完了する（記録先: `docs/reports/ruby-fallback-free-release-cycle.md`）。
+- [x] npm 配布で Ruby fallback を使わないリリースサイクルを1回完了する（記録先: `docs/reports/ruby-fallback-free-release-cycle.md`）。
 - [x] rollback plan と release note の要点を用意する（`docs/releases/ruby-fallback-removal.md`）。
 
 ## #83 で削除する候補
