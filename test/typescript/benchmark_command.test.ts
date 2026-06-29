@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, it } from 'node:test';
@@ -637,6 +637,128 @@ describe('benchmark command TypeScript route', () => {
 
       assert.equal(result.exitStatus, 0, result.stderr);
       assert.equal(result.stdout, 'PASS SmallRx\nchecks: 1\n');
+      assert.equal(result.stderr, '');
+    });
+  });
+
+  it('runs the Quantum Katas smoke benchmark suite', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, [
+        'benchmark',
+        'run-all',
+        'benchmarks/quantum-katas',
+        'benchmarks/solutions/quantum-katas'
+      ]);
+
+      assert.equal(result.exitStatus, 0, result.stderr);
+      assert.equal(result.stdout, [
+        'PASS benchmark suite',
+        'tasks: 3',
+        'passed: 3, failed: 0, disallowed: 0, error: 0',
+        '- passed basic-gates/state-flip StateFlip',
+        '- passed superposition/bell-state BellState',
+        '- passed superposition/plus-state PlusState',
+        ''
+      ].join('\n'));
+      assert.equal(result.stderr, '');
+    });
+  });
+
+  it('writes JSON for the Quantum Katas smoke benchmark suite', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, [
+        'benchmark',
+        'run-all',
+        'benchmarks/quantum-katas',
+        'benchmarks/solutions/quantum-katas',
+        '--json'
+      ]);
+      const payload = JSON.parse(result.stdout) as Record<string, unknown>;
+
+      assert.equal(result.exitStatus, 0, result.stderr);
+      assert.deepStrictEqual(payload, {
+        status: 'passed',
+        exitCode: 0,
+        summary: {
+          total: 3,
+          passed: 3,
+          failed: 0,
+          disallowed: 0,
+          error: 0
+        },
+        results: [
+          {
+            taskId: 'basic-gates/state-flip',
+            title: 'StateFlip',
+            task: 'benchmarks/quantum-katas/basic-gates/state-flip.md',
+            submission: 'benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni',
+            status: 'passed',
+            exitCode: 0,
+            checks: [{ type: 'run', status: 'passed' }]
+          },
+          {
+            taskId: 'superposition/bell-state',
+            title: 'BellState',
+            task: 'benchmarks/quantum-katas/superposition/bell-state.md',
+            submission: 'benchmarks/solutions/quantum-katas/superposition/bell-state.qni',
+            status: 'passed',
+            exitCode: 0,
+            checks: [{ type: 'expect', status: 'passed' }]
+          },
+          {
+            taskId: 'superposition/plus-state',
+            title: 'PlusState',
+            task: 'benchmarks/quantum-katas/superposition/plus-state.md',
+            submission: 'benchmarks/solutions/quantum-katas/superposition/plus-state.qni',
+            status: 'passed',
+            exitCode: 0,
+            checks: [{ type: 'run', status: 'passed' }]
+          }
+        ]
+      });
+      assert.equal(result.stderr, '');
+    });
+  });
+
+  it('returns a non-zero suite status when any benchmark task fails', async () => {
+    await withTempDir(async (dir) => {
+      const benchmarkDir = path.join(dir, 'benchmarks');
+      const solutionsDir = path.join(dir, 'solutions');
+      await mkdir(path.join(benchmarkDir, 'basic-gates'), { recursive: true });
+      await mkdir(path.join(solutionsDir, 'basic-gates'), { recursive: true });
+      await writeFile(path.join(benchmarkDir, 'basic-gates', 'state-flip.md'), [
+        '---',
+        'id: basic-gates/state-flip',
+        'title: StateFlip',
+        'source: test',
+        'difficulty: smoke',
+        'allowed_commands:',
+        '  - qni add',
+        'checks:',
+        '  tolerance: 1e-9',
+        '  items:',
+        '    - type: run',
+        '      expected:',
+        '        - basis: "|1>"',
+        '          amplitude:',
+        '            real: 1',
+        '            imaginary: 0',
+        '---',
+        '',
+        'Flip the state.'
+      ].join('\n'));
+      await writeFile(path.join(solutionsDir, 'basic-gates', 'state-flip.qni'), 'qni add H --qubit 0 --step 0\n');
+
+      const result = captureDispatcherRun(dir, ['benchmark', 'run-all', 'benchmarks', 'solutions']);
+
+      assert.equal(result.exitStatus, 1, result.stderr);
+      assert.equal(result.stdout, [
+        'FAIL benchmark suite',
+        'tasks: 1',
+        'passed: 0, failed: 1, disallowed: 0, error: 0',
+        '- failed basic-gates/state-flip StateFlip',
+        ''
+      ].join('\n'));
       assert.equal(result.stderr, '');
     });
   });

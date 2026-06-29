@@ -312,3 +312,89 @@ qni benchmark run で最小の合格判定を実行したい。
 ## Scenario: MVP手順は --json の実行例を示す
 
 - Then リポジトリファイル "docs/benchmark.md" は "qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni --json" を含む
+
+## Scenario: Quantum Katas スモークセットを一括実行できる
+
+- When "qni benchmark run-all benchmarks/quantum-katas benchmarks/solutions/quantum-katas" を実行
+- Then コマンドは成功
+
+## Scenario: Quantum Katas スモークセットの一括実行は各課題の結果を表示する
+
+- When "qni benchmark run-all benchmarks/quantum-katas benchmarks/solutions/quantum-katas" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  PASS benchmark suite
+  tasks: 3
+  passed: 3, failed: 0, disallowed: 0, error: 0
+  - passed basic-gates/state-flip StateFlip
+  - passed superposition/bell-state BellState
+  - passed superposition/plus-state PlusState
+  ```
+
+## Scenario: Quantum Katas スモークセットの一括実行 JSON は集計と各課題結果を含む
+
+- When "qni benchmark run-all benchmarks/quantum-katas benchmarks/solutions/quantum-katas --json" を実行
+- Then 標準出力は次の JSON と一致する:
+
+  ```json
+  {
+    "status": "passed",
+    "exitCode": 0,
+    "summary": {
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "disallowed": 0,
+      "error": 0
+    },
+    "results": [
+      {
+        "taskId": "basic-gates/state-flip",
+        "title": "StateFlip",
+        "task": "benchmarks/quantum-katas/basic-gates/state-flip.md",
+        "submission": "benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "taskId": "superposition/bell-state",
+        "title": "BellState",
+        "task": "benchmarks/quantum-katas/superposition/bell-state.md",
+        "submission": "benchmarks/solutions/quantum-katas/superposition/bell-state.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "checks": [
+          {
+            "type": "expect",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "taskId": "superposition/plus-state",
+        "title": "PlusState",
+        "task": "benchmarks/quantum-katas/superposition/plus-state.md",
+        "submission": "benchmarks/solutions/quantum-katas/superposition/plus-state.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ]
+      }
+    ]
+  }
+  ```
+
+## Scenario: MVP手順は run-all の実行例を示す
+
+- Then リポジトリファイル "docs/benchmark.md" は "qni benchmark run-all benchmarks/quantum-katas benchmarks/solutions/quantum-katas" を含む

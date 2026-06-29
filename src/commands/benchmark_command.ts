@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path = require('node:path');
 import { parseDocument } from 'yaml';
@@ -82,10 +82,20 @@ type BenchmarkOutputFormat = 'human' | 'json';
 
 type BenchmarkStatus = 'passed' | 'failed' | 'disallowed' | 'error';
 
-interface BenchmarkRequest {
+type BenchmarkRequest = BenchmarkRunRequest | BenchmarkSuiteRequest;
+
+interface BenchmarkRunRequest {
   readonly format: BenchmarkOutputFormat;
+  readonly kind: 'run';
   readonly submissionFile: string;
   readonly taskFile: string;
+}
+
+interface BenchmarkSuiteRequest {
+  readonly benchmarkDir: string;
+  readonly format: BenchmarkOutputFormat;
+  readonly kind: 'run-all';
+  readonly solutionsDir: string;
 }
 
 interface BenchmarkResult {
@@ -93,6 +103,36 @@ interface BenchmarkResult {
   readonly disallowedSubmission?: DisallowedSubmission;
   readonly errorMessage?: string;
   readonly status: BenchmarkStatus;
+}
+
+interface BenchmarkSuiteEntry {
+  readonly submission: string;
+  readonly submissionPath: string;
+  readonly taskFile: string;
+  readonly taskPath: string;
+}
+
+interface BenchmarkSuiteTaskResult {
+  readonly result: BenchmarkResult;
+  readonly submission: string;
+  readonly task?: BenchmarkTask;
+  readonly taskFile: string;
+}
+
+interface BenchmarkSuiteResult {
+  readonly errorMessage?: string;
+  readonly exitCode: number;
+  readonly results: readonly BenchmarkSuiteTaskResult[];
+  readonly status: BenchmarkStatus;
+  readonly summary: BenchmarkSuiteSummary;
+}
+
+interface BenchmarkSuiteSummary {
+  readonly disallowed: number;
+  readonly error: number;
+  readonly failed: number;
+  readonly passed: number;
+  readonly total: number;
 }
 
 type BenchmarkCheckResult = ExpectCheckResult | RunCheckResult;
@@ -138,7 +178,11 @@ const QNI_COMMAND_HANDLERS = new Map<string, CommandHandler>([
   ['expect', runExpectCommand],
   ['run', runRunCommand]
 ]);
-const USAGE = 'Usage: qni benchmark run <task-file> <submission-file> [--json]\n';
+const USAGE = [
+  'Usage: qni benchmark run <task-file> <submission-file> [--json]',
+  '       qni benchmark run-all <benchmark-dir> <solutions-dir> [--json]',
+  ''
+].join('\n');
 const MAX_FAILED_AMPLITUDE_DETAILS = 16;
 const MAX_FAILED_EXPECTATION_DETAILS = 16;
 const ZERO_AMPLITUDE: ComplexAmplitude = { imaginary: 0, real: 0 };
@@ -151,6 +195,15 @@ export function runBenchmarkCommand(argv: string[], context: CommandHandlerConte
     return 3;
   }
 
+  switch (request.kind) {
+    case 'run':
+      return runSingleBenchmark(request, context);
+    case 'run-all':
+      return runBenchmarkSuite(request, context);
+  }
+}
+
+function runSingleBenchmark(request: BenchmarkRunRequest, context: CommandHandlerContext): number {
   let task: BenchmarkTask | undefined;
 
   try {
@@ -187,28 +240,92 @@ export function runBenchmarkCommand(argv: string[], context: CommandHandlerConte
   }
 }
 
+function runBenchmarkSuite(request: BenchmarkSuiteRequest, context: CommandHandlerContext): number {
+  try {
+    const benchmarkDirPath = resolveInputPath(request.benchmarkDir, context);
+    const solutionsDirPath = resolveInputPath(request.solutionsDir, context);
+    const entries = benchmarkSuiteEntries({
+      benchmarkDir: request.benchmarkDir,
+      benchmarkDirPath,
+      solutionsDir: request.solutionsDir,
+      solutionsDirPath
+    });
+    const suite = benchmarkSuiteResult(entries.map((entry) => evaluateBenchmarkSuiteEntry(entry, context)));
+
+    writeBenchmarkSuiteResult({
+      format: request.format,
+      suite
+    });
+    return suite.exitCode;
+  } catch (error) {
+    const suite: BenchmarkSuiteResult = {
+      errorMessage: errorMessage(error),
+      exitCode: 3,
+      results: [],
+      status: 'error',
+      summary: {
+        disallowed: 0,
+        error: 1,
+        failed: 0,
+        passed: 0,
+        total: 0
+      }
+    };
+
+    writeBenchmarkSuiteResult({
+      format: request.format,
+      suite
+    });
+    return suite.exitCode;
+  }
+}
+
 function parseBenchmarkRequest(argv: readonly string[]): BenchmarkRequest | undefined {
-  if (argv[0] !== 'benchmark' || argv[1] !== 'run') {
+  if (argv[0] !== 'benchmark') {
     return undefined;
   }
 
+  const subcommand = argv[1];
   const args = argv.slice(2);
+  const parsed = benchmarkPositionalArgs(args);
+
+  if (!parsed || parsed.positional.length !== 2) {
+    return undefined;
+  }
+
+  switch (subcommand) {
+    case 'run':
+      return {
+        format: parsed.format,
+        kind: 'run',
+        submissionFile: parsed.positional[1] ?? '',
+        taskFile: parsed.positional[0] ?? ''
+      };
+    case 'run-all':
+      return {
+        benchmarkDir: parsed.positional[0] ?? '',
+        format: parsed.format,
+        kind: 'run-all',
+        solutionsDir: parsed.positional[1] ?? ''
+      };
+    default:
+      return undefined;
+  }
+}
+
+function benchmarkPositionalArgs(args: readonly string[]): {
+  readonly format: BenchmarkOutputFormat;
+  readonly positional: readonly string[];
+} | undefined {
   const jsonFlagCount = args.filter((arg) => arg === '--json').length;
 
   if (jsonFlagCount > 1 || args.some((arg) => arg.startsWith('--') && arg !== '--json')) {
     return undefined;
   }
 
-  const positional = args.filter((arg) => arg !== '--json');
-
-  if (positional.length !== 2) {
-    return undefined;
-  }
-
   return {
     format: jsonFlagCount === 1 ? 'json' : 'human',
-    submissionFile: positional[1] ?? '',
-    taskFile: positional[0] ?? ''
+    positional: args.filter((arg) => arg !== '--json')
   };
 }
 
@@ -257,6 +374,139 @@ function evaluateBenchmark(options: {
     };
   } finally {
     rmSync(workDir, { force: true, recursive: true });
+  }
+}
+
+function benchmarkSuiteEntries(options: {
+  readonly benchmarkDir: string;
+  readonly benchmarkDirPath: string;
+  readonly solutionsDir: string;
+  readonly solutionsDirPath: string;
+}): BenchmarkSuiteEntry[] {
+  const relativeTaskFiles = markdownFilesInDirectory(options.benchmarkDirPath);
+
+  if (relativeTaskFiles.length === 0) {
+    throw new BenchmarkError(`benchmark directory contains no task files: ${options.benchmarkDir}`);
+  }
+
+  return relativeTaskFiles.map((relativeTaskFile) => {
+    const relativeSubmissionFile = relativeTaskFile.replace(/\.md$/u, '.qni');
+
+    return {
+      submission: displayChildPath(options.solutionsDir, relativeSubmissionFile),
+      submissionPath: path.join(options.solutionsDirPath, relativeSubmissionFile),
+      taskFile: displayChildPath(options.benchmarkDir, relativeTaskFile),
+      taskPath: path.join(options.benchmarkDirPath, relativeTaskFile)
+    };
+  });
+}
+
+function markdownFilesInDirectory(dir: string): string[] {
+  if (!existsSync(dir)) {
+    throw new BenchmarkError(`benchmark directory does not exist: ${dir}`);
+  }
+
+  if (!statSync(dir).isDirectory()) {
+    throw new BenchmarkError(`benchmark path is not a directory: ${dir}`);
+  }
+
+  return markdownFilesInDirectoryEntries(dir, '').sort();
+}
+
+function markdownFilesInDirectoryEntries(root: string, relativeDir: string): string[] {
+  const dir = path.join(root, relativeDir);
+  const entries = readdirSync(dir, { withFileTypes: true }).sort((left, right) => left.name.localeCompare(right.name));
+  const files: string[] = [];
+
+  for (const entry of entries) {
+    const relativePath = path.join(relativeDir, entry.name);
+
+    if (entry.isDirectory()) {
+      files.push(...markdownFilesInDirectoryEntries(root, relativePath));
+    } else if (entry.isFile() && entry.name.endsWith('.md')) {
+      files.push(relativePath);
+    }
+  }
+
+  return files;
+}
+
+function displayChildPath(root: string, relativeFile: string): string {
+  return toPosixPath(path.join(root, relativeFile));
+}
+
+function toPosixPath(filePath: string): string {
+  return filePath.split(path.sep).join('/');
+}
+
+function evaluateBenchmarkSuiteEntry(entry: BenchmarkSuiteEntry, context: CommandHandlerContext): BenchmarkSuiteTaskResult {
+  let task: BenchmarkTask | undefined;
+
+  try {
+    task = loadBenchmarkTask(entry.taskPath);
+
+    if (!existsSync(entry.submissionPath)) {
+      throw new BenchmarkError(`submission file does not exist: ${entry.submission}`);
+    }
+
+    return {
+      result: evaluateBenchmark({
+        context,
+        submissionPath: entry.submissionPath,
+        task
+      }),
+      submission: entry.submission,
+      task,
+      taskFile: entry.taskFile
+    };
+  } catch (error) {
+    return {
+      result: {
+        checks: [],
+        errorMessage: errorMessage(error),
+        status: 'error'
+      },
+      submission: entry.submission,
+      task,
+      taskFile: entry.taskFile
+    };
+  }
+}
+
+function benchmarkSuiteResult(results: readonly BenchmarkSuiteTaskResult[]): BenchmarkSuiteResult {
+  const summary = benchmarkSuiteSummary(results);
+  const exitCode = Math.max(0, ...results.map((item) => exitCodeForResult(item.result)));
+
+  return {
+    exitCode,
+    results,
+    status: benchmarkSuiteStatus(exitCode),
+    summary
+  };
+}
+
+function benchmarkSuiteSummary(results: readonly BenchmarkSuiteTaskResult[]): BenchmarkSuiteSummary {
+  return {
+    disallowed: results.filter((item) => item.result.status === 'disallowed').length,
+    error: results.filter((item) => item.result.status === 'error').length,
+    failed: results.filter((item) => item.result.status === 'failed').length,
+    passed: results.filter((item) => item.result.status === 'passed').length,
+    total: results.length
+  };
+}
+
+function benchmarkSuiteStatus(exitCode: number): BenchmarkStatus {
+  switch (exitCode) {
+    case 0:
+      return 'passed';
+    case 1:
+      return 'failed';
+    case 2:
+      return 'disallowed';
+    case 3:
+      return 'error';
+    default:
+      throw new BenchmarkError(`unsupported benchmark suite exit code: ${exitCode}`);
   }
 }
 
@@ -892,6 +1142,60 @@ function writeBenchmarkResult(options: {
   writeHumanResult(options.task, options.result);
 }
 
+function writeBenchmarkSuiteResult(options: {
+  readonly format: BenchmarkOutputFormat;
+  readonly suite: BenchmarkSuiteResult;
+}): void {
+  if (options.format === 'json') {
+    writeJsonSuiteResult(options.suite);
+    return;
+  }
+
+  writeHumanSuiteResult(options.suite);
+}
+
+function writeHumanSuiteResult(suite: BenchmarkSuiteResult): void {
+  if (suite.results.length === 0 && suite.status === 'error') {
+    process.stdout.write('ERROR benchmark suite\n');
+    if (suite.errorMessage) {
+      process.stdout.write(`error: ${suite.errorMessage}\n`);
+    }
+    return;
+  }
+
+  process.stdout.write(`${suite.status === 'passed' ? 'PASS' : 'FAIL'} benchmark suite\n`);
+  process.stdout.write(`tasks: ${suite.summary.total}\n`);
+  process.stdout.write([
+    `passed: ${suite.summary.passed}`,
+    `failed: ${suite.summary.failed}`,
+    `disallowed: ${suite.summary.disallowed}`,
+    `error: ${suite.summary.error}`
+  ].join(', '));
+  process.stdout.write('\n');
+
+  for (const item of suite.results) {
+    process.stdout.write(`- ${item.result.status} ${item.task?.id ?? item.taskFile} ${item.task?.title ?? '(unavailable)'}\n`);
+  }
+}
+
+function writeJsonSuiteResult(suite: BenchmarkSuiteResult): void {
+  const payload: Record<string, unknown> = {
+    status: suite.status,
+    exitCode: suite.exitCode,
+    summary: suite.summary,
+    results: suite.results.map((item) => ({
+      ...benchmarkResultPayload(item.task, item.submission, item.result),
+      task: item.taskFile
+    }))
+  };
+
+  if (suite.errorMessage) {
+    payload.error = suite.errorMessage;
+  }
+
+  process.stdout.write(`${JSON.stringify(payload, null, 2)}\n`);
+}
+
 function writeHumanResult(task: BenchmarkTask | undefined, result: BenchmarkResult): void {
   if (result.status === 'error') {
     writeErrorResult(task, result);
@@ -915,6 +1219,14 @@ function writeHumanResult(task: BenchmarkTask | undefined, result: BenchmarkResu
 }
 
 function writeJsonResult(task: BenchmarkTask | undefined, submission: string, result: BenchmarkResult): void {
+  process.stdout.write(`${JSON.stringify(benchmarkResultPayload(task, submission, result), null, 2)}\n`);
+}
+
+function benchmarkResultPayload(
+  task: BenchmarkTask | undefined,
+  submission: string,
+  result: BenchmarkResult
+): Record<string, unknown> {
   const payload: Record<string, unknown> = {
     taskId: task?.id ?? null,
     title: task?.title ?? null,
@@ -931,7 +1243,7 @@ function writeJsonResult(task: BenchmarkTask | undefined, submission: string, re
     payload.error = result.errorMessage;
   }
 
-  process.stdout.write(`${JSON.stringify(payload, null, 2)}\n`);
+  return payload;
 }
 
 function writeErrorResult(task: BenchmarkTask | undefined, result: BenchmarkResult): void {

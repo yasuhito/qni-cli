@@ -85,3 +85,28 @@ qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/
   ]
 }
 ```
+
+## スモークセットを一括実行する
+
+`qni benchmark run-all` を使うと、ベンチマークディレクトリ内の課題をまとめて評価できます。第1引数に課題ディレクトリ、第2引数に対応する提出物ディレクトリを指定します。
+
+```bash
+qni benchmark run-all benchmarks/quantum-katas benchmarks/solutions/quantum-katas
+```
+
+期待される結果は、3問すべてが `passed` になり、終了コードが `0` になることです。
+
+```text
+PASS benchmark suite
+tasks: 3
+passed: 3, failed: 0, disallowed: 0, error: 0
+- passed basic-gates/state-flip StateFlip
+- passed superposition/bell-state BellState
+- passed superposition/plus-state PlusState
+```
+
+一括実行でも `--json` を付けると、集計と課題ごとの結果を含むJSONを出力します。
+
+```bash
+qni benchmark run-all benchmarks/quantum-katas benchmarks/solutions/quantum-katas --json
+```
