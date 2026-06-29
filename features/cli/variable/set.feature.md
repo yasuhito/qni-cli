@@ -1,6 +1,6 @@
 # Feature: qni variable set
 
-qni-cli のユーザとして
+qni-cli の利用者として
 角度変数を使って回路を再利用するために
 qni variable set で変数を保存したい
 
