@@ -1,5 +1,6 @@
-# Feature: Quantum Katas BasicGates Task 1.2 BasisChange
-  Task 1.2 BasisChange: |0⟩ を |+⟩ に、|1⟩ を |-⟩ に変える
+# Feature: Quantum Katas BasicGates 課題 1.2 BasisChange
+
+  課題 1.2 BasisChange: |0⟩ を |+⟩ に、|1⟩ を |-⟩ に変える
 
   入力:
   1 量子ビットの状態 |ψ⟩ = α|0⟩ + β|1⟩
