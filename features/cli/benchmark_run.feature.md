@@ -24,6 +24,24 @@ qni benchmark run で最小の合格判定を実行したい。
 - When "qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni" を実行
 - Then "circuit.json" は存在しない
 
+## Scenario: StateFlip 標準解の JSON は passed を含む
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni --json" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  "status": "passed"
+  ```
+
+## Scenario: StateFlip 標準解の JSON は終了コード 0 を含む
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni --json" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  "exitCode": 0
+  ```
+
 ## Scenario: PlusState 標準解は合格する
 
 - When "qni benchmark run benchmarks/quantum-katas/superposition/plus-state.md benchmarks/solutions/quantum-katas/superposition/plus-state.qni" を実行
@@ -57,6 +75,24 @@ qni benchmark run で最小の合格判定を実行したい。
   rejected: line 1: qni run
   ```
 
+## Scenario: StateFlip の不許可コマンドの JSON は disallowed を含む
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/disallowed/quantum-katas/basic-gates/state-flip-disallowed.qni --json" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  "status": "disallowed"
+  ```
+
+## Scenario: StateFlip の不許可コマンドの JSON は終了コード 2 を含む
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/disallowed/quantum-katas/basic-gates/state-flip-disallowed.qni --json" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  "exitCode": 2
+  ```
+
 ## Scenario: StateFlip 不正解サンプルは終了コード 1 で不合格になる
 
 - When "qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/incorrect/quantum-katas/basic-gates/state-flip-wrong.qni" を実行
@@ -74,4 +110,80 @@ qni benchmark run で最小の合格判定を実行したい。
   - run #1: state vector did not match expected amplitudes
     expected / actual mismatches:
     - |0>: expected 0, actual 0.7071067811865475
+  ```
+
+## Scenario: StateFlip 不正解サンプルの JSON は failed を含む
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/incorrect/quantum-katas/basic-gates/state-flip-wrong.qni --json" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  "status": "failed"
+  ```
+
+## Scenario: StateFlip 不正解サンプルの JSON は終了コード 1 を含む
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/incorrect/quantum-katas/basic-gates/state-flip-wrong.qni --json" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  "exitCode": 1
+  ```
+
+## Scenario: frontmatter 不備の課題ファイルは終了コード 3 になる
+
+- When "qni benchmark run benchmarks/invalid/quantum-katas/basic-gates/state-flip-missing-allowed-commands.md benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni" を実行
+- Then 終了コードは 3
+
+## Scenario: frontmatter 不備の課題ファイルは error と表示される
+
+- When "qni benchmark run benchmarks/invalid/quantum-katas/basic-gates/state-flip-missing-allowed-commands.md benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  ERROR benchmark run
+  error: allowed_commands is required
+  ```
+
+## Scenario: YAML として壊れた課題ファイルは終了コード 3 になる
+
+- When "qni benchmark run benchmarks/invalid/quantum-katas/basic-gates/state-flip-malformed-frontmatter.md benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni" を実行
+- Then 終了コードは 3
+
+## Scenario: 提出物の構文不備は終了コード 3 になる
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/error/quantum-katas/basic-gates/state-flip-syntax-error.qni" を実行
+- Then 終了コードは 3
+
+## Scenario: qni 実行失敗は終了コード 3 になる
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/error/quantum-katas/basic-gates/state-flip-qni-error.qni" を実行
+- Then 終了コードは 3
+
+## Scenario: qni 実行失敗は error と表示される
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/error/quantum-katas/basic-gates/state-flip-qni-error.qni" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  ERROR StateFlip
+  error: submission command failed at line 1: qni add X --qubit nope --step 0
+  ```
+
+## Scenario: qni 実行失敗の JSON は error を含む
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/error/quantum-katas/basic-gates/state-flip-qni-error.qni --json" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  "status": "error"
+  ```
+
+## Scenario: qni 実行失敗の JSON は終了コード 3 を含む
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/error/quantum-katas/basic-gates/state-flip-qni-error.qni --json" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  "exitCode": 3
   ```

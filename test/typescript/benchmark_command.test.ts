@@ -82,6 +82,205 @@ describe('benchmark command TypeScript route', () => {
     assert.equal(streamChunkText(new Uint8Array([97, 98])), 'ab');
   });
 
+  it('classifies invalid task frontmatter as an error result', async () => {
+    await withTempDir(async (dir) => {
+      await writeFile(path.join(dir, 'task.md'), [
+        '---',
+        'id: basic-gates/state-flip',
+        'title: StateFlip',
+        'source: test',
+        'difficulty: smoke',
+        'checks:',
+        '  tolerance: 1e-9',
+        '  items:',
+        '    - type: run',
+        '      expected:',
+        '        - basis: "|1>"',
+        '          amplitude:',
+        '            real: 1',
+        '            imaginary: 0',
+        '---',
+        '',
+        'Flip the state.'
+      ].join('\n'));
+
+      const result = captureDispatcherRun(dir, [
+        'benchmark',
+        'run',
+        'task.md',
+        'benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni'
+      ]);
+
+      assert.equal(result.exitStatus, 3);
+      assert.equal(result.stdout, 'ERROR benchmark run\nerror: allowed_commands is required\n');
+      assert.equal(result.stderr, '');
+    });
+  });
+
+  it('classifies malformed YAML frontmatter as an error result', async () => {
+    await withTempDir(async (dir) => {
+      await writeFile(path.join(dir, 'task.md'), [
+        '---',
+        'id: basic-gates/state-flip',
+        'title: "StateFlip',
+        'source: test',
+        'difficulty: smoke',
+        'allowed_commands:',
+        '  - qni add',
+        'checks:',
+        '  tolerance: 1e-9',
+        '  items:',
+        '    - type: run',
+        '      expected:',
+        '        - basis: "|1>"',
+        '          amplitude:',
+        '            real: 1',
+        '            imaginary: 0',
+        '---',
+        '',
+        'Flip the state.'
+      ].join('\n'));
+
+      const result = captureDispatcherRun(dir, [
+        'benchmark',
+        'run',
+        'task.md',
+        'benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni'
+      ]);
+
+      assert.equal(result.exitStatus, 3);
+      assert.match(result.stdout, /^ERROR benchmark run\nerror: invalid YAML frontmatter: Missing closing "quote/mu);
+      assert.equal(result.stderr, '');
+    });
+  });
+
+  it('classifies submission syntax errors as error results', async () => {
+    await withTempDir(async (dir) => {
+      await writeFile(path.join(dir, 'submission.qni'), 'qni add X --qubit "0 --step 0\n');
+
+      const result = captureDispatcherRun(dir, [
+        'benchmark',
+        'run',
+        'benchmarks/quantum-katas/basic-gates/state-flip.md',
+        'submission.qni'
+      ]);
+
+      assert.equal(result.exitStatus, 3);
+      assert.equal(result.stdout, [
+        'ERROR StateFlip',
+        'error: unterminated quote in command: qni add X --qubit "0 --step 0',
+        ''
+      ].join('\n'));
+      assert.equal(result.stderr, '');
+    });
+  });
+
+  it('classifies qni command execution failures as error results', async () => {
+    await withTempDir(async (dir) => {
+      await writeFile(path.join(dir, 'submission.qni'), 'qni add X --qubit nope --step 0\n');
+
+      const result = captureDispatcherRun(dir, [
+        'benchmark',
+        'run',
+        'benchmarks/quantum-katas/basic-gates/state-flip.md',
+        'submission.qni'
+      ]);
+
+      assert.equal(result.exitStatus, 3);
+      assert.equal(result.stdout, [
+        'ERROR StateFlip',
+        'error: submission command failed at line 1: qni add X --qubit nope --step 0',
+        'qubit must be an integer',
+        ''
+      ].join('\n'));
+      assert.equal(result.stderr, '');
+    });
+  });
+
+  it('writes JSON error status and exit code for qni command execution failures', async () => {
+    await withTempDir(async (dir) => {
+      await writeFile(path.join(dir, 'submission.qni'), 'qni add X --qubit nope --step 0\n');
+
+      const result = captureDispatcherRun(dir, [
+        'benchmark',
+        'run',
+        'benchmarks/quantum-katas/basic-gates/state-flip.md',
+        'submission.qni',
+        '--json'
+      ]);
+      const payload = JSON.parse(result.stdout) as Record<string, unknown>;
+
+      assert.equal(result.exitStatus, 3);
+      assert.equal(payload.status, 'error');
+      assert.equal(payload.exitCode, 3);
+      assert.equal(payload.taskId, 'basic-gates/state-flip');
+      assert.equal(payload.title, 'StateFlip');
+      assert.equal(result.stderr, '');
+    });
+  });
+
+  it('writes JSON passed status and exit code for correct submissions', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, [
+        'benchmark',
+        'run',
+        'benchmarks/quantum-katas/basic-gates/state-flip.md',
+        'benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni',
+        '--json'
+      ]);
+      const payload = JSON.parse(result.stdout) as Record<string, unknown>;
+
+      assert.equal(result.exitStatus, 0);
+      assert.deepEqual(payload, {
+        taskId: 'basic-gates/state-flip',
+        title: 'StateFlip',
+        submission: 'benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni',
+        status: 'passed',
+        exitCode: 0,
+        checks: [{ type: 'run', status: 'passed' }]
+      });
+      assert.equal(result.stderr, '');
+    });
+  });
+
+  it('writes JSON failed status and exit code for wrong answers', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, [
+        'benchmark',
+        'run',
+        'benchmarks/quantum-katas/basic-gates/state-flip.md',
+        'benchmarks/incorrect/quantum-katas/basic-gates/state-flip-wrong.qni',
+        '--json'
+      ]);
+      const payload = JSON.parse(result.stdout) as Record<string, unknown>;
+
+      assert.equal(result.exitStatus, 1);
+      assert.equal(payload.status, 'failed');
+      assert.equal(payload.exitCode, 1);
+      assert.deepEqual(payload.checks, [{ type: 'run', status: 'failed' }]);
+      assert.equal(result.stderr, '');
+    });
+  });
+
+  it('writes JSON disallowed status and exit code for rejected submissions', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, [
+        'benchmark',
+        'run',
+        'benchmarks/quantum-katas/basic-gates/state-flip.md',
+        'benchmarks/disallowed/quantum-katas/basic-gates/state-flip-disallowed.qni',
+        '--json'
+      ]);
+      const payload = JSON.parse(result.stdout) as Record<string, unknown>;
+
+      assert.equal(result.exitStatus, 2);
+      assert.equal(payload.status, 'disallowed');
+      assert.equal(payload.exitCode, 2);
+      assert.deepEqual(payload.checks, []);
+      assert.equal(result.stderr, '');
+    });
+  });
+
   it('rejects submission commands not listed in allowed_commands', async () => {
     await withTempDir(async (dir) => {
       await writeFile(path.join(dir, 'task.md'), [
