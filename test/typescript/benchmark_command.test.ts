@@ -82,6 +82,56 @@ describe('benchmark command TypeScript route', () => {
     assert.equal(streamChunkText(new Uint8Array([97, 98])), 'ab');
   });
 
+  it('uses checks.tolerance from the task file during run checks', async () => {
+    await withTempDir(async (dir) => {
+      const taskLines = (tolerance: string) => [
+        '---',
+        'id: numeric/tolerance',
+        'title: ToleranceCheck',
+        'source: test',
+        'difficulty: smoke',
+        'allowed_commands:',
+        '  - qni add',
+        'checks:',
+        `  tolerance: ${tolerance}`,
+        '  items:',
+        '    - type: run',
+        '      expected:',
+        '        - basis: "|1>"',
+        '          amplitude:',
+        '            real: 0.999999999999',
+        '            imaginary: 0',
+        '---',
+        '',
+        'Flip the state.'
+      ].join('\n');
+      await writeFile(path.join(dir, 'loose.md'), taskLines('1e-11'));
+      await writeFile(path.join(dir, 'tight.md'), taskLines('1e-13'));
+      await writeFile(path.join(dir, 'submission.qni'), 'qni add X --qubit 0 --step 0\n');
+
+      const loose = captureDispatcherRun(dir, ['benchmark', 'run', 'loose.md', 'submission.qni']);
+      const tight = captureDispatcherRun(dir, ['benchmark', 'run', 'tight.md', 'submission.qni']);
+
+      assert.equal(loose.exitStatus, 0, loose.stderr);
+      assert.equal(tight.exitStatus, 1, tight.stderr);
+    });
+  });
+
+  it('passes the PlusState solution using the task tolerance for rounded amplitudes', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, [
+        'benchmark',
+        'run',
+        'benchmarks/quantum-katas/superposition/plus-state.md',
+        'benchmarks/solutions/quantum-katas/superposition/plus-state.qni'
+      ]);
+
+      assert.equal(result.exitStatus, 0, result.stderr);
+      assert.equal(result.stdout, 'PASS PlusState\nchecks: 1\n');
+      assert.equal(result.stderr, '');
+    });
+  });
+
   it('parses scientific notation in imaginary amplitudes during run checks', async () => {
     await withTempDir(async (dir) => {
       await writeFile(path.join(dir, 'task.md'), [
