@@ -2,10 +2,24 @@
 
 ## ドキュメント言語
 
-- superpowers の仕様書は日本語で書く。
-- superpowers の計画書は日本語で書く。
-- 仕様書、計画書、Linear/GitHub への書き込みでは、不自然な英日混在の「ルー語」を避ける。英語の普通名詞に自然な日本語訳がある場合は日本語で書く（例: `step definition の意図` ではなく `ステップ定義の意図`、`env setup` ではなく `環境変数の準備`、`command 実行` ではなく `コマンド実行`）。ただし、ツール名、ファイル名、API名、CLI引数、環境変数、Gherkin キーワード（`Given` / `When` / `Then`）、プログラミング言語名など、識別子や固有の技術用語として英語表記が必要な語はそのまま書いてよい。
+- 設計検討ドキュメントは日本語で書く。
+- 計画書は日本語で書く。
+- 仕様書、計画書、GitHub issue/PRD への書き込みでは、不自然な英日混在の「ルー語」を避ける。英語の普通名詞に自然な日本語訳がある場合は日本語で書く（例: `step definition の意図` ではなく `ステップ定義の意図`、`env setup` ではなく `環境変数の準備`、`command 実行` ではなく `コマンド実行`）。ただし、ツール名、ファイル名、API名、CLI引数、環境変数、Gherkin キーワード（`Given` / `When` / `Then`）、プログラミング言語名など、識別子や固有の技術用語として英語表記が必要な語はそのまま書いてよい。
 - qni-cli の TypeScript 移行に関する説明でも、読み手向けの文章は自然な日本語にし、コード識別子・コマンド・エラーメッセージ・ファイルパスは原文を保つ。
+
+## Agent skills
+
+### Issue tracker
+
+課題と PRD は GitHub Issues で管理する。外部 Pull request は triage 対象にしない。詳細は `docs/agents/issue-tracker.md` を参照する。
+
+### Triage labels
+
+Matt 系スキルの標準 triage 役割は、同名の GitHub label に対応させる。詳細は `docs/agents/triage-labels.md` を参照する。
+
+### Domain docs
+
+このリポジトリは single-context として扱い、ルートの `CONTEXT.md` と `docs/adr/` を使う。詳細は `docs/agents/domain.md` を参照する。
 
 ## 機能開発規則
 
@@ -26,14 +40,14 @@
 - Quantum Katas など既知の利用場面で自然に必要な機能は、機能仕様を先に定義する方針で qni CLI に追加することを優先する。
 - 元のタスクや回路の意図を崩して回避するのではなく、qni CLI 自体を成長させる方向をまず考える。
 
-## Linear 課題規則
+## GitHub issue 規則
 
-- Linear に課題を作成するとき、タイトルは日本語にする。
+- GitHub issue を作成するとき、タイトルは日本語にする。
 
 ## PR レビュー規則
 
 - PR をレビューしてマージしてよいと判断した場合は、ユーザーの追加確認を待たずにマージしてよい。
-- 対応が必要と判断した場合は、PR に具体的な指摘と修正方針をコメントし、対応する Linear 課題の状態を `In Progress` にする。
+- 対応が必要と判断した場合は、PR に具体的な指摘と修正方針をコメントし、対応する GitHub issue があれば状態やラベルを更新する。
 
 ## 検証規則
 
