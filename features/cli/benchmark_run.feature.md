@@ -42,6 +42,27 @@ qni benchmark run で最小の合格判定を実行したい。
   "exitCode": 0
   ```
 
+## Scenario: StateFlip 標準解の JSON は機械処理できる結果である
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni --json" を実行
+- Then 標準出力は次の JSON と一致する:
+
+  ```json
+  {
+    "taskId": "basic-gates/state-flip",
+    "title": "StateFlip",
+    "submission": "benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni",
+    "status": "passed",
+    "exitCode": 0,
+    "checks": [
+      {
+        "type": "run",
+        "status": "passed"
+      }
+    ]
+  }
+  ```
+
 ## Scenario: PlusState 標準解は合格する
 
 - When "qni benchmark run benchmarks/quantum-katas/superposition/plus-state.md benchmarks/solutions/quantum-katas/superposition/plus-state.qni" を実行
@@ -124,6 +145,22 @@ qni benchmark run で最小の合格判定を実行したい。
   "exitCode": 2
   ```
 
+## Scenario: StateFlip の不許可コマンドの JSON は機械処理できる結果である
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/disallowed/quantum-katas/basic-gates/state-flip-disallowed.qni --json" を実行
+- Then 標準出力は次の JSON と一致する:
+
+  ```json
+  {
+    "taskId": "basic-gates/state-flip",
+    "title": "StateFlip",
+    "submission": "benchmarks/disallowed/quantum-katas/basic-gates/state-flip-disallowed.qni",
+    "status": "disallowed",
+    "exitCode": 2,
+    "checks": []
+  }
+  ```
+
 ## Scenario: StateFlip 不正解サンプルは終了コード 1 で不合格になる
 
 - When "qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/incorrect/quantum-katas/basic-gates/state-flip-wrong.qni" を実行
@@ -159,6 +196,27 @@ qni benchmark run で最小の合格判定を実行したい。
 
   ```text
   "exitCode": 1
+  ```
+
+## Scenario: StateFlip 不正解サンプルの JSON は機械処理できる結果である
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/incorrect/quantum-katas/basic-gates/state-flip-wrong.qni --json" を実行
+- Then 標準出力は次の JSON と一致する:
+
+  ```json
+  {
+    "taskId": "basic-gates/state-flip",
+    "title": "StateFlip",
+    "submission": "benchmarks/incorrect/quantum-katas/basic-gates/state-flip-wrong.qni",
+    "status": "failed",
+    "exitCode": 1,
+    "checks": [
+      {
+        "type": "run",
+        "status": "failed"
+      }
+    ]
+  }
   ```
 
 ## Scenario: frontmatter 不備の課題ファイルは終了コード 3 になる

@@ -255,9 +255,14 @@ describe('benchmark command TypeScript route', () => {
       const payload = JSON.parse(result.stdout) as Record<string, unknown>;
 
       assert.equal(result.exitStatus, 1);
-      assert.equal(payload.status, 'failed');
-      assert.equal(payload.exitCode, 1);
-      assert.deepEqual(payload.checks, [{ type: 'run', status: 'failed' }]);
+      assert.deepEqual(payload, {
+        taskId: 'basic-gates/state-flip',
+        title: 'StateFlip',
+        submission: 'benchmarks/incorrect/quantum-katas/basic-gates/state-flip-wrong.qni',
+        status: 'failed',
+        exitCode: 1,
+        checks: [{ type: 'run', status: 'failed' }]
+      });
       assert.equal(result.stderr, '');
     });
   });
@@ -274,9 +279,14 @@ describe('benchmark command TypeScript route', () => {
       const payload = JSON.parse(result.stdout) as Record<string, unknown>;
 
       assert.equal(result.exitStatus, 2);
-      assert.equal(payload.status, 'disallowed');
-      assert.equal(payload.exitCode, 2);
-      assert.deepEqual(payload.checks, []);
+      assert.deepEqual(payload, {
+        taskId: 'basic-gates/state-flip',
+        title: 'StateFlip',
+        submission: 'benchmarks/disallowed/quantum-katas/basic-gates/state-flip-disallowed.qni',
+        status: 'disallowed',
+        exitCode: 2,
+        checks: []
+      });
       assert.equal(result.stderr, '');
     });
   });
