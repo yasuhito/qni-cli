@@ -46,8 +46,15 @@ interface BenchmarkResult {
 interface BenchmarkCheckResult {
   readonly actual: readonly ComplexAmplitude[];
   readonly expected: readonly ComplexAmplitude[];
+  readonly mismatches: readonly AmplitudeMismatch[];
   readonly status: 'passed' | 'failed';
   readonly type: 'run';
+}
+
+interface AmplitudeMismatch {
+  readonly actual: ComplexAmplitude;
+  readonly basis: string;
+  readonly expected: ComplexAmplitude;
 }
 
 class BenchmarkError extends Error {}
@@ -57,6 +64,7 @@ const QNI_COMMAND_HANDLERS = new Map<string, CommandHandler>([
   ['run', runRunCommand]
 ]);
 const USAGE = 'Usage: qni benchmark run <task-file> <submission-file>\n';
+const MAX_FAILED_AMPLITUDE_DETAILS = 16;
 const ZERO_AMPLITUDE: ComplexAmplitude = { imaginary: 0, real: 0 };
 
 export function runBenchmarkCommand(argv: string[], context: CommandHandlerContext): number {
@@ -163,11 +171,13 @@ function runCheck(
 
   const actual = parseStateVector(result.stdout);
   const expected = expectedStateVector(check.expected, actual.length);
+  const mismatches = stateVectorMismatches(actual, expected, task.checks.tolerance);
 
   return {
     actual,
     expected,
-    status: stateVectorMatches(actual, expected, task.checks.tolerance) ? 'passed' : 'failed',
+    mismatches,
+    status: mismatches.length === 0 ? 'passed' : 'failed',
     type: 'run'
   };
 }
@@ -185,12 +195,24 @@ function expectedStateVector(
   return expected;
 }
 
-function stateVectorMatches(
+function stateVectorMismatches(
   actual: readonly ComplexAmplitude[],
   expected: readonly ComplexAmplitude[],
   tolerance: number
-): boolean {
-  return actual.every((amplitude, index) => amplitudesClose(amplitude, expected[index] ?? ZERO_AMPLITUDE, tolerance));
+): AmplitudeMismatch[] {
+  return actual.flatMap((amplitude, index) => {
+    const expectedAmplitude = expected[index] ?? ZERO_AMPLITUDE;
+
+    if (amplitudesClose(amplitude, expectedAmplitude, tolerance)) {
+      return [];
+    }
+
+    return [{
+      actual: amplitude,
+      basis: basisLabel(index, actual.length),
+      expected: expectedAmplitude
+    }];
+  });
 }
 
 function amplitudesClose(actual: ComplexAmplitude, expected: ComplexAmplitude, tolerance: number): boolean {
@@ -521,15 +543,30 @@ function writeFailedCheckDetails(result: BenchmarkResult): void {
 function failedCheckLines(check: BenchmarkCheckResult, index: number): string[] {
   return [
     `- ${check.type} #${index + 1}: state vector did not match expected amplitudes`,
-    '  expected:',
-    ...stateVectorLines(check.expected).map((line) => `    ${line}`),
-    '  actual:',
-    ...stateVectorLines(check.actual).map((line) => `    ${line}`)
+    '  expected / actual mismatches:',
+    ...displayedMismatches(check.mismatches),
+    ...omittedMismatchLines(check.mismatches)
   ];
 }
 
-function stateVectorLines(stateVector: readonly ComplexAmplitude[]): string[] {
-  return stateVector.map((amplitude, index) => `${basisLabel(index, stateVector.length)}: ${formatComplexAmplitude(amplitude)}`);
+function displayedMismatches(mismatches: readonly AmplitudeMismatch[]): string[] {
+  return mismatches
+    .slice(0, MAX_FAILED_AMPLITUDE_DETAILS)
+    .map((mismatch) => [
+      `  - ${mismatch.basis}:`,
+      `expected ${formatComplexAmplitude(mismatch.expected)},`,
+      `actual ${formatComplexAmplitude(mismatch.actual)}`
+    ].join(' '));
+}
+
+function omittedMismatchLines(mismatches: readonly AmplitudeMismatch[]): string[] {
+  const omittedCount = mismatches.length - MAX_FAILED_AMPLITUDE_DETAILS;
+
+  if (omittedCount <= 0) {
+    return [];
+  }
+
+  return [`  ... ${omittedCount} more mismatched amplitudes omitted`];
 }
 
 function basisLabel(index: number, vectorLength: number): string {

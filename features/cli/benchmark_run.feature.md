@@ -53,4 +53,6 @@ qni benchmark run で最小の合格判定を実行したい。
   checks: 1
   failed checks:
   - run #1: state vector did not match expected amplitudes
+    expected / actual mismatches:
+    - |0>: expected 0, actual 0.7071067811865475
   ```
