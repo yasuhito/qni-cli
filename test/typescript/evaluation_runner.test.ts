@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, it } from 'node:test';
@@ -73,6 +73,51 @@ function captureProcessWrites<T>(callback: () => T): CapturedValue<T> {
 }
 
 describe('evaluation runner public entrypoints', () => {
+  it('reports task frontmatter errors through the evaluation runner seam', async () => {
+    await withTempDir(async (dir) => {
+      await writeFile(path.join(dir, 'task.md'), [
+        '---',
+        'id: basic-gates/state-flip',
+        'title: StateFlip',
+        'source: test',
+        'difficulty: smoke',
+        'checks:',
+        '  tolerance: 1e-9',
+        '  items:',
+        '    - type: run',
+        '      expected:',
+        '        - basis: "|1>"',
+        '          amplitude:',
+        '            real: 1',
+        '            imaginary: 0',
+        '---',
+        '',
+        'Flip the state.'
+      ].join('\n'));
+
+      const captured = captureProcessWrites(() => gradeBenchmarkTask({
+        taskFile: 'task.md',
+        submissionFile: 'submission.qni'
+      }, {
+        cwd: dir,
+        env: { PATH: '' },
+        projectRoot: process.cwd()
+      }));
+
+      assert.equal(captured.stdout, '');
+      assert.equal(captured.stderr, '');
+      assert.deepStrictEqual(captured.value, {
+        taskId: null,
+        title: null,
+        submission: 'submission.qni',
+        status: 'error',
+        exitCode: 3,
+        checks: [],
+        error: 'allowed_commands is required'
+      });
+    });
+  });
+
   it('grades a single benchmark task without writing CLI output', async () => {
     await withTempDir(async (dir) => {
       const captured = captureProcessWrites(() => gradeBenchmarkTask({
