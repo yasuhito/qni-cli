@@ -82,6 +82,11 @@ type BenchmarkOutputFormat = 'human' | 'json';
 
 export type BenchmarkStatus = 'passed' | 'failed' | 'disallowed' | 'error';
 
+export interface BenchmarkTaskGradingRequest {
+  readonly submissionFile: string;
+  readonly taskFile: string;
+}
+
 export interface BenchmarkSuiteGradingRequest {
   readonly benchmarkDir: string;
   readonly solutionsDir: string;
@@ -142,6 +147,12 @@ interface BenchmarkSuiteEntry {
   readonly submissionPath: string;
   readonly taskFile: string;
   readonly taskPath: string;
+}
+
+interface BenchmarkTaskResult {
+  readonly result: BenchmarkResult;
+  readonly submission: string;
+  readonly task?: BenchmarkTask;
 }
 
 interface BenchmarkSuiteTaskResult {
@@ -236,40 +247,15 @@ export function runBenchmarkCommand(argv: string[], context: CommandHandlerConte
 }
 
 function runSingleBenchmark(request: BenchmarkRunRequest, context: CommandHandlerContext): number {
-  let task: BenchmarkTask | undefined;
+  const taskResult = evaluateBenchmarkTask(request, context);
 
-  try {
-    const taskPath = resolveInputPath(request.taskFile, context);
-    const submissionPath = resolveInputPath(request.submissionFile, context);
-    task = loadBenchmarkTask(taskPath);
-    const result = evaluateBenchmark({
-      context,
-      submissionPath,
-      task
-    });
-
-    writeBenchmarkResult({
-      format: request.format,
-      result,
-      submission: request.submissionFile,
-      task
-    });
-    return exitCodeForResult(result);
-  } catch (error) {
-    const result: BenchmarkResult = {
-      checks: [],
-      errorMessage: errorMessage(error),
-      status: 'error'
-    };
-
-    writeBenchmarkResult({
-      format: request.format,
-      result,
-      submission: request.submissionFile,
-      task
-    });
-    return exitCodeForResult(result);
-  }
+  writeBenchmarkResult({
+    format: request.format,
+    result: taskResult.result,
+    submission: taskResult.submission,
+    task: taskResult.task
+  });
+  return exitCodeForResult(taskResult.result);
 }
 
 function runBenchmarkSuite(request: BenchmarkSuiteRequest, context: CommandHandlerContext): number {
@@ -283,6 +269,19 @@ function runBenchmarkSuite(request: BenchmarkSuiteRequest, context: CommandHandl
 }
 
 /**
+ * Runs the single benchmark task grader without writing the task report to stdout.
+ * The returned shape matches the `qni benchmark run --json` payload.
+ */
+export function gradeBenchmarkTask(
+  request: BenchmarkTaskGradingRequest,
+  context: CommandHandlerContext
+): BenchmarkTaskGradingResult {
+  const taskResult = evaluateBenchmarkTask(request, context);
+
+  return benchmarkResultPayload(taskResult.task, taskResult.submission, taskResult.result);
+}
+
+/**
  * Runs the benchmark suite grader without writing the suite report to stdout.
  * The returned shape matches the `qni benchmark run-all --json` payload.
  */
@@ -291,6 +290,36 @@ export function gradeBenchmarkSuite(
   context: CommandHandlerContext
 ): BenchmarkSuiteGradingResult {
   return benchmarkSuiteGradingResult(evaluateBenchmarkSuite(request, context));
+}
+
+function evaluateBenchmarkTask(request: BenchmarkTaskGradingRequest, context: CommandHandlerContext): BenchmarkTaskResult {
+  let task: BenchmarkTask | undefined;
+
+  try {
+    const taskPath = resolveInputPath(request.taskFile, context);
+    const submissionPath = resolveInputPath(request.submissionFile, context);
+    task = loadBenchmarkTask(taskPath);
+
+    return {
+      result: evaluateBenchmark({
+        context,
+        submissionPath,
+        task
+      }),
+      submission: request.submissionFile,
+      task
+    };
+  } catch (error) {
+    return {
+      result: {
+        checks: [],
+        errorMessage: errorMessage(error),
+        status: 'error'
+      },
+      submission: request.submissionFile,
+      task
+    };
+  }
 }
 
 function evaluateBenchmarkSuite(

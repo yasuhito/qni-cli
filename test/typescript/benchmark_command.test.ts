@@ -4,8 +4,9 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, it } from 'node:test';
 
-import { gradeBenchmarkSuite, streamChunkText } from '../../src/commands/benchmark_command';
+import { streamChunkText } from '../../src/commands/benchmark_command';
 import { createDispatcher } from '../../src/dispatcher';
+import { gradeBenchmarkSuite } from '../../src/evaluation_runner';
 
 interface CapturedRun {
   readonly exitStatus: number;

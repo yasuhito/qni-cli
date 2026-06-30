@@ -2,7 +2,7 @@ import { copyFileSync, cpSync, existsSync, mkdirSync, statSync, writeFileSync } 
 import path = require('node:path');
 
 import type { CommandHandlerContext } from '../dispatcher';
-import { gradeBenchmarkSuite, type BenchmarkSuiteGradingResult } from './benchmark_command';
+import { gradeBenchmarkSuite, type BenchmarkSuiteGradingResult } from '../evaluation_runner';
 
 interface ResearchRecordRequest {
   readonly benchmark: string;
