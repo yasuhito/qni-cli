@@ -6,9 +6,13 @@ qni-cli は、量子回路をコマンド列として組み立て、状態ベク
 
 ### プロジェクト全体
 
+**Qni**:
+現在のリポジトリとCLI系ツールの名前。量子回路AI共同研究者プロジェクト全体の名前としては暫定であり、将来は共同研究者としての範囲を表す名前へ変更する可能性がある。
+_Avoid_: Q2, Q2CLI, CLI機能だけで全体を表す名前
+
 **qni-cli**:
-量子回路を作成、実行、表示、検証するための Node.js / TypeScript 製 CLI。
-_Avoid_: Ruby CLI, Ruby fallback
+Qni のうち、量子回路を作成、実行、表示、検証するための Node.js / TypeScript 製 CLI。
+_Avoid_: Ruby CLI, Ruby fallback, 共同研究者全体
 
 **量子回路AIエージェント**:
 PhysicsIntern のような研究支援エージェントを量子回路設計向けに具体化した存在で、共同研究者として自然言語の課題文を読み、qni-cli で検証可能な提出物を作る。
