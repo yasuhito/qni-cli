@@ -20,6 +20,10 @@ pack した成果物をインストールして代表コマンドを実行した
 
 - Then リポジトリファイル "scripts/smoke_npm_package.js" は "benchmark run" を含む
 
+## Scenario: package smoke script は研究試行記録の代表例を確認する
+
+- Then リポジトリファイル "scripts/smoke_npm_package.js" は "qni research record package smoke" を含む
+
 ## Scenario: npm package は TypeScript build artifact を含める
 
 - Then リポジトリファイル "package.json" は "\"dist/\"" を含む

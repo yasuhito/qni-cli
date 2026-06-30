@@ -110,3 +110,47 @@ passed: 3, failed: 0, disallowed: 0, error: 0
 ```bash
 qni benchmark run-all benchmarks/quantum-katas benchmarks/solutions/quantum-katas --json
 ```
+
+## benchmark と research の責務
+
+`benchmark` は提出物を採点し、`research` は研究ログを保存します。`qni benchmark run` と `qni benchmark run-all` は `.qni` 提出物を評価し、結果を標準出力へ出します。`qni research record` は、1つのベンチマークスイートに対する外部共同研究者の1回の研究試行を `research/runs/<timestamp>-<slug>/` に保存します。保存時には `qni benchmark run-all --json` 相当の採点を実行し、その結果も同じ研究試行ディレクトリに残します。
+
+`qni research record` は AI を呼び出さず、git commit も作りません。Pi、Claude、Codex、人間などが外部で作ったプロンプト、AI回答、`.qni` 提出物ディレクトリをファイルパスで渡します。`git commit` が必要な場合は、生成された `research/runs/...` を確認してから手動または上位の実行環境で作ります。
+
+## 研究試行を記録する最小例
+
+プロンプト、AI回答、提出物ディレクトリを用意してから `qni research record` を実行します。次の例では、スモークセットの標準解を外部共同研究者の提出物として扱い、研究試行ディレクトリを作ります。
+
+```bash
+mkdir -p tmp/research-example/submissions
+cp -R benchmarks/solutions/quantum-katas/. tmp/research-example/submissions/
+
+cat > tmp/research-example/prompt.md <<'MD'
+Quantum Katas のスモークセットを `.qni` 形式で解いてください。
+MD
+
+cat > tmp/research-example/response.md <<'MD'
+提出物ディレクトリに各課題の `.qni` ファイルを保存しました。
+MD
+
+qni research record \
+  --collaborator claude-sonnet-4 \
+  --benchmark benchmarks/quantum-katas \
+  --submissions tmp/research-example/submissions \
+  --prompt tmp/research-example/prompt.md \
+  --response tmp/research-example/response.md \
+  --slug smoke-claude
+```
+
+成功すると、次のファイル群が `research/runs/<timestamp>-<slug>/` に保存されます。
+
+```text
+trial.md
+metadata.json
+prompt.md
+response.md
+submissions/
+result.json
+```
+
+終了コードは採点状態を表します。`passed` は `0`、`failed` は `1`、`disallowed` は `2`、`error` または入力検証や保存の失敗は `3` です。不合格、不許可、実行エラーの研究試行も保存対象です。

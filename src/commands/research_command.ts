@@ -34,6 +34,38 @@ const USAGE = [
   'Usage: qni research record --collaborator <name> --benchmark <dir> --submissions <dir> --prompt <file> --response <file> --slug <slug>',
   ''
 ].join('\n');
+const HELP_TEXT = `Usage:
+  qni research record --collaborator <name> --benchmark <dir> --submissions <dir> --prompt <file> --response <file> --slug <slug>
+
+Overview:
+  Record one external collaborator trial for one benchmark suite.
+  qni research record does not call AI and does not create a git commit.
+  benchmark grades submissions; research saves the research log.
+
+Required inputs:
+  --collaborator <name>
+  --benchmark <dir>
+  --submissions <dir>
+  --prompt <file>
+  --response <file>
+  --slug <slug>
+
+Saved files:
+  research/runs/<timestamp>-<slug>/trial.md
+  research/runs/<timestamp>-<slug>/metadata.json
+  research/runs/<timestamp>-<slug>/prompt.md
+  research/runs/<timestamp>-<slug>/response.md
+  research/runs/<timestamp>-<slug>/submissions/
+  research/runs/<timestamp>-<slug>/result.json
+
+Exit codes:
+  0  passed
+  1  failed
+  2  disallowed
+  3  error or input/save failure
+
+Example:
+  qni research record --collaborator claude-sonnet-4 --benchmark benchmarks/quantum-katas --submissions tmp/submissions --prompt tmp/prompt.md --response tmp/response.md --slug smoke-claude`;
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u;
 const OPTION_NAMES = new Map<string, ResearchRecordOption>([
   ['--benchmark', 'benchmark'],
@@ -45,6 +77,11 @@ const OPTION_NAMES = new Map<string, ResearchRecordOption>([
 ]);
 
 export function runResearchCommand(argv: string[], context: CommandHandlerContext): number {
+  if (isResearchHelpRequest(argv)) {
+    process.stdout.write(`${HELP_TEXT}\n`);
+    return 0;
+  }
+
   const request = parseResearchRecordRequest(argv);
 
   if (!request) {
@@ -58,6 +95,26 @@ export function runResearchCommand(argv: string[], context: CommandHandlerContex
     process.stderr.write(`${errorMessage(error)}\n`);
     return 3;
   }
+}
+
+function isResearchHelpRequest(argv: readonly string[]): boolean {
+  if (argv[0] !== 'research') {
+    return false;
+  }
+
+  if (argv.length === 1) {
+    return true;
+  }
+
+  if (argv.length === 2) {
+    return isHelpFlag(argv[1]);
+  }
+
+  return argv[1] === 'record' && argv.length === 3 && isHelpFlag(argv[2]);
+}
+
+function isHelpFlag(value: string | undefined): boolean {
+  return value === '--help' || value === '-h';
 }
 
 function parseResearchRecordRequest(argv: readonly string[]): ResearchRecordRequest | undefined {

@@ -66,6 +66,32 @@ function main() {
       stdoutIncludes: 'PASS StateFlip'
     });
 
+    fs.writeFileSync(path.join(workspace, 'prompt.md'), 'Solve the smoke benchmark suite.\n');
+    fs.writeFileSync(path.join(workspace, 'response.md'), 'I wrote the requested .qni submissions.\n');
+    assertCommand({
+      command: [
+        'qni',
+        'research',
+        'record',
+        '--collaborator',
+        'package-smoke',
+        '--benchmark',
+        path.join(packageRoot, 'benchmarks', 'quantum-katas'),
+        '--submissions',
+        path.join(packageRoot, 'benchmarks', 'solutions', 'quantum-katas'),
+        '--prompt',
+        'prompt.md',
+        '--response',
+        'response.md',
+        '--slug',
+        'package-smoke'
+      ],
+      cwd: workspace,
+      env,
+      label: 'qni research record package smoke',
+      stdoutIncludes: 'Recorded research trial: research/runs/'
+    });
+
     console.log(`package smoke passed: ${path.basename(tarball)}`);
   } finally {
     if (keepTemp) {
