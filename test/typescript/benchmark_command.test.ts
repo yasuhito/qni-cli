@@ -4,13 +4,19 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, it } from 'node:test';
 
-import { streamChunkText } from '../../src/commands/benchmark_command';
+import { gradeBenchmarkSuite, streamChunkText } from '../../src/commands/benchmark_command';
 import { createDispatcher } from '../../src/dispatcher';
 
 interface CapturedRun {
   readonly exitStatus: number;
   readonly stderr: string;
   readonly stdout: string;
+}
+
+interface CapturedValue<T> {
+  readonly stderr: string;
+  readonly stdout: string;
+  readonly value: T;
 }
 
 async function withTempDir<T>(callback: (dir: string) => Promise<T>): Promise<T> {
@@ -23,7 +29,7 @@ async function withTempDir<T>(callback: (dir: string) => Promise<T>): Promise<T>
   }
 }
 
-function captureDispatcherRun(cwd: string, argv: string[]): CapturedRun {
+function captureProcessWrites<T>(callback: () => T): CapturedValue<T> {
   let stdout = '';
   let stderr = '';
   const originalStdoutWrite = process.stdout.write;
@@ -60,21 +66,35 @@ function captureDispatcherRun(cwd: string, argv: string[]): CapturedRun {
   }) as typeof process.stderr.write;
 
   try {
+    const value = callback();
+
+    return {
+      stderr,
+      stdout,
+      value
+    };
+  } finally {
+    process.stdout.write = originalStdoutWrite;
+    process.stderr.write = originalStderrWrite;
+  }
+}
+
+function captureDispatcherRun(cwd: string, argv: string[]): CapturedRun {
+  const captured = captureProcessWrites(() => {
     const dispatcher = createDispatcher({
       cwd,
       env: { PATH: '' },
       projectRoot: process.cwd()
     });
 
-    return {
-      exitStatus: dispatcher.run(argv),
-      stderr,
-      stdout
-    };
-  } finally {
-    process.stdout.write = originalStdoutWrite;
-    process.stderr.write = originalStderrWrite;
-  }
+    return dispatcher.run(argv);
+  });
+
+  return {
+    exitStatus: captured.value,
+    stderr: captured.stderr,
+    stdout: captured.stdout
+  };
 }
 
 describe('benchmark command TypeScript route', () => {
@@ -638,6 +658,56 @@ describe('benchmark command TypeScript route', () => {
       assert.equal(result.exitStatus, 0, result.stderr);
       assert.equal(result.stdout, 'PASS SmallRx\nchecks: 1\n');
       assert.equal(result.stderr, '');
+    });
+  });
+
+  it('returns suite grading through a reusable seam without writing the suite output', async () => {
+    await withTempDir(async (dir) => {
+      const captured = captureProcessWrites(() => gradeBenchmarkSuite({
+        benchmarkDir: 'benchmarks/quantum-katas',
+        solutionsDir: 'benchmarks/solutions/quantum-katas'
+      }, {
+        cwd: dir,
+        env: { PATH: '' },
+        projectRoot: process.cwd()
+      }));
+
+      assert.equal(captured.stdout, '');
+      assert.equal(captured.stderr, '');
+      assert.equal(captured.value.status, 'passed');
+      assert.equal(captured.value.exitCode, 0);
+      assert.deepStrictEqual(captured.value.summary, {
+        total: 3,
+        passed: 3,
+        failed: 0,
+        disallowed: 0,
+        error: 0
+      });
+      assert.deepStrictEqual(captured.value.results.map((result) => ({
+        taskId: result.taskId,
+        status: result.status,
+        exitCode: result.exitCode,
+        checks: result.checks
+      })), [
+        {
+          taskId: 'basic-gates/state-flip',
+          status: 'passed',
+          exitCode: 0,
+          checks: [{ type: 'run', status: 'passed' }]
+        },
+        {
+          taskId: 'superposition/bell-state',
+          status: 'passed',
+          exitCode: 0,
+          checks: [{ type: 'expect', status: 'passed' }]
+        },
+        {
+          taskId: 'superposition/plus-state',
+          status: 'passed',
+          exitCode: 0,
+          checks: [{ type: 'run', status: 'passed' }]
+        }
+      ]);
     });
   });
 
