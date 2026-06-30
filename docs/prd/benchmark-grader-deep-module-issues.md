@@ -2,7 +2,7 @@
 
 Parent PRD: #286 https://github.com/yasuhito/qni-cli/issues/286
 
-## 1. 評価ランナーの公開入口を定義する
+## 1. #287 評価ランナーの公開入口を定義する
 
 **Blocked by**: None
 
@@ -18,9 +18,9 @@ Acceptance criteria:
 - [ ] 公開入口を直接確認する TypeScript テストがある。
 - [ ] `npm run check` が成功する。
 
-## 2. ベンチマーク課題読み込みを評価ランナー内部に閉じ込める
+## 2. #288 ベンチマーク課題読み込みを評価ランナー内部に閉じ込める
 
-**Blocked by**: issue 1
+**Blocked by**: #287
 
 **User stories covered**: 2, 3, 4, 8, 13, 14, 15
 
@@ -34,9 +34,9 @@ Acceptance criteria:
 - [ ] `qni research record` の合格・不成功経路が変わらない。
 - [ ] `npm run check` が成功する。
 
-## 3. `.qni` 提出物解析と許可コマンド判定を評価ランナー内部に閉じ込める
+## 3. #289 `.qni` 提出物解析と許可コマンド判定を評価ランナー内部に閉じ込める
 
-**Blocked by**: issue 1
+**Blocked by**: #287
 
 **User stories covered**: 2, 3, 5, 9, 13, 14, 15
 
@@ -50,9 +50,9 @@ Acceptance criteria:
 - [ ] `qni research record` は不許可研究試行を従来どおり保存する。
 - [ ] `npm run check` が成功する。
 
-## 4. 検証条件の評価とスイート集計を評価ランナー module に移す
+## 4. #290 検証条件の評価とスイート集計を評価ランナー module に移す
 
-**Blocked by**: issues 1, 2, 3
+**Blocked by**: #287, #288, #289
 
 **User stories covered**: 1, 3, 6, 10, 11, 14, 15, 18, 19
 
@@ -66,9 +66,9 @@ Acceptance criteria:
 - [ ] `qni benchmark run-all --json` と `qni research record` の結果が同じ採点意味を保つ。
 - [ ] `npm run check` が成功する。
 
-## 5. benchmark command を薄い CLI adapter にする
+## 5. #291 benchmark command を薄い CLI adapter にする
 
-**Blocked by**: issue 4
+**Blocked by**: #290
 
 **User stories covered**: 1, 12, 14, 15, 16, 20
 
