@@ -19,6 +19,17 @@ interface CapturedValue<T> {
   readonly value: T;
 }
 
+type UnsuccessfulResearchStatus = 'disallowed' | 'error' | 'failed';
+
+const UNSUCCESSFUL_RESEARCH_TRIAL_CASES: readonly {
+  readonly exitCode: number;
+  readonly status: UnsuccessfulResearchStatus;
+}[] = [
+  { exitCode: 1, status: 'failed' },
+  { exitCode: 2, status: 'disallowed' },
+  { exitCode: 3, status: 'error' }
+];
+
 async function withTempDir<T>(callback: (dir: string) => Promise<T>): Promise<T> {
   const dir = await mkdtemp(path.join(tmpdir(), 'qni-cli-research-'));
 
@@ -102,17 +113,6 @@ async function prepareResearchInputs(dir: string): Promise<void> {
   await writeFile(path.join(dir, 'response.md'), 'I wrote the requested .qni submissions.\n');
 }
 
-type UnsuccessfulResearchStatus = 'disallowed' | 'error' | 'failed';
-
-const UNSUCCESSFUL_RESEARCH_TRIAL_CASES: readonly {
-  readonly exitCode: number;
-  readonly status: UnsuccessfulResearchStatus;
-}[] = [
-  { exitCode: 1, status: 'failed' },
-  { exitCode: 2, status: 'disallowed' },
-  { exitCode: 3, status: 'error' }
-];
-
 async function prepareQuantumKatasSubmissions(
   dir: string,
   submissionsDir: string,
@@ -159,15 +159,34 @@ function quantumKatasSubmissionContent(status: UnsuccessfulResearchStatus, relat
   return content;
 }
 
-async function singleTrialDir(dir: string): Promise<string> {
+async function researchTrialDirs(dir: string): Promise<string[]> {
   const runsDir = path.join(dir, 'research', 'runs');
+
+  if (!(await directoryExists(runsDir))) {
+    return [];
+  }
+
   const entries = await readdir(runsDir, { withFileTypes: true });
-  const trialDirs = entries
+
+  return entries
     .filter((entry) => entry.isDirectory())
-    .map((entry) => path.join(runsDir, entry.name));
+    .map((entry) => path.join(runsDir, entry.name))
+    .sort();
+}
+
+async function singleTrialDir(dir: string): Promise<string> {
+  const trialDirs = await researchTrialDirs(dir);
 
   assert.equal(trialDirs.length, 1);
   return trialDirs[0] ?? '';
+}
+
+async function directoryExists(filePath: string): Promise<boolean> {
+  try {
+    return (await stat(filePath)).isDirectory();
+  } catch {
+    return false;
+  }
 }
 
 async function readJsonFile(filePath: string): Promise<Record<string, unknown>> {
@@ -178,7 +197,182 @@ function git(cwd: string, args: readonly string[]): string {
   return execFileSync('git', [...args], { cwd, encoding: 'utf8' }).trim();
 }
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+}
+
+async function withFixedDateNow<T>(isoTimestamp: string, callback: () => Promise<T>): Promise<T> {
+  const originalDateNow = Date.now;
+  const fixedTimeMs = new Date(isoTimestamp).getTime();
+
+  Date.now = (() => fixedTimeMs) as typeof Date.now;
+  try {
+    return await callback();
+  } finally {
+    Date.now = originalDateNow;
+  }
+}
+
 describe('research command TypeScript route', () => {
+  it('rejects unsafe research trial slugs before creating a trial directory', async () => {
+    for (const slug of ['Smoke_Claude', 'smoke--claude', 'smoke-', '-smoke', '../escape']) {
+      await withTempDir(async (dir) => {
+        await prepareResearchInputs(dir);
+
+        const result = captureDispatcherRun(dir, [
+          'research',
+          'record',
+          '--collaborator',
+          'claude-sonnet-4',
+          '--benchmark',
+          'benchmarks/quantum-katas',
+          '--submissions',
+          'benchmarks/solutions/quantum-katas',
+          '--prompt',
+          'prompt.md',
+          '--response',
+          'response.md',
+          '--slug',
+          slug
+        ]);
+
+        assert.equal(result.exitStatus, 3, slug);
+        assert.equal(result.stdout, '');
+        assert.match(result.stderr, new RegExp(`Invalid --slug: ${escapeRegExp(slug)}`, 'u'));
+        assert.match(result.stderr, /Use lowercase letters, digits, and hyphens between words/u);
+        assert.deepStrictEqual(await researchTrialDirs(dir), []);
+      });
+    }
+  });
+
+  it('rejects missing research trial inputs before creating a trial directory', async () => {
+    const cases = [
+      {
+        argv: ['--benchmark', 'missing-benchmark'],
+        message: 'Benchmark suite directory does not exist: missing-benchmark',
+        suggestion: 'Create the directory or pass a different --benchmark path.'
+      },
+      {
+        argv: ['--submissions', 'missing-submissions'],
+        message: 'Submissions directory does not exist: missing-submissions',
+        suggestion: 'Create the directory or pass a different --submissions path.'
+      },
+      {
+        argv: ['--prompt', 'missing-prompt.md'],
+        message: 'Prompt file does not exist: missing-prompt.md',
+        suggestion: 'Create the file or pass a different --prompt path.'
+      },
+      {
+        argv: ['--response', 'missing-response.md'],
+        message: 'AI response file does not exist: missing-response.md',
+        suggestion: 'Create the file or pass a different --response path.'
+      }
+    ];
+
+    for (const testCase of cases) {
+      await withTempDir(async (dir) => {
+        await prepareResearchInputs(dir);
+
+        const result = captureDispatcherRun(dir, [
+          'research',
+          'record',
+          '--collaborator',
+          'claude-sonnet-4',
+          '--benchmark',
+          'benchmarks/quantum-katas',
+          '--submissions',
+          'benchmarks/solutions/quantum-katas',
+          '--prompt',
+          'prompt.md',
+          '--response',
+          'response.md',
+          '--slug',
+          'smoke-claude',
+          ...testCase.argv
+        ]);
+
+        assert.equal(result.exitStatus, 3, testCase.message);
+        assert.equal(result.stdout, '');
+        assert.match(result.stderr, new RegExp(escapeRegExp(testCase.message), 'u'));
+        assert.match(result.stderr, new RegExp(escapeRegExp(testCase.suggestion), 'u'));
+        assert.deepStrictEqual(await researchTrialDirs(dir), []);
+      });
+    }
+  });
+
+  it('does not overwrite an existing research trial directory', async () => {
+    await withFixedDateNow('2026-06-30T12:34:56.789Z', async () => {
+      await withTempDir(async (dir) => {
+        await prepareResearchInputs(dir);
+        const existingTrialDir = path.join(dir, 'research', 'runs', '2026-06-30T123456Z-smoke-claude');
+        const existingTrialFile = path.join(existingTrialDir, 'trial.md');
+
+        await mkdir(existingTrialDir, { recursive: true });
+        await writeFile(existingTrialFile, 'existing trial\n');
+        const beforeTrialDirs = await researchTrialDirs(dir);
+
+        const result = captureDispatcherRun(dir, [
+          'research',
+          'record',
+          '--collaborator',
+          'claude-sonnet-4',
+          '--benchmark',
+          'benchmarks/quantum-katas',
+          '--submissions',
+          'benchmarks/solutions/quantum-katas',
+          '--prompt',
+          'prompt.md',
+          '--response',
+          'response.md',
+          '--slug',
+          'smoke-claude'
+        ]);
+
+        assert.equal(result.exitStatus, 3);
+        assert.equal(result.stdout, '');
+        assert.match(result.stderr, /Research trial directory already exists: research\/runs\/2026-06-30T123456Z-smoke-claude/u);
+        assert.match(result.stderr, /Choose a different --slug/u);
+        assert.deepStrictEqual(await researchTrialDirs(dir), beforeTrialDirs);
+        assert.equal(await readFile(existingTrialFile, 'utf8'), 'existing trial\n');
+      });
+    });
+  });
+
+  it('leaves existing research files unchanged when input validation fails', async () => {
+    await withTempDir(async (dir) => {
+      await prepareResearchInputs(dir);
+      const existingTrialFile = path.join(dir, 'research', 'runs', 'existing-trial', 'trial.md');
+      const workspaceFile = path.join(dir, 'workspace.txt');
+
+      await mkdir(path.dirname(existingTrialFile), { recursive: true });
+      await writeFile(existingTrialFile, 'existing trial\n');
+      await writeFile(workspaceFile, 'keep me\n');
+      const beforeTrialDirs = await researchTrialDirs(dir);
+
+      const result = captureDispatcherRun(dir, [
+        'research',
+        'record',
+        '--collaborator',
+        'claude-sonnet-4',
+        '--benchmark',
+        'benchmarks/quantum-katas',
+        '--submissions',
+        'benchmarks/solutions/quantum-katas',
+        '--prompt',
+        'missing-prompt.md',
+        '--response',
+        'response.md',
+        '--slug',
+        'smoke-claude'
+      ]);
+
+      assert.equal(result.exitStatus, 3);
+      assert.deepStrictEqual(await researchTrialDirs(dir), beforeTrialDirs);
+      assert.equal(await readFile(existingTrialFile, 'utf8'), 'existing trial\n');
+      assert.equal(await readFile(workspaceFile, 'utf8'), 'keep me\n');
+    });
+  });
+
   for (const gradingCase of UNSUCCESSFUL_RESEARCH_TRIAL_CASES) {
     it(`records a ${gradingCase.status} research trial directory with grading output`, async () => {
       await withTempDir(async (dir) => {

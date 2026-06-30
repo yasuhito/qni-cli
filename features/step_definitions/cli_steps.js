@@ -294,6 +294,18 @@ function researchTrialPath(scenarioDir, filePath) {
   return path.join(singleResearchTrialDir(scenarioDir), filePath);
 }
 
+function researchTimestamp(date) {
+  const iso = date.toISOString();
+
+  return `${iso.slice(0, 10)}T${iso.slice(11, 13)}${iso.slice(14, 16)}${iso.slice(17, 19)}Z`;
+}
+
+function researchTrialIdAt(timeMs, slug) {
+  const date = new Date(Math.floor(timeMs / 1000) * 1000);
+
+  return `${researchTimestamp(date)}-${slug}`;
+}
+
 function readCircuitJson(scenarioDir) {
   return JSON.parse(fs.readFileSync(path.join(scenarioDir, 'circuit.json'), 'utf8'));
 }
@@ -843,6 +855,22 @@ Given('環境変数 {string} を {string} に設定する', function (name, valu
   this.commandEnv[name] = value;
 });
 
+Given('slug {string} の保存先候補に既存の研究試行がある', function (slug) {
+  const runsDir = researchRunsDir(this.scenarioDir);
+  const baseTimeMs = Math.floor(Date.now() / 1000) * 1000;
+
+  fs.mkdirSync(runsDir, { recursive: true });
+  for (let offsetSeconds = -5; offsetSeconds <= 120; offsetSeconds += 1) {
+    const trialId = researchTrialIdAt(baseTimeMs + offsetSeconds * 1000, slug);
+    const trialDir = path.join(runsDir, trialId);
+
+    fs.mkdirSync(trialDir, { recursive: true });
+    fs.writeFileSync(path.join(trialDir, 'trial.md'), `existing trial: ${trialId}\n`);
+  }
+
+  this.researchTrialDirsBeforeCommand = researchTrialDirs(this.scenarioDir);
+});
+
 When('{string} を TTY で実行', async function (command) {
   this.lastCommand = await runQniCommandInTty(this.scenarioDir, command, this.commandEnv);
 });
@@ -920,6 +948,21 @@ Then('標準出力に次を含む:', function (docString) {
       expected,
       'actual:',
       this.lastCommand.stdout
+    ].join('\n')
+  );
+});
+
+Then('標準エラーに次を含む:', function (docString) {
+  const expected = docStringContent(docString);
+
+  assert.ok(
+    this.lastCommand.stderr.includes(expected),
+    [
+      'expected stderr to include',
+      'expected:',
+      expected,
+      'actual:',
+      this.lastCommand.stderr
     ].join('\n')
   );
 });
@@ -1044,6 +1087,14 @@ Then('研究試行ファイル {string} が作られる', function (filePath) {
   assert.ok(fs.statSync(actualPath).isFile(), `expected research trial file to exist: ${filePath}`);
 });
 
+Then('研究試行ディレクトリは作られない', function () {
+  assert.deepEqual(researchTrialDirs(this.scenarioDir), []);
+});
+
+Then('研究試行ディレクトリ一覧は変わらない', function () {
+  assert.deepEqual(researchTrialDirs(this.scenarioDir), this.researchTrialDirsBeforeCommand);
+});
+
 Then('研究試行ディレクトリ {string} が作られる', function (filePath) {
   const actualPath = researchTrialPath(this.scenarioDir, filePath);
 
@@ -1069,6 +1120,21 @@ Then('研究試行 JSON ファイル {string} の {string} は {string}', functi
   const actual = JSON.parse(fs.readFileSync(actualPath, 'utf8'));
 
   assert.equal(actual[key], value);
+});
+
+Then('作業ディレクトリのファイル {string} は {string} を含む', function (filePath, text) {
+  const actualPath = path.join(this.scenarioDir, filePath);
+  assert.ok(fs.existsSync(actualPath), `expected workspace file to exist: ${filePath}`);
+
+  const actual = fs.readFileSync(actualPath, 'utf8');
+  assert.ok(
+    actual.includes(text),
+    [
+      'expected workspace file to include text',
+      `file: ${filePath}`,
+      `expected: ${text}`
+    ].join('\n')
+  );
 });
 
 Then('リポジトリファイル {string} は {string} を含む', function (filePath, text) {
