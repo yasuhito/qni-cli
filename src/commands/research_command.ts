@@ -1,4 +1,4 @@
-import { copyFileSync, cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { copyFileSync, cpSync, existsSync, mkdirSync, statSync, writeFileSync } from 'node:fs';
 import path = require('node:path');
 
 import type { CommandHandlerContext } from '../dispatcher';
@@ -13,12 +13,28 @@ interface ResearchRecordRequest {
   readonly submissions: string;
 }
 
+interface ResearchRecordInputPaths {
+  readonly prompt: string;
+  readonly response: string;
+  readonly submissions: string;
+}
+
+interface ResearchRecordPlan {
+  readonly createdAt: Date;
+  readonly id: string;
+  readonly inputPaths: ResearchRecordInputPaths;
+  readonly trialDir: string;
+}
+
 type ResearchRecordOption = keyof ResearchRecordRequest;
+
+class ResearchRecordError extends Error {}
 
 const USAGE = [
   'Usage: qni research record --collaborator <name> --benchmark <dir> --submissions <dir> --prompt <file> --response <file> --slug <slug>',
   ''
 ].join('\n');
+const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u;
 const OPTION_NAMES = new Map<string, ResearchRecordOption>([
   ['--benchmark', 'benchmark'],
   ['--collaborator', 'collaborator'],
@@ -67,7 +83,14 @@ function parseResearchRecordRequest(argv: readonly string[]): ResearchRecordRequ
     values[optionName] = optionValue;
   }
 
-  if (!values.benchmark || !values.collaborator || !values.prompt || !values.response || !values.slug || !values.submissions) {
+  if (
+    values.benchmark === undefined ||
+    values.collaborator === undefined ||
+    values.prompt === undefined ||
+    values.response === undefined ||
+    values.slug === undefined ||
+    values.submissions === undefined
+  ) {
     return undefined;
   }
 
@@ -82,6 +105,7 @@ function parseResearchRecordRequest(argv: readonly string[]): ResearchRecordRequ
 }
 
 function recordResearchTrial(request: ResearchRecordRequest, context: CommandHandlerContext): number {
+  const plan = planResearchRecord(request, context);
   const result = gradeBenchmarkSuite({
     benchmarkDir: request.benchmark,
     solutionsDir: request.submissions
@@ -91,26 +115,149 @@ function recordResearchTrial(request: ResearchRecordRequest, context: CommandHan
     return result.exitCode;
   }
 
+  mkdirSync(path.dirname(plan.trialDir), { recursive: true });
+  mkdirSync(plan.trialDir);
+  copyFileSync(plan.inputPaths.prompt, path.join(plan.trialDir, 'prompt.md'));
+  copyFileSync(plan.inputPaths.response, path.join(plan.trialDir, 'response.md'));
+  cpSync(plan.inputPaths.submissions, path.join(plan.trialDir, 'submissions'), { recursive: true });
+  writeJsonFile(path.join(plan.trialDir, 'result.json'), result);
+  writeJsonFile(path.join(plan.trialDir, 'metadata.json'), researchMetadata({
+    createdAt: plan.createdAt,
+    id: plan.id,
+    request,
+    result
+  }));
+  writeFileSync(path.join(plan.trialDir, 'trial.md'), researchTrialSummary(request, result));
+  process.stdout.write(`Recorded research trial: ${toPosixPath(path.join('research', 'runs', plan.id))}\n`);
+
+  return 0;
+}
+
+function planResearchRecord(request: ResearchRecordRequest, context: CommandHandlerContext): ResearchRecordPlan {
+  validateResearchSlug(request.slug);
+  const inputPaths = validateResearchRecordInputs(request, context);
   const createdAt = currentUtcSecond();
   const id = `${researchTimestamp(createdAt)}-${request.slug}`;
   const trialDir = path.join(context.cwd, 'research', 'runs', id);
 
-  mkdirSync(path.dirname(trialDir), { recursive: true });
-  mkdirSync(trialDir);
-  copyFileSync(resolveInputPath(request.prompt, context), path.join(trialDir, 'prompt.md'));
-  copyFileSync(resolveInputPath(request.response, context), path.join(trialDir, 'response.md'));
-  cpSync(resolveInputPath(request.submissions, context), path.join(trialDir, 'submissions'), { recursive: true });
-  writeJsonFile(path.join(trialDir, 'result.json'), result);
-  writeJsonFile(path.join(trialDir, 'metadata.json'), researchMetadata({
+  validateResearchTrialDestination(trialDir, context);
+
+  return {
     createdAt,
     id,
-    request,
-    result
-  }));
-  writeFileSync(path.join(trialDir, 'trial.md'), researchTrialSummary(request, result));
-  process.stdout.write(`Recorded research trial: ${toPosixPath(path.join('research', 'runs', id))}\n`);
+    inputPaths,
+    trialDir
+  };
+}
 
-  return 0;
+function validateResearchSlug(slug: string): void {
+  if (SLUG_PATTERN.test(slug)) {
+    return;
+  }
+
+  throw new ResearchRecordError([
+    `Invalid --slug: ${slug}`,
+    'Use lowercase letters, digits, and hyphens between words (pattern: [a-z0-9]+(-[a-z0-9]+)*).'
+  ].join('\n'));
+}
+
+function validateResearchRecordInputs(
+  request: ResearchRecordRequest,
+  context: CommandHandlerContext
+): ResearchRecordInputPaths {
+  requireDirectoryInput({
+    inputPath: request.benchmark,
+    missingMessage: `Benchmark suite directory does not exist: ${request.benchmark}`,
+    optionName: '--benchmark',
+    typeMessage: `Benchmark suite path is not a directory: ${request.benchmark}`
+  }, context);
+
+  return {
+    prompt: requireFileInput({
+      inputPath: request.prompt,
+      missingMessage: `Prompt file does not exist: ${request.prompt}`,
+      optionName: '--prompt',
+      typeMessage: `Prompt path is not a file: ${request.prompt}`
+    }, context),
+    response: requireFileInput({
+      inputPath: request.response,
+      missingMessage: `AI response file does not exist: ${request.response}`,
+      optionName: '--response',
+      typeMessage: `AI response path is not a file: ${request.response}`
+    }, context),
+    submissions: requireDirectoryInput({
+      inputPath: request.submissions,
+      missingMessage: `Submissions directory does not exist: ${request.submissions}`,
+      optionName: '--submissions',
+      typeMessage: `Submissions path is not a directory: ${request.submissions}`
+    }, context)
+  };
+}
+
+function requireFileInput(options: {
+  readonly inputPath: string;
+  readonly missingMessage: string;
+  readonly optionName: string;
+  readonly typeMessage: string;
+}, context: CommandHandlerContext): string {
+  const resolvedPath = requireInputPath(options, context);
+
+  if (!statSync(resolvedPath).isFile()) {
+    throw new ResearchRecordError([
+      options.typeMessage,
+      `Pass a file path with ${options.optionName}.`
+    ].join('\n'));
+  }
+
+  return resolvedPath;
+}
+
+function requireDirectoryInput(options: {
+  readonly inputPath: string;
+  readonly missingMessage: string;
+  readonly optionName: string;
+  readonly typeMessage: string;
+}, context: CommandHandlerContext): string {
+  const resolvedPath = requireInputPath(options, context);
+
+  if (!statSync(resolvedPath).isDirectory()) {
+    throw new ResearchRecordError([
+      options.typeMessage,
+      `Pass a directory path with ${options.optionName}.`
+    ].join('\n'));
+  }
+
+  return resolvedPath;
+}
+
+function requireInputPath(options: {
+  readonly inputPath: string;
+  readonly missingMessage: string;
+  readonly optionName: string;
+}, context: CommandHandlerContext): string {
+  const resolvedPath = resolveInputPath(options.inputPath, context);
+
+  if (!existsSync(resolvedPath)) {
+    const kind = options.optionName === '--prompt' || options.optionName === '--response' ? 'file' : 'directory';
+
+    throw new ResearchRecordError([
+      options.missingMessage,
+      `Create the ${kind} or pass a different ${options.optionName} path.`
+    ].join('\n'));
+  }
+
+  return resolvedPath;
+}
+
+function validateResearchTrialDestination(trialDir: string, context: CommandHandlerContext): void {
+  if (!existsSync(trialDir)) {
+    return;
+  }
+
+  throw new ResearchRecordError([
+    `Research trial directory already exists: ${toPosixPath(path.relative(context.cwd, trialDir))}`,
+    'Choose a different --slug and run qni research record again.'
+  ].join('\n'));
 }
 
 function currentUtcSecond(): Date {
