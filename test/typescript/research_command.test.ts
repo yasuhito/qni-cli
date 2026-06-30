@@ -102,6 +102,63 @@ async function prepareResearchInputs(dir: string): Promise<void> {
   await writeFile(path.join(dir, 'response.md'), 'I wrote the requested .qni submissions.\n');
 }
 
+type UnsuccessfulResearchStatus = 'disallowed' | 'error' | 'failed';
+
+const UNSUCCESSFUL_RESEARCH_TRIAL_CASES: readonly {
+  readonly exitCode: number;
+  readonly status: UnsuccessfulResearchStatus;
+}[] = [
+  { exitCode: 1, status: 'failed' },
+  { exitCode: 2, status: 'disallowed' },
+  { exitCode: 3, status: 'error' }
+];
+
+async function prepareQuantumKatasSubmissions(
+  dir: string,
+  submissionsDir: string,
+  status: UnsuccessfulResearchStatus
+): Promise<void> {
+  const relativePaths = [
+    'basic-gates/state-flip.qni',
+    'superposition/bell-state.qni',
+    'superposition/plus-state.qni'
+  ];
+
+  for (const relativePath of relativePaths) {
+    const submissionPath = path.join(dir, submissionsDir, relativePath);
+
+    await mkdir(path.dirname(submissionPath), { recursive: true });
+    await writeFile(submissionPath, quantumKatasSubmissionContent(status, relativePath));
+  }
+}
+
+function quantumKatasSubmissionContent(status: UnsuccessfulResearchStatus, relativePath: string): string {
+  const passedSubmissions = new Map<string, string>([
+    ['basic-gates/state-flip.qni', 'qni add X --qubit 0 --step 0\n'],
+    ['superposition/bell-state.qni', 'qni add H --qubit 0 --step 0\nqni add X --control 0 --qubit 1 --step 1\n'],
+    ['superposition/plus-state.qni', 'qni add H --qubit 0 --step 0\n']
+  ]);
+
+  if (relativePath === 'basic-gates/state-flip.qni') {
+    switch (status) {
+      case 'failed':
+        return 'qni add H --qubit 0 --step 0\n';
+      case 'disallowed':
+        return 'qni run\n';
+      case 'error':
+        return 'qni add X --qubit nope --step 0\n';
+    }
+  }
+
+  const content = passedSubmissions.get(relativePath);
+
+  if (!content) {
+    throw new Error(`unsupported Quantum Katas submission path: ${relativePath}`);
+  }
+
+  return content;
+}
+
 async function singleTrialDir(dir: string): Promise<string> {
   const runsDir = path.join(dir, 'research', 'runs');
   const entries = await readdir(runsDir, { withFileTypes: true });
@@ -122,6 +179,53 @@ function git(cwd: string, args: readonly string[]): string {
 }
 
 describe('research command TypeScript route', () => {
+  for (const gradingCase of UNSUCCESSFUL_RESEARCH_TRIAL_CASES) {
+    it(`records a ${gradingCase.status} research trial directory with grading output`, async () => {
+      await withTempDir(async (dir) => {
+        const submissionsDir = `${gradingCase.status}-submissions`;
+
+        await prepareResearchInputs(dir);
+        await prepareQuantumKatasSubmissions(dir, submissionsDir, gradingCase.status);
+
+        const result = captureDispatcherRun(dir, [
+          'research',
+          'record',
+          '--collaborator',
+          'claude-sonnet-4',
+          '--benchmark',
+          'benchmarks/quantum-katas',
+          '--submissions',
+          submissionsDir,
+          '--prompt',
+          'prompt.md',
+          '--response',
+          'response.md',
+          '--slug',
+          `${gradingCase.status}-claude`
+        ]);
+        const trialDir = await singleTrialDir(dir);
+        const trialId = path.basename(trialDir);
+        const metadata = await readJsonFile(path.join(trialDir, 'metadata.json'));
+        const gradingResult = await readJsonFile(path.join(trialDir, 'result.json'));
+        const trialSummary = await readFile(path.join(trialDir, 'trial.md'), 'utf8');
+
+        assert.equal(result.exitStatus, gradingCase.exitCode);
+        assert.equal(result.stderr, '');
+        assert.match(
+          result.stdout,
+          new RegExp(`^Recorded research trial: research/runs/\\d{4}-\\d{2}-\\d{2}T\\d{6}Z-${gradingCase.status}-claude\\n$`, 'u')
+        );
+        assert.match(trialId, new RegExp(`^\\d{4}-\\d{2}-\\d{2}T\\d{6}Z-${gradingCase.status}-claude$`, 'u'));
+        assert.equal(metadata.status, gradingCase.status);
+        assert.equal(gradingResult.status, gradingCase.status);
+        assert.equal(gradingResult.exitCode, gradingCase.exitCode);
+        assert.ok(trialSummary.includes(`- status: ${gradingCase.status}\n`));
+        assert.equal((await stat(path.join(trialDir, 'submissions'))).isDirectory(), true);
+        assert.equal((await stat(path.join(trialDir, 'submissions', 'basic-gates', 'state-flip.qni'))).isFile(), true);
+      });
+    });
+  }
+
   it('records a passed research trial directory with grading output', async () => {
     await withTempDir(async (dir) => {
       await prepareResearchInputs(dir);

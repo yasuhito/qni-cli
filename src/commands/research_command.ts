@@ -87,10 +87,6 @@ function recordResearchTrial(request: ResearchRecordRequest, context: CommandHan
     solutionsDir: request.submissions
   }, context);
 
-  if (result.status !== 'passed') {
-    return result.exitCode;
-  }
-
   const createdAt = currentUtcSecond();
   const id = `${researchTimestamp(createdAt)}-${request.slug}`;
   const trialDir = path.join(context.cwd, 'research', 'runs', id);
@@ -110,7 +106,7 @@ function recordResearchTrial(request: ResearchRecordRequest, context: CommandHan
   writeFileSync(path.join(trialDir, 'trial.md'), researchTrialSummary(request, result));
   process.stdout.write(`Recorded research trial: ${toPosixPath(path.join('research', 'runs', id))}\n`);
 
-  return 0;
+  return result.exitCode;
 }
 
 function currentUtcSecond(): Date {

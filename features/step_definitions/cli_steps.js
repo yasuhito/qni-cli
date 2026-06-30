@@ -213,6 +213,50 @@ function writeCircuitJson(scenarioDir, data) {
   );
 }
 
+function quantumKatasSubmissionContent(status, relativePath) {
+  const passedSubmissions = new Map([
+    ['basic-gates/state-flip.qni', 'qni add X --qubit 0 --step 0\n'],
+    ['superposition/bell-state.qni', 'qni add H --qubit 0 --step 0\nqni add X --control 0 --qubit 1 --step 1\n'],
+    ['superposition/plus-state.qni', 'qni add H --qubit 0 --step 0\n']
+  ]);
+
+  if (relativePath === 'basic-gates/state-flip.qni') {
+    switch (status) {
+      case 'failed':
+        return 'qni add H --qubit 0 --step 0\n';
+      case 'disallowed':
+        return 'qni run\n';
+      case 'error':
+        return 'qni add X --qubit nope --step 0\n';
+      default:
+        break;
+    }
+  }
+
+  const content = passedSubmissions.get(relativePath);
+
+  if (!content) {
+    throw new Error(`unsupported Quantum Katas submission path: ${relativePath}`);
+  }
+
+  return content;
+}
+
+function writeQuantumKatasSubmissions(scenarioDir, status, submissionsDir) {
+  const relativePaths = [
+    'basic-gates/state-flip.qni',
+    'superposition/bell-state.qni',
+    'superposition/plus-state.qni'
+  ];
+
+  for (const relativePath of relativePaths) {
+    const actualPath = path.join(scenarioDir, submissionsDir, relativePath);
+
+    fs.mkdirSync(path.dirname(actualPath), { recursive: true });
+    fs.writeFileSync(actualPath, quantumKatasSubmissionContent(status, relativePath));
+  }
+}
+
 function projectFilePath(filePath) {
   return path.join(PROJECT_ROOT, filePath);
 }
@@ -719,6 +763,10 @@ Given('作業ディレクトリに {string} を作る:', function (filePath, doc
 
   fs.mkdirSync(path.dirname(actualPath), { recursive: true });
   fs.writeFileSync(actualPath, docStringContent(docString));
+});
+
+Given('作業ディレクトリに採点状態 {string} の Quantum Katas 提出物群 {string} を作る', function (status, submissionsDir) {
+  writeQuantumKatasSubmissions(this.scenarioDir, status, submissionsDir);
 });
 
 Given(/^空の 1 (?:qubit |量子ビット)回路がある$/, function () {
