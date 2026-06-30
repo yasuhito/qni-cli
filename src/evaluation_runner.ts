@@ -9,4 +9,4 @@ export {
   type BenchmarkSuiteTaskGradingResult,
   type BenchmarkTaskGradingRequest,
   type BenchmarkTaskGradingResult
-} from './commands/benchmark_command';
+} from './evaluation_runner/benchmark_grading';

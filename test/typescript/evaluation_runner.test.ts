@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, it } from 'node:test';
@@ -142,6 +142,54 @@ describe('evaluation runner public entrypoints', () => {
     });
   });
 
+  it('grades expect checks through the evaluation runner seam', async () => {
+    await withTempDir(async (dir) => {
+      const captured = captureProcessWrites(() => gradeBenchmarkTask({
+        taskFile: 'benchmarks/quantum-katas/superposition/bell-state.md',
+        submissionFile: 'benchmarks/solutions/quantum-katas/superposition/bell-state.qni'
+      }, {
+        cwd: dir,
+        env: { PATH: '' },
+        projectRoot: process.cwd()
+      }));
+
+      assert.equal(captured.stdout, '');
+      assert.equal(captured.stderr, '');
+      assert.deepStrictEqual(captured.value, {
+        taskId: 'superposition/bell-state',
+        title: 'BellState',
+        submission: 'benchmarks/solutions/quantum-katas/superposition/bell-state.qni',
+        status: 'passed',
+        exitCode: 0,
+        checks: [{ type: 'expect', status: 'passed' }]
+      });
+    });
+  });
+
+  it('classifies failed run checks through the evaluation runner seam', async () => {
+    await withTempDir(async (dir) => {
+      const captured = captureProcessWrites(() => gradeBenchmarkTask({
+        taskFile: 'benchmarks/quantum-katas/basic-gates/state-flip.md',
+        submissionFile: 'benchmarks/incorrect/quantum-katas/basic-gates/state-flip-wrong.qni'
+      }, {
+        cwd: dir,
+        env: { PATH: '' },
+        projectRoot: process.cwd()
+      }));
+
+      assert.equal(captured.stdout, '');
+      assert.equal(captured.stderr, '');
+      assert.deepStrictEqual(captured.value, {
+        taskId: 'basic-gates/state-flip',
+        title: 'StateFlip',
+        submission: 'benchmarks/incorrect/quantum-katas/basic-gates/state-flip-wrong.qni',
+        status: 'failed',
+        exitCode: 1,
+        checks: [{ type: 'run', status: 'failed' }]
+      });
+    });
+  });
+
   it('grades a benchmark suite without writing CLI output', async () => {
     await withTempDir(async (dir) => {
       const captured = captureProcessWrites(() => gradeBenchmarkSuite({
@@ -164,6 +212,57 @@ describe('evaluation runner public entrypoints', () => {
         disallowed: 0,
         error: 0
       });
+    });
+  });
+
+  it('aggregates suite failures through the evaluation runner seam', async () => {
+    await withTempDir(async (dir) => {
+      await mkdir(path.join(dir, 'benchmarks', 'basic-gates'), { recursive: true });
+      await mkdir(path.join(dir, 'solutions', 'basic-gates'), { recursive: true });
+      await writeFile(path.join(dir, 'benchmarks', 'basic-gates', 'state-flip.md'), [
+        '---',
+        'id: basic-gates/state-flip',
+        'title: StateFlip',
+        'source: test',
+        'difficulty: smoke',
+        'allowed_commands:',
+        '  - qni add',
+        'checks:',
+        '  tolerance: 1e-9',
+        '  items:',
+        '    - type: run',
+        '      expected:',
+        '        - basis: "|1>"',
+        '          amplitude:',
+        '            real: 1',
+        '            imaginary: 0',
+        '---',
+        '',
+        'Flip the state.'
+      ].join('\n'));
+      await writeFile(path.join(dir, 'solutions', 'basic-gates', 'state-flip.qni'), 'qni add H --qubit 0 --step 0\n');
+
+      const captured = captureProcessWrites(() => gradeBenchmarkSuite({
+        benchmarkDir: 'benchmarks',
+        solutionsDir: 'solutions'
+      }, {
+        cwd: dir,
+        env: { PATH: '' },
+        projectRoot: process.cwd()
+      }));
+
+      assert.equal(captured.stdout, '');
+      assert.equal(captured.stderr, '');
+      assert.equal(captured.value.status, 'failed');
+      assert.equal(captured.value.exitCode, 1);
+      assert.deepStrictEqual(captured.value.summary, {
+        total: 1,
+        passed: 0,
+        failed: 1,
+        disallowed: 0,
+        error: 0
+      });
+      assert.deepStrictEqual(captured.value.results.map((result) => result.status), ['failed']);
     });
   });
 
