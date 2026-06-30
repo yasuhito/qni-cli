@@ -22,11 +22,13 @@ interface TempDirOptions {
 
 type WriteCallback = (error?: Error | null) => void;
 
+const DEFAULT_TEMP_DIR_PREFIX = 'qni-cli-ts-';
+
 export async function withTempDir<T>(
   callback: (dir: string) => Promise<T> | T,
   options: TempDirOptions = {}
 ): Promise<T> {
-  const dir = await mkdtemp(path.join(tmpdir(), options.prefix ?? 'qni-cli-ts-'));
+  const dir = await mkdtemp(path.join(tmpdir(), safeTempDirPrefix(options.prefix)));
 
   try {
     return await callback(dir);
@@ -35,6 +37,9 @@ export async function withTempDir<T>(
   }
 }
 
+export function captureProcessWrites<TCallback extends () => unknown>(
+  callback: ReturnType<TCallback> extends PromiseLike<unknown> ? never : TCallback
+): CapturedValue<ReturnType<TCallback>>;
 export function captureProcessWrites<T>(callback: () => T): CapturedValue<T> {
   let stdout = '';
   let stderr = '';
@@ -63,6 +68,9 @@ export function captureProcessWrites<T>(callback: () => T): CapturedValue<T> {
 
   try {
     const value = callback();
+    if (isPromiseLike(value)) {
+      throw new TypeError('captureProcessWrites only supports synchronous callbacks');
+    }
 
     return {
       stderr,
@@ -95,6 +103,25 @@ export function captureDispatcherRun(
     stderr: captured.stderr,
     stdout: captured.stdout
   };
+}
+
+function safeTempDirPrefix(prefix: string | undefined): string {
+  const basename = path.basename(prefix ?? DEFAULT_TEMP_DIR_PREFIX);
+
+  if (basename === '' || basename === '.' || basename === '..') {
+    return DEFAULT_TEMP_DIR_PREFIX;
+  }
+
+  return basename;
+}
+
+function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
+  return (
+    (typeof value === 'object' || typeof value === 'function') &&
+    value !== null &&
+    'then' in value &&
+    typeof value.then === 'function'
+  );
 }
 
 function chunkToString(chunk: string | Uint8Array): string {
