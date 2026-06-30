@@ -1,0 +1,216 @@
+import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { mkdir, mkdtemp, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { describe, it } from 'node:test';
+
+import { createDispatcher } from '../../src/dispatcher';
+
+interface CapturedRun {
+  readonly exitStatus: number;
+  readonly stderr: string;
+  readonly stdout: string;
+}
+
+interface CapturedValue<T> {
+  readonly stderr: string;
+  readonly stdout: string;
+  readonly value: T;
+}
+
+async function withTempDir<T>(callback: (dir: string) => Promise<T>): Promise<T> {
+  const dir = await mkdtemp(path.join(tmpdir(), 'qni-cli-research-'));
+
+  try {
+    return await callback(dir);
+  } finally {
+    await rm(dir, { force: true, recursive: true });
+  }
+}
+
+function captureProcessWrites<T>(callback: () => T): CapturedValue<T> {
+  let stdout = '';
+  let stderr = '';
+  const originalStdoutWrite = process.stdout.write;
+  const originalStderrWrite = process.stderr.write;
+
+  process.stdout.write = ((
+    chunk: string | Uint8Array,
+    encodingOrCallback?: BufferEncoding | ((error?: Error | null) => void),
+    callback?: (error?: Error | null) => void
+  ): boolean => {
+    stdout += typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf8');
+    if (typeof encodingOrCallback === 'function') {
+      encodingOrCallback();
+    }
+    if (callback) {
+      callback();
+    }
+    return true;
+  }) as typeof process.stdout.write;
+
+  process.stderr.write = ((
+    chunk: string | Uint8Array,
+    encodingOrCallback?: BufferEncoding | ((error?: Error | null) => void),
+    callback?: BufferEncoding | ((error?: Error | null) => void)
+  ): boolean => {
+    stderr += typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf8');
+    if (typeof encodingOrCallback === 'function') {
+      encodingOrCallback();
+    }
+    if (typeof callback === 'function') {
+      callback();
+    }
+    return true;
+  }) as typeof process.stderr.write;
+
+  try {
+    const value = callback();
+
+    return {
+      stderr,
+      stdout,
+      value
+    };
+  } finally {
+    process.stdout.write = originalStdoutWrite;
+    process.stderr.write = originalStderrWrite;
+  }
+}
+
+function captureDispatcherRun(cwd: string, argv: string[]): CapturedRun {
+  const captured = captureProcessWrites(() => {
+    const dispatcher = createDispatcher({
+      cwd,
+      env: { PATH: '' },
+      projectRoot: process.cwd()
+    });
+
+    return dispatcher.run(argv);
+  });
+
+  return {
+    exitStatus: captured.value,
+    stderr: captured.stderr,
+    stdout: captured.stdout
+  };
+}
+
+async function prepareResearchInputs(dir: string): Promise<void> {
+  await writeFile(path.join(dir, 'prompt.md'), 'Solve the smoke benchmark suite.\n');
+  await writeFile(path.join(dir, 'response.md'), 'I wrote the requested .qni submissions.\n');
+}
+
+async function singleTrialDir(dir: string): Promise<string> {
+  const runsDir = path.join(dir, 'research', 'runs');
+  const entries = await readdir(runsDir, { withFileTypes: true });
+  const trialDirs = entries
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => path.join(runsDir, entry.name));
+
+  assert.equal(trialDirs.length, 1);
+  return trialDirs[0] ?? '';
+}
+
+async function readJsonFile(filePath: string): Promise<Record<string, unknown>> {
+  return JSON.parse(await readFile(filePath, 'utf8')) as Record<string, unknown>;
+}
+
+function git(cwd: string, args: readonly string[]): string {
+  return execFileSync('git', [...args], { cwd, encoding: 'utf8' }).trim();
+}
+
+describe('research command TypeScript route', () => {
+  it('records a passed research trial directory with grading output', async () => {
+    await withTempDir(async (dir) => {
+      await prepareResearchInputs(dir);
+
+      const result = captureDispatcherRun(dir, [
+        'research',
+        'record',
+        '--collaborator',
+        'claude-sonnet-4',
+        '--benchmark',
+        'benchmarks/quantum-katas',
+        '--submissions',
+        'benchmarks/solutions/quantum-katas',
+        '--prompt',
+        'prompt.md',
+        '--response',
+        'response.md',
+        '--slug',
+        'smoke-claude'
+      ]);
+      const trialDir = await singleTrialDir(dir);
+      const trialId = path.basename(trialDir);
+      const metadata = await readJsonFile(path.join(trialDir, 'metadata.json'));
+      const gradingResult = await readJsonFile(path.join(trialDir, 'result.json'));
+      const trialSummary = await readFile(path.join(trialDir, 'trial.md'), 'utf8');
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stderr, '');
+      assert.match(result.stdout, /^Recorded research trial: research\/runs\/\d{4}-\d{2}-\d{2}T\d{6}Z-smoke-claude\n$/u);
+      assert.match(trialId, /^\d{4}-\d{2}-\d{2}T\d{6}Z-smoke-claude$/u);
+      assert.deepStrictEqual(metadata, {
+        schemaVersion: 1,
+        id: trialId,
+        createdAt: metadata.createdAt,
+        collaborator: 'claude-sonnet-4',
+        benchmark: 'benchmarks/quantum-katas',
+        submissions: 'submissions',
+        prompt: 'prompt.md',
+        response: 'response.md',
+        result: 'result.json',
+        status: 'passed'
+      });
+      assert.match(String(metadata.createdAt), /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.000Z$/u);
+      assert.equal(gradingResult.status, 'passed');
+      assert.deepStrictEqual(gradingResult.summary, {
+        total: 3,
+        passed: 3,
+        failed: 0,
+        disallowed: 0,
+        error: 0
+      });
+      assert.ok(trialSummary.includes('- status: passed\n'));
+      assert.equal(await readFile(path.join(trialDir, 'prompt.md'), 'utf8'), 'Solve the smoke benchmark suite.\n');
+      assert.equal(await readFile(path.join(trialDir, 'response.md'), 'utf8'), 'I wrote the requested .qni submissions.\n');
+      assert.equal((await stat(path.join(trialDir, 'submissions'))).isDirectory(), true);
+      assert.equal((await stat(path.join(trialDir, 'submissions', 'basic-gates', 'state-flip.qni'))).isFile(), true);
+    });
+  });
+
+  it('does not create a git commit while recording a passed research trial', async () => {
+    await withTempDir(async (dir) => {
+      git(dir, ['init']);
+      await prepareResearchInputs(dir);
+      await mkdir(path.join(dir, 'tracked'), { recursive: true });
+      await writeFile(path.join(dir, 'tracked', 'baseline.txt'), 'baseline\n');
+      git(dir, ['add', 'prompt.md', 'response.md', 'tracked/baseline.txt']);
+      git(dir, ['-c', 'user.name=Qni Test', '-c', 'user.email=qni@example.test', 'commit', '-m', 'baseline']);
+      const beforeHead = git(dir, ['rev-parse', 'HEAD']);
+
+      const result = captureDispatcherRun(dir, [
+        'research',
+        'record',
+        '--collaborator',
+        'claude-sonnet-4',
+        '--benchmark',
+        'benchmarks/quantum-katas',
+        '--submissions',
+        'benchmarks/solutions/quantum-katas',
+        '--prompt',
+        'prompt.md',
+        '--response',
+        'response.md',
+        '--slug',
+        'smoke-claude'
+      ]);
+      const afterHead = git(dir, ['rev-parse', 'HEAD']);
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(afterHead, beforeHead);
+    });
+  });
+});

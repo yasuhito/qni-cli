@@ -7,6 +7,7 @@ import { runGateCommand } from './commands/gate_command';
 import { runHelpCommand } from './commands/help_command';
 import { runExpectCommand } from './commands/expect_command';
 import { runRemoveCommand } from './commands/remove_command';
+import { runResearchCommand } from './commands/research_command';
 import { runRunCommand } from './commands/run_command';
 import { runStateCommand } from './commands/state_command';
 import { runVariableCommand } from './commands/variable_command';
@@ -45,6 +46,7 @@ const TYPESCRIPT_ROUTES = new Map<string, CommandHandler>([
   ['expect', runExpectCommand],
   ['gate', runGateCommand],
   ['rm', runRemoveCommand],
+  ['research', runResearchCommand],
   ['run', runRunCommand],
   ['state', runStateCommand],
   ['variable', runVariableCommand],

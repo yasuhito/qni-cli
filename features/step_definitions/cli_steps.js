@@ -217,6 +217,39 @@ function projectFilePath(filePath) {
   return path.join(PROJECT_ROOT, filePath);
 }
 
+function researchRunsDir(scenarioDir) {
+  return path.join(scenarioDir, 'research', 'runs');
+}
+
+function researchTrialDirs(scenarioDir) {
+  const runsDir = researchRunsDir(scenarioDir);
+
+  if (!fs.existsSync(runsDir)) {
+    return [];
+  }
+
+  return fs.readdirSync(runsDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => path.join(runsDir, entry.name))
+    .sort();
+}
+
+function singleResearchTrialDir(scenarioDir) {
+  const dirs = researchTrialDirs(scenarioDir);
+
+  assert.equal(
+    dirs.length,
+    1,
+    `expected exactly one research trial directory, found ${dirs.length}`
+  );
+
+  return dirs[0];
+}
+
+function researchTrialPath(scenarioDir, filePath) {
+  return path.join(singleResearchTrialDir(scenarioDir), filePath);
+}
+
 function readCircuitJson(scenarioDir) {
   return JSON.parse(fs.readFileSync(path.join(scenarioDir, 'circuit.json'), 'utf8'));
 }
@@ -681,6 +714,13 @@ print(json.dumps(module.label_metrics()))
   return pythonJson(script, [helperPath]);
 }
 
+Given('作業ディレクトリに {string} を作る:', function (filePath, docString) {
+  const actualPath = path.join(this.scenarioDir, filePath);
+
+  fs.mkdirSync(path.dirname(actualPath), { recursive: true });
+  fs.writeFileSync(actualPath, docStringContent(docString));
+});
+
 Given(/^空の 1 (?:qubit |量子ビット)回路がある$/, function () {
   writeCircuitJson(this.scenarioDir, {
     qubits: 1,
@@ -941,6 +981,46 @@ Then('リポジトリファイル {string} は存在する', function (filePath)
     fs.existsSync(projectFilePath(filePath)),
     `expected repository file to exist: ${filePath}`
   );
+});
+
+Then('UTC秒精度タイムスタンプと slug {string} の研究試行ディレクトリが作られる', function (slug) {
+  const trialDir = singleResearchTrialDir(this.scenarioDir);
+  const trialId = path.basename(trialDir);
+
+  assert.match(trialId, new RegExp(`^\\d{4}-\\d{2}-\\d{2}T\\d{6}Z-${slug}$`, 'u'));
+});
+
+Then('研究試行ファイル {string} が作られる', function (filePath) {
+  const actualPath = researchTrialPath(this.scenarioDir, filePath);
+
+  assert.ok(fs.statSync(actualPath).isFile(), `expected research trial file to exist: ${filePath}`);
+});
+
+Then('研究試行ディレクトリ {string} が作られる', function (filePath) {
+  const actualPath = researchTrialPath(this.scenarioDir, filePath);
+
+  assert.ok(fs.statSync(actualPath).isDirectory(), `expected research trial directory to exist: ${filePath}`);
+});
+
+Then('研究試行ファイル {string} は {string} を含む', function (filePath, text) {
+  const actualPath = researchTrialPath(this.scenarioDir, filePath);
+  const actual = fs.readFileSync(actualPath, 'utf8');
+
+  assert.ok(
+    actual.includes(text),
+    [
+      'expected research trial file to include text',
+      `file: ${filePath}`,
+      `expected: ${text}`
+    ].join('\n')
+  );
+});
+
+Then('研究試行 JSON ファイル {string} の {string} は {string}', function (filePath, key, value) {
+  const actualPath = researchTrialPath(this.scenarioDir, filePath);
+  const actual = JSON.parse(fs.readFileSync(actualPath, 'utf8'));
+
+  assert.equal(actual[key], value);
 });
 
 Then('リポジトリファイル {string} は {string} を含む', function (filePath, text) {
