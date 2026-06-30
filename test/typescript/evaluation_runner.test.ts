@@ -166,4 +166,56 @@ describe('evaluation runner public entrypoints', () => {
       });
     });
   });
+
+  it('classifies disallowed submissions without writing CLI output', async () => {
+    await withTempDir(async (dir) => {
+      const captured = captureProcessWrites(() => gradeBenchmarkTask({
+        taskFile: 'benchmarks/quantum-katas/basic-gates/state-flip.md',
+        submissionFile: 'benchmarks/disallowed/quantum-katas/basic-gates/state-flip-disallowed.qni'
+      }, {
+        cwd: dir,
+        env: { PATH: '' },
+        projectRoot: process.cwd()
+      }));
+
+      assert.equal(captured.stdout, '');
+      assert.equal(captured.stderr, '');
+      assert.deepStrictEqual(captured.value, {
+        taskId: 'basic-gates/state-flip',
+        title: 'StateFlip',
+        submission: 'benchmarks/disallowed/quantum-katas/basic-gates/state-flip-disallowed.qni',
+        status: 'disallowed',
+        exitCode: 2,
+        checks: []
+      });
+    });
+  });
+
+  it('classifies .qni lines that do not start with qni as error results', async () => {
+    await withTempDir(async (dir) => {
+      const submissionPath = path.join(dir, 'submission.qni');
+      await writeFile(submissionPath, 'echo not-qni\n');
+
+      const captured = captureProcessWrites(() => gradeBenchmarkTask({
+        taskFile: 'benchmarks/quantum-katas/basic-gates/state-flip.md',
+        submissionFile: submissionPath
+      }, {
+        cwd: dir,
+        env: { PATH: '' },
+        projectRoot: process.cwd()
+      }));
+
+      assert.equal(captured.stdout, '');
+      assert.equal(captured.stderr, '');
+      assert.deepStrictEqual(captured.value, {
+        taskId: 'basic-gates/state-flip',
+        title: 'StateFlip',
+        submission: submissionPath,
+        status: 'error',
+        exitCode: 3,
+        checks: [],
+        error: 'submission command must start with qni at line 1: echo not-qni'
+      });
+    });
+  });
 });

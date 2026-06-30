@@ -218,6 +218,27 @@ describe('benchmark command TypeScript route', () => {
     });
   });
 
+  it('classifies submission lines that do not start with qni as error results', async () => {
+    await withTempDir(async (dir) => {
+      await writeFile(path.join(dir, 'submission.qni'), 'echo not-qni\n');
+
+      const result = captureDispatcherRun(dir, [
+        'benchmark',
+        'run',
+        'benchmarks/quantum-katas/basic-gates/state-flip.md',
+        'submission.qni'
+      ]);
+
+      assert.equal(result.exitStatus, 3);
+      assert.equal(result.stdout, [
+        'ERROR StateFlip',
+        'error: submission command must start with qni at line 1: echo not-qni',
+        ''
+      ].join('\n'));
+      assert.equal(result.stderr, '');
+    });
+  });
+
   it('writes JSON error status and exit code for qni command execution failures', async () => {
     await withTempDir(async (dir) => {
       await writeFile(path.join(dir, 'submission.qni'), 'qni add X --qubit nope --step 0\n');

@@ -1,10 +1,9 @@
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path = require('node:path');
 
 import {
   loadBenchmarkTask,
-  type AllowedCommand,
   type BenchmarkCheck,
   type BenchmarkTask,
   type ComplexAmplitude,
@@ -13,8 +12,12 @@ import {
   type ExpectCheck,
   type RunCheck
 } from '../evaluation_runner/benchmark_task';
-import { splitCommandLine } from '../qni_command_line';
 import type { CommandHandler, CommandHandlerContext } from '../dispatcher';
+import {
+  readBenchmarkSubmission,
+  type DisallowedSubmission,
+  type SubmissionCommand
+} from '../evaluation_runner/benchmark_submission';
 import { runAddCommand } from './add_command';
 import { runExpectCommand } from './expect_command';
 import { runRunCommand } from './run_command';
@@ -33,16 +36,6 @@ interface QniCommandResult {
   readonly exitStatus: number;
   readonly stderr: string;
   readonly stdout: string;
-}
-
-interface SubmissionCommand {
-  readonly argv: string[];
-  readonly lineNumber: number;
-  readonly source: string;
-}
-
-interface DisallowedSubmission {
-  readonly command: SubmissionCommand;
 }
 
 type BenchmarkOutputFormat = 'human' | 'json';
@@ -392,13 +385,15 @@ function evaluateBenchmark(options: {
   readonly submissionPath: string;
   readonly task: BenchmarkTask;
 }): BenchmarkResult {
-  const submissionCommands = qniCommandsInSubmission(options.submissionPath);
-  const disallowedSubmission = disallowedSubmissionCommand(submissionCommands, options.task.allowedCommands);
+  const submission = readBenchmarkSubmission({
+    allowedCommands: options.task.allowedCommands,
+    submissionPath: options.submissionPath
+  });
 
-  if (disallowedSubmission) {
+  if (submission.kind === 'disallowed') {
     return {
       checks: [],
-      disallowedSubmission,
+      disallowedSubmission: submission.disallowedSubmission,
       status: 'disallowed'
     };
   }
@@ -406,7 +401,7 @@ function evaluateBenchmark(options: {
   const workDir = mkdtempSync(path.join(tmpdir(), 'qni-benchmark-'));
 
   try {
-    runSubmission(submissionCommands, workDir, options.context);
+    runSubmission(submission.commands, workDir, options.context);
     const checks = options.task.checks.items.map((check) => runBenchmarkCheck(check, options.task, workDir, options.context));
 
     return {
@@ -587,39 +582,6 @@ function runSubmission(commands: readonly SubmissionCommand[], workDir: string, 
       ].filter(Boolean).join('\n'));
     }
   }
-}
-
-function qniCommandsInSubmission(submissionPath: string): SubmissionCommand[] {
-  return readFileSync(submissionPath, 'utf8')
-    .split(/\r?\n/u)
-    .map((line, index) => ({ lineNumber: index + 1, source: line.trim() }))
-    .filter((line) => line.source.length > 0)
-    .map((line) => {
-      const argv = splitCommandLine(line.source);
-
-      if (argv[0] !== 'qni') {
-        throw new BenchmarkError(`submission command must start with qni at line ${line.lineNumber}: ${line.source}`);
-      }
-
-      return {
-        argv: argv.slice(1),
-        lineNumber: line.lineNumber,
-        source: line.source
-      };
-    });
-}
-
-function disallowedSubmissionCommand(
-  commands: readonly SubmissionCommand[],
-  allowedCommands: readonly AllowedCommand[]
-): DisallowedSubmission | undefined {
-  const command = commands.find((candidate) => !allowedCommands.some((allowed) => commandAllowed(candidate, allowed)));
-
-  return command ? { command } : undefined;
-}
-
-function commandAllowed(command: SubmissionCommand, allowed: AllowedCommand): boolean {
-  return allowed.argv.every((word, index) => command.argv[index] === word);
 }
 
 function runBenchmarkCheck(
