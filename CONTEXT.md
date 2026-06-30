@@ -75,7 +75,7 @@ _Avoid_: AI の自己検証, 手動レビュー
 _Avoid_: 許可 shell コマンド, allowlist なし実行
 
 **採点結果**:
-提出物の評価を `passed`、`failed`、`disallowed`、`error` などに分類した結果。
+提出物の評価を `passed`、`failed`、`disallowed`、`error` などに分類した結果。研究試行では、合格だけでなく不合格、不許可、実行エラーも保存対象にする。
 _Avoid_: テスト結果, ログ全文
 
 **失敗理由**:
