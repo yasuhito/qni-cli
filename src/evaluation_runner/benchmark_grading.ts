@@ -189,6 +189,10 @@ export function gradeBenchmarkSuite(
   return benchmarkSuiteGradingResult(evaluateBenchmarkSuite(request, context));
 }
 
+/**
+ * Runs the single benchmark task grader and returns the JSON-compatible result
+ * plus rich details that the benchmark CLI adapter needs for human output.
+ */
 export function gradeBenchmarkTaskForReport(
   request: BenchmarkTaskGradingRequest,
   context: CommandHandlerContext
@@ -746,7 +750,7 @@ function captureCommandRun(callback: () => number): QniCommandResult {
   }
 }
 
-export function streamChunkText(chunk: string | Uint8Array): string {
+function streamChunkText(chunk: string | Uint8Array): string {
   return typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf8');
 }
 

@@ -4,7 +4,6 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, it } from 'node:test';
 
-import { streamChunkText } from '../../src/commands/benchmark_command';
 import { createDispatcher } from '../../src/dispatcher';
 import { gradeBenchmarkSuite } from '../../src/evaluation_runner';
 
@@ -99,10 +98,6 @@ function captureDispatcherRun(cwd: string, argv: string[]): CapturedRun {
 }
 
 describe('benchmark command TypeScript route', () => {
-  it('decodes Uint8Array stream chunks as UTF-8 text', () => {
-    assert.equal(streamChunkText(new Uint8Array([97, 98])), 'ab');
-  });
-
   it('classifies invalid task frontmatter as an error result', async () => {
     await withTempDir(async (dir) => {
       await writeFile(path.join(dir, 'task.md'), [

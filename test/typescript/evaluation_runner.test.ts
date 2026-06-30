@@ -4,7 +4,15 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, it } from 'node:test';
 
-import { gradeBenchmarkSuite, gradeBenchmarkTask } from '../../src/evaluation_runner';
+import {
+  benchmarkSuiteCommandReport,
+  benchmarkTaskCommandReport
+} from '../../src/commands/benchmark_output';
+import {
+  gradeBenchmarkSuite,
+  gradeBenchmarkTask,
+  gradeBenchmarkTaskForReport
+} from '../../src/evaluation_runner';
 
 interface CapturedValue<T> {
   readonly stderr: string;
@@ -190,6 +198,42 @@ describe('evaluation runner public entrypoints', () => {
     });
   });
 
+  it('provides a single-task report that the benchmark adapter formats without regrading', async () => {
+    await withTempDir(async (dir) => {
+      const captured = captureProcessWrites(() => gradeBenchmarkTaskForReport({
+        taskFile: 'benchmarks/quantum-katas/basic-gates/state-flip.md',
+        submissionFile: 'benchmarks/incorrect/quantum-katas/basic-gates/state-flip-wrong.qni'
+      }, {
+        cwd: dir,
+        env: { PATH: '' },
+        projectRoot: process.cwd()
+      }));
+      const output = benchmarkTaskCommandReport(captured.value);
+
+      assert.equal(captured.stdout, '');
+      assert.equal(captured.stderr, '');
+      assert.equal(output.exitCode, 1);
+      assert.equal(output.humanOutput, [
+        'FAIL StateFlip',
+        'checks: 1',
+        'failed checks:',
+        '- run #1: state vector did not match expected amplitudes',
+        '  expected / actual mismatches:',
+        '  - |0>: expected 0, actual 0.7071067811865475',
+        '  - |1>: expected 1, actual 0.7071067811865475',
+        ''
+      ].join('\n'));
+      assert.deepStrictEqual(output.jsonOutput, {
+        taskId: 'basic-gates/state-flip',
+        title: 'StateFlip',
+        submission: 'benchmarks/incorrect/quantum-katas/basic-gates/state-flip-wrong.qni',
+        status: 'failed',
+        exitCode: 1,
+        checks: [{ type: 'run', status: 'failed' }]
+      });
+    });
+  });
+
   it('grades a benchmark suite without writing CLI output', async () => {
     await withTempDir(async (dir) => {
       const captured = captureProcessWrites(() => gradeBenchmarkSuite({
@@ -206,6 +250,41 @@ describe('evaluation runner public entrypoints', () => {
       assert.equal(captured.value.status, 'passed');
       assert.equal(captured.value.exitCode, 0);
       assert.deepStrictEqual(captured.value.summary, {
+        total: 3,
+        passed: 3,
+        failed: 0,
+        disallowed: 0,
+        error: 0
+      });
+    });
+  });
+
+  it('formats suite command output in the benchmark adapter layer', async () => {
+    await withTempDir(async (dir) => {
+      const captured = captureProcessWrites(() => gradeBenchmarkSuite({
+        benchmarkDir: 'benchmarks/quantum-katas',
+        solutionsDir: 'benchmarks/solutions/quantum-katas'
+      }, {
+        cwd: dir,
+        env: { PATH: '' },
+        projectRoot: process.cwd()
+      }));
+      const output = benchmarkSuiteCommandReport(captured.value);
+
+      assert.equal(captured.stdout, '');
+      assert.equal(captured.stderr, '');
+      assert.equal(output.exitCode, 0);
+      assert.equal(output.humanOutput, [
+        'PASS benchmark suite',
+        'tasks: 3',
+        'passed: 3, failed: 0, disallowed: 0, error: 0',
+        '- passed basic-gates/state-flip StateFlip',
+        '- passed superposition/bell-state BellState',
+        '- passed superposition/plus-state PlusState',
+        ''
+      ].join('\n'));
+      assert.equal(output.jsonOutput.status, 'passed');
+      assert.deepStrictEqual(output.jsonOutput.summary, {
         total: 3,
         passed: 3,
         failed: 0,
