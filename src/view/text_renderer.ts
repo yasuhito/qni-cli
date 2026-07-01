@@ -398,13 +398,33 @@ class TextLayer {
     this.cells[qubit] = cell;
   }
 
-  placeSwapEndpoints(topQubit: number, bottomQubit: number): void {
-    this.place(topQubit, new Ex({ botConnect: '│' }));
-    this.place(bottomQubit, new Ex({ topConnect: '│' }));
+  placeSwapEndpoint(qubit: number, options: { botConnect?: string; topConnect?: string } = {}): void {
+    this.place(qubit, new Ex(options));
   }
 
   toArray(): DrawElement[] {
     return this.cells;
+  }
+}
+
+class VerticalConnectionSpan {
+  private readonly maxQubit: number;
+  private readonly minQubit: number;
+
+  constructor(qubits: number[]) {
+    this.minQubit = Math.min(...qubits);
+    this.maxQubit = Math.max(...qubits);
+  }
+
+  bridgeQubits(): number[] {
+    return range(this.minQubit + 1, this.maxQubit);
+  }
+
+  connectorsFor(qubit: number): { botConnect: string; topConnect: string } {
+    return {
+      botConnect: qubit < this.maxQubit ? '│' : ' ',
+      topConnect: qubit > this.minQubit ? '│' : ' '
+    };
   }
 }
 
@@ -505,12 +525,19 @@ class TextStepLayerBuilder {
     }
 
     const [topQubit, bottomQubit] = swapPair;
-    layer.placeSwapEndpoints(topQubit, bottomQubit);
-    this.placeSwapBridges(layer, topQubit, bottomQubit);
+    const span = new VerticalConnectionSpan([...this.step.controlQubits(), topQubit, bottomQubit]);
+
+    for (const controlQubit of this.step.controlQubits()) {
+      layer.place(controlQubit, new Bullet(span.connectorsFor(controlQubit)));
+    }
+
+    layer.placeSwapEndpoint(topQubit, span.connectorsFor(topQubit));
+    layer.placeSwapEndpoint(bottomQubit, span.connectorsFor(bottomQubit));
+    this.placeSwapBridges(layer, span);
   }
 
-  private placeSwapBridges(layer: TextLayer, topQubit: number, bottomQubit: number): void {
-    for (const qubit of range(topQubit + 1, bottomQubit)) {
+  private placeSwapBridges(layer: TextLayer, span: VerticalConnectionSpan): void {
+    for (const qubit of span.bridgeQubits()) {
       if (this.step.emptySlot(qubit)) {
         layer.place(qubit, new VerticalBridge());
       }
@@ -861,7 +888,7 @@ function rjust(value: string, width: number, pad = ' '): string {
 }
 
 function trimmedLines(lines: string[]): string[] {
-  return trimTrailingBlankLines(trimLeadingBlankLines(lines));
+  return trimTrailingBlankLines(trimLeadingBlankLines(lines)).map((line) => line.replace(/\s+$/u, ''));
 }
 
 function trimLeadingBlankLines(lines: string[]): string[] {

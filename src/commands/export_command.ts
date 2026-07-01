@@ -32,7 +32,7 @@ Overview:
   --no-transparent writes an opaque PNG background, useful for light circuit lines on dark note themes.
   --state-vector renders the symbolic state vector as LaTeX and converts it to PNG.
   --circle-notation renders the final computational-basis state as a circle-notation PNG.
-  qni export follows qni's step constraints, so one step can contain simple 1-qubit gates, one controlled gate, or one 2-qubit SWAP.
+  qni export follows qni's step constraints, so one step can contain simple 1-qubit gates, one controlled gate, one 2-qubit SWAP, or one controlled 2-qubit SWAP.
 
 Options:
   --latex-source  # write qcircuit LaTeX

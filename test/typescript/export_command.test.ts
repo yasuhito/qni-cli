@@ -151,10 +151,11 @@ describe('export command TypeScript route', () => {
   it('renders qcircuit LaTeX source for controlled and swap operations', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
-        qubits: 2,
+        qubits: 3,
         cols: [
-          ['•', 'X'],
-          ['Swap', 'Swap']
+          ['•', 'X', 1],
+          [1, 'Swap', 'Swap'],
+          ['•', 'Swap', 'Swap']
         ]
       });
 
@@ -165,6 +166,7 @@ describe('export command TypeScript route', () => {
       assert.match(result.stdout, /\\Qcircuit/u);
       assert.match(result.stdout, /\\ctrl\{1\}/u);
       assert.match(result.stdout, /\\qswap/u);
+      assert.match(result.stdout, /\\qwx\[-1\]/u);
     });
   });
 
