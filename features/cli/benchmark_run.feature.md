@@ -152,6 +152,50 @@ qni benchmark run で最小の合格判定を実行したい。
   "type": "expect"
   ```
 
+## Scenario: AllBasisVectorWithPhaseFlip_TwoQubits 課題ファイルがある
+
+- Then リポジトリファイル "benchmarks/quantum-katas/superposition/all-basis-vector-with-phase-flip-two-qubits.md" は存在する
+
+## Scenario: AllBasisVectorWithPhaseFlip_TwoQubits 標準解がある
+
+- Then リポジトリファイル "benchmarks/solutions/quantum-katas/superposition/all-basis-vector-with-phase-flip-two-qubits.qni" は存在する
+
+## Scenario: AllBasisVectorWithPhaseFlip_TwoQubits 標準解は合格する
+
+- When "qni benchmark run benchmarks/quantum-katas/superposition/all-basis-vector-with-phase-flip-two-qubits.md benchmarks/solutions/quantum-katas/superposition/all-basis-vector-with-phase-flip-two-qubits.qni" を実行
+- Then コマンドは成功
+
+## Scenario: AllBasisVectorWithPhaseFlip_TwoQubits 標準解の合格が表示される
+
+- When "qni benchmark run benchmarks/quantum-katas/superposition/all-basis-vector-with-phase-flip-two-qubits.md benchmarks/solutions/quantum-katas/superposition/all-basis-vector-with-phase-flip-two-qubits.qni" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  PASS AllBasisVectorWithPhaseFlip_TwoQubits
+  ```
+
+## Scenario: AllBasisVectorsWithPhases_TwoQubits 課題ファイルがある
+
+- Then リポジトリファイル "benchmarks/quantum-katas/superposition/all-basis-vectors-with-phases-two-qubits.md" は存在する
+
+## Scenario: AllBasisVectorsWithPhases_TwoQubits 標準解がある
+
+- Then リポジトリファイル "benchmarks/solutions/quantum-katas/superposition/all-basis-vectors-with-phases-two-qubits.qni" は存在する
+
+## Scenario: AllBasisVectorsWithPhases_TwoQubits 標準解は合格する
+
+- When "qni benchmark run benchmarks/quantum-katas/superposition/all-basis-vectors-with-phases-two-qubits.md benchmarks/solutions/quantum-katas/superposition/all-basis-vectors-with-phases-two-qubits.qni" を実行
+- Then コマンドは成功
+
+## Scenario: AllBasisVectorsWithPhases_TwoQubits 標準解の合格が表示される
+
+- When "qni benchmark run benchmarks/quantum-katas/superposition/all-basis-vectors-with-phases-two-qubits.md benchmarks/solutions/quantum-katas/superposition/all-basis-vectors-with-phases-two-qubits.qni" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  PASS AllBasisVectorsWithPhases_TwoQubits
+  ```
+
 ## Scenario: GHZState 課題ファイルがある
 
 - Then リポジトリファイル "benchmarks/quantum-katas/superposition/ghz-state.md" は存在する
@@ -412,10 +456,12 @@ qni benchmark run で最小の合格判定を実行したい。
 
   ```text
   PASS benchmark suite
-  tasks: 6
-  passed: 6, failed: 0, disallowed: 0, error: 0
+  tasks: 8
+  passed: 8, failed: 0, disallowed: 0, error: 0
   - passed basic-gates/state-flip StateFlip
+  - passed superposition/all-basis-vector-with-phase-flip-two-qubits AllBasisVectorWithPhaseFlip_TwoQubits
   - passed superposition/all-basis-vectors-two-qubits AllBasisVectors_TwoQubits
+  - passed superposition/all-basis-vectors-with-phases-two-qubits AllBasisVectorsWithPhases_TwoQubits
   - passed superposition/bell-state BellState
   - passed superposition/ghz-state GHZState
   - passed superposition/minus-state MinusState
@@ -432,8 +478,8 @@ qni benchmark run で最小の合格判定を実行したい。
     "status": "passed",
     "exitCode": 0,
     "summary": {
-      "total": 6,
-      "passed": 6,
+      "total": 8,
+      "passed": 8,
       "failed": 0,
       "disallowed": 0,
       "error": 0
@@ -454,10 +500,38 @@ qni benchmark run で最小の合格判定を実行したい。
         ]
       },
       {
+        "taskId": "superposition/all-basis-vector-with-phase-flip-two-qubits",
+        "title": "AllBasisVectorWithPhaseFlip_TwoQubits",
+        "task": "benchmarks/quantum-katas/superposition/all-basis-vector-with-phase-flip-two-qubits.md",
+        "submission": "benchmarks/solutions/quantum-katas/superposition/all-basis-vector-with-phase-flip-two-qubits.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ]
+      },
+      {
         "taskId": "superposition/all-basis-vectors-two-qubits",
         "title": "AllBasisVectors_TwoQubits",
         "task": "benchmarks/quantum-katas/superposition/all-basis-vectors-two-qubits.md",
         "submission": "benchmarks/solutions/quantum-katas/superposition/all-basis-vectors-two-qubits.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "taskId": "superposition/all-basis-vectors-with-phases-two-qubits",
+        "title": "AllBasisVectorsWithPhases_TwoQubits",
+        "task": "benchmarks/quantum-katas/superposition/all-basis-vectors-with-phases-two-qubits.md",
+        "submission": "benchmarks/solutions/quantum-katas/superposition/all-basis-vectors-with-phases-two-qubits.qni",
         "status": "passed",
         "exitCode": 0,
         "checks": [

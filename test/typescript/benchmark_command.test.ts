@@ -470,6 +470,36 @@ describe('benchmark command TypeScript route', () => {
     });
   });
 
+  it('passes the AllBasisVectorWithPhaseFlip_TwoQubits solution using a run check', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, [
+        'benchmark',
+        'run',
+        'benchmarks/quantum-katas/superposition/all-basis-vector-with-phase-flip-two-qubits.md',
+        'benchmarks/solutions/quantum-katas/superposition/all-basis-vector-with-phase-flip-two-qubits.qni'
+      ]);
+
+      assert.equal(result.exitStatus, 0, result.stderr);
+      assert.equal(result.stdout, 'PASS AllBasisVectorWithPhaseFlip_TwoQubits\nchecks: 1\n');
+      assert.equal(result.stderr, '');
+    });
+  });
+
+  it('passes the AllBasisVectorsWithPhases_TwoQubits solution using a run check', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, [
+        'benchmark',
+        'run',
+        'benchmarks/quantum-katas/superposition/all-basis-vectors-with-phases-two-qubits.md',
+        'benchmarks/solutions/quantum-katas/superposition/all-basis-vectors-with-phases-two-qubits.qni'
+      ]);
+
+      assert.equal(result.exitStatus, 0, result.stderr);
+      assert.equal(result.stdout, 'PASS AllBasisVectorsWithPhases_TwoQubits\nchecks: 1\n');
+      assert.equal(result.stderr, '');
+    });
+  });
+
   it('uses checks.tolerance from the task file during expect checks', async () => {
     await withTempDir(async (dir) => {
       const taskLines = (tolerance: string) => [
@@ -633,8 +663,8 @@ describe('benchmark command TypeScript route', () => {
       assert.equal(captured.value.status, 'passed');
       assert.equal(captured.value.exitCode, 0);
       assert.deepStrictEqual(captured.value.summary, {
-        total: 6,
-        passed: 6,
+        total: 8,
+        passed: 8,
         failed: 0,
         disallowed: 0,
         error: 0
@@ -652,7 +682,19 @@ describe('benchmark command TypeScript route', () => {
           checks: [{ type: 'run', status: 'passed' }]
         },
         {
+          taskId: 'superposition/all-basis-vector-with-phase-flip-two-qubits',
+          status: 'passed',
+          exitCode: 0,
+          checks: [{ type: 'run', status: 'passed' }]
+        },
+        {
           taskId: 'superposition/all-basis-vectors-two-qubits',
+          status: 'passed',
+          exitCode: 0,
+          checks: [{ type: 'run', status: 'passed' }]
+        },
+        {
+          taskId: 'superposition/all-basis-vectors-with-phases-two-qubits',
           status: 'passed',
           exitCode: 0,
           checks: [{ type: 'run', status: 'passed' }]
@@ -697,10 +739,12 @@ describe('benchmark command TypeScript route', () => {
       assert.equal(result.exitStatus, 0, result.stderr);
       assert.equal(result.stdout, [
         'PASS benchmark suite',
-        'tasks: 6',
-        'passed: 6, failed: 0, disallowed: 0, error: 0',
+        'tasks: 8',
+        'passed: 8, failed: 0, disallowed: 0, error: 0',
         '- passed basic-gates/state-flip StateFlip',
+        '- passed superposition/all-basis-vector-with-phase-flip-two-qubits AllBasisVectorWithPhaseFlip_TwoQubits',
         '- passed superposition/all-basis-vectors-two-qubits AllBasisVectors_TwoQubits',
+        '- passed superposition/all-basis-vectors-with-phases-two-qubits AllBasisVectorsWithPhases_TwoQubits',
         '- passed superposition/bell-state BellState',
         '- passed superposition/ghz-state GHZState',
         '- passed superposition/minus-state MinusState',
@@ -727,8 +771,8 @@ describe('benchmark command TypeScript route', () => {
         status: 'passed',
         exitCode: 0,
         summary: {
-          total: 6,
-          passed: 6,
+          total: 8,
+          passed: 8,
           failed: 0,
           disallowed: 0,
           error: 0
@@ -744,10 +788,28 @@ describe('benchmark command TypeScript route', () => {
             checks: [{ type: 'run', status: 'passed' }]
           },
           {
+            taskId: 'superposition/all-basis-vector-with-phase-flip-two-qubits',
+            title: 'AllBasisVectorWithPhaseFlip_TwoQubits',
+            task: 'benchmarks/quantum-katas/superposition/all-basis-vector-with-phase-flip-two-qubits.md',
+            submission: 'benchmarks/solutions/quantum-katas/superposition/all-basis-vector-with-phase-flip-two-qubits.qni',
+            status: 'passed',
+            exitCode: 0,
+            checks: [{ type: 'run', status: 'passed' }]
+          },
+          {
             taskId: 'superposition/all-basis-vectors-two-qubits',
             title: 'AllBasisVectors_TwoQubits',
             task: 'benchmarks/quantum-katas/superposition/all-basis-vectors-two-qubits.md',
             submission: 'benchmarks/solutions/quantum-katas/superposition/all-basis-vectors-two-qubits.qni',
+            status: 'passed',
+            exitCode: 0,
+            checks: [{ type: 'run', status: 'passed' }]
+          },
+          {
+            taskId: 'superposition/all-basis-vectors-with-phases-two-qubits',
+            title: 'AllBasisVectorsWithPhases_TwoQubits',
+            task: 'benchmarks/quantum-katas/superposition/all-basis-vectors-with-phases-two-qubits.md',
+            submission: 'benchmarks/solutions/quantum-katas/superposition/all-basis-vectors-with-phases-two-qubits.qni',
             status: 'passed',
             exitCode: 0,
             checks: [{ type: 'run', status: 'passed' }]
