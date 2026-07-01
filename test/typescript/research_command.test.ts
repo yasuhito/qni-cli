@@ -6,6 +6,7 @@ import path from 'node:path';
 import { describe, it } from 'node:test';
 
 import { createDispatcher } from '../../src/dispatcher';
+import { type StoredResearchStatus, writeStoredResearchTrial } from './helpers/research_trial';
 
 interface CapturedRun {
   readonly exitStatus: number;
@@ -19,7 +20,7 @@ interface CapturedValue<T> {
   readonly value: T;
 }
 
-type UnsuccessfulResearchStatus = 'disallowed' | 'error' | 'failed';
+type UnsuccessfulResearchStatus = Exclude<StoredResearchStatus, 'passed'>;
 
 const UNSUCCESSFUL_RESEARCH_TRIAL_CASES: readonly {
   readonly exitCode: number;
@@ -214,6 +215,156 @@ async function withFixedDateNow<T>(isoTimestamp: string, callback: () => Promise
 }
 
 describe('research command TypeScript route', () => {
+  it('prints an empty JSON research report when no trials exist', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, ['research', 'report', '--json']);
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stderr, '');
+      assert.deepStrictEqual(JSON.parse(result.stdout) as unknown, {
+        schemaVersion: 1,
+        trialSummary: {
+          passed: 0,
+          failed: 0,
+          disallowed: 0,
+          error: 0,
+          invalid: 0,
+          total: 0
+        },
+        taskSummary: {
+          passed: 0,
+          failed: 0,
+          disallowed: 0,
+          error: 0,
+          total: 0
+        },
+        trials: []
+      });
+    });
+  });
+
+  it('prints a JSON research report and exits with 0 when only valid trials exist', async () => {
+    await withTempDir(async (dir) => {
+      await writeStoredResearchTrial(dir, '2026-07-01T000001Z-passed');
+
+      const result = captureDispatcherRun(dir, ['research', 'report', '--json']);
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stderr, '');
+      assert.deepStrictEqual(JSON.parse(result.stdout) as unknown, {
+        schemaVersion: 1,
+        trialSummary: {
+          passed: 1,
+          failed: 0,
+          disallowed: 0,
+          error: 0,
+          invalid: 0,
+          total: 1
+        },
+        taskSummary: {
+          passed: 1,
+          failed: 0,
+          disallowed: 0,
+          error: 0,
+          total: 1
+        },
+        trials: [
+          {
+            id: '2026-07-01T000001Z-passed',
+            createdAt: '2026-07-01T00:00:01.000Z',
+            collaborator: 'claude-sonnet-4',
+            benchmark: 'benchmarks/quantum-katas',
+            status: 'passed',
+            summary: {
+              passed: 1,
+              failed: 0,
+              disallowed: 0,
+              error: 0,
+              total: 1
+            },
+            path: 'research/runs/2026-07-01T000001Z-passed'
+          }
+        ]
+      });
+    });
+  });
+
+  it('prints a JSON research report and exits with 1 when a trial is invalid', async () => {
+    await withTempDir(async (dir) => {
+      await writeStoredResearchTrial(dir, '2026-07-01T000001Z-passed');
+      await writeStoredResearchTrial(dir, 'broken-trial');
+
+      const result = captureDispatcherRun(dir, ['research', 'report', '--json']);
+
+      assert.equal(result.exitStatus, 1);
+      assert.equal(result.stderr, '');
+      assert.deepStrictEqual(JSON.parse(result.stdout) as unknown, {
+        schemaVersion: 1,
+        trialSummary: {
+          passed: 1,
+          failed: 0,
+          disallowed: 0,
+          error: 0,
+          invalid: 1,
+          total: 2
+        },
+        taskSummary: {
+          passed: 1,
+          failed: 0,
+          disallowed: 0,
+          error: 0,
+          total: 1
+        },
+        trials: [
+          {
+            id: '2026-07-01T000001Z-passed',
+            createdAt: '2026-07-01T00:00:01.000Z',
+            collaborator: 'claude-sonnet-4',
+            benchmark: 'benchmarks/quantum-katas',
+            status: 'passed',
+            summary: {
+              passed: 1,
+              failed: 0,
+              disallowed: 0,
+              error: 0,
+              total: 1
+            },
+            path: 'research/runs/2026-07-01T000001Z-passed'
+          },
+          {
+            id: 'broken-trial',
+            createdAt: null,
+            collaborator: null,
+            benchmark: null,
+            status: 'invalid',
+            summary: {
+              passed: 0,
+              failed: 0,
+              disallowed: 0,
+              error: 0,
+              total: 0
+            },
+            path: 'research/runs/broken-trial',
+            invalidReason: ['invalid research trial id: broken-trial']
+          }
+        ]
+      });
+    });
+  });
+
+  it('returns exit code 3 when the research runs path cannot be read as a directory', async () => {
+    await withTempDir(async (dir) => {
+      await mkdir(path.join(dir, 'research'), { recursive: true });
+      await writeFile(path.join(dir, 'research', 'runs'), 'not a directory\n');
+
+      const result = captureDispatcherRun(dir, ['research', 'report', '--json']);
+
+      assert.equal(result.exitStatus, 3);
+      assert.equal(result.stdout, '');
+      assert.match(result.stderr, /Research runs path is not a directory: research\/runs/u);
+    });
+  });
+
   it('rejects unsafe research trial slugs before creating a trial directory', async () => {
     for (const slug of ['Smoke_Claude', 'smoke--claude', 'smoke-', '-smoke', '../escape']) {
       await withTempDir(async (dir) => {
