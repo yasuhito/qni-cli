@@ -187,6 +187,28 @@ qni benchmark run で最小の合格判定を実行したい。
   PASS FredkinGate
   ```
 
+## Scenario: GlobalPhaseChange 課題ファイルがある
+
+- Then リポジトリファイル "benchmarks/quantum-katas/basic-gates/global-phase-change.md" は存在する
+
+## Scenario: GlobalPhaseChange 標準解がある
+
+- Then リポジトリファイル "benchmarks/solutions/quantum-katas/basic-gates/global-phase-change.qni" は存在する
+
+## Scenario: GlobalPhaseChange 標準解は合格する
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/global-phase-change.md benchmarks/solutions/quantum-katas/basic-gates/global-phase-change.qni" を実行
+- Then コマンドは成功
+
+## Scenario: GlobalPhaseChange 標準解の合格が表示される
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/global-phase-change.md benchmarks/solutions/quantum-katas/basic-gates/global-phase-change.qni" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  PASS GlobalPhaseChange
+  ```
+
 ## Scenario: SignFlip 課題ファイルがある
 
 - Then リポジトリファイル "benchmarks/quantum-katas/basic-gates/sign-flip.md" は存在する
@@ -586,6 +608,24 @@ qni benchmark run で最小の合格判定を実行したい。
   - case control-zero run #1: state vector did not match expected amplitudes
   ```
 
+## Scenario: GlobalPhaseChange のグローバル位相を掛けない不正解サンプルがある
+
+- Then リポジトリファイル "benchmarks/incorrect/quantum-katas/basic-gates/global-phase-change-no-phase.qni" は存在する
+
+## Scenario: GlobalPhaseChange のグローバル位相を掛けない提出物は不合格になる
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/global-phase-change.md benchmarks/incorrect/quantum-katas/basic-gates/global-phase-change-no-phase.qni" を実行
+- Then 終了コードは 1
+
+## Scenario: GlobalPhaseChange のグローバル位相を掛けない提出物は不合格と表示される
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/global-phase-change.md benchmarks/incorrect/quantum-katas/basic-gates/global-phase-change-no-phase.qni" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  FAIL GlobalPhaseChange
+  ```
+
 ## Scenario: frontmatter 不備の課題ファイルは終了コード 3 になる
 
 - When "qni benchmark run benchmarks/invalid/quantum-katas/basic-gates/state-flip-missing-allowed-commands.md benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni" を実行
@@ -684,6 +724,10 @@ qni benchmark run で最小の合格判定を実行したい。
 
 - Then リポジトリファイル "docs/benchmark.md" は "qni benchmark run benchmarks/quantum-katas/basic-gates/fredkin-gate.md benchmarks/solutions/quantum-katas/basic-gates/fredkin-gate.qni" を含む
 
+## Scenario: MVP手順は GlobalPhaseChange 標準解の実行例を示す
+
+- Then リポジトリファイル "docs/benchmark.md" は "qni benchmark run benchmarks/quantum-katas/basic-gates/global-phase-change.md benchmarks/solutions/quantum-katas/basic-gates/global-phase-change.qni" を含む
+
 ## Scenario: MVP手順は SignFlip 標準解の実行例を示す
 
 - Then リポジトリファイル "docs/benchmark.md" は "qni benchmark run benchmarks/quantum-katas/basic-gates/sign-flip.md benchmarks/solutions/quantum-katas/basic-gates/sign-flip.qni" を含む
@@ -740,13 +784,14 @@ qni benchmark run で最小の合格判定を実行したい。
 
   ```text
   PASS benchmark suite
-  tasks: 21
-  passed: 21, failed: 0, disallowed: 0, error: 0
+  tasks: 22
+  passed: 22, failed: 0, disallowed: 0, error: 0
   - passed basic-gates/basis-change BasisChange
   - passed basic-gates/bell-state-change-1 BellStateChange1
   - passed basic-gates/bell-state-change-2 BellStateChange2
   - passed basic-gates/bell-state-change-3 BellStateChange3
   - passed basic-gates/fredkin-gate FredkinGate
+  - passed basic-gates/global-phase-change GlobalPhaseChange
   - passed basic-gates/phase-change-pi-over-3 PhaseChangePiOver3
   - passed basic-gates/phase-flip PhaseFlip
   - passed basic-gates/sign-flip SignFlip
@@ -778,8 +823,8 @@ qni benchmark run で最小の合格判定を実行したい。
       "disallowed": 0,
       "error": 0,
       "failed": 0,
-      "passed": 21,
-      "total": 21
+      "passed": 22,
+      "total": 22
     },
     "results": [
       {
@@ -939,6 +984,46 @@ qni benchmark run で最小の合格判定を実行したい。
           }
         ],
         "task": "benchmarks/quantum-katas/basic-gates/fredkin-gate.md"
+      },
+      {
+        "taskId": "basic-gates/global-phase-change",
+        "title": "GlobalPhaseChange",
+        "submission": "benchmarks/solutions/quantum-katas/basic-gates/global-phase-change.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "gradingCases": [
+          {
+            "caseId": "target-zero",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "target-one",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          }
+        ],
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
+        "task": "benchmarks/quantum-katas/basic-gates/global-phase-change.md"
       },
       {
         "taskId": "basic-gates/phase-change-pi-over-3",

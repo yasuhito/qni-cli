@@ -449,6 +449,21 @@ describe('benchmark command TypeScript route', () => {
     });
   });
 
+  it('passes the GlobalPhaseChange solution using explicit grading cases', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, [
+        'benchmark',
+        'run',
+        'benchmarks/quantum-katas/basic-gates/global-phase-change.md',
+        'benchmarks/solutions/quantum-katas/basic-gates/global-phase-change.qni'
+      ]);
+
+      assert.equal(result.exitStatus, 0, result.stderr);
+      assert.equal(result.stdout, 'PASS GlobalPhaseChange\nchecks: 2\n');
+      assert.equal(result.stderr, '');
+    });
+  });
+
   it('passes the SignFlip solution using explicit grading cases', async () => {
     await withTempDir(async (dir) => {
       const result = captureDispatcherRun(dir, [
@@ -727,6 +742,32 @@ describe('benchmark command TypeScript route', () => {
     });
   });
 
+  it('fails the GlobalPhaseChange no-phase incorrect sample in both grading cases', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, [
+        'benchmark',
+        'run',
+        'benchmarks/quantum-katas/basic-gates/global-phase-change.md',
+        'benchmarks/incorrect/quantum-katas/basic-gates/global-phase-change-no-phase.qni'
+      ]);
+
+      assert.equal(result.exitStatus, 1, result.stderr);
+      assert.equal(result.stdout, [
+        'FAIL GlobalPhaseChange',
+        'checks: 2',
+        'failed checks:',
+        '- case target-zero run #1: state vector did not match expected amplitudes',
+        '  expected / actual mismatches:',
+        '  - |10>: expected -0.7071067811865476, actual 0.7071067811865476',
+        '- case target-one run #1: state vector did not match expected amplitudes',
+        '  expected / actual mismatches:',
+        '  - |11>: expected -0.7071067811865476, actual 0.7071067811865476',
+        ''
+      ].join('\n'));
+      assert.equal(result.stderr, '');
+    });
+  });
+
   it('prints failed grading case ids in human-readable check details', async () => {
     await withTempDir(async (dir) => {
       await writeFile(path.join(dir, 'task.md'), xOnZeroAndOneGradingCasesTask());
@@ -907,8 +948,8 @@ describe('benchmark command TypeScript route', () => {
       assert.equal(captured.value.status, 'passed');
       assert.equal(captured.value.exitCode, 0);
       assert.deepStrictEqual(captured.value.summary, {
-        total: 21,
-        passed: 21,
+        total: 22,
+        passed: 22,
         failed: 0,
         disallowed: 0,
         error: 0
@@ -948,6 +989,15 @@ describe('benchmark command TypeScript route', () => {
         },
         {
           taskId: 'basic-gates/fredkin-gate',
+          status: 'passed',
+          exitCode: 0,
+          checks: [
+            { type: 'run', status: 'passed' },
+            { type: 'run', status: 'passed' }
+          ]
+        },
+        {
+          taskId: 'basic-gates/global-phase-change',
           status: 'passed',
           exitCode: 0,
           checks: [
@@ -1100,13 +1150,14 @@ describe('benchmark command TypeScript route', () => {
       assert.equal(result.exitStatus, 0, result.stderr);
       assert.equal(result.stdout, [
         'PASS benchmark suite',
-        'tasks: 21',
-        'passed: 21, failed: 0, disallowed: 0, error: 0',
+        'tasks: 22',
+        'passed: 22, failed: 0, disallowed: 0, error: 0',
         '- passed basic-gates/basis-change BasisChange',
         '- passed basic-gates/bell-state-change-1 BellStateChange1',
         '- passed basic-gates/bell-state-change-2 BellStateChange2',
         '- passed basic-gates/bell-state-change-3 BellStateChange3',
         '- passed basic-gates/fredkin-gate FredkinGate',
+        '- passed basic-gates/global-phase-change GlobalPhaseChange',
         '- passed basic-gates/phase-change-pi-over-3 PhaseChangePiOver3',
         '- passed basic-gates/phase-flip PhaseFlip',
         '- passed basic-gates/sign-flip SignFlip',
@@ -1149,8 +1200,8 @@ describe('benchmark command TypeScript route', () => {
     "disallowed": 0,
     "error": 0,
     "failed": 0,
-    "passed": 21,
-    "total": 21
+    "passed": 22,
+    "total": 22
   },
   "results": [
     {
@@ -1310,6 +1361,46 @@ describe('benchmark command TypeScript route', () => {
         }
       ],
       "task": "benchmarks/quantum-katas/basic-gates/fredkin-gate.md"
+    },
+    {
+      "taskId": "basic-gates/global-phase-change",
+      "title": "GlobalPhaseChange",
+      "submission": "benchmarks/solutions/quantum-katas/basic-gates/global-phase-change.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "gradingCases": [
+        {
+          "caseId": "target-zero",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "target-one",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/basic-gates/global-phase-change.md"
     },
     {
       "taskId": "basic-gates/phase-change-pi-over-3",

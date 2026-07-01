@@ -16,7 +16,7 @@
 
 提出物には回路を作るコマンドだけを書きます。`qni run` や `qni expect` などの検証コマンドは書きません。
 
-## 21問の標準解を実行する
+## 22問の標準解を実行する
 
 ### StateFlip
 
@@ -105,6 +105,14 @@ qni benchmark run benchmarks/quantum-katas/basic-gates/fredkin-gate.md benchmark
 ```
 
 期待される結果は `PASS FredkinGate` です。FredkinGate は複数の採点ケースを持ち、制御量子ビットが `|0>` の入力と `|1>` の入力を別々に検証します。
+
+### GlobalPhaseChange
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/global-phase-change.md benchmarks/solutions/quantum-katas/basic-gates/global-phase-change.qni
+```
+
+期待される結果は `PASS GlobalPhaseChange` です。GlobalPhaseChange は、単独では観測不能なグローバル位相を、制御量子ビットの重ね合わせに対する相対位相として採点します。
 
 ### SignFlip
 
@@ -236,6 +244,14 @@ qni benchmark run benchmarks/quantum-katas/basic-gates/fredkin-gate.md benchmark
 
 期待される結果は `FAIL FredkinGate` です。
 
+GlobalPhaseChange には、グローバル位相を掛けない不正解サンプルがあります。許可された提出物ですが、制御付き効果として期待される相対位相が出ないため、終了コードは `1` です。
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/global-phase-change.md benchmarks/incorrect/quantum-katas/basic-gates/global-phase-change-no-phase.qni
+```
+
+期待される結果は `FAIL GlobalPhaseChange` です。
+
 ## 不許可サンプルを実行する
 
 不許可サンプルは、課題ファイルの `allowed_commands` にない `qni run` を提出物に含みます。終了コードは `2` です。
@@ -276,7 +292,7 @@ qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/
 
 `grading_cases` を使うと、同じ提出物を複数の初期条件で採点できます。各ケースは独立した一時作業ディレクトリで実行されます。`setup_commands` は採点ケースごとの初期状態準備に使い、提出物の `allowed_commands` とは別に評価ランナーが実行します。
 
-BasisChange では、既定の `|0>` 入力と、`qni state set "1|1>"` で準備する `|1>` 入力を分けています。FredkinGate のような3量子ビット課題では、制御量子ビットが `|0>` の入力と `|1>` の入力を別々の採点ケースにします。
+BasisChange では、既定の `|0>` 入力と、`qni state set "1|1>"` で準備する `|1>` 入力を分けています。FredkinGate のような3量子ビット課題では、制御量子ビットが `|0>` の入力と `|1>` の入力を別々の採点ケースにします。GlobalPhaseChange では、制御量子ビットを重ね合わせにした2量子ビット状態を `setup_commands` で準備し、制御付きグローバル位相を相対位相として検証します。
 
 ```yaml
 grading_cases:
@@ -320,17 +336,18 @@ grading_cases:
 qni benchmark run-all benchmarks/quantum-katas benchmarks/solutions/quantum-katas
 ```
 
-期待される結果は、21問すべてが `passed` になり、終了コードが `0` になることです。
+期待される結果は、22問すべてが `passed` になり、終了コードが `0` になることです。
 
 ```text
 PASS benchmark suite
-tasks: 21
-passed: 21, failed: 0, disallowed: 0, error: 0
+tasks: 22
+passed: 22, failed: 0, disallowed: 0, error: 0
 - passed basic-gates/basis-change BasisChange
 - passed basic-gates/bell-state-change-1 BellStateChange1
 - passed basic-gates/bell-state-change-2 BellStateChange2
 - passed basic-gates/bell-state-change-3 BellStateChange3
 - passed basic-gates/fredkin-gate FredkinGate
+- passed basic-gates/global-phase-change GlobalPhaseChange
 - passed basic-gates/phase-change-pi-over-3 PhaseChangePiOver3
 - passed basic-gates/phase-flip PhaseFlip
 - passed basic-gates/sign-flip SignFlip
