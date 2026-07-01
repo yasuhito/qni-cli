@@ -3,7 +3,7 @@ import path = require('node:path');
 
 import type { CommandHandlerContext } from '../dispatcher';
 import { gradeBenchmarkSuite, type BenchmarkSuiteGradingResult } from '../evaluation_runner';
-import { buildResearchReport, readResearchTrialsForReport } from '../research_report';
+import { buildResearchReport, formatResearchReportHumanOutput, readResearchTrialsForReport } from '../research_report';
 
 interface ResearchRecordRequest {
   readonly benchmark: string;
@@ -31,11 +31,27 @@ type ResearchRecordOption = keyof ResearchRecordRequest;
 
 class ResearchRecordError extends Error {}
 
-const USAGE = [
+const RESEARCH_USAGE = [
+  'Usage: qni research <command>',
+  ''
+].join('\n');
+const RECORD_USAGE = [
   'Usage: qni research record --collaborator <name> --benchmark <dir> --submissions <dir> --prompt <file> --response <file> --slug <slug>',
   ''
 ].join('\n');
-const HELP_TEXT = `Usage:
+const REPORT_USAGE = [
+  'Usage: qni research report [--json]',
+  ''
+].join('\n');
+const RESEARCH_HELP_TEXT = `Usage:
+  qni research <command>
+
+Commands:
+  qni research record    Record one external collaborator trial for one benchmark suite.
+  qni research report    Show saved research trial summaries from research/runs/.
+
+Run qni research COMMAND --help for command details.`;
+const RECORD_HELP_TEXT = `Usage:
   qni research record --collaborator <name> --benchmark <dir> --submissions <dir> --prompt <file> --response <file> --slug <slug>
 
 Overview:
@@ -67,6 +83,24 @@ Exit codes:
 
 Example:
   qni research record --collaborator claude-sonnet-4 --benchmark benchmarks/quantum-katas --submissions tmp/submissions --prompt tmp/prompt.md --response tmp/response.md --slug smoke-claude`;
+const REPORT_HELP_TEXT = `Usage:
+  qni research report [--json]
+
+Overview:
+  Show a report for saved research trials under research/runs/.
+  By default, output is dependency-free plaintext for terminal reading.
+  Use --json for the existing machine-readable report.
+
+Output:
+  summary of trial statuses
+  summary of benchmark task statuses
+  newest-first trial list
+  invalid details when invalid research trial directories exist
+
+Exit codes:
+  0  report generated and no invalid research trials were found
+  1  report generated and one or more invalid research trials were found
+  3  research/runs/ could not be read`;
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u;
 const OPTION_NAMES = new Map<string, ResearchRecordOption>([
   ['--benchmark', 'benchmark'],
@@ -78,8 +112,18 @@ const OPTION_NAMES = new Map<string, ResearchRecordOption>([
 ]);
 
 export function runResearchCommand(argv: string[], context: CommandHandlerContext): number {
-  if (isResearchHelpRequest(argv)) {
-    process.stdout.write(`${HELP_TEXT}\n`);
+  if (isResearchParentHelpRequest(argv)) {
+    process.stdout.write(`${RESEARCH_HELP_TEXT}\n`);
+    return 0;
+  }
+
+  if (isResearchRecordHelpRequest(argv)) {
+    process.stdout.write(`${RECORD_HELP_TEXT}\n`);
+    return 0;
+  }
+
+  if (isResearchReportHelpRequest(argv)) {
+    process.stdout.write(`${REPORT_HELP_TEXT}\n`);
     return 0;
   }
 
@@ -87,10 +131,19 @@ export function runResearchCommand(argv: string[], context: CommandHandlerContex
     return runResearchReportJson(context);
   }
 
+  if (isResearchReportHumanRequest(argv)) {
+    return runResearchReportHuman(context);
+  }
+
+  if (isResearchReportRequest(argv)) {
+    process.stderr.write(REPORT_USAGE);
+    return 3;
+  }
+
   const request = parseResearchRecordRequest(argv);
 
   if (!request) {
-    process.stderr.write(USAGE);
+    process.stderr.write(argv[0] === 'research' && argv[1] === 'record' ? RECORD_USAGE : RESEARCH_USAGE);
     return 3;
   }
 
@@ -102,8 +155,32 @@ export function runResearchCommand(argv: string[], context: CommandHandlerContex
   }
 }
 
+function isResearchParentHelpRequest(argv: readonly string[]): boolean {
+  if (argv[0] !== 'research') {
+    return false;
+  }
+
+  return argv.length === 1 || (argv.length === 2 && isHelpFlag(argv[1]));
+}
+
+function isResearchRecordHelpRequest(argv: readonly string[]): boolean {
+  return argv[0] === 'research' && argv[1] === 'record' && argv.length === 3 && isHelpFlag(argv[2]);
+}
+
+function isResearchReportHelpRequest(argv: readonly string[]): boolean {
+  return argv[0] === 'research' && argv[1] === 'report' && argv.length === 3 && isHelpFlag(argv[2]);
+}
+
 function isResearchReportJsonRequest(argv: readonly string[]): boolean {
   return argv[0] === 'research' && argv[1] === 'report' && argv.length === 3 && argv[2] === '--json';
+}
+
+function isResearchReportHumanRequest(argv: readonly string[]): boolean {
+  return argv[0] === 'research' && argv[1] === 'report' && argv.length === 2;
+}
+
+function isResearchReportRequest(argv: readonly string[]): boolean {
+  return argv[0] === 'research' && argv[1] === 'report';
 }
 
 function runResearchReportJson(context: CommandHandlerContext): number {
@@ -118,20 +195,16 @@ function runResearchReportJson(context: CommandHandlerContext): number {
   }
 }
 
-function isResearchHelpRequest(argv: readonly string[]): boolean {
-  if (argv[0] !== 'research') {
-    return false;
-  }
+function runResearchReportHuman(context: CommandHandlerContext): number {
+  try {
+    const report = buildResearchReport(readResearchTrialsForReport({ cwd: context.cwd }));
 
-  if (argv.length === 1) {
-    return true;
+    process.stdout.write(formatResearchReportHumanOutput(report));
+    return report.trialSummary.invalid > 0 ? 1 : 0;
+  } catch (error) {
+    process.stderr.write(`${errorMessage(error)}\n`);
+    return 3;
   }
-
-  if (argv.length === 2) {
-    return isHelpFlag(argv[1]);
-  }
-
-  return argv[1] === 'record' && argv.length === 3 && isHelpFlag(argv[2]);
 }
 
 function isHelpFlag(value: string | undefined): boolean {

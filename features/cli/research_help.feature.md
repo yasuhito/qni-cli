@@ -65,3 +65,57 @@ qni research record のヘルプを見たい。
   ```text
   qni research record
   ```
+
+## Scenario: qni research --help は report コマンドを案内する
+
+- When "qni research --help" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  qni research report
+  ```
+
+## Scenario: qni research report --help は成功する
+
+- When "qni research report --help" を実行
+- Then コマンドは成功
+
+## Scenario: qni research report --help は使い方を表示する
+
+- When "qni research report --help" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  Usage:
+    qni research report [--json]
+  ```
+
+## Scenario: qni research report --help は対象ディレクトリを表示する
+
+- When "qni research report --help" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  research/runs/
+  ```
+
+## Scenario: qni research report --help は JSON 出力を表示する
+
+- When "qni research report --help" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  --json
+  ```
+
+## Scenario: qni research report --help は終了コードを表示する
+
+- When "qni research report --help" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  Exit codes:
+    0  report generated and no invalid research trials were found
+    1  report generated and one or more invalid research trials were found
+    3  research/runs/ could not be read
+  ```
