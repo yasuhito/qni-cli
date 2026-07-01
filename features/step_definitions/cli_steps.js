@@ -306,6 +306,66 @@ function researchTrialIdAt(timeMs, slug) {
   return `${researchTimestamp(date)}-${slug}`;
 }
 
+function researchReportCreatedAtForId(id) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2})(\d{2})(\d{2})Z/u.exec(id);
+
+  if (!match) {
+    return '2026-06-30T12:34:56.000Z';
+  }
+
+  return `${match[1]}-${match[2]}-${match[3]}T${match[4]}:${match[5]}:${match[6]}.000Z`;
+}
+
+function writeResearchReportJsonFile(filePath, value) {
+  fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`);
+}
+
+function writeResearchReportTrial(scenarioDir, id) {
+  const trialDir = path.join(researchRunsDir(scenarioDir), id);
+
+  fs.mkdirSync(trialDir, { recursive: true });
+  writeResearchReportJsonFile(path.join(trialDir, 'metadata.json'), {
+    schemaVersion: 1,
+    id,
+    createdAt: researchReportCreatedAtForId(id),
+    collaborator: 'claude-sonnet-4',
+    benchmark: 'benchmarks/quantum-katas',
+    submissions: 'submissions',
+    prompt: 'prompt.md',
+    response: 'response.md',
+    result: 'result.json',
+    status: 'passed'
+  });
+  writeResearchReportJsonFile(path.join(trialDir, 'result.json'), {
+    status: 'passed',
+    exitCode: 0,
+    summary: {
+      total: 1,
+      passed: 1,
+      failed: 0,
+      disallowed: 0,
+      error: 0
+    },
+    results: [
+      {
+        task: 'basic-gates/state-flip.md',
+        taskId: 'basic-gates/state-flip',
+        title: 'StateFlip',
+        submission: 'submissions/basic-gates/state-flip.qni',
+        status: 'passed',
+        exitCode: 0,
+        checks: [{ type: 'run', status: 'passed' }]
+      }
+    ]
+  });
+}
+
+function readResearchReportTrials(scenarioDir) {
+  const { readResearchTrials } = require(path.join(PROJECT_ROOT, 'dist', 'research_report'));
+
+  return readResearchTrials({ cwd: scenarioDir });
+}
+
 function readCircuitJson(scenarioDir) {
   return JSON.parse(fs.readFileSync(path.join(scenarioDir, 'circuit.json'), 'utf8'));
 }
@@ -871,8 +931,20 @@ Given('slug {string} の保存先候補に既存の研究試行がある', funct
   this.researchTrialDirsBeforeCommand = researchTrialDirs(this.scenarioDir);
 });
 
+Given('有効な研究試行 {string} を研究ログに保存済み', function (id) {
+  writeResearchReportTrial(this.scenarioDir, id);
+});
+
+Given('無効な研究試行候補 {string} を研究ログに保存済み', function (id) {
+  writeResearchReportTrial(this.scenarioDir, id);
+});
+
 When('{string} を TTY で実行', async function (command) {
   this.lastCommand = await runQniCommandInTty(this.scenarioDir, command, this.commandEnv);
+});
+
+When('研究試行レポート reader で研究試行を読み取る', function () {
+  this.lastResearchTrials = readResearchReportTrials(this.scenarioDir);
 });
 
 Then('コマンドは成功', function () {
@@ -1120,6 +1192,40 @@ Then('研究試行 JSON ファイル {string} の {string} は {string}', functi
   const actual = JSON.parse(fs.readFileSync(actualPath, 'utf8'));
 
   assert.equal(actual[key], value);
+});
+
+Then('読み取った研究試行数は {int}', function (expectedCount) {
+  assert.equal(this.lastResearchTrials.length, expectedCount);
+});
+
+Then('読み取った研究試行ID一覧は:', function (docString) {
+  assert.equal(
+    this.lastResearchTrials.map((trial) => trial.id).join('\n'),
+    normalizeMultilineText(docStringContent(docString))
+  );
+});
+
+Then('読み取った研究試行 {string} の status は {string}', function (id, expectedStatus) {
+  const trial = this.lastResearchTrials.find((item) => item.id === id);
+
+  assert.ok(trial, `expected research trial to be read: ${id}`);
+  assert.equal(trial.status, expectedStatus);
+});
+
+Then('読み取った研究試行 {string} の invalidReason は {string} を含む', function (id, expectedReason) {
+  const trial = this.lastResearchTrials.find((item) => item.id === id);
+
+  assert.ok(trial, `expected research trial to be read: ${id}`);
+  assert.equal(trial.kind, 'invalid');
+  assert.ok(
+    trial.invalidReason.some((reason) => reason.includes(expectedReason)),
+    [
+      'expected invalid reason to include text',
+      `trial: ${id}`,
+      `expected: ${expectedReason}`,
+      `actual: ${JSON.stringify(trial.invalidReason)}`
+    ].join('\n')
+  );
 });
 
 Then('作業ディレクトリのファイル {string} は {string} を含む', function (filePath, text) {
