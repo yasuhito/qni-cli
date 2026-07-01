@@ -89,10 +89,14 @@ function suiteTaskFailedCheckLines(item: BenchmarkSuiteTaskGradingResult): strin
     return [];
   }
 
+  if (!hasMultipleGradingCases(item.gradingCases)) {
+    return suiteTaskGradingCaseErrorLines(item.gradingCases, false);
+  }
+
   return [
     ...failedGradingCaseChecks(item.gradingCases)
       .map((entry) => `  - case ${entry.caseId} ${entry.check.type} #${entry.index + 1}: failed`),
-    ...suiteTaskGradingCaseErrorLines(item.gradingCases)
+    ...suiteTaskGradingCaseErrorLines(item.gradingCases, true)
   ];
 }
 
@@ -126,7 +130,7 @@ function formatErrorResult(task: BenchmarkTask | undefined, result: BenchmarkRes
 }
 
 function failedCheckDetailsLines(result: BenchmarkResult): string[] {
-  if (result.gradingCases) {
+  if (result.gradingCases && hasMultipleGradingCases(result.gradingCases)) {
     return failedGradingCaseDetailsLines(result.gradingCases);
   }
 
@@ -169,16 +173,24 @@ function failedGradingCaseChecks<TCheck extends BenchmarkCheckResult | Benchmark
     .filter((entry) => entry.check.status === 'failed'));
 }
 
-function suiteTaskGradingCaseErrorLines(gradingCases: readonly BenchmarkGradingCaseSummary[]): string[] {
+function hasMultipleGradingCases(gradingCases: readonly unknown[]): boolean {
+  return gradingCases.length > 1;
+}
+
+function suiteTaskGradingCaseErrorLines(
+  gradingCases: readonly BenchmarkGradingCaseSummary[],
+  includeCaseId: boolean
+): string[] {
   return gradingCases.flatMap((gradingCase) => {
     if (gradingCase.error === undefined) {
       return [];
     }
 
     const [firstLine = '', ...additionalLines] = gradingCase.error.split(/\r?\n/u);
+    const label = includeCaseId ? `case ${gradingCase.caseId} error` : 'error';
 
     return [
-      `  - case ${gradingCase.caseId} error: ${firstLine}`,
+      `  - ${label}: ${firstLine}`,
       ...additionalLines.map((line) => `    ${line}`)
     ];
   });
