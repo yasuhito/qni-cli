@@ -16,7 +16,7 @@
 
 提出物には回路を作るコマンドだけを書きます。`qni run` や `qni expect` などの検証コマンドは書きません。
 
-## 9問の標準解を実行する
+## 10問の標準解を実行する
 
 ### StateFlip
 
@@ -33,6 +33,14 @@ qni benchmark run benchmarks/quantum-katas/basic-gates/basis-change.md benchmark
 ```
 
 期待される結果は `PASS BasisChange` です。BasisChange は複数の採点ケースを持ち、既定の `|0>` 入力と `setup_commands` で準備した `|1>` 入力を別々に検証します。
+
+### FredkinGate
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/fredkin-gate.md benchmarks/solutions/quantum-katas/basic-gates/fredkin-gate.qni
+```
+
+期待される結果は `PASS FredkinGate` です。FredkinGate は複数の採点ケースを持ち、制御量子ビットが `|0>` の入力と `|1>` の入力を別々に検証します。
 
 ### PlusState
 
@@ -108,6 +116,14 @@ qni benchmark run benchmarks/quantum-katas/basic-gates/basis-change.md benchmark
 
 期待される結果は `FAIL BasisChange` です。
 
+FredkinGate には、制御量子ビットを無視して常に SWAP する不正解サンプルがあります。制御量子ビットが `|0>` の採点ケースで失敗するため、終了コードは `1` です。
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/fredkin-gate.md benchmarks/incorrect/quantum-katas/basic-gates/fredkin-gate-unconditional-swap.qni
+```
+
+期待される結果は `FAIL FredkinGate` です。
+
 ## 不許可サンプルを実行する
 
 不許可サンプルは、課題ファイルの `allowed_commands` にない `qni run` を提出物に含みます。終了コードは `2` です。
@@ -148,7 +164,7 @@ qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/
 
 `grading_cases` を使うと、同じ提出物を複数の初期条件で採点できます。各ケースは独立した一時作業ディレクトリで実行されます。`setup_commands` は採点ケースごとの初期状態準備に使い、提出物の `allowed_commands` とは別に評価ランナーが実行します。
 
-BasisChange では、既定の `|0>` 入力と、`qni state set "1|1>"` で準備する `|1>` 入力を分けています。
+BasisChange では、既定の `|0>` 入力と、`qni state set "1|1>"` で準備する `|1>` 入力を分けています。FredkinGate のような3量子ビット課題では、制御量子ビットが `|0>` の入力と `|1>` の入力を別々の採点ケースにします。
 
 ```yaml
 grading_cases:
@@ -192,13 +208,14 @@ grading_cases:
 qni benchmark run-all benchmarks/quantum-katas benchmarks/solutions/quantum-katas
 ```
 
-期待される結果は、9問すべてが `passed` になり、終了コードが `0` になることです。
+期待される結果は、10問すべてが `passed` になり、終了コードが `0` になることです。
 
 ```text
 PASS benchmark suite
-tasks: 9
-passed: 9, failed: 0, disallowed: 0, error: 0
+tasks: 10
+passed: 10, failed: 0, disallowed: 0, error: 0
 - passed basic-gates/basis-change BasisChange
+- passed basic-gates/fredkin-gate FredkinGate
 - passed basic-gates/state-flip StateFlip
 - passed superposition/all-basis-vector-with-phase-flip-two-qubits AllBasisVectorWithPhaseFlip_TwoQubits
 - passed superposition/all-basis-vectors-two-qubits AllBasisVectors_TwoQubits

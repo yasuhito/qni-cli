@@ -1,0 +1,1 @@
+qni add SWAP --qubit 1,2 --step 0
