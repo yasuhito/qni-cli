@@ -71,11 +71,15 @@ export function loadBenchmarkTask(taskPath: string): BenchmarkTask {
 
   return {
     allowedCommands,
-    checks: gradingCases[0].checks,
+    checks: compatibleChecks(gradingCases),
     gradingCases,
     id: scalarValue(frontmatter, 'id'),
     title: scalarValue(frontmatter, 'title')
   };
+}
+
+function compatibleChecks(gradingCases: readonly BenchmarkGradingCase[]): BenchmarkChecks {
+  return (gradingCases.find((gradingCase) => gradingCase.id === IMPLICIT_GRADING_CASE_ID) ?? gradingCases[0]).checks;
 }
 
 function frontmatterOf(markdown: string): string {
@@ -193,12 +197,12 @@ function parseSetupCommands(gradingCase: FrontmatterRecord): BenchmarkSetupComma
   }
 
   if (!Array.isArray(setupCommands)) {
-    throw new BenchmarkTaskError('setup_commands must be a list of qni commands');
+    throw new BenchmarkTaskError('setup_commands must be a list of qni subcommands');
   }
 
   return setupCommands
     .map((item) => stringListValue(item, 'setup_commands'))
-    .map((source) => parseQniCommand(source, 'setup_commands entries must start with a qni command'));
+    .map((source) => parseQniCommand(source, 'setup_commands entries must start with a qni subcommand'));
 }
 
 function checksTolerance(checks: FrontmatterRecord): number {

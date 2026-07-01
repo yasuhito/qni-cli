@@ -144,6 +144,45 @@ describe('benchmark task frontmatter parser', () => {
     });
   });
 
+  it('uses the default grading case for legacy checks compatibility', async () => {
+    await withTempDir(async (dir) => {
+      const taskPath = path.join(dir, 'task.md');
+
+      await writeTask(taskPath, [
+        'id: grading-cases/default-compatibility',
+        'title: DefaultCompatibility',
+        'source: test',
+        'difficulty: smoke',
+        'allowed_commands:',
+        '  - qni add',
+        'grading_cases:',
+        '  - id: starts-at-one',
+        '    checks:',
+        '      tolerance: 1e-6',
+        '      items:',
+        '        - type: expect',
+        '          expected:',
+        '            - pauli: Z',
+        '              value: -1',
+        '  - id: default',
+        '    checks:',
+        '      tolerance: 1e-9',
+        '      items:',
+        '        - type: expect',
+        '          expected:',
+        '            - pauli: Z',
+        '              value: 1'
+      ]);
+
+      const task = loadBenchmarkTask(taskPath);
+      const defaultCase = task.gradingCases.find((gradingCase) => gradingCase.id === 'default');
+
+      assert.deepStrictEqual(task.gradingCases.map((gradingCase) => gradingCase.id), ['starts-at-one', 'default']);
+      assert.ok(defaultCase);
+      assert.strictEqual(task.checks, defaultCase.checks);
+    });
+  });
+
   it('rejects root checks and explicit grading cases together', async () => {
     await assertInvalidTask([
       'id: grading-cases/conflict',
@@ -265,7 +304,29 @@ describe('benchmark task frontmatter parser', () => {
       '          expected:',
       '            - pauli: Z',
       '              value: 1'
-    ], /setup_commands entries must start with a qni command: echo not-qni/u);
+    ], /setup_commands entries must start with a qni subcommand: echo not-qni/u);
+  });
+
+  it('rejects setup commands without a qni subcommand', async () => {
+    await assertInvalidTask([
+      'id: grading-cases/missing-setup-subcommand',
+      'title: MissingSetupSubcommand',
+      'source: test',
+      'difficulty: smoke',
+      'allowed_commands:',
+      '  - qni add',
+      'grading_cases:',
+      '  - id: missing-setup-subcommand',
+      '    setup_commands:',
+      '      - qni',
+      '    checks:',
+      '      tolerance: 1e-9',
+      '      items:',
+      '        - type: expect',
+      '          expected:',
+      '            - pauli: Z',
+      '              value: 1'
+    ], /setup_commands entries must start with a qni subcommand: qni/u);
   });
 });
 
