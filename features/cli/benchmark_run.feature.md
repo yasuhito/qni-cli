@@ -696,8 +696,8 @@ qni benchmark run で最小の合格判定を実行したい。
 
   ```text
   PASS benchmark suite
-  tasks: 15
-  passed: 15, failed: 0, disallowed: 0, error: 0
+  tasks: 20
+  passed: 20, failed: 0, disallowed: 0, error: 0
   - passed basic-gates/basis-change BasisChange
   - passed basic-gates/bell-state-change-1 BellStateChange1
   - passed basic-gates/bell-state-change-2 BellStateChange2
@@ -706,6 +706,11 @@ qni benchmark run で最小の合格判定を実行したい。
   - passed basic-gates/phase-flip PhaseFlip
   - passed basic-gates/sign-flip SignFlip
   - passed basic-gates/state-flip StateFlip
+  - passed basic-gates/toffoli-gate ToffoliGate
+  - passed basic-gates/two-qubit-gate-1 TwoQubitGate1
+  - passed basic-gates/two-qubit-gate-2 TwoQubitGate2
+  - passed basic-gates/two-qubit-gate-3 TwoQubitGate3
+  - passed basic-gates/two-qubit-gate-4 TwoQubitGate4
   - passed superposition/all-basis-vector-with-phase-flip-two-qubits AllBasisVectorWithPhaseFlip_TwoQubits
   - passed superposition/all-basis-vectors-two-qubits AllBasisVectors_TwoQubits
   - passed superposition/all-basis-vectors-with-phases-two-qubits AllBasisVectorsWithPhases_TwoQubits
@@ -728,8 +733,8 @@ qni benchmark run で最小の合格判定を実行したい。
       "disallowed": 0,
       "error": 0,
       "failed": 0,
-      "passed": 15,
-      "total": 15
+      "passed": 20,
+      "total": 20
     },
     "results": [
       {
@@ -983,6 +988,332 @@ qni benchmark run で最小の合格判定を実行したい。
           }
         ],
         "task": "benchmarks/quantum-katas/basic-gates/state-flip.md"
+      },
+      {
+        "taskId": "basic-gates/toffoli-gate",
+        "title": "ToffoliGate",
+        "submission": "benchmarks/solutions/quantum-katas/basic-gates/toffoli-gate.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "gradingCases": [
+          {
+            "caseId": "zero-zero-zero-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "one-one-zero-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "one-one-one-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "one-zero-one-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "superposition-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          }
+        ],
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
+        "task": "benchmarks/quantum-katas/basic-gates/toffoli-gate.md"
+      },
+      {
+        "taskId": "basic-gates/two-qubit-gate-1",
+        "title": "TwoQubitGate1",
+        "submission": "benchmarks/solutions/quantum-katas/basic-gates/two-qubit-gate-1.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "gradingCases": [
+          {
+            "caseId": "zero-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "one-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "superposition-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          }
+        ],
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
+        "task": "benchmarks/quantum-katas/basic-gates/two-qubit-gate-1.md"
+      },
+      {
+        "taskId": "basic-gates/two-qubit-gate-2",
+        "title": "TwoQubitGate2",
+        "submission": "benchmarks/solutions/quantum-katas/basic-gates/two-qubit-gate-2.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "gradingCases": [
+          {
+            "caseId": "plus-plus-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "eleven-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "ten-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          }
+        ],
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
+        "task": "benchmarks/quantum-katas/basic-gates/two-qubit-gate-2.md"
+      },
+      {
+        "taskId": "basic-gates/two-qubit-gate-3",
+        "title": "TwoQubitGate3",
+        "submission": "benchmarks/solutions/quantum-katas/basic-gates/two-qubit-gate-3.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "gradingCases": [
+          {
+            "caseId": "zero-zero-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "zero-one-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "one-zero-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "superposition-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          }
+        ],
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
+        "task": "benchmarks/quantum-katas/basic-gates/two-qubit-gate-3.md"
+      },
+      {
+        "taskId": "basic-gates/two-qubit-gate-4",
+        "title": "TwoQubitGate4",
+        "submission": "benchmarks/solutions/quantum-katas/basic-gates/two-qubit-gate-4.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "gradingCases": [
+          {
+            "caseId": "zero-zero-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "zero-one-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "one-zero-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "superposition-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          }
+        ],
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
+        "task": "benchmarks/quantum-katas/basic-gates/two-qubit-gate-4.md"
       },
       {
         "taskId": "superposition/all-basis-vector-with-phase-flip-two-qubits",

@@ -223,6 +223,14 @@ function quantumKatasSubmissionContent(status, relativePath) {
     ['basic-gates/phase-flip.qni', 'qni add S --qubit 0 --step 0\n'],
     ['basic-gates/sign-flip.qni', 'qni add Z --qubit 0 --step 0\n'],
     ['basic-gates/state-flip.qni', 'qni add X --qubit 0 --step 0\n'],
+    ['basic-gates/toffoli-gate.qni', 'qni add X --control 0,1 --qubit 2 --step 0\n'],
+    ['basic-gates/two-qubit-gate-1.qni', 'qni add X --control 0 --qubit 1 --step 0\n'],
+    ['basic-gates/two-qubit-gate-2.qni', 'qni add Z --control 0 --qubit 1 --step 0\n'],
+    ['basic-gates/two-qubit-gate-3.qni', 'qni add SWAP --qubit 0,1 --step 0\n'],
+    [
+      'basic-gates/two-qubit-gate-4.qni',
+      'qni add X --control 0 --qubit 1 --step 0\nqni add X --qubit 1 --step 1\n'
+    ],
     [
       'superposition/all-basis-vector-with-phase-flip-two-qubits.qni',
       'qni add H --qubit 0 --step 0\nqni add H --qubit 1 --step 0\nqni add Z --control 0 --qubit 1 --step 1\n'
@@ -270,6 +278,11 @@ function writeQuantumKatasSubmissions(scenarioDir, status, submissionsDir) {
     'basic-gates/phase-flip.qni',
     'basic-gates/sign-flip.qni',
     'basic-gates/state-flip.qni',
+    'basic-gates/toffoli-gate.qni',
+    'basic-gates/two-qubit-gate-1.qni',
+    'basic-gates/two-qubit-gate-2.qni',
+    'basic-gates/two-qubit-gate-3.qni',
+    'basic-gates/two-qubit-gate-4.qni',
     'superposition/all-basis-vector-with-phase-flip-two-qubits.qni',
     'superposition/all-basis-vectors-two-qubits.qni',
     'superposition/all-basis-vectors-with-phases-two-qubits.qni',
