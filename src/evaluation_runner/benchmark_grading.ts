@@ -323,12 +323,11 @@ function evaluateBenchmark(options: {
     task: options.task
   }));
   const checks = gradingCases.flatMap((gradingCase) => gradingCase.checks);
-  const firstCaseError = gradingCases.find((gradingCase) => gradingCase.status === 'error')?.errorMessage;
 
   return {
     checks,
     ...explicitGradingCasesResult(options.task, gradingCases),
-    ...optionalErrorMessage(firstCaseError),
+    ...optionalErrorMessage(firstGradingCaseErrorMessage(options.task, gradingCases)),
     status: benchmarkStatusForGradingCases(gradingCases)
   };
 }
@@ -402,6 +401,23 @@ function explicitGradingCasesResult(
 
 function optionalErrorMessage(errorMessage: string | undefined): Pick<BenchmarkResult, 'errorMessage'> {
   return errorMessage === undefined ? {} : { errorMessage };
+}
+
+function firstGradingCaseErrorMessage(
+  task: BenchmarkTask,
+  gradingCases: readonly BenchmarkGradingCaseResult[]
+): string | undefined {
+  const gradingCase = gradingCases.find((item) => item.status === 'error' && item.errorMessage !== undefined);
+
+  if (!gradingCase?.errorMessage) {
+    return undefined;
+  }
+
+  if (!task.hasExplicitGradingCases) {
+    return gradingCase.errorMessage;
+  }
+
+  return `case ${gradingCase.caseId} error: ${gradingCase.errorMessage}`;
 }
 
 function benchmarkStatusForGradingCases(gradingCases: readonly BenchmarkGradingCaseResult[]): BenchmarkStatus {

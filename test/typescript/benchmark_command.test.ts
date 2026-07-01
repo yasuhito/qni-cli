@@ -122,6 +122,24 @@ describe('benchmark command TypeScript route', () => {
     });
   });
 
+  it('prints the grading case id for grading case command execution errors', async () => {
+    await withTempDir(async (dir) => {
+      await writeFile(path.join(dir, 'task.md'), xOnZeroAndOneGradingCasesTask());
+      await writeFile(path.join(dir, 'submission.qni'), 'qni add X --qubit nope --step 0\n');
+
+      const result = captureDispatcherRun(dir, ['benchmark', 'run', 'task.md', 'submission.qni']);
+
+      assert.equal(result.exitStatus, 3);
+      assert.equal(result.stdout, [
+        'ERROR XOnZeroAndOne',
+        'error: case zero-input error: submission command failed at line 1: qni add X --qubit nope --step 0',
+        'qubit must be an integer',
+        ''
+      ].join('\n'));
+      assert.equal(result.stderr, '');
+    });
+  });
+
   it('classifies submission lines that do not start with qni as error results', async () => {
     await withTempDir(async (dir) => {
       await writeFile(path.join(dir, 'submission.qni'), 'echo not-qni\n');

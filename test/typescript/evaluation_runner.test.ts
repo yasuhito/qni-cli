@@ -343,7 +343,7 @@ describe('evaluation runner public entrypoints', () => {
         ],
         checks: [],
         error: [
-          'setup command failed in grading case bad-setup: qni state set ',
+          'case bad-setup error: setup command failed in grading case bad-setup: qni state set ',
           'initial state expression is required'
         ].join('\n')
       });
