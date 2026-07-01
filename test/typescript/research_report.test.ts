@@ -236,6 +236,25 @@ describe('research report reader', () => {
     });
   });
 
+  it('marks unreadable research trial JSON files invalid', async () => {
+    await withTempDir(async (dir) => {
+      const unreadableMetadataId = '2026-06-30T123456Z-unreadable-metadata';
+      const unreadableResultId = '2026-06-30T123457Z-unreadable-result';
+      const unreadableMetadataDir = await makeResearchTrialDir(dir, unreadableMetadataId);
+      const unreadableResultDir = await makeResearchTrialDir(dir, unreadableResultId);
+
+      await mkdir(path.join(unreadableMetadataDir, 'metadata.json'));
+      await writeJsonFile(path.join(unreadableMetadataDir, 'result.json'), researchResult());
+      await writeJsonFile(path.join(unreadableResultDir, 'metadata.json'), researchMetadata(unreadableResultId));
+      await mkdir(path.join(unreadableResultDir, 'result.json'));
+
+      assert.deepStrictEqual(invalidReasonsById(readResearchTrials({ cwd: dir })), new Map([
+        [unreadableResultId, ['result.json could not be read']],
+        [unreadableMetadataId, ['metadata.json could not be read']]
+      ]));
+    });
+  });
+
   it('marks unknown metadata schemas invalid', async () => {
     await withTempDir(async (dir) => {
       const id = '2026-06-30T123456Z-schema-v2';

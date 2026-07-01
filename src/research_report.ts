@@ -116,10 +116,18 @@ function readJsonObject(filePath: string, displayName: string): JsonObjectReadRe
     return { invalidReason: [`${displayName} is missing`] };
   }
 
+  let contents: string;
+
+  try {
+    contents = readFileSync(filePath, 'utf8');
+  } catch {
+    return { invalidReason: [`${displayName} could not be read`] };
+  }
+
   let value: unknown;
 
   try {
-    value = JSON.parse(readFileSync(filePath, 'utf8')) as unknown;
+    value = JSON.parse(contents) as unknown;
   } catch {
     return { invalidReason: [`${displayName} is not valid JSON`] };
   }
