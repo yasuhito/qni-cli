@@ -77,6 +77,50 @@ qni benchmark run で最小の合格判定を実行したい。
   PASS PlusState
   ```
 
+## Scenario: MinusState 課題ファイルがある
+
+- Then リポジトリファイル "benchmarks/quantum-katas/superposition/minus-state.md" は存在する
+
+## Scenario: MinusState 標準解がある
+
+- Then リポジトリファイル "benchmarks/solutions/quantum-katas/superposition/minus-state.qni" は存在する
+
+## Scenario: MinusState 標準解は合格する
+
+- When "qni benchmark run benchmarks/quantum-katas/superposition/minus-state.md benchmarks/solutions/quantum-katas/superposition/minus-state.qni" を実行
+- Then コマンドは成功
+
+## Scenario: MinusState 標準解の合格が表示される
+
+- When "qni benchmark run benchmarks/quantum-katas/superposition/minus-state.md benchmarks/solutions/quantum-katas/superposition/minus-state.qni" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  PASS MinusState
+  ```
+
+## Scenario: AllBasisVectors_TwoQubits 課題ファイルがある
+
+- Then リポジトリファイル "benchmarks/quantum-katas/superposition/all-basis-vectors-two-qubits.md" は存在する
+
+## Scenario: AllBasisVectors_TwoQubits 標準解がある
+
+- Then リポジトリファイル "benchmarks/solutions/quantum-katas/superposition/all-basis-vectors-two-qubits.qni" は存在する
+
+## Scenario: AllBasisVectors_TwoQubits 標準解は合格する
+
+- When "qni benchmark run benchmarks/quantum-katas/superposition/all-basis-vectors-two-qubits.md benchmarks/solutions/quantum-katas/superposition/all-basis-vectors-two-qubits.qni" を実行
+- Then コマンドは成功
+
+## Scenario: AllBasisVectors_TwoQubits 標準解の合格が表示される
+
+- When "qni benchmark run benchmarks/quantum-katas/superposition/all-basis-vectors-two-qubits.md benchmarks/solutions/quantum-katas/superposition/all-basis-vectors-two-qubits.qni" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  PASS AllBasisVectors_TwoQubits
+  ```
+
 ## Scenario: BellState 課題ファイルがある
 
 - Then リポジトリファイル "benchmarks/quantum-katas/superposition/bell-state.md" は存在する
@@ -345,6 +389,14 @@ qni benchmark run で最小の合格判定を実行したい。
 
 - Then リポジトリファイル "docs/benchmark.md" は "qni benchmark run benchmarks/quantum-katas/superposition/bell-state.md benchmarks/solutions/quantum-katas/superposition/bell-state.qni" を含む
 
+## Scenario: MVP手順は MinusState 標準解の実行例を示す
+
+- Then リポジトリファイル "docs/benchmark.md" は "qni benchmark run benchmarks/quantum-katas/superposition/minus-state.md benchmarks/solutions/quantum-katas/superposition/minus-state.qni" を含む
+
+## Scenario: MVP手順は AllBasisVectors_TwoQubits 標準解の実行例を示す
+
+- Then リポジトリファイル "docs/benchmark.md" は "qni benchmark run benchmarks/quantum-katas/superposition/all-basis-vectors-two-qubits.md benchmarks/solutions/quantum-katas/superposition/all-basis-vectors-two-qubits.qni" を含む
+
 ## Scenario: MVP手順は不正解サンプルの実行例を示す
 
 - Then リポジトリファイル "docs/benchmark.md" は "qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/incorrect/quantum-katas/basic-gates/state-flip-wrong.qni" を含む
@@ -369,12 +421,14 @@ qni benchmark run で最小の合格判定を実行したい。
 
   ```text
   PASS benchmark suite
-  tasks: 5
-  passed: 5, failed: 0, disallowed: 0, error: 0
+  tasks: 7
+  passed: 7, failed: 0, disallowed: 0, error: 0
   - passed basic-gates/state-flip StateFlip
   - passed superposition/all-basis-vector-with-phase-flip-two-qubits AllBasisVectorWithPhaseFlip_TwoQubits
+  - passed superposition/all-basis-vectors-two-qubits AllBasisVectors_TwoQubits
   - passed superposition/all-basis-vectors-with-phases-two-qubits AllBasisVectorsWithPhases_TwoQubits
   - passed superposition/bell-state BellState
+  - passed superposition/minus-state MinusState
   - passed superposition/plus-state PlusState
   ```
 
@@ -388,8 +442,8 @@ qni benchmark run で最小の合格判定を実行したい。
     "status": "passed",
     "exitCode": 0,
     "summary": {
-      "total": 5,
-      "passed": 5,
+      "total": 7,
+      "passed": 7,
       "failed": 0,
       "disallowed": 0,
       "error": 0
@@ -424,6 +478,20 @@ qni benchmark run で最小の合格判定を実行したい。
         ]
       },
       {
+        "taskId": "superposition/all-basis-vectors-two-qubits",
+        "title": "AllBasisVectors_TwoQubits",
+        "task": "benchmarks/quantum-katas/superposition/all-basis-vectors-two-qubits.md",
+        "submission": "benchmarks/solutions/quantum-katas/superposition/all-basis-vectors-two-qubits.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ]
+      },
+      {
         "taskId": "superposition/all-basis-vectors-with-phases-two-qubits",
         "title": "AllBasisVectorsWithPhases_TwoQubits",
         "task": "benchmarks/quantum-katas/superposition/all-basis-vectors-with-phases-two-qubits.md",
@@ -447,6 +515,20 @@ qni benchmark run で最小の合格判定を実行したい。
         "checks": [
           {
             "type": "expect",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "taskId": "superposition/minus-state",
+        "title": "MinusState",
+        "task": "benchmarks/quantum-katas/superposition/minus-state.md",
+        "submission": "benchmarks/solutions/quantum-katas/superposition/minus-state.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "checks": [
+          {
+            "type": "run",
             "status": "passed"
           }
         ]
