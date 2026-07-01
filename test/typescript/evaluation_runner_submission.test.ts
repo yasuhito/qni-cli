@@ -1,24 +1,14 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { describe, it } from 'node:test';
 
 import { readBenchmarkSubmission } from '../../src/evaluation_runner/benchmark_submission';
+import { withTempDir } from './helpers/command';
 
 interface AllowedCommand {
   readonly argv: readonly string[];
   readonly source: string;
-}
-
-async function withTempDir<T>(callback: (dir: string) => Promise<T>): Promise<T> {
-  const dir = await mkdtemp(path.join(tmpdir(), 'qni-cli-evaluation-submission-'));
-
-  try {
-    return await callback(dir);
-  } finally {
-    await rm(dir, { force: true, recursive: true });
-  }
 }
 
 function allowedCommand(source: string, argv: readonly string[]): AllowedCommand {
