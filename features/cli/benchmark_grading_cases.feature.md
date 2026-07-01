@@ -40,10 +40,12 @@ qni-cli の評価ランナー利用者として
 
   checks と grading_cases を同時指定した不正な課題です。
   ```
+
 - Given 作業ディレクトリに "submission.qni" を作る:
 
   ```text
   qni add X --qubit 0 --step 0
   ```
+
 - When "qni benchmark run task.md submission.qni" を実行
 - Then 終了コードは 3

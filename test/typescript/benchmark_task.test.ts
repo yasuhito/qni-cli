@@ -185,6 +185,19 @@ describe('benchmark task frontmatter parser', () => {
     ], /grading_cases must list at least one case/u);
   });
 
+  it('rejects grading_cases that is not a list', async () => {
+    await assertInvalidTask([
+      'id: grading-cases/not-a-list',
+      'title: GradingCasesNotAList',
+      'source: test',
+      'difficulty: smoke',
+      'allowed_commands:',
+      '  - qni add',
+      'grading_cases:',
+      '  id: default'
+    ], /grading_cases must list at least one case/u);
+  });
+
   it('rejects duplicate grading case ids', async () => {
     await assertInvalidTask([
       'id: grading-cases/duplicate',
