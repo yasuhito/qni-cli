@@ -21,6 +21,7 @@ interface TempDirOptions {
 }
 
 type WriteCallback = (error?: Error | null) => void;
+type NonPromise<T> = T extends PromiseLike<unknown> ? never : T;
 
 const DEFAULT_TEMP_DIR_PREFIX = 'qni-cli-ts-';
 
@@ -37,10 +38,7 @@ export async function withTempDir<T>(
   }
 }
 
-export function captureProcessWrites<TCallback extends () => unknown>(
-  callback: ReturnType<TCallback> extends PromiseLike<unknown> ? never : TCallback
-): CapturedValue<ReturnType<TCallback>>;
-export function captureProcessWrites<T>(callback: () => T): CapturedValue<T> {
+export function captureProcessWrites<T>(callback: () => T & NonPromise<T>): CapturedValue<T> {
   let stdout = '';
   let stderr = '';
   const originalStdoutWrite = process.stdout.write;

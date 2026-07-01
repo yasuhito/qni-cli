@@ -5,6 +5,12 @@ import { describe, it } from 'node:test';
 
 import { captureProcessWrites, withTempDir } from './command';
 
+function assertCaptureProcessWritesRejectsAsyncCallbackType(): void {
+  // The helper must reject async callbacks during type checking, before runtime.
+  // @ts-expect-error captureProcessWrites only supports synchronous callbacks.
+  captureProcessWrites(async () => undefined);
+}
+
 describe('TypeScript command test helpers', () => {
   it('keeps temporary directories under tmpdir when prefix includes path segments', async () => {
     await withTempDir(
