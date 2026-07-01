@@ -20,6 +20,7 @@ interface CapturedValue<T> {
 }
 
 type UnsuccessfulResearchStatus = 'disallowed' | 'error' | 'failed';
+type StoredResearchStatus = UnsuccessfulResearchStatus | 'passed';
 
 const UNSUCCESSFUL_RESEARCH_TRIAL_CASES: readonly {
   readonly exitCode: number;
@@ -193,6 +194,80 @@ async function readJsonFile(filePath: string): Promise<Record<string, unknown>> 
   return JSON.parse(await readFile(filePath, 'utf8')) as Record<string, unknown>;
 }
 
+async function writeStoredResearchTrial(
+  dir: string,
+  id: string,
+  options: {
+    readonly status?: StoredResearchStatus;
+  } = {}
+): Promise<void> {
+  const status = options.status ?? 'passed';
+  const trialDir = path.join(dir, 'research', 'runs', id);
+
+  await mkdir(trialDir, { recursive: true });
+  await writeJsonFile(path.join(trialDir, 'metadata.json'), {
+    schemaVersion: 1,
+    id,
+    createdAt: createdAtForResearchTrialId(id),
+    collaborator: 'claude-sonnet-4',
+    benchmark: 'benchmarks/quantum-katas',
+    submissions: 'submissions',
+    prompt: 'prompt.md',
+    response: 'response.md',
+    result: 'result.json',
+    status
+  });
+  await writeJsonFile(path.join(trialDir, 'result.json'), {
+    status,
+    exitCode: researchStatusExitCode(status),
+    summary: {
+      total: 1,
+      passed: status === 'passed' ? 1 : 0,
+      failed: status === 'failed' ? 1 : 0,
+      disallowed: status === 'disallowed' ? 1 : 0,
+      error: status === 'error' ? 1 : 0
+    },
+    results: [
+      {
+        task: 'basic-gates/state-flip.md',
+        taskId: 'basic-gates/state-flip',
+        title: 'StateFlip',
+        submission: 'submissions/basic-gates/state-flip.qni',
+        status,
+        exitCode: researchStatusExitCode(status),
+        checks: [{ type: 'run', status: status === 'passed' ? 'passed' : 'failed' }]
+      }
+    ]
+  });
+}
+
+async function writeJsonFile(filePath: string, value: unknown): Promise<void> {
+  await writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`);
+}
+
+function createdAtForResearchTrialId(id: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2})(\d{2})(\d{2})Z/u.exec(id);
+
+  if (!match) {
+    return '2026-06-30T12:34:56.000Z';
+  }
+
+  return `${match[1]}-${match[2]}-${match[3]}T${match[4]}:${match[5]}:${match[6]}.000Z`;
+}
+
+function researchStatusExitCode(status: StoredResearchStatus): number {
+  switch (status) {
+    case 'passed':
+      return 0;
+    case 'failed':
+      return 1;
+    case 'disallowed':
+      return 2;
+    case 'error':
+      return 3;
+  }
+}
+
 function git(cwd: string, args: readonly string[]): string {
   return execFileSync('git', [...args], { cwd, encoding: 'utf8' }).trim();
 }
@@ -214,6 +289,110 @@ async function withFixedDateNow<T>(isoTimestamp: string, callback: () => Promise
 }
 
 describe('research command TypeScript route', () => {
+  it('prints an empty JSON research report when no trials exist', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, ['research', 'report', '--json']);
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stderr, '');
+      assert.deepStrictEqual(JSON.parse(result.stdout) as unknown, {
+        schemaVersion: 1,
+        trialSummary: {
+          passed: 0,
+          failed: 0,
+          disallowed: 0,
+          error: 0,
+          invalid: 0,
+          total: 0
+        },
+        taskSummary: {
+          passed: 0,
+          failed: 0,
+          disallowed: 0,
+          error: 0,
+          total: 0
+        },
+        trials: []
+      });
+    });
+  });
+
+  it('prints a JSON research report and exits with 1 when a trial is invalid', async () => {
+    await withTempDir(async (dir) => {
+      await writeStoredResearchTrial(dir, '2026-07-01T000001Z-passed');
+      await writeStoredResearchTrial(dir, 'broken-trial');
+
+      const result = captureDispatcherRun(dir, ['research', 'report', '--json']);
+
+      assert.equal(result.exitStatus, 1);
+      assert.equal(result.stderr, '');
+      assert.deepStrictEqual(JSON.parse(result.stdout) as unknown, {
+        schemaVersion: 1,
+        trialSummary: {
+          passed: 1,
+          failed: 0,
+          disallowed: 0,
+          error: 0,
+          invalid: 1,
+          total: 2
+        },
+        taskSummary: {
+          passed: 1,
+          failed: 0,
+          disallowed: 0,
+          error: 0,
+          total: 1
+        },
+        trials: [
+          {
+            id: '2026-07-01T000001Z-passed',
+            createdAt: '2026-07-01T00:00:01.000Z',
+            collaborator: 'claude-sonnet-4',
+            benchmark: 'benchmarks/quantum-katas',
+            status: 'passed',
+            summary: {
+              passed: 1,
+              failed: 0,
+              disallowed: 0,
+              error: 0,
+              total: 1
+            },
+            path: 'research/runs/2026-07-01T000001Z-passed'
+          },
+          {
+            id: 'broken-trial',
+            createdAt: null,
+            collaborator: null,
+            benchmark: null,
+            status: 'invalid',
+            summary: {
+              passed: 0,
+              failed: 0,
+              disallowed: 0,
+              error: 0,
+              total: 0
+            },
+            path: 'research/runs/broken-trial',
+            invalidReason: ['invalid research trial id: broken-trial']
+          }
+        ]
+      });
+    });
+  });
+
+  it('returns exit code 3 when the research runs path cannot be read as a directory', async () => {
+    await withTempDir(async (dir) => {
+      await mkdir(path.join(dir, 'research'), { recursive: true });
+      await writeFile(path.join(dir, 'research', 'runs'), 'not a directory\n');
+
+      const result = captureDispatcherRun(dir, ['research', 'report', '--json']);
+
+      assert.equal(result.exitStatus, 3);
+      assert.equal(result.stdout, '');
+      assert.match(result.stderr, /Research runs path is not a directory: research\/runs/u);
+    });
+  });
+
   it('rejects unsafe research trial slugs before creating a trial directory', async () => {
     for (const slug of ['Smoke_Claude', 'smoke--claude', 'smoke-', '-smoke', '../escape']) {
       await withTempDir(async (dir) => {

@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, it } from 'node:test';
 
-import { readResearchTrials, type ResearchTrial } from '../../src/research_report';
+import { buildResearchReport, readResearchTrials, type ResearchTrial } from '../../src/research_report';
 
 async function withTempDir<T>(callback: (dir: string) => Promise<T>): Promise<T> {
   const dir = await mkdtemp(path.join(tmpdir(), 'qni-cli-research-report-'));
@@ -365,6 +365,105 @@ describe('research report reader', () => {
 
       assert.equal(await readFile(metadataPath, 'utf8'), metadataBefore);
       assert.equal(await readFile(resultPath, 'utf8'), resultBefore);
+    });
+  });
+});
+
+describe('research report builder', () => {
+  it('builds an empty report from an empty reader result', () => {
+    assert.deepStrictEqual(buildResearchReport([]), {
+      schemaVersion: 1,
+      trialSummary: {
+        passed: 0,
+        failed: 0,
+        disallowed: 0,
+        error: 0,
+        invalid: 0,
+        total: 0
+      },
+      taskSummary: {
+        passed: 0,
+        failed: 0,
+        disallowed: 0,
+        error: 0,
+        total: 0
+      },
+      trials: []
+    });
+  });
+
+  it('aggregates valid and invalid research trial reader results', async () => {
+    await withTempDir(async (dir) => {
+      await writeResearchTrial(dir, '2026-07-01T000001Z-passed');
+      await writeResearchTrial(dir, '2026-06-30T123456Z-failed', { status: 'failed' });
+      await writeResearchTrial(dir, 'broken-trial');
+
+      assert.deepStrictEqual(buildResearchReport(readResearchTrials({ cwd: dir })), {
+        schemaVersion: 1,
+        trialSummary: {
+          passed: 1,
+          failed: 1,
+          disallowed: 0,
+          error: 0,
+          invalid: 1,
+          total: 3
+        },
+        taskSummary: {
+          passed: 1,
+          failed: 1,
+          disallowed: 0,
+          error: 0,
+          total: 2
+        },
+        trials: [
+          {
+            id: '2026-07-01T000001Z-passed',
+            createdAt: '2026-07-01T00:00:01.000Z',
+            collaborator: 'claude-sonnet-4',
+            benchmark: 'benchmarks/quantum-katas',
+            status: 'passed',
+            summary: {
+              passed: 1,
+              failed: 0,
+              disallowed: 0,
+              error: 0,
+              total: 1
+            },
+            path: 'research/runs/2026-07-01T000001Z-passed'
+          },
+          {
+            id: '2026-06-30T123456Z-failed',
+            createdAt: '2026-06-30T12:34:56.000Z',
+            collaborator: 'claude-sonnet-4',
+            benchmark: 'benchmarks/quantum-katas',
+            status: 'failed',
+            summary: {
+              passed: 0,
+              failed: 1,
+              disallowed: 0,
+              error: 0,
+              total: 1
+            },
+            path: 'research/runs/2026-06-30T123456Z-failed'
+          },
+          {
+            id: 'broken-trial',
+            createdAt: null,
+            collaborator: null,
+            benchmark: null,
+            status: 'invalid',
+            summary: {
+              passed: 0,
+              failed: 0,
+              disallowed: 0,
+              error: 0,
+              total: 0
+            },
+            path: 'research/runs/broken-trial',
+            invalidReason: ['invalid research trial id: broken-trial']
+          }
+        ]
+      });
     });
   });
 });

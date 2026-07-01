@@ -7,6 +7,45 @@ export interface ReadResearchTrialsOptions {
   readonly cwd: string;
 }
 
+export interface ResearchReport {
+  readonly schemaVersion: 1;
+  readonly taskSummary: BenchmarkSuiteSummary;
+  readonly trials: readonly ResearchReportTrial[];
+  readonly trialSummary: ResearchReportTrialSummary;
+}
+
+export type ResearchReportTrial = ResearchReportValidTrial | ResearchReportInvalidTrial;
+
+export interface ResearchReportValidTrial {
+  readonly benchmark: string;
+  readonly collaborator: string;
+  readonly createdAt: string;
+  readonly id: string;
+  readonly path: string;
+  readonly status: BenchmarkStatus;
+  readonly summary: BenchmarkSuiteSummary;
+}
+
+export interface ResearchReportInvalidTrial {
+  readonly benchmark: null;
+  readonly collaborator: null;
+  readonly createdAt: null;
+  readonly id: string;
+  readonly invalidReason: readonly string[];
+  readonly path: string;
+  readonly status: 'invalid';
+  readonly summary: BenchmarkSuiteSummary;
+}
+
+export interface ResearchReportTrialSummary {
+  readonly disallowed: number;
+  readonly error: number;
+  readonly failed: number;
+  readonly invalid: number;
+  readonly passed: number;
+  readonly total: number;
+}
+
 export type ResearchTrial = ValidResearchTrial | InvalidResearchTrial;
 
 export interface ValidResearchTrial {
@@ -52,17 +91,75 @@ const RESEARCH_RUNS_PATH = path.join('research', 'runs');
 const RESEARCH_TRIAL_TIMESTAMP_PATTERN = /^(\d{4}-\d{2}-\d{2}T\d{6}Z)/u;
 const RESEARCH_TRIAL_ID_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{6}Z-[a-z0-9]+(?:-[a-z0-9]+)*$/u;
 
+export function buildResearchReport(trials: readonly ResearchTrial[]): ResearchReport {
+  const trialSummary = emptyResearchReportTrialSummary();
+  const taskSummary = emptyBenchmarkSuiteSummary();
+
+  for (const trial of trials) {
+    addTrialStatus(trialSummary, trial.status);
+
+    if (trial.kind === 'valid') {
+      addBenchmarkSuiteSummary(taskSummary, trial.summary);
+    }
+  }
+
+  return {
+    schemaVersion: 1,
+    trialSummary,
+    taskSummary,
+    trials: trials.map((trial) => researchReportTrial(trial))
+  };
+}
+
 export function readResearchTrials(options: ReadResearchTrialsOptions): ResearchTrial[] {
+  try {
+    return readResearchTrialsFromRunsDir(options, { strict: false });
+  } catch {
+    return [];
+  }
+}
+
+export function readResearchTrialsForReport(options: ReadResearchTrialsOptions): ResearchTrial[] {
+  return readResearchTrialsFromRunsDir(options, { strict: true });
+}
+
+function readResearchTrialsFromRunsDir(
+  options: ReadResearchTrialsOptions,
+  readOptions: { readonly strict: boolean }
+): ResearchTrial[] {
   const runsDir = path.join(options.cwd, RESEARCH_RUNS_PATH);
   let entries: Dirent[];
+  let runsDirStats: ReturnType<typeof statSync>;
 
   try {
-    if (!statSync(runsDir).isDirectory()) {
+    runsDirStats = statSync(runsDir);
+  } catch (error) {
+    if (isMissingPathError(error)) {
       return [];
     }
 
+    if (readOptions.strict) {
+      throw new Error(`Research runs path could not be read: ${RESEARCH_RUNS_PATH}`);
+    }
+
+    return [];
+  }
+
+  if (!runsDirStats.isDirectory()) {
+    if (readOptions.strict) {
+      throw new Error(`Research runs path is not a directory: ${RESEARCH_RUNS_PATH}`);
+    }
+
+    return [];
+  }
+
+  try {
     entries = readdirSync(runsDir, { withFileTypes: true });
   } catch {
+    if (readOptions.strict) {
+      throw new Error(`Research runs path could not be read: ${RESEARCH_RUNS_PATH}`);
+    }
+
     return [];
   }
 
@@ -70,6 +167,100 @@ export function readResearchTrials(options: ReadResearchTrialsOptions): Research
     .filter((entry) => entry.isDirectory())
     .map((entry) => readResearchTrial(options.cwd, path.join(runsDir, entry.name), entry.name))
     .sort(compareResearchTrials);
+}
+
+function emptyResearchReportTrialSummary(): {
+  disallowed: number;
+  error: number;
+  failed: number;
+  invalid: number;
+  passed: number;
+  total: number;
+} {
+  return {
+    passed: 0,
+    failed: 0,
+    disallowed: 0,
+    error: 0,
+    invalid: 0,
+    total: 0
+  };
+}
+
+function emptyBenchmarkSuiteSummary(): {
+  disallowed: number;
+  error: number;
+  failed: number;
+  passed: number;
+  total: number;
+} {
+  return {
+    passed: 0,
+    failed: 0,
+    disallowed: 0,
+    error: 0,
+    total: 0
+  };
+}
+
+function addTrialStatus(summary: {
+  disallowed: number;
+  error: number;
+  failed: number;
+  invalid: number;
+  passed: number;
+  total: number;
+}, status: BenchmarkStatus | 'invalid'): void {
+  summary[status] += 1;
+  summary.total += 1;
+}
+
+function addBenchmarkSuiteSummary(
+  target: {
+    disallowed: number;
+    error: number;
+    failed: number;
+    passed: number;
+    total: number;
+  },
+  source: BenchmarkSuiteSummary
+): void {
+  target.passed += source.passed;
+  target.failed += source.failed;
+  target.disallowed += source.disallowed;
+  target.error += source.error;
+  target.total += source.total;
+}
+
+function researchReportTrial(trial: ResearchTrial): ResearchReportTrial {
+  if (trial.kind === 'invalid') {
+    return {
+      id: trial.id,
+      createdAt: null,
+      collaborator: null,
+      benchmark: null,
+      status: 'invalid',
+      summary: emptyBenchmarkSuiteSummary(),
+      path: trial.path,
+      invalidReason: trial.invalidReason
+    };
+  }
+
+  return {
+    id: trial.id,
+    createdAt: trial.createdAt,
+    collaborator: trial.collaborator,
+    benchmark: trial.benchmark,
+    status: trial.status,
+    summary: {
+      passed: trial.summary.passed,
+      failed: trial.summary.failed,
+      disallowed: trial.summary.disallowed,
+      error: trial.summary.error,
+      total: trial.summary.total
+    },
+    path: trial.path
+  };
 }
 
 function readResearchTrial(cwd: string, trialDir: string, id: string): ResearchTrial {
@@ -285,6 +476,14 @@ function isBenchmarkStatus(value: unknown): value is BenchmarkStatus {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isMissingPathError(error: unknown): boolean {
+  return isErrnoException(error) && error.code === 'ENOENT';
+}
+
+function isErrnoException(error: unknown): error is NodeJS.ErrnoException {
+  return error instanceof Error && 'code' in error;
 }
 
 function invalidReasonsForTrialId(id: string): string[] {

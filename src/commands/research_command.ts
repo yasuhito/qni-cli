@@ -3,6 +3,7 @@ import path = require('node:path');
 
 import type { CommandHandlerContext } from '../dispatcher';
 import { gradeBenchmarkSuite, type BenchmarkSuiteGradingResult } from '../evaluation_runner';
+import { buildResearchReport, readResearchTrialsForReport } from '../research_report';
 
 interface ResearchRecordRequest {
   readonly benchmark: string;
@@ -82,6 +83,10 @@ export function runResearchCommand(argv: string[], context: CommandHandlerContex
     return 0;
   }
 
+  if (isResearchReportJsonRequest(argv)) {
+    return runResearchReportJson(context);
+  }
+
   const request = parseResearchRecordRequest(argv);
 
   if (!request) {
@@ -91,6 +96,22 @@ export function runResearchCommand(argv: string[], context: CommandHandlerContex
 
   try {
     return recordResearchTrial(request, context);
+  } catch (error) {
+    process.stderr.write(`${errorMessage(error)}\n`);
+    return 3;
+  }
+}
+
+function isResearchReportJsonRequest(argv: readonly string[]): boolean {
+  return argv[0] === 'research' && argv[1] === 'report' && argv.length === 3 && argv[2] === '--json';
+}
+
+function runResearchReportJson(context: CommandHandlerContext): number {
+  try {
+    const report = buildResearchReport(readResearchTrialsForReport({ cwd: context.cwd }));
+
+    process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
+    return report.trialSummary.invalid > 0 ? 1 : 0;
   } catch (error) {
     process.stderr.write(`${errorMessage(error)}\n`);
     return 3;
