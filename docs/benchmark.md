@@ -14,7 +14,7 @@
 
 提出物には回路を作るコマンドだけを書きます。`qni run` や `qni expect` などの検証コマンドは書きません。
 
-## 5問の標準解を実行する
+## 7問の標準解を実行する
 
 ### StateFlip
 
@@ -47,6 +47,22 @@ qni benchmark run benchmarks/quantum-katas/superposition/all-basis-vectors-two-q
 ```
 
 期待される結果は `PASS AllBasisVectors_TwoQubits` です。
+
+### AllBasisVectorWithPhaseFlip_TwoQubits
+
+```bash
+qni benchmark run benchmarks/quantum-katas/superposition/all-basis-vector-with-phase-flip-two-qubits.md benchmarks/solutions/quantum-katas/superposition/all-basis-vector-with-phase-flip-two-qubits.qni
+```
+
+期待される結果は `PASS AllBasisVectorWithPhaseFlip_TwoQubits` です。
+
+### AllBasisVectorsWithPhases_TwoQubits
+
+```bash
+qni benchmark run benchmarks/quantum-katas/superposition/all-basis-vectors-with-phases-two-qubits.md benchmarks/solutions/quantum-katas/superposition/all-basis-vectors-with-phases-two-qubits.qni
+```
+
+期待される結果は `PASS AllBasisVectorsWithPhases_TwoQubits` です。
 
 ### BellState
 
