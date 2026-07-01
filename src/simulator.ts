@@ -169,13 +169,21 @@ class StateVector {
   }
 
   applySwap(firstQubit: number, secondQubit: number): StateVector {
+    return this.applyControlledSwap([], firstQubit, secondQubit);
+  }
+
+  applyControlledSwap(controls: readonly number[], firstQubit: number, secondQubit: number): StateVector {
     const firstMask = bitMask(this.qubits, firstQubit);
     const secondMask = bitMask(this.qubits, secondQubit);
+    const controlMasks = controls.map((control) => bitMask(this.qubits, control));
     const result = Array.from({ length: this.amplitudes.length }, () => new Complex(0));
 
     this.amplitudes.forEach((amplitude, index) => {
+      const inactiveControl = controlMasks.some((controlMask) => !bitSet(index, controlMask));
       const destination =
-        bitSet(index, firstMask) === bitSet(index, secondMask) ? index : index ^ firstMask ^ secondMask;
+        inactiveControl || bitSet(index, firstMask) === bitSet(index, secondMask)
+          ? index
+          : index ^ firstMask ^ secondMask;
       result[destination] = amplitude;
     });
 
@@ -302,7 +310,11 @@ class StepOperation {
     }
 
     const swapQubits = this.slotIndices(SWAP_SYMBOL);
-    return stateVector.applySwap(swapQubits[0] ?? 0, swapQubits[1] ?? 0);
+    return stateVector.applyControlledSwap(
+      this.slotIndices(CONTROL_SYMBOL),
+      swapQubits[0] ?? 0,
+      swapQubits[1] ?? 0
+    );
   }
 
   private applyControlled(stateVector: StateVector): StateVector {
@@ -346,7 +358,10 @@ class StepOperation {
   }
 
   private validSwapStep(): boolean {
-    return this.slotIndices(SWAP_SYMBOL).length === 2 && this.col.every((slot) => slot === EMPTY_SLOT || slot === SWAP_SYMBOL);
+    return (
+      this.slotIndices(SWAP_SYMBOL).length === 2 &&
+      this.col.every((slot) => slot === EMPTY_SLOT || slot === CONTROL_SYMBOL || slot === SWAP_SYMBOL)
+    );
   }
 
   private slotIndices(symbol: string): number[] {

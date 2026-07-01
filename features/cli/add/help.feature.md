@@ -20,6 +20,7 @@ qni-cli の利用者として、add コマンドの使い方を確認するた�
     qni add ANGLED_GATE --angle=ANGLE --qubit=N --step=N
     qni add ANGLED_GATE --angle=ANGLE --control=CONTROL --qubit=N --step=N
     qni add SWAP --qubit=N,N --step=N
+    qni add SWAP --control=CONTROL --qubit=N,N --step=N
 
   Overview:
     Add a gate to ./circuit.json.
@@ -30,6 +31,7 @@ qni-cli の利用者として、add コマンドの使い方を確認するた�
     CNOT is written as qni add X --control 0 --qubit 1 --step 0.
     ANGLED_GATE can be P, Rx, Ry, or Rz and is saved as GATE(angle).
     SWAP uses exactly two target qubits and writes "Swap" to both slots.
+    With --control, SWAP becomes controlled-SWAP and writes "•" to each control slot.
 
   Options:
     --step=N             # 0-based step index
@@ -48,6 +50,7 @@ qni-cli の利用者として、add コマンドの使い方を確認するた�
     qni add Rx --angle π/2 --qubit 0 --step 2
     qni add Rz --angle pi/4 --control 0 --qubit 1 --step 3
     qni add SWAP --qubit 0,1 --step 0
+    qni add SWAP --control 0 --qubit 1,2 --step 0
   ```
 
 ## Scenario: qni add --help は成功する
@@ -67,6 +70,7 @@ qni-cli の利用者として、add コマンドの使い方を確認するた�
     qni add ANGLED_GATE --angle=ANGLE --qubit=N --step=N
     qni add ANGLED_GATE --angle=ANGLE --control=CONTROL --qubit=N --step=N
     qni add SWAP --qubit=N,N --step=N
+    qni add SWAP --control=CONTROL --qubit=N,N --step=N
 
   Overview:
     Add a gate to ./circuit.json.
@@ -77,6 +81,7 @@ qni-cli の利用者として、add コマンドの使い方を確認するた�
     CNOT is written as qni add X --control 0 --qubit 1 --step 0.
     ANGLED_GATE can be P, Rx, Ry, or Rz and is saved as GATE(angle).
     SWAP uses exactly two target qubits and writes "Swap" to both slots.
+    With --control, SWAP becomes controlled-SWAP and writes "•" to each control slot.
 
   Options:
     --step=N             # 0-based step index
@@ -95,4 +100,5 @@ qni-cli の利用者として、add コマンドの使い方を確認するた�
     qni add Rx --angle π/2 --qubit 0 --step 2
     qni add Rz --angle pi/4 --control 0 --qubit 1 --step 3
     qni add SWAP --qubit 0,1 --step 0
+    qni add SWAP --control 0 --qubit 1,2 --step 0
   ```

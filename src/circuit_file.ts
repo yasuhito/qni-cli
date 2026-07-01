@@ -75,20 +75,25 @@ export class CircuitFile {
   }
 
   addControlledGate(gate: string, step: number, controls: number[], target: number): void {
-    validateControls(controls, target);
+    validateControls(controls, [target]);
     this.addPlacement(step, new Map([...controls.map((control) => [control, CONTROL_SYMBOL] as const), [target, gate]]));
   }
 
   addSwapGate(step: number, targets: number[]): void {
-    if (targets.length !== 2) {
-      throw new CircuitFileError('SWAP requires exactly 2 target qubits');
-    }
-
-    if (new Set(targets).size !== targets.length) {
-      throw new CircuitFileError('SWAP target qubits must be different');
-    }
-
+    validateSwapTargets(targets);
     this.addPlacement(step, new Map(targets.map((target) => [target, SWAP_SYMBOL] as const)));
+  }
+
+  addControlledSwapGate(step: number, controls: number[], targets: number[]): void {
+    validateSwapTargets(targets);
+    validateControls(controls, targets);
+    this.addPlacement(
+      step,
+      new Map([
+        ...controls.map((control) => [control, CONTROL_SYMBOL] as const),
+        ...targets.map((target) => [target, SWAP_SYMBOL] as const)
+      ])
+    );
   }
 
   initialStateText(): string {
@@ -234,6 +239,16 @@ export class CircuitFile {
   }
 }
 
+function validateSwapTargets(targets: number[]): void {
+  if (targets.length !== 2) {
+    throw new CircuitFileError('SWAP requires exactly 2 target qubits');
+  }
+
+  if (new Set(targets).size !== targets.length) {
+    throw new CircuitFileError('SWAP target qubits must be different');
+  }
+}
+
 function emptyCircuit(step: number, qubit: number): CircuitData {
   const qubits = qubit + 1;
 
@@ -271,7 +286,7 @@ function ensureAddSlotAvailable(circuit: CircuitData, step: number, qubit: numbe
   }
 }
 
-function validateControls(controls: number[], target: number): void {
+function validateControls(controls: number[], targets: number[]): void {
   if (controls.length === 0) {
     throw new CircuitFileError('control must not be empty');
   }
@@ -280,7 +295,7 @@ function validateControls(controls: number[], target: number): void {
     throw new CircuitFileError('control must not contain duplicates');
   }
 
-  if (controls.includes(target)) {
+  if (controls.some((control) => targets.includes(control))) {
     throw new CircuitFileError('control and target must be different');
   }
 }
@@ -301,6 +316,10 @@ function removableQubits(
   step: number,
   qubit: number
 ): number[] {
+  if (controlledSwapSlot(col, selectedSlot)) {
+    return controlledSwapQubits(col, step);
+  }
+
   if (selectedSlot === SWAP_SYMBOL) {
     return swapQubits(col, step);
   }
@@ -310,6 +329,25 @@ function removableQubits(
   }
 
   return [qubit];
+}
+
+function controlledSwapSlot(col: unknown[], selectedSlot: unknown): boolean {
+  return (
+    col.includes(CONTROL_SYMBOL) &&
+    col.includes(SWAP_SYMBOL) &&
+    (selectedSlot === CONTROL_SYMBOL || selectedSlot === SWAP_SYMBOL)
+  );
+}
+
+function controlledSwapQubits(col: unknown[], step: number): number[] {
+  const controls = slotIndices(col, CONTROL_SYMBOL);
+  const swaps = swapQubits(col, step);
+
+  if (!col.every((slot) => slot === EMPTY_SLOT || slot === CONTROL_SYMBOL || slot === SWAP_SYMBOL)) {
+    throw new CircuitFileError(`unsupported controlled swap step: cols[${step}] = ${JSON.stringify(col)}`);
+  }
+
+  return [...controls, ...swaps];
 }
 
 function controlledSlot(col: unknown[], selectedSlot: unknown, qubit: number): boolean {
