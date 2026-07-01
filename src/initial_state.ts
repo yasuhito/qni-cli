@@ -136,6 +136,15 @@ function parseTerm(rawValue: string): InitialStateTerm {
 
 function specialInitialState(rawValue: unknown): InitialStateData | undefined {
   const text = String(rawValue).trim();
+  const computationalBasis = computationalBasisShorthand(text);
+
+  if (computationalBasis) {
+    return {
+      format: FORMAT,
+      terms: [{ basis: computationalBasis, coefficient: '1' }]
+    };
+  }
+
   const oneQubitCoefficient = ONE_QUBIT_SPECIAL_STATES.get(text);
 
   if (oneQubitCoefficient) {
@@ -158,6 +167,12 @@ function specialInitialState(rawValue: unknown): InitialStateData | undefined {
   }
 
   return undefined;
+}
+
+function computationalBasisShorthand(text: string): string | undefined {
+  const match = /^\|(?<basis>[01]+)>$/u.exec(text);
+
+  return match?.groups?.basis;
 }
 
 function normalizedText(rawValue: unknown): string {

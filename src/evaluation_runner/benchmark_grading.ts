@@ -6,9 +6,13 @@ import type { CommandHandler, CommandHandlerContext } from '../dispatcher';
 import { runAddCommand } from '../commands/add_command';
 import { runExpectCommand } from '../commands/expect_command';
 import { runRunCommand } from '../commands/run_command';
+import { runStateCommand } from '../commands/state_command';
 import {
   loadBenchmarkTask,
   type BenchmarkCheck,
+  type BenchmarkChecks,
+  type BenchmarkGradingCase,
+  type BenchmarkSetupCommand,
   type BenchmarkTask,
   type ComplexAmplitude,
   type ExpectedAmplitude,
@@ -30,6 +34,11 @@ interface ExpectedStateVector {
 interface BasisMetadata {
   readonly index: number;
   readonly vectorLength: number;
+}
+
+interface BenchmarkCheckContext {
+  readonly checks: BenchmarkChecks;
+  readonly taskId: string;
 }
 
 interface QniCommandResult {
@@ -161,7 +170,8 @@ class BenchmarkError extends Error {}
 const QNI_COMMAND_HANDLERS = new Map<string, CommandHandler>([
   ['add', runAddCommand],
   ['expect', runExpectCommand],
-  ['run', runRunCommand]
+  ['run', runRunCommand],
+  ['state', runStateCommand]
 ]);
 const MAX_FAILED_AMPLITUDE_DETAILS = 16;
 const MAX_FAILED_EXPECTATION_DETAILS = 16;
@@ -283,16 +293,37 @@ function evaluateBenchmark(options: {
     };
   }
 
+  const checks = options.task.gradingCases.flatMap((gradingCase) => evaluateGradingCase({
+    context: options.context,
+    gradingCase,
+    submissionCommands: submission.commands,
+    task: options.task
+  }));
+
+  return {
+    checks,
+    status: checks.every((check) => check.status === 'passed') ? 'passed' : 'failed'
+  };
+}
+
+function evaluateGradingCase(options: {
+  readonly context: CommandHandlerContext;
+  readonly gradingCase: BenchmarkGradingCase;
+  readonly submissionCommands: readonly SubmissionCommand[];
+  readonly task: BenchmarkTask;
+}): BenchmarkCheckResult[] {
   const workDir = mkdtempSync(path.join(tmpdir(), 'qni-benchmark-'));
 
   try {
-    runSubmission(submission.commands, workDir, options.context);
-    const checks = options.task.checks.items.map((check) => runBenchmarkCheck(check, options.task, workDir, options.context));
+    runSetupCommands(options.gradingCase, workDir, options.context);
+    runSubmission(options.submissionCommands, workDir, options.context);
 
-    return {
-      checks,
-      status: checks.every((check) => check.status === 'passed') ? 'passed' : 'failed'
+    const checkContext: BenchmarkCheckContext = {
+      checks: options.gradingCase.checks,
+      taskId: options.task.id
     };
+
+    return options.gradingCase.checks.items.map((check) => runBenchmarkCheck(check, checkContext, workDir, options.context));
   } finally {
     rmSync(workDir, { force: true, recursive: true });
   }
@@ -469,35 +500,61 @@ function runSubmission(commands: readonly SubmissionCommand[], workDir: string, 
   }
 }
 
+function runSetupCommands(
+  gradingCase: BenchmarkGradingCase,
+  workDir: string,
+  context: CommandHandlerContext
+): void {
+  for (const command of gradingCase.setupCommands) {
+    runSetupCommand(command, gradingCase, workDir, context);
+  }
+}
+
+function runSetupCommand(
+  command: BenchmarkSetupCommand,
+  gradingCase: BenchmarkGradingCase,
+  workDir: string,
+  context: CommandHandlerContext
+): void {
+  const result = runQni(command.argv, workDir, context);
+
+  if (result.exitStatus !== 0) {
+    throw new BenchmarkError([
+      `setup command failed in grading case ${gradingCase.id}: ${command.source}`,
+      result.stderr.trimEnd()
+    ].filter(Boolean).join('\n'));
+  }
+}
+
 function runBenchmarkCheck(
   check: BenchmarkCheck,
-  task: BenchmarkTask,
+  checkContext: BenchmarkCheckContext,
   workDir: string,
   context: CommandHandlerContext
 ): BenchmarkCheckResult {
   switch (check.type) {
     case 'expect':
-      return runExpectCheck(check, task, workDir, context);
+      return runExpectCheck(check, checkContext, workDir, context);
     case 'run':
-      return runRunCheck(check, task, workDir, context);
+      return runRunCheck(check, checkContext, workDir, context);
   }
 }
 
 function runRunCheck(
   check: RunCheck,
-  task: BenchmarkTask,
+  checkContext: BenchmarkCheckContext,
   workDir: string,
   context: CommandHandlerContext
 ): RunCheckResult {
   const result = runQni(['run'], workDir, context);
 
   if (result.exitStatus !== 0) {
-    throw new BenchmarkError(`run check failed to execute for ${task.id}: ${result.stderr.trimEnd()}`);
+    throw new BenchmarkError(`run check failed to execute for ${checkContext.taskId}: ${result.stderr.trimEnd()}`);
   }
 
   const actual = parseStateVector(result.stdout);
   const expected = expectedStateVector(check.expected);
-  const mismatches = stateVectorMismatchSummary(actual, expected, task.checks.tolerance);
+  const mismatches = stateVectorMismatchSummary(actual, expected, checkContext.checks.tolerance);
 
   return {
     mismatches,
@@ -508,18 +565,18 @@ function runRunCheck(
 
 function runExpectCheck(
   check: ExpectCheck,
-  task: BenchmarkTask,
+  checkContext: BenchmarkCheckContext,
   workDir: string,
   context: CommandHandlerContext
 ): ExpectCheckResult {
   const result = runQni(['expect', ...check.expected.map((item) => item.pauli)], workDir, context);
 
   if (result.exitStatus !== 0) {
-    throw new BenchmarkError(`expect check failed to execute for ${task.id}: ${result.stderr.trimEnd()}`);
+    throw new BenchmarkError(`expect check failed to execute for ${checkContext.taskId}: ${result.stderr.trimEnd()}`);
   }
 
   const actual = parseExpectationValues(result.stdout);
-  const mismatches = expectationMismatchSummary(actual, check.expected, task.checks.tolerance);
+  const mismatches = expectationMismatchSummary(actual, check.expected, checkContext.checks.tolerance);
 
   return {
     mismatches,
