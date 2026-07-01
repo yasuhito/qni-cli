@@ -402,8 +402,8 @@ describe('evaluation runner public entrypoints', () => {
       assert.equal(captured.value.status, 'passed');
       assert.equal(captured.value.exitCode, 0);
       assert.deepStrictEqual(captured.value.summary, {
-        total: 9,
-        passed: 9,
+        total: 14,
+        passed: 14,
         failed: 0,
         disallowed: 0,
         error: 0
@@ -428,10 +428,15 @@ describe('evaluation runner public entrypoints', () => {
       assert.equal(output.exitCode, 0);
       assert.equal(output.humanOutput, [
         'PASS benchmark suite',
-        'tasks: 9',
-        'passed: 9, failed: 0, disallowed: 0, error: 0',
+        'tasks: 14',
+        'passed: 14, failed: 0, disallowed: 0, error: 0',
         '- passed basic-gates/basis-change BasisChange',
         '- passed basic-gates/state-flip StateFlip',
+        '- passed basic-gates/toffoli-gate ToffoliGate',
+        '- passed basic-gates/two-qubit-gate-1 TwoQubitGate1',
+        '- passed basic-gates/two-qubit-gate-2 TwoQubitGate2',
+        '- passed basic-gates/two-qubit-gate-3 TwoQubitGate3',
+        '- passed basic-gates/two-qubit-gate-4 TwoQubitGate4',
         '- passed superposition/all-basis-vector-with-phase-flip-two-qubits AllBasisVectorWithPhaseFlip_TwoQubits',
         '- passed superposition/all-basis-vectors-two-qubits AllBasisVectors_TwoQubits',
         '- passed superposition/all-basis-vectors-with-phases-two-qubits AllBasisVectorsWithPhases_TwoQubits',
@@ -443,8 +448,8 @@ describe('evaluation runner public entrypoints', () => {
       ].join('\n'));
       assert.equal(output.jsonOutput.status, 'passed');
       assert.deepStrictEqual(output.jsonOutput.summary, {
-        total: 9,
-        passed: 9,
+        total: 14,
+        passed: 14,
         failed: 0,
         disallowed: 0,
         error: 0

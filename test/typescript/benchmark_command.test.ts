@@ -800,8 +800,8 @@ describe('benchmark command TypeScript route', () => {
       assert.equal(captured.value.status, 'passed');
       assert.equal(captured.value.exitCode, 0);
       assert.deepStrictEqual(captured.value.summary, {
-        total: 9,
-        passed: 9,
+        total: 14,
+        passed: 14,
         failed: 0,
         disallowed: 0,
         error: 0
@@ -826,6 +826,60 @@ describe('benchmark command TypeScript route', () => {
           status: 'passed',
           exitCode: 0,
           checks: [{ type: 'run', status: 'passed' }]
+        },
+        {
+          taskId: 'basic-gates/toffoli-gate',
+          status: 'passed',
+          exitCode: 0,
+          checks: [
+            { type: 'run', status: 'passed' },
+            { type: 'run', status: 'passed' },
+            { type: 'run', status: 'passed' },
+            { type: 'run', status: 'passed' },
+            { type: 'run', status: 'passed' }
+          ]
+        },
+        {
+          taskId: 'basic-gates/two-qubit-gate-1',
+          status: 'passed',
+          exitCode: 0,
+          checks: [
+            { type: 'run', status: 'passed' },
+            { type: 'run', status: 'passed' },
+            { type: 'run', status: 'passed' }
+          ]
+        },
+        {
+          taskId: 'basic-gates/two-qubit-gate-2',
+          status: 'passed',
+          exitCode: 0,
+          checks: [
+            { type: 'run', status: 'passed' },
+            { type: 'run', status: 'passed' },
+            { type: 'run', status: 'passed' }
+          ]
+        },
+        {
+          taskId: 'basic-gates/two-qubit-gate-3',
+          status: 'passed',
+          exitCode: 0,
+          checks: [
+            { type: 'run', status: 'passed' },
+            { type: 'run', status: 'passed' },
+            { type: 'run', status: 'passed' },
+            { type: 'run', status: 'passed' }
+          ]
+        },
+        {
+          taskId: 'basic-gates/two-qubit-gate-4',
+          status: 'passed',
+          exitCode: 0,
+          checks: [
+            { type: 'run', status: 'passed' },
+            { type: 'run', status: 'passed' },
+            { type: 'run', status: 'passed' },
+            { type: 'run', status: 'passed' }
+          ]
         },
         {
           taskId: 'superposition/all-basis-vector-with-phase-flip-two-qubits',
@@ -885,10 +939,15 @@ describe('benchmark command TypeScript route', () => {
       assert.equal(result.exitStatus, 0, result.stderr);
       assert.equal(result.stdout, [
         'PASS benchmark suite',
-        'tasks: 9',
-        'passed: 9, failed: 0, disallowed: 0, error: 0',
+        'tasks: 14',
+        'passed: 14, failed: 0, disallowed: 0, error: 0',
         '- passed basic-gates/basis-change BasisChange',
         '- passed basic-gates/state-flip StateFlip',
+        '- passed basic-gates/toffoli-gate ToffoliGate',
+        '- passed basic-gates/two-qubit-gate-1 TwoQubitGate1',
+        '- passed basic-gates/two-qubit-gate-2 TwoQubitGate2',
+        '- passed basic-gates/two-qubit-gate-3 TwoQubitGate3',
+        '- passed basic-gates/two-qubit-gate-4 TwoQubitGate4',
         '- passed superposition/all-basis-vector-with-phase-flip-two-qubits AllBasisVectorWithPhaseFlip_TwoQubits',
         '- passed superposition/all-basis-vectors-two-qubits AllBasisVectors_TwoQubits',
         '- passed superposition/all-basis-vectors-with-phases-two-qubits AllBasisVectorsWithPhases_TwoQubits',
@@ -918,8 +977,8 @@ describe('benchmark command TypeScript route', () => {
         status: 'passed',
         exitCode: 0,
         summary: {
-          total: 9,
-          passed: 9,
+          total: 14,
+          passed: 14,
           failed: 0,
           disallowed: 0,
           error: 0
@@ -957,6 +1016,180 @@ describe('benchmark command TypeScript route', () => {
             status: 'passed',
             exitCode: 0,
             checks: [{ type: 'run', status: 'passed' }]
+          },
+          {
+            taskId: 'basic-gates/toffoli-gate',
+            title: 'ToffoliGate',
+            task: 'benchmarks/quantum-katas/basic-gates/toffoli-gate.md',
+            submission: 'benchmarks/solutions/quantum-katas/basic-gates/toffoli-gate.qni',
+            status: 'passed',
+            exitCode: 0,
+            gradingCases: [
+              {
+                caseId: 'zero-zero-zero-input',
+                status: 'passed',
+                checks: [{ type: 'run', status: 'passed' }]
+              },
+              {
+                caseId: 'one-one-zero-input',
+                status: 'passed',
+                checks: [{ type: 'run', status: 'passed' }]
+              },
+              {
+                caseId: 'one-one-one-input',
+                status: 'passed',
+                checks: [{ type: 'run', status: 'passed' }]
+              },
+              {
+                caseId: 'one-zero-one-input',
+                status: 'passed',
+                checks: [{ type: 'run', status: 'passed' }]
+              },
+              {
+                caseId: 'superposition-input',
+                status: 'passed',
+                checks: [{ type: 'run', status: 'passed' }]
+              }
+            ],
+            checks: [
+              { type: 'run', status: 'passed' },
+              { type: 'run', status: 'passed' },
+              { type: 'run', status: 'passed' },
+              { type: 'run', status: 'passed' },
+              { type: 'run', status: 'passed' }
+            ]
+          },
+          {
+            taskId: 'basic-gates/two-qubit-gate-1',
+            title: 'TwoQubitGate1',
+            task: 'benchmarks/quantum-katas/basic-gates/two-qubit-gate-1.md',
+            submission: 'benchmarks/solutions/quantum-katas/basic-gates/two-qubit-gate-1.qni',
+            status: 'passed',
+            exitCode: 0,
+            gradingCases: [
+              {
+                caseId: 'zero-input',
+                status: 'passed',
+                checks: [{ type: 'run', status: 'passed' }]
+              },
+              {
+                caseId: 'one-input',
+                status: 'passed',
+                checks: [{ type: 'run', status: 'passed' }]
+              },
+              {
+                caseId: 'superposition-input',
+                status: 'passed',
+                checks: [{ type: 'run', status: 'passed' }]
+              }
+            ],
+            checks: [
+              { type: 'run', status: 'passed' },
+              { type: 'run', status: 'passed' },
+              { type: 'run', status: 'passed' }
+            ]
+          },
+          {
+            taskId: 'basic-gates/two-qubit-gate-2',
+            title: 'TwoQubitGate2',
+            task: 'benchmarks/quantum-katas/basic-gates/two-qubit-gate-2.md',
+            submission: 'benchmarks/solutions/quantum-katas/basic-gates/two-qubit-gate-2.qni',
+            status: 'passed',
+            exitCode: 0,
+            gradingCases: [
+              {
+                caseId: 'plus-plus-input',
+                status: 'passed',
+                checks: [{ type: 'run', status: 'passed' }]
+              },
+              {
+                caseId: 'eleven-input',
+                status: 'passed',
+                checks: [{ type: 'run', status: 'passed' }]
+              },
+              {
+                caseId: 'ten-input',
+                status: 'passed',
+                checks: [{ type: 'run', status: 'passed' }]
+              }
+            ],
+            checks: [
+              { type: 'run', status: 'passed' },
+              { type: 'run', status: 'passed' },
+              { type: 'run', status: 'passed' }
+            ]
+          },
+          {
+            taskId: 'basic-gates/two-qubit-gate-3',
+            title: 'TwoQubitGate3',
+            task: 'benchmarks/quantum-katas/basic-gates/two-qubit-gate-3.md',
+            submission: 'benchmarks/solutions/quantum-katas/basic-gates/two-qubit-gate-3.qni',
+            status: 'passed',
+            exitCode: 0,
+            gradingCases: [
+              {
+                caseId: 'zero-zero-input',
+                status: 'passed',
+                checks: [{ type: 'run', status: 'passed' }]
+              },
+              {
+                caseId: 'zero-one-input',
+                status: 'passed',
+                checks: [{ type: 'run', status: 'passed' }]
+              },
+              {
+                caseId: 'one-zero-input',
+                status: 'passed',
+                checks: [{ type: 'run', status: 'passed' }]
+              },
+              {
+                caseId: 'superposition-input',
+                status: 'passed',
+                checks: [{ type: 'run', status: 'passed' }]
+              }
+            ],
+            checks: [
+              { type: 'run', status: 'passed' },
+              { type: 'run', status: 'passed' },
+              { type: 'run', status: 'passed' },
+              { type: 'run', status: 'passed' }
+            ]
+          },
+          {
+            taskId: 'basic-gates/two-qubit-gate-4',
+            title: 'TwoQubitGate4',
+            task: 'benchmarks/quantum-katas/basic-gates/two-qubit-gate-4.md',
+            submission: 'benchmarks/solutions/quantum-katas/basic-gates/two-qubit-gate-4.qni',
+            status: 'passed',
+            exitCode: 0,
+            gradingCases: [
+              {
+                caseId: 'zero-zero-input',
+                status: 'passed',
+                checks: [{ type: 'run', status: 'passed' }]
+              },
+              {
+                caseId: 'zero-one-input',
+                status: 'passed',
+                checks: [{ type: 'run', status: 'passed' }]
+              },
+              {
+                caseId: 'one-zero-input',
+                status: 'passed',
+                checks: [{ type: 'run', status: 'passed' }]
+              },
+              {
+                caseId: 'superposition-input',
+                status: 'passed',
+                checks: [{ type: 'run', status: 'passed' }]
+              }
+            ],
+            checks: [
+              { type: 'run', status: 'passed' },
+              { type: 'run', status: 'passed' },
+              { type: 'run', status: 'passed' },
+              { type: 'run', status: 'passed' }
+            ]
           },
           {
             taskId: 'superposition/all-basis-vector-with-phase-flip-two-qubits',
