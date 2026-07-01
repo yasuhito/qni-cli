@@ -132,6 +132,189 @@ describe('evaluation runner public entrypoints', () => {
     });
   });
 
+  it('grades every grading case in an isolated work directory', async () => {
+    await withTempDir(async (dir) => {
+      await writeFile(path.join(dir, 'task.md'), [
+        '---',
+        'id: grading-cases/x-on-zero-and-one',
+        'title: XOnZeroAndOne',
+        'source: test',
+        'difficulty: smoke',
+        'allowed_commands:',
+        '  - qni add',
+        'grading_cases:',
+        '  - id: zero-input',
+        '    checks:',
+        '      tolerance: 1e-9',
+        '      items:',
+        '        - type: run',
+        '          expected:',
+        '            - basis: "|1>"',
+        '              amplitude:',
+        '                real: 1',
+        '                imaginary: 0',
+        '  - id: one-input',
+        '    setup_commands:',
+        '      - qni state set "|1>"',
+        '    checks:',
+        '      tolerance: 1e-9',
+        '      items:',
+        '        - type: run',
+        '          expected:',
+        '            - basis: "|0>"',
+        '              amplitude:',
+        '                real: 1',
+        '                imaginary: 0',
+        '---',
+        '',
+        'Apply X to both basis inputs.'
+      ].join('\n'));
+      await writeFile(path.join(dir, 'submission.qni'), 'qni add X --qubit 0 --step 0\n');
+
+      const captured = captureProcessWrites(() => gradeBenchmarkTask({
+        taskFile: 'task.md',
+        submissionFile: 'submission.qni'
+      }, {
+        cwd: dir,
+        env: { PATH: '' },
+        projectRoot: process.cwd()
+      }));
+
+      assert.equal(captured.stdout, '');
+      assert.equal(captured.stderr, '');
+      assert.deepStrictEqual(captured.value, {
+        taskId: 'grading-cases/x-on-zero-and-one',
+        title: 'XOnZeroAndOne',
+        submission: 'submission.qni',
+        status: 'passed',
+        exitCode: 0,
+        checks: [
+          { type: 'run', status: 'passed' },
+          { type: 'run', status: 'passed' }
+        ]
+      });
+    });
+  });
+
+  it('fails the task when any grading case check fails', async () => {
+    await withTempDir(async (dir) => {
+      await writeFile(path.join(dir, 'task.md'), [
+        '---',
+        'id: grading-cases/one-case-fails',
+        'title: OneCaseFails',
+        'source: test',
+        'difficulty: smoke',
+        'allowed_commands:',
+        '  - qni add',
+        'grading_cases:',
+        '  - id: zero-input',
+        '    checks:',
+        '      tolerance: 1e-9',
+        '      items:',
+        '        - type: run',
+        '          expected:',
+        '            - basis: "|1>"',
+        '              amplitude:',
+        '                real: 1',
+        '                imaginary: 0',
+        '  - id: one-input',
+        '    setup_commands:',
+        '      - qni state set "|1>"',
+        '    checks:',
+        '      tolerance: 1e-9',
+        '      items:',
+        '        - type: run',
+        '          expected:',
+        '            - basis: "|1>"',
+        '              amplitude:',
+        '                real: 1',
+        '                imaginary: 0',
+        '---',
+        '',
+        'One case should fail.'
+      ].join('\n'));
+      await writeFile(path.join(dir, 'submission.qni'), 'qni add X --qubit 0 --step 0\n');
+
+      const captured = captureProcessWrites(() => gradeBenchmarkTask({
+        taskFile: 'task.md',
+        submissionFile: 'submission.qni'
+      }, {
+        cwd: dir,
+        env: { PATH: '' },
+        projectRoot: process.cwd()
+      }));
+
+      assert.equal(captured.stdout, '');
+      assert.equal(captured.stderr, '');
+      assert.deepStrictEqual(captured.value, {
+        taskId: 'grading-cases/one-case-fails',
+        title: 'OneCaseFails',
+        submission: 'submission.qni',
+        status: 'failed',
+        exitCode: 1,
+        checks: [
+          { type: 'run', status: 'passed' },
+          { type: 'run', status: 'failed' }
+        ]
+      });
+    });
+  });
+
+  it('classifies setup command failures as benchmark errors', async () => {
+    await withTempDir(async (dir) => {
+      await writeFile(path.join(dir, 'task.md'), [
+        '---',
+        'id: grading-cases/setup-error',
+        'title: SetupError',
+        'source: test',
+        'difficulty: smoke',
+        'allowed_commands:',
+        '  - qni add',
+        'grading_cases:',
+        '  - id: bad-setup',
+        '    setup_commands:',
+        '      - qni state set ""',
+        '    checks:',
+        '      tolerance: 1e-9',
+        '      items:',
+        '        - type: run',
+        '          expected:',
+        '            - basis: "|0>"',
+        '              amplitude:',
+        '                real: 1',
+        '                imaginary: 0',
+        '---',
+        '',
+        'Setup should fail before checks run.'
+      ].join('\n'));
+      await writeFile(path.join(dir, 'submission.qni'), '');
+
+      const captured = captureProcessWrites(() => gradeBenchmarkTask({
+        taskFile: 'task.md',
+        submissionFile: 'submission.qni'
+      }, {
+        cwd: dir,
+        env: { PATH: '' },
+        projectRoot: process.cwd()
+      }));
+
+      assert.equal(captured.stdout, '');
+      assert.equal(captured.stderr, '');
+      assert.deepStrictEqual(captured.value, {
+        taskId: 'grading-cases/setup-error',
+        title: 'SetupError',
+        submission: 'submission.qni',
+        status: 'error',
+        exitCode: 3,
+        checks: [],
+        error: [
+          'setup command failed in grading case bad-setup: qni state set ',
+          'initial state expression is required'
+        ].join('\n')
+      });
+    });
+  });
+
   it('provides a single-task report that the benchmark adapter formats without regrading', async () => {
     await withTempDir(async (dir) => {
       const captured = captureProcessWrites(() => gradeBenchmarkTaskForReport({

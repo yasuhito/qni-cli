@@ -129,6 +129,8 @@ def parse_state_coefficient(raw_value: str, variables: dict[str, str]):
     imaginary_numeric = IMAGINARY_NUMERIC_PATTERN.match(normalized)
     if imaginary_numeric:
         return I * symbolic_scalar(imaginary_numeric.group("real"))
+    if NUMERIC_PATTERN.match(normalized):
+        return symbolic_scalar(normalized)
 
     return parse_angle(normalized, variables).symbolic
 
