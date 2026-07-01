@@ -284,6 +284,42 @@ describe('research report reader', () => {
     });
   });
 
+  it('marks metadata ids that do not match trial directories invalid', async () => {
+    await withTempDir(async (dir) => {
+      const id = '2026-06-30T123456Z-id-mismatch';
+      const metadataId = '2026-06-30T123456Z-other-trial';
+      const trialDir = await makeResearchTrialDir(dir, id);
+
+      await writeJsonFile(path.join(trialDir, 'metadata.json'), {
+        ...researchMetadata(id),
+        id: metadataId
+      });
+      await writeJsonFile(path.join(trialDir, 'result.json'), researchResult());
+
+      assert.deepStrictEqual(invalidReasonsById(readResearchTrials({ cwd: dir })).get(id), [
+        `metadata id ${metadataId} does not match research trial id ${id}`
+      ]);
+    });
+  });
+
+  it('marks metadata result paths that do not point to result.json invalid', async () => {
+    await withTempDir(async (dir) => {
+      const id = '2026-06-30T123456Z-result-path-mismatch';
+      const resultPath = 'other-result.json';
+      const trialDir = await makeResearchTrialDir(dir, id);
+
+      await writeJsonFile(path.join(trialDir, 'metadata.json'), {
+        ...researchMetadata(id),
+        result: resultPath
+      });
+      await writeJsonFile(path.join(trialDir, 'result.json'), researchResult());
+
+      assert.deepStrictEqual(invalidReasonsById(readResearchTrials({ cwd: dir })).get(id), [
+        `metadata result ${resultPath} does not point to result.json`
+      ]);
+    });
+  });
+
   it('marks metadata and result status mismatches invalid', async () => {
     await withTempDir(async (dir) => {
       const id = '2026-06-30T123456Z-status-mismatch';
