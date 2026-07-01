@@ -261,6 +261,20 @@ describe('add command TypeScript route', () => {
     });
   });
 
+  it('adds controlled SWAP through the TypeScript route', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, ['add', 'SWAP', '--control', '0', '--qubit', '1,2', '--step', '0']);
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, '');
+      assert.deepEqual(await readCircuit(path.join(dir, 'circuit.json')), {
+        qubits: 3,
+        cols: [['•', 'Swap', 'Swap']]
+      });
+    });
+  });
+
   it('accepts decimal numeric step values like Ruby for migrated gate variants', async () => {
     const examples = [
       {
@@ -351,6 +365,21 @@ describe('add command TypeScript route', () => {
       assert.equal(duplicatedTargets.exitStatus, 1);
       assert.equal(duplicatedTargets.stdout, '');
       assert.equal(duplicatedTargets.stderr, 'SWAP target qubits must be different\n');
+
+      const overlappingControl = captureDispatcherRun(dir, [
+        'add',
+        'SWAP',
+        '--control',
+        '0',
+        '--qubit',
+        '0,1',
+        '--step',
+        '0'
+      ]);
+
+      assert.equal(overlappingControl.exitStatus, 1);
+      assert.equal(overlappingControl.stdout, '');
+      assert.equal(overlappingControl.stderr, 'control and target must be different\n');
     });
   });
 

@@ -283,15 +283,23 @@ class QCircuitColumn {
     }
 
     const [topQubit, bottomQubit] = this.swapQubits.sort((a, b) => a - b);
-
-    return new Map<number, string>([
+    const cells = new Map<number, string>([
       [topQubit, '\\qswap'],
       [bottomQubit, `\\qswap \\qwx[${topQubit - bottomQubit}]`]
     ]);
+
+    for (const controlQubit of this.controlQubits) {
+      cells.set(controlQubit, `\\ctrl{${this.controlledSwapTarget(controlQubit) - controlQubit}}`);
+    }
+
+    return cells;
   }
 
   private get validSwapStep(): boolean {
-    return this.swapQubits.length === 2 && this.slots.every((slot) => emptySlot(slot) || slot === SWAP_SYMBOL);
+    return (
+      this.swapQubits.length === 2 &&
+      this.slots.every((slot) => emptySlot(slot) || slot === CONTROL_SYMBOL || slot === SWAP_SYMBOL)
+    );
   }
 
   private get swapQubits(): number[] {
@@ -299,6 +307,12 @@ class QCircuitColumn {
       .map((slot, index) => ({ index, slot }))
       .filter(({ slot }) => slot === SWAP_SYMBOL)
       .map(({ index }) => index);
+  }
+
+  private controlledSwapTarget(controlQubit: number): number {
+    return this.swapQubits.reduce((nearest, swapQubit) =>
+      Math.abs(swapQubit - controlQubit) < Math.abs(nearest - controlQubit) ? swapQubit : nearest
+    );
   }
 }
 

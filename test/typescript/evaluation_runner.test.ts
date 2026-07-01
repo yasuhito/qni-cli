@@ -188,6 +188,18 @@ describe('evaluation runner public entrypoints', () => {
         submission: 'submission.qni',
         status: 'passed',
         exitCode: 0,
+        gradingCases: [
+          {
+            caseId: 'zero-input',
+            status: 'passed',
+            checks: [{ type: 'run', status: 'passed' }]
+          },
+          {
+            caseId: 'one-input',
+            status: 'passed',
+            checks: [{ type: 'run', status: 'passed' }]
+          }
+        ],
         checks: [
           { type: 'run', status: 'passed' },
           { type: 'run', status: 'passed' }
@@ -252,6 +264,18 @@ describe('evaluation runner public entrypoints', () => {
         submission: 'submission.qni',
         status: 'failed',
         exitCode: 1,
+        gradingCases: [
+          {
+            caseId: 'zero-input',
+            status: 'passed',
+            checks: [{ type: 'run', status: 'passed' }]
+          },
+          {
+            caseId: 'one-input',
+            status: 'failed',
+            checks: [{ type: 'run', status: 'failed' }]
+          }
+        ],
         checks: [
           { type: 'run', status: 'passed' },
           { type: 'run', status: 'failed' }
@@ -306,9 +330,20 @@ describe('evaluation runner public entrypoints', () => {
         submission: 'submission.qni',
         status: 'error',
         exitCode: 3,
+        gradingCases: [
+          {
+            caseId: 'bad-setup',
+            status: 'error',
+            checks: [],
+            error: [
+              'setup command failed in grading case bad-setup: qni state set ',
+              'initial state expression is required'
+            ].join('\n')
+          }
+        ],
         checks: [],
         error: [
-          'setup command failed in grading case bad-setup: qni state set ',
+          'case bad-setup error: setup command failed in grading case bad-setup: qni state set ',
           'initial state expression is required'
         ].join('\n')
       });

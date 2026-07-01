@@ -9,6 +9,7 @@ const HELP_TEXT = `Usage:
   qni add ANGLED_GATE --angle=ANGLE --qubit=N --step=N
   qni add ANGLED_GATE --angle=ANGLE --control=CONTROL --qubit=N --step=N
   qni add SWAP --qubit=N,N --step=N
+  qni add SWAP --control=CONTROL --qubit=N,N --step=N
 
 Overview:
   Add a gate to ./circuit.json.
@@ -19,6 +20,7 @@ Overview:
   CNOT is written as qni add X --control 0 --qubit 1 --step 0.
   ANGLED_GATE can be P, Rx, Ry, Rz, or GlobalPhase and is saved as GATE(angle).
   SWAP uses exactly two target qubits and writes "Swap" to both slots.
+  With --control, SWAP becomes controlled-SWAP and writes "•" to each control slot.
 
 Options:
   --step=N             # 0-based step index
@@ -37,7 +39,8 @@ Examples:
   qni add Rx --angle π/2 --qubit 0 --step 2
   qni add Rz --angle pi/4 --control 0 --qubit 1 --step 3
   qni add GlobalPhase --angle 2π --qubit 0 --step 4
-  qni add SWAP --qubit 0,1 --step 0`;
+  qni add SWAP --qubit 0,1 --step 0
+  qni add SWAP --control 0 --qubit 1,2 --step 0`;
 
 const FIXED_GATES = new Map<string, string>([
   ['H', 'H'],
@@ -84,10 +87,10 @@ export function runAddCommand(argv: string[], context: CommandHandlerContext): n
 
     if (gate === SWAP_GATE) {
       if (controlled(options)) {
-        throw new CircuitFileError('SWAP does not support --control yet');
+        circuitFile.addControlledSwapGate(options.step, options.controls, options.qubits);
+      } else {
+        circuitFile.addSwapGate(options.step, options.qubits);
       }
-
-      circuitFile.addSwapGate(options.step, options.qubits);
     } else if (controlled(options)) {
       circuitFile.addControlledGate(serializedGate(gate, options), options.step, options.controls, singleQubit(options));
     } else {

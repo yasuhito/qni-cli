@@ -3,10 +3,25 @@ import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { describe, it } from 'node:test';
 
-import { loadBenchmarkTask } from '../../src/evaluation_runner/benchmark_task';
+import { loadBenchmarkTask, type BenchmarkTask } from '../../src/evaluation_runner/benchmark_task';
 import { withTempDir } from './helpers/command';
 
 describe('benchmark task frontmatter parser', () => {
+  it('keeps the explicit grading cases marker optional on the exported task type', () => {
+    const task: BenchmarkTask = {
+      allowedCommands: [{ argv: ['add'], source: 'qni add' }],
+      checks: {
+        tolerance: 1e-9,
+        items: []
+      },
+      gradingCases: [],
+      id: 'compat/manual-task',
+      title: 'ManualTask'
+    };
+
+    assert.equal(task.hasExplicitGradingCases, undefined);
+  });
+
   it('normalizes root checks into an implicit grading case', async () => {
     await withTempDir(async (dir) => {
       const taskPath = path.join(dir, 'task.md');

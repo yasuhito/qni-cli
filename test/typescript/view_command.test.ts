@@ -160,6 +160,31 @@ describe('view command TypeScript route', () => {
     });
   });
 
+  it('renders controlled SWAP with stable ASCII art', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        qubits: 3,
+        cols: [['•', 'Swap', 'Swap']]
+      });
+
+      const result = captureDispatcherRun(dir, ['view']);
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stderr, '');
+      assert.equal(
+        result.stdout,
+        [
+          'q0: ─■─',
+          '     │',
+          'q1: ─X─',
+          '     │',
+          'q2: ─X─',
+          ''
+        ].join('\n')
+      );
+    });
+  });
+
   it('uses dim suffix color for compact TTY labels', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {

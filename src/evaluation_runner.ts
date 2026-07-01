@@ -3,6 +3,8 @@ export {
   gradeBenchmarkTask,
   gradeBenchmarkTaskForReport,
   type BenchmarkCheckSummary,
+  type BenchmarkGradingCaseStatus,
+  type BenchmarkGradingCaseSummary,
   type BenchmarkStatus,
   type BenchmarkSuiteGradingRequest,
   type BenchmarkSuiteGradingResult,

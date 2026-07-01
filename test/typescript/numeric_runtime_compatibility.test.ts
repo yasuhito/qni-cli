@@ -78,6 +78,34 @@ describe('TypeScript numeric simulator compatibility', () => {
     assert.equal(simulator.renderExpectationValues(['IZ']), 'IZ=-1.0');
   });
 
+  it('applies controlled SWAP only when all controls are active', () => {
+    const controlledSwap = [['•', 'Swap', 'Swap']];
+
+    assert.equal(
+      new Simulator({
+        cols: controlledSwap,
+        initial_state: {
+          format: 'ket_sum_v1',
+          terms: [{ basis: '101', coefficient: '1' }]
+        },
+        qubits: 3
+      }).renderStateVector(),
+      '0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0'
+    );
+
+    assert.equal(
+      new Simulator({
+        cols: controlledSwap,
+        initial_state: {
+          format: 'ket_sum_v1',
+          terms: [{ basis: '001', coefficient: '1' }]
+        },
+        qubits: 3
+      }).renderStateVector(),
+      '0.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0'
+    );
+  });
+
   it('rejects qubit counts that would overflow JavaScript bitwise state indexing', () => {
     const circuit: CircuitData = {
       cols: [],
