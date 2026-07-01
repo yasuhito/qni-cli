@@ -663,8 +663,8 @@ describe('benchmark command TypeScript route', () => {
       assert.equal(captured.value.status, 'passed');
       assert.equal(captured.value.exitCode, 0);
       assert.deepStrictEqual(captured.value.summary, {
-        total: 7,
-        passed: 7,
+        total: 8,
+        passed: 8,
         failed: 0,
         disallowed: 0,
         error: 0
@@ -706,6 +706,12 @@ describe('benchmark command TypeScript route', () => {
           checks: [{ type: 'expect', status: 'passed' }]
         },
         {
+          taskId: 'superposition/ghz-state',
+          status: 'passed',
+          exitCode: 0,
+          checks: [{ type: 'run', status: 'passed' }]
+        },
+        {
           taskId: 'superposition/minus-state',
           status: 'passed',
           exitCode: 0,
@@ -733,13 +739,14 @@ describe('benchmark command TypeScript route', () => {
       assert.equal(result.exitStatus, 0, result.stderr);
       assert.equal(result.stdout, [
         'PASS benchmark suite',
-        'tasks: 7',
-        'passed: 7, failed: 0, disallowed: 0, error: 0',
+        'tasks: 8',
+        'passed: 8, failed: 0, disallowed: 0, error: 0',
         '- passed basic-gates/state-flip StateFlip',
         '- passed superposition/all-basis-vector-with-phase-flip-two-qubits AllBasisVectorWithPhaseFlip_TwoQubits',
         '- passed superposition/all-basis-vectors-two-qubits AllBasisVectors_TwoQubits',
         '- passed superposition/all-basis-vectors-with-phases-two-qubits AllBasisVectorsWithPhases_TwoQubits',
         '- passed superposition/bell-state BellState',
+        '- passed superposition/ghz-state GHZState',
         '- passed superposition/minus-state MinusState',
         '- passed superposition/plus-state PlusState',
         ''
@@ -764,8 +771,8 @@ describe('benchmark command TypeScript route', () => {
         status: 'passed',
         exitCode: 0,
         summary: {
-          total: 7,
-          passed: 7,
+          total: 8,
+          passed: 8,
           failed: 0,
           disallowed: 0,
           error: 0
@@ -815,6 +822,15 @@ describe('benchmark command TypeScript route', () => {
             status: 'passed',
             exitCode: 0,
             checks: [{ type: 'expect', status: 'passed' }]
+          },
+          {
+            taskId: 'superposition/ghz-state',
+            title: 'GHZState',
+            task: 'benchmarks/quantum-katas/superposition/ghz-state.md',
+            submission: 'benchmarks/solutions/quantum-katas/superposition/ghz-state.qni',
+            status: 'passed',
+            exitCode: 0,
+            checks: [{ type: 'run', status: 'passed' }]
           },
           {
             taskId: 'superposition/minus-state',

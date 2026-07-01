@@ -14,7 +14,7 @@
 
 提出物には回路を作るコマンドだけを書きます。`qni run` や `qni expect` などの検証コマンドは書きません。
 
-## 7問の標準解を実行する
+## 8問の標準解を実行する
 
 ### StateFlip
 
@@ -72,6 +72,14 @@ qni benchmark run benchmarks/quantum-katas/superposition/bell-state.md benchmark
 
 期待される結果は `PASS BellState` です。
 
+### GHZState
+
+```bash
+qni benchmark run benchmarks/quantum-katas/superposition/ghz-state.md benchmarks/solutions/quantum-katas/superposition/ghz-state.qni
+```
+
+期待される結果は `PASS GHZState` です。
+
 ## 不正解サンプルを実行する
 
 不正解サンプルは、許可された `qni add` だけを使っていますが、期待される量子状態には到達しません。終了コードは `1` です。
@@ -126,17 +134,18 @@ qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/
 qni benchmark run-all benchmarks/quantum-katas benchmarks/solutions/quantum-katas
 ```
 
-期待される結果は、7問すべてが `passed` になり、終了コードが `0` になることです。
+期待される結果は、8問すべてが `passed` になり、終了コードが `0` になることです。
 
 ```text
 PASS benchmark suite
-tasks: 7
-passed: 7, failed: 0, disallowed: 0, error: 0
+tasks: 8
+passed: 8, failed: 0, disallowed: 0, error: 0
 - passed basic-gates/state-flip StateFlip
 - passed superposition/all-basis-vector-with-phase-flip-two-qubits AllBasisVectorWithPhaseFlip_TwoQubits
 - passed superposition/all-basis-vectors-two-qubits AllBasisVectors_TwoQubits
 - passed superposition/all-basis-vectors-with-phases-two-qubits AllBasisVectorsWithPhases_TwoQubits
 - passed superposition/bell-state BellState
+- passed superposition/ghz-state GHZState
 - passed superposition/minus-state MinusState
 - passed superposition/plus-state PlusState
 ```
