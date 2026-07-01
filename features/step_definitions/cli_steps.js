@@ -216,6 +216,9 @@ function writeCircuitJson(scenarioDir, data) {
 function quantumKatasSubmissionContent(status, relativePath) {
   const passedSubmissions = new Map([
     ['basic-gates/basis-change.qni', 'qni add H --qubit 0 --step 0\n'],
+    ['basic-gates/bell-state-change-1.qni', 'qni add Z --qubit 0 --step 0\n'],
+    ['basic-gates/bell-state-change-2.qni', 'qni add X --qubit 0 --step 0\n'],
+    ['basic-gates/bell-state-change-3.qni', 'qni add X --qubit 0 --step 0\nqni add Z --qubit 0 --step 1\n'],
     ['basic-gates/phase-change-pi-over-3.qni', 'qni add P --angle pi/3 --qubit 0 --step 0\n'],
     ['basic-gates/phase-flip.qni', 'qni add S --qubit 0 --step 0\n'],
     ['basic-gates/sign-flip.qni', 'qni add Z --qubit 0 --step 0\n'],
@@ -260,6 +263,9 @@ function quantumKatasSubmissionContent(status, relativePath) {
 function writeQuantumKatasSubmissions(scenarioDir, status, submissionsDir) {
   const relativePaths = [
     'basic-gates/basis-change.qni',
+    'basic-gates/bell-state-change-1.qni',
+    'basic-gates/bell-state-change-2.qni',
+    'basic-gates/bell-state-change-3.qni',
     'basic-gates/phase-change-pi-over-3.qni',
     'basic-gates/phase-flip.qni',
     'basic-gates/sign-flip.qni',
