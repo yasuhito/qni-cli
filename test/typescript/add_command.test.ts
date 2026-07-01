@@ -166,7 +166,8 @@ describe('add command TypeScript route', () => {
       ['P', 'π/3', 'P(π/3)'],
       ['Rx', 'pi/4', 'Rx(π/4)'],
       ['Ry', 'theta', 'Ry(theta)'],
-      ['Rz', '2*alpha', 'Rz(2*alpha)']
+      ['Rz', '2*alpha', 'Rz(2*alpha)'],
+      ['GlobalPhase', '2π', 'GlobalPhase(2π)']
     ];
 
     for (const [gate, angle, storedGate] of examples) {
@@ -374,7 +375,7 @@ describe('add command TypeScript route', () => {
 
       assert.equal(unsupportedAngle.exitStatus, 1);
       assert.equal(unsupportedAngle.stdout, '');
-      assert.equal(unsupportedAngle.stderr, 'angle is only supported for P, Rx, Ry, and Rz\n');
+      assert.equal(unsupportedAngle.stderr, 'angle is only supported for P, Rx, Ry, Rz, and GlobalPhase\n');
     });
   });
 

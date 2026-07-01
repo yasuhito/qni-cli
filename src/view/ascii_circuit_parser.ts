@@ -28,11 +28,11 @@ const FIXED_GATE_LABELS = new Map<string, string>([
   ['Z', 'Z'],
   [SQRT_X_VIEW_SYMBOL, SQRT_X_SYMBOL]
 ]);
-const ANGLED_GATE_LABELS = new Set(['P', 'Rx', 'Ry', 'Rz']);
+const ANGLED_GATE_LABELS = new Set(['P', 'Rx', 'Ry', 'Rz', 'GlobalPhase']);
 const ANGLED_GATE_ERROR = 'ASCII parser angled gates require a dedicated angle line above the box';
 const BOX_BORDER_PATTERN = /[┌┐└┘├┤]/u;
 const MID_LINE_PATTERN = /^(?<prefix>\s*q(?<qubit>\d+): )(?<wire>.*)$/u;
-const UNEXPECTED_ANGLE_ERROR = 'ASCII parser angle lines are only supported for Rx, Ry, Rz, and P boxes';
+const UNEXPECTED_ANGLE_ERROR = 'ASCII parser angle lines are only supported for Rx, Ry, Rz, P, and GlobalPhase boxes';
 
 export class AsciiCircuitParser {
   private readonly asciiArt: string;

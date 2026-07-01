@@ -14,17 +14,17 @@ Overview:
   Add a gate to ./circuit.json.
   If ./circuit.json does not exist, qni creates the smallest circuit that can hold the gate.
   step and qubit are 0-based indices.
-  Supported gates: H, X, Y, Z, S, S†, T, T†, √X, P, Rx, Ry, Rz, SWAP.
+  Supported gates: H, X, Y, Z, S, S†, T, T†, √X, P, Rx, Ry, Rz, GlobalPhase, SWAP.
   With --control, GATE is placed on --qubit and "•" is placed on each control qubit.
   CNOT is written as qni add X --control 0 --qubit 1 --step 0.
-  ANGLED_GATE can be P, Rx, Ry, or Rz and is saved as GATE(angle).
+  ANGLED_GATE can be P, Rx, Ry, Rz, or GlobalPhase and is saved as GATE(angle).
   SWAP uses exactly two target qubits and writes "Swap" to both slots.
 
 Options:
   --step=N             # 0-based step index
   --qubit=N            # 0-based qubit index
   [--control=CONTROL]  # comma-separated control qubit indices
-  [--angle=ANGLE]      # angle for P, Rx, Ry, or Rz, such as π/3 or pi/3
+  [--angle=ANGLE]      # angle for P, Rx, Ry, Rz, or GlobalPhase, such as π/3 or pi/3
 
 Examples:
   qni add H --qubit 0 --step 0
@@ -36,6 +36,7 @@ Examples:
   qni add P --angle π/3 --qubit 0 --step 1
   qni add Rx --angle π/2 --qubit 0 --step 2
   qni add Rz --angle pi/4 --control 0 --qubit 1 --step 3
+  qni add GlobalPhase --angle 2π --qubit 0 --step 4
   qni add SWAP --qubit 0,1 --step 0`;
 
 const FIXED_GATES = new Map<string, string>([
@@ -52,6 +53,7 @@ const FIXED_GATES = new Map<string, string>([
 ]);
 
 const ANGLED_GATES = new Map<string, string>([
+  ['GLOBALPHASE', 'GlobalPhase'],
   ['P', 'P'],
   ['RX', 'Rx'],
   ['RY', 'Ry'],
@@ -183,7 +185,7 @@ function serializedGate(gate: string, options: AddOptions): string {
 
 function validateAngleUsage(gate: string, options: AddOptions): void {
   if (options.angle && !angledGate(gate)) {
-    throw new CircuitFileError('angle is only supported for P, Rx, Ry, and Rz');
+    throw new CircuitFileError('angle is only supported for P, Rx, Ry, Rz, and GlobalPhase');
   }
 }
 

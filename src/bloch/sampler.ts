@@ -224,7 +224,7 @@ class OneQubitState {
   }
 }
 
-const ANGLED_GATE_PATTERN = /^(?<gate>P|Rx|Ry|Rz)\((?<angle>.+)\)$/u;
+const ANGLED_GATE_PATTERN = /^(?<gate>P|Rx|Ry|Rz|GlobalPhase)\((?<angle>.+)\)$/u;
 
 function angledBlochRotation(
   serializedGate: string,
@@ -269,9 +269,18 @@ function angledGateOperator(
       return ryGate(angle);
     case 'Rz':
       return rzGate(angle);
+    case 'GlobalPhase':
+      return globalPhaseGate(angle);
     default:
       return undefined;
   }
+}
+
+function globalPhaseGate(angle: number): GateOperator {
+  const halfAngle = angle / 2;
+  const phase = new Complex(Math.cos(halfAngle), -Math.sin(halfAngle));
+
+  return (zero, one) => [phase.multiply(zero), phase.multiply(one)];
 }
 
 function phaseGate(angle: number): GateOperator {
