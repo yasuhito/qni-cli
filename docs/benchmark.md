@@ -14,7 +14,7 @@
 
 提出物には回路を作るコマンドだけを書きます。`qni run` や `qni expect` などの検証コマンドは書きません。
 
-## 9問の標準解を実行する
+## 12問の標準解を実行する
 
 ### StateFlip
 
@@ -31,6 +31,30 @@ qni benchmark run benchmarks/quantum-katas/basic-gates/basis-change.md benchmark
 ```
 
 期待される結果は `PASS BasisChange` です。BasisChange は複数の採点ケースを持ち、既定の `|0>` 入力と `setup_commands` で準備した `|1>` 入力を別々に検証します。
+
+### SignFlip
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/sign-flip.md benchmarks/solutions/quantum-katas/basic-gates/sign-flip.qni
+```
+
+期待される結果は `PASS SignFlip` です。SignFlip は複数の採点ケースを持ち、`setup_commands` で準備した `|+>` 入力と `|->` 入力を別々に検証します。
+
+### PhaseFlip
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/phase-flip.md benchmarks/solutions/quantum-katas/basic-gates/phase-flip.qni
+```
+
+期待される結果は `PASS PhaseFlip` です。PhaseFlip は複数の採点ケースを持ち、`setup_commands` で準備した `|0>` 入力と `|1>` 入力を別々に検証します。
+
+### PhaseChangePiOver3
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/phase-change-pi-over-3.md benchmarks/solutions/quantum-katas/basic-gates/phase-change-pi-over-3.qni
+```
+
+期待される結果は `PASS PhaseChangePiOver3` です。PhaseChangePiOver3 は Quantum Katas BasicGates の PhaseChange を固定角度 `pi/3` で評価し、`|0>` 入力と `|1>` 入力を別々に検証します。
 
 ### PlusState
 
@@ -105,6 +129,14 @@ qni benchmark run benchmarks/quantum-katas/basic-gates/basis-change.md benchmark
 ```
 
 期待される結果は `FAIL BasisChange` です。
+
+PhaseFlip には、`|0>` 入力だけに合う不正解サンプルがあります。`|1>` 入力の採点ケースで失敗するため、終了コードは `1` です。
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/phase-flip.md benchmarks/incorrect/quantum-katas/basic-gates/phase-flip-zero-only.qni
+```
+
+期待される結果は `FAIL PhaseFlip` です。
 
 ## 不許可サンプルを実行する
 
@@ -190,13 +222,16 @@ grading_cases:
 qni benchmark run-all benchmarks/quantum-katas benchmarks/solutions/quantum-katas
 ```
 
-期待される結果は、9問すべてが `passed` になり、終了コードが `0` になることです。
+期待される結果は、12問すべてが `passed` になり、終了コードが `0` になることです。
 
 ```text
 PASS benchmark suite
-tasks: 9
-passed: 9, failed: 0, disallowed: 0, error: 0
+tasks: 12
+passed: 12, failed: 0, disallowed: 0, error: 0
 - passed basic-gates/basis-change BasisChange
+- passed basic-gates/phase-change-pi-over-3 PhaseChangePiOver3
+- passed basic-gates/phase-flip PhaseFlip
+- passed basic-gates/sign-flip SignFlip
 - passed basic-gates/state-flip StateFlip
 - passed superposition/all-basis-vector-with-phase-flip-two-qubits AllBasisVectorWithPhaseFlip_TwoQubits
 - passed superposition/all-basis-vectors-two-qubits AllBasisVectors_TwoQubits
