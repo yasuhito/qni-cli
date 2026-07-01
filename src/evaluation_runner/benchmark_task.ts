@@ -6,13 +6,24 @@ import { splitCommandLine } from '../qni_command_line';
 export interface BenchmarkTask {
   readonly allowedCommands: readonly AllowedCommand[];
   readonly checks: BenchmarkChecks;
+  readonly gradingCases: readonly BenchmarkGradingCase[];
   readonly id: string;
   readonly title: string;
 }
 
-export interface AllowedCommand {
+interface ParsedQniCommand {
   readonly argv: readonly string[];
   readonly source: string;
+}
+
+export interface AllowedCommand extends ParsedQniCommand {}
+
+export interface BenchmarkSetupCommand extends ParsedQniCommand {}
+
+export interface BenchmarkGradingCase {
+  readonly checks: BenchmarkChecks;
+  readonly id: string;
+  readonly setupCommands: readonly BenchmarkSetupCommand[];
 }
 
 export interface BenchmarkChecks {
@@ -51,12 +62,17 @@ type FrontmatterRecord = Readonly<Record<string, unknown>>;
 
 class BenchmarkTaskError extends Error {}
 
+const IMPLICIT_GRADING_CASE_ID = 'default';
+
 export function loadBenchmarkTask(taskPath: string): BenchmarkTask {
   const frontmatter = frontmatterRecord(frontmatterOf(readFileSync(taskPath, 'utf8')));
+  const allowedCommands = parseAllowedCommands(frontmatter);
+  const gradingCases = parseGradingCases(frontmatter);
 
   return {
-    allowedCommands: parseAllowedCommands(frontmatter),
-    checks: parseChecks(frontmatter),
+    allowedCommands,
+    checks: gradingCases[0].checks,
+    gradingCases,
     id: scalarValue(frontmatter, 'id'),
     title: scalarValue(frontmatter, 'title')
   };
@@ -94,18 +110,8 @@ function firstYamlErrorLine(error: Error): string {
 }
 
 function parseAllowedCommands(frontmatter: FrontmatterRecord): AllowedCommand[] {
-  return frontmatterListValues(frontmatter, 'allowed_commands').map((source) => {
-    const argv = splitCommandLine(source);
-
-    if (argv[0] !== 'qni' || argv.length < 2) {
-      throw new BenchmarkTaskError(`allowed_commands entries must start with a qni subcommand: ${source}`);
-    }
-
-    return {
-      argv: argv.slice(1),
-      source: argv.join(' ')
-    };
-  });
+  return frontmatterListValues(frontmatter, 'allowed_commands')
+    .map((source) => parseQniCommand(source, 'allowed_commands entries must start with a qni subcommand'));
 }
 
 function frontmatterListValues(frontmatter: FrontmatterRecord, key: string): string[] {
@@ -129,6 +135,70 @@ function parseChecks(frontmatter: FrontmatterRecord): BenchmarkChecks {
     items: parseCheckItems(checks),
     tolerance: checksTolerance(checks)
   };
+}
+
+function parseGradingCases(frontmatter: FrontmatterRecord): BenchmarkGradingCase[] {
+  const hasRootChecks = hasValue(frontmatter, 'checks');
+  const hasExplicitGradingCases = hasValue(frontmatter, 'grading_cases');
+
+  if (hasRootChecks && hasExplicitGradingCases) {
+    throw new BenchmarkTaskError('checks and grading_cases must not both be specified');
+  }
+
+  if (hasExplicitGradingCases) {
+    return parseExplicitGradingCases(frontmatter);
+  }
+
+  return [
+    {
+      checks: parseChecks(frontmatter),
+      id: IMPLICIT_GRADING_CASE_ID,
+      setupCommands: []
+    }
+  ];
+}
+
+function parseExplicitGradingCases(frontmatter: FrontmatterRecord): BenchmarkGradingCase[] {
+  const cases = requiredValue(frontmatter, 'grading_cases');
+
+  if (!Array.isArray(cases) || cases.length === 0) {
+    throw new BenchmarkTaskError('grading_cases must list at least one case');
+  }
+
+  const seenIds = new Set<string>();
+
+  return cases.map((item) => {
+    const gradingCase = requiredRecord(item, 'grading_cases entries must be mappings');
+    const id = nonEmptyScalarValue(gradingCase, 'id', 'grading_cases id must not be empty');
+
+    if (seenIds.has(id)) {
+      throw new BenchmarkTaskError(`duplicate grading_cases id: ${id}`);
+    }
+
+    seenIds.add(id);
+
+    return {
+      checks: parseChecks(gradingCase),
+      id,
+      setupCommands: parseSetupCommands(gradingCase)
+    };
+  });
+}
+
+function parseSetupCommands(gradingCase: FrontmatterRecord): BenchmarkSetupCommand[] {
+  const setupCommands = gradingCase.setup_commands;
+
+  if (setupCommands === undefined) {
+    return [];
+  }
+
+  if (!Array.isArray(setupCommands)) {
+    throw new BenchmarkTaskError('setup_commands must be a list of qni commands');
+  }
+
+  return setupCommands
+    .map((item) => stringListValue(item, 'setup_commands'))
+    .map((source) => parseQniCommand(source, 'setup_commands entries must start with a qni command'));
 }
 
 function checksTolerance(checks: FrontmatterRecord): number {
@@ -226,11 +296,25 @@ function requiredValue(record: FrontmatterRecord, key: string, errorMessage = `$
   return value;
 }
 
+function hasValue(record: FrontmatterRecord, key: string): boolean {
+  return record[key] !== undefined;
+}
+
 function scalarValue(record: FrontmatterRecord, key: string): string {
   const value = requiredValue(record, key);
 
   if (typeof value !== 'string') {
     throw new BenchmarkTaskError(`${key} must be a string`);
+  }
+
+  return value;
+}
+
+function nonEmptyScalarValue(record: FrontmatterRecord, key: string, errorMessage: string): string {
+  const value = scalarValue(record, key).trim();
+
+  if (value.length === 0) {
+    throw new BenchmarkTaskError(errorMessage);
   }
 
   return value;
@@ -242,6 +326,19 @@ function stringListValue(value: unknown, key: string): string {
   }
 
   return value;
+}
+
+function parseQniCommand(source: string, errorPrefix: string): ParsedQniCommand {
+  const argv = splitCommandLine(source);
+
+  if (argv[0] !== 'qni' || argv.length < 2) {
+    throw new BenchmarkTaskError(`${errorPrefix}: ${source}`);
+  }
+
+  return {
+    argv: argv.slice(1),
+    source: argv.join(' ')
+  };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
