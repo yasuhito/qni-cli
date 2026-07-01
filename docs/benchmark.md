@@ -14,7 +14,7 @@
 
 提出物には回路を作るコマンドだけを書きます。`qni run` や `qni expect` などの検証コマンドは書きません。
 
-## 9問の標準解を実行する
+## 12問の標準解を実行する
 
 ### StateFlip
 
@@ -31,6 +31,30 @@ qni benchmark run benchmarks/quantum-katas/basic-gates/basis-change.md benchmark
 ```
 
 期待される結果は `PASS BasisChange` です。BasisChange は複数の採点ケースを持ち、既定の `|0>` 入力と `setup_commands` で準備した `|1>` 入力を別々に検証します。
+
+### BellStateChange1
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/bell-state-change-1.md benchmarks/solutions/quantum-katas/basic-gates/bell-state-change-1.qni
+```
+
+期待される結果は `PASS BellStateChange1` です。BellStateChange1 は `setup_commands` で `|Φ+>` を準備し、提出物が `|Φ->` に変換することを計算基底の振幅で検証します。
+
+### BellStateChange2
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/bell-state-change-2.md benchmarks/solutions/quantum-katas/basic-gates/bell-state-change-2.qni
+```
+
+期待される結果は `PASS BellStateChange2` です。BellStateChange2 は `setup_commands` で `|Φ+>` を準備し、提出物が `|Ψ+>` に変換することを計算基底の振幅で検証します。
+
+### BellStateChange3
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/bell-state-change-3.md benchmarks/solutions/quantum-katas/basic-gates/bell-state-change-3.qni
+```
+
+期待される結果は `PASS BellStateChange3` です。BellStateChange3 は `setup_commands` で `|Φ+>` を準備し、提出物が `|Ψ->` に変換することを計算基底の振幅で検証します。
 
 ### PlusState
 
@@ -106,6 +130,14 @@ qni benchmark run benchmarks/quantum-katas/basic-gates/basis-change.md benchmark
 
 期待される結果は `FAIL BasisChange` です。
 
+BellStateChange3 には、Bell 状態の符号を取り違える不正解サンプルがあります。`|Ψ->` にすべきところを `|Ψ+>` にするため、終了コードは `1` です。
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/bell-state-change-3.md benchmarks/incorrect/quantum-katas/basic-gates/bell-state-change-3-wrong-sign.qni
+```
+
+期待される結果は `FAIL BellStateChange3` です。
+
 ## 不許可サンプルを実行する
 
 不許可サンプルは、課題ファイルの `allowed_commands` にない `qni run` を提出物に含みます。終了コードは `2` です。
@@ -146,7 +178,7 @@ qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/
 
 `grading_cases` を使うと、同じ提出物を複数の初期条件で採点できます。各ケースは独立した一時作業ディレクトリで実行されます。`setup_commands` は採点ケースごとの初期状態準備に使い、提出物の `allowed_commands` とは別に評価ランナーが実行します。
 
-BasisChange では、既定の `|0>` 入力と、`qni state set "1|1>"` で準備する `|1>` 入力を分けています。
+BasisChange では、既定の `|0>` 入力と、`qni state set "1|1>"` で準備する `|1>` 入力を分けています。BellStateChange 系の課題では、`qni state set "|Φ+>"` で Bell 状態を準備してから提出物を実行します。
 
 ```yaml
 grading_cases:
@@ -190,13 +222,16 @@ grading_cases:
 qni benchmark run-all benchmarks/quantum-katas benchmarks/solutions/quantum-katas
 ```
 
-期待される結果は、9問すべてが `passed` になり、終了コードが `0` になることです。
+期待される結果は、12問すべてが `passed` になり、終了コードが `0` になることです。
 
 ```text
 PASS benchmark suite
-tasks: 9
-passed: 9, failed: 0, disallowed: 0, error: 0
+tasks: 12
+passed: 12, failed: 0, disallowed: 0, error: 0
 - passed basic-gates/basis-change BasisChange
+- passed basic-gates/bell-state-change-1 BellStateChange1
+- passed basic-gates/bell-state-change-2 BellStateChange2
+- passed basic-gates/bell-state-change-3 BellStateChange3
 - passed basic-gates/state-flip StateFlip
 - passed superposition/all-basis-vector-with-phase-flip-two-qubits AllBasisVectorWithPhaseFlip_TwoQubits
 - passed superposition/all-basis-vectors-two-qubits AllBasisVectors_TwoQubits

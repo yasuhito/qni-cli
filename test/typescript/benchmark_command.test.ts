@@ -800,8 +800,8 @@ describe('benchmark command TypeScript route', () => {
       assert.equal(captured.value.status, 'passed');
       assert.equal(captured.value.exitCode, 0);
       assert.deepStrictEqual(captured.value.summary, {
-        total: 9,
-        passed: 9,
+        total: 12,
+        passed: 12,
         failed: 0,
         disallowed: 0,
         error: 0
@@ -820,6 +820,24 @@ describe('benchmark command TypeScript route', () => {
             { type: 'run', status: 'passed' },
             { type: 'run', status: 'passed' }
           ]
+        },
+        {
+          taskId: 'basic-gates/bell-state-change-1',
+          status: 'passed',
+          exitCode: 0,
+          checks: [{ type: 'run', status: 'passed' }]
+        },
+        {
+          taskId: 'basic-gates/bell-state-change-2',
+          status: 'passed',
+          exitCode: 0,
+          checks: [{ type: 'run', status: 'passed' }]
+        },
+        {
+          taskId: 'basic-gates/bell-state-change-3',
+          status: 'passed',
+          exitCode: 0,
+          checks: [{ type: 'run', status: 'passed' }]
         },
         {
           taskId: 'basic-gates/state-flip',
@@ -885,9 +903,12 @@ describe('benchmark command TypeScript route', () => {
       assert.equal(result.exitStatus, 0, result.stderr);
       assert.equal(result.stdout, [
         'PASS benchmark suite',
-        'tasks: 9',
-        'passed: 9, failed: 0, disallowed: 0, error: 0',
+        'tasks: 12',
+        'passed: 12, failed: 0, disallowed: 0, error: 0',
         '- passed basic-gates/basis-change BasisChange',
+        '- passed basic-gates/bell-state-change-1 BellStateChange1',
+        '- passed basic-gates/bell-state-change-2 BellStateChange2',
+        '- passed basic-gates/bell-state-change-3 BellStateChange3',
         '- passed basic-gates/state-flip StateFlip',
         '- passed superposition/all-basis-vector-with-phase-flip-two-qubits AllBasisVectorWithPhaseFlip_TwoQubits',
         '- passed superposition/all-basis-vectors-two-qubits AllBasisVectors_TwoQubits',
@@ -918,8 +939,8 @@ describe('benchmark command TypeScript route', () => {
         status: 'passed',
         exitCode: 0,
         summary: {
-          total: 9,
-          passed: 9,
+          total: 12,
+          passed: 12,
           failed: 0,
           disallowed: 0,
           error: 0
@@ -948,6 +969,54 @@ describe('benchmark command TypeScript route', () => {
               { type: 'run', status: 'passed' },
               { type: 'run', status: 'passed' }
             ]
+          },
+          {
+            taskId: 'basic-gates/bell-state-change-1',
+            title: 'BellStateChange1',
+            task: 'benchmarks/quantum-katas/basic-gates/bell-state-change-1.md',
+            submission: 'benchmarks/solutions/quantum-katas/basic-gates/bell-state-change-1.qni',
+            status: 'passed',
+            exitCode: 0,
+            gradingCases: [
+              {
+                caseId: 'phi-plus-input',
+                status: 'passed',
+                checks: [{ type: 'run', status: 'passed' }]
+              }
+            ],
+            checks: [{ type: 'run', status: 'passed' }]
+          },
+          {
+            taskId: 'basic-gates/bell-state-change-2',
+            title: 'BellStateChange2',
+            task: 'benchmarks/quantum-katas/basic-gates/bell-state-change-2.md',
+            submission: 'benchmarks/solutions/quantum-katas/basic-gates/bell-state-change-2.qni',
+            status: 'passed',
+            exitCode: 0,
+            gradingCases: [
+              {
+                caseId: 'phi-plus-input',
+                status: 'passed',
+                checks: [{ type: 'run', status: 'passed' }]
+              }
+            ],
+            checks: [{ type: 'run', status: 'passed' }]
+          },
+          {
+            taskId: 'basic-gates/bell-state-change-3',
+            title: 'BellStateChange3',
+            task: 'benchmarks/quantum-katas/basic-gates/bell-state-change-3.md',
+            submission: 'benchmarks/solutions/quantum-katas/basic-gates/bell-state-change-3.qni',
+            status: 'passed',
+            exitCode: 0,
+            gradingCases: [
+              {
+                caseId: 'phi-plus-input',
+                status: 'passed',
+                checks: [{ type: 'run', status: 'passed' }]
+              }
+            ],
+            checks: [{ type: 'run', status: 'passed' }]
           },
           {
             taskId: 'basic-gates/state-flip',
