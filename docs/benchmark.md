@@ -16,7 +16,7 @@
 
 提出物には回路を作るコマンドだけを書きます。`qni run` や `qni expect` などの検証コマンドは書きません。
 
-## 10問の標準解を実行する
+## 22問の標準解を実行する
 
 ### StateFlip
 
@@ -34,6 +34,78 @@ qni benchmark run benchmarks/quantum-katas/basic-gates/basis-change.md benchmark
 
 期待される結果は `PASS BasisChange` です。BasisChange は複数の採点ケースを持ち、既定の `|0>` 入力と `setup_commands` で準備した `|1>` 入力を別々に検証します。
 
+### TwoQubitGate1
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/two-qubit-gate-1.md benchmarks/solutions/quantum-katas/basic-gates/two-qubit-gate-1.qni
+```
+
+期待される結果は `PASS TwoQubitGate1` です。TwoQubitGate1 は CNOT により、1つ目の量子ビットが `|1>` のときに2つ目の量子ビットを反転します。
+
+### TwoQubitGate2
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/two-qubit-gate-2.md benchmarks/solutions/quantum-katas/basic-gates/two-qubit-gate-2.qni
+```
+
+期待される結果は `PASS TwoQubitGate2` です。TwoQubitGate2 は controlled-Z により、`|11>` 成分だけの符号を反転します。
+
+### TwoQubitGate3
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/two-qubit-gate-3.md benchmarks/solutions/quantum-katas/basic-gates/two-qubit-gate-3.qni
+```
+
+期待される結果は `PASS TwoQubitGate3` です。TwoQubitGate3 は SWAP により、2つの量子ビットを入れ替えます。
+
+### TwoQubitGate4
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/two-qubit-gate-4.md benchmarks/solutions/quantum-katas/basic-gates/two-qubit-gate-4.qni
+```
+
+期待される結果は `PASS TwoQubitGate4` です。TwoQubitGate4 は CNOT と X の組み合わせにより、1つ目の量子ビットが `|0>` のときだけ2つ目の量子ビットを反転する変換を作ります。
+
+### ToffoliGate
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/toffoli-gate.md benchmarks/solutions/quantum-katas/basic-gates/toffoli-gate.qni
+```
+
+期待される結果は `PASS ToffoliGate` です。ToffoliGate は二重制御 X により、1つ目と2つ目の量子ビットがどちらも `|1>` のときだけ3つ目の量子ビットを反転します。
+
+### BellStateChange1
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/bell-state-change-1.md benchmarks/solutions/quantum-katas/basic-gates/bell-state-change-1.qni
+```
+
+期待される結果は `PASS BellStateChange1` です。BellStateChange1 は `setup_commands` で `|Φ+>` を準備し、提出物が `|Φ->` に変換することを計算基底の振幅で検証します。
+
+### BellStateChange2
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/bell-state-change-2.md benchmarks/solutions/quantum-katas/basic-gates/bell-state-change-2.qni
+```
+
+期待される結果は `PASS BellStateChange2` です。BellStateChange2 は `setup_commands` で `|Φ+>` を準備し、提出物が `|Ψ+>` に変換することを計算基底の振幅で検証します。
+
+### BellStateChange3
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/bell-state-change-3.md benchmarks/solutions/quantum-katas/basic-gates/bell-state-change-3.qni
+```
+
+期待される結果は `PASS BellStateChange3` です。BellStateChange3 は `setup_commands` で `|Φ+>` を準備し、提出物が `|Ψ->` に変換することを計算基底の振幅で検証します。
+
+### FredkinGate
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/fredkin-gate.md benchmarks/solutions/quantum-katas/basic-gates/fredkin-gate.qni
+```
+
+期待される結果は `PASS FredkinGate` です。FredkinGate は複数の採点ケースを持ち、制御量子ビットが `|0>` の入力と `|1>` の入力を別々に検証します。
+
 ### GlobalPhaseChange
 
 ```bash
@@ -41,6 +113,30 @@ qni benchmark run benchmarks/quantum-katas/basic-gates/global-phase-change.md be
 ```
 
 期待される結果は `PASS GlobalPhaseChange` です。GlobalPhaseChange は、単独では観測不能なグローバル位相を、制御量子ビットの重ね合わせに対する相対位相として採点します。
+
+### SignFlip
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/sign-flip.md benchmarks/solutions/quantum-katas/basic-gates/sign-flip.qni
+```
+
+期待される結果は `PASS SignFlip` です。SignFlip は複数の採点ケースを持ち、`setup_commands` で準備した `|+>` 入力と `|->` 入力を別々に検証します。
+
+### PhaseFlip
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/phase-flip.md benchmarks/solutions/quantum-katas/basic-gates/phase-flip.qni
+```
+
+期待される結果は `PASS PhaseFlip` です。PhaseFlip は複数の採点ケースを持ち、`setup_commands` で準備した `|0>` 入力と `|1>` 入力を別々に検証します。
+
+### PhaseChangePiOver3
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/phase-change-pi-over-3.md benchmarks/solutions/quantum-katas/basic-gates/phase-change-pi-over-3.qni
+```
+
+期待される結果は `PASS PhaseChangePiOver3` です。PhaseChangePiOver3 は Quantum Katas BasicGates の PhaseChange を固定角度 `pi/3` で評価し、`|0>` 入力と `|1>` 入力を別々に検証します。
 
 ### PlusState
 
@@ -116,6 +212,38 @@ qni benchmark run benchmarks/quantum-katas/basic-gates/basis-change.md benchmark
 
 期待される結果は `FAIL BasisChange` です。
 
+TwoQubitGate1 には、`|00>` 入力だけに合う不正解サンプルがあります。重ね合わせ入力と `|10>` 入力の採点ケースで失敗するため、終了コードは `1` です。
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/two-qubit-gate-1.md benchmarks/incorrect/quantum-katas/basic-gates/two-qubit-gate-1-zero-only.qni
+```
+
+期待される結果は `FAIL TwoQubitGate1` です。
+
+PhaseFlip には、`|0>` 入力だけに合う不正解サンプルがあります。`|1>` 入力の採点ケースで失敗するため、終了コードは `1` です。
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/phase-flip.md benchmarks/incorrect/quantum-katas/basic-gates/phase-flip-zero-only.qni
+```
+
+期待される結果は `FAIL PhaseFlip` です。
+
+BellStateChange3 には、Bell 状態の符号を取り違える不正解サンプルがあります。`|Ψ->` にすべきところを `|Ψ+>` にするため、終了コードは `1` です。
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/bell-state-change-3.md benchmarks/incorrect/quantum-katas/basic-gates/bell-state-change-3-wrong-sign.qni
+```
+
+期待される結果は `FAIL BellStateChange3` です。
+
+FredkinGate には、制御量子ビットを無視して常に SWAP する不正解サンプルがあります。制御量子ビットが `|0>` の採点ケースで失敗するため、終了コードは `1` です。
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/fredkin-gate.md benchmarks/incorrect/quantum-katas/basic-gates/fredkin-gate-unconditional-swap.qni
+```
+
+期待される結果は `FAIL FredkinGate` です。
+
 GlobalPhaseChange には、グローバル位相を掛けない不正解サンプルがあります。許可された提出物ですが、制御付き効果として期待される相対位相が出ないため、終了コードは `1` です。
 
 ```bash
@@ -164,7 +292,7 @@ qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/
 
 `grading_cases` を使うと、同じ提出物を複数の初期条件で採点できます。各ケースは独立した一時作業ディレクトリで実行されます。`setup_commands` は採点ケースごとの初期状態準備に使い、提出物の `allowed_commands` とは別に評価ランナーが実行します。
 
-BasisChange では、既定の `|0>` 入力と、`qni state set "1|1>"` で準備する `|1>` 入力を分けています。GlobalPhaseChange では、制御量子ビットを重ね合わせにした2量子ビット状態を `setup_commands` で準備し、制御付きグローバル位相を相対位相として検証します。
+BasisChange では、既定の `|0>` 入力と、`qni state set "1|1>"` で準備する `|1>` 入力を分けています。FredkinGate のような3量子ビット課題では、制御量子ビットが `|0>` の入力と `|1>` の入力を別々の採点ケースにします。GlobalPhaseChange では、制御量子ビットを重ね合わせにした2量子ビット状態を `setup_commands` で準備し、制御付きグローバル位相を相対位相として検証します。
 
 ```yaml
 grading_cases:
@@ -208,15 +336,27 @@ grading_cases:
 qni benchmark run-all benchmarks/quantum-katas benchmarks/solutions/quantum-katas
 ```
 
-期待される結果は、10問すべてが `passed` になり、終了コードが `0` になることです。
+期待される結果は、22問すべてが `passed` になり、終了コードが `0` になることです。
 
 ```text
 PASS benchmark suite
-tasks: 10
-passed: 10, failed: 0, disallowed: 0, error: 0
+tasks: 22
+passed: 22, failed: 0, disallowed: 0, error: 0
 - passed basic-gates/basis-change BasisChange
+- passed basic-gates/bell-state-change-1 BellStateChange1
+- passed basic-gates/bell-state-change-2 BellStateChange2
+- passed basic-gates/bell-state-change-3 BellStateChange3
+- passed basic-gates/fredkin-gate FredkinGate
 - passed basic-gates/global-phase-change GlobalPhaseChange
+- passed basic-gates/phase-change-pi-over-3 PhaseChangePiOver3
+- passed basic-gates/phase-flip PhaseFlip
+- passed basic-gates/sign-flip SignFlip
 - passed basic-gates/state-flip StateFlip
+- passed basic-gates/toffoli-gate ToffoliGate
+- passed basic-gates/two-qubit-gate-1 TwoQubitGate1
+- passed basic-gates/two-qubit-gate-2 TwoQubitGate2
+- passed basic-gates/two-qubit-gate-3 TwoQubitGate3
+- passed basic-gates/two-qubit-gate-4 TwoQubitGate4
 - passed superposition/all-basis-vector-with-phase-flip-two-qubits AllBasisVectorWithPhaseFlip_TwoQubits
 - passed superposition/all-basis-vectors-two-qubits AllBasisVectors_TwoQubits
 - passed superposition/all-basis-vectors-with-phases-two-qubits AllBasisVectorsWithPhases_TwoQubits
