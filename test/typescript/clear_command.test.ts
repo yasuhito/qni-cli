@@ -6,6 +6,8 @@ import { describe, it } from 'node:test';
 
 import { captureDispatcherRun, withTempDir } from './helpers/command';
 
+const TEMP_DIR_OPTIONS = { prefix: 'qni-cli-clear-' };
+
 const HELP_TEXT = `Usage:
   qni clear
 
@@ -29,50 +31,62 @@ async function circuitExists(dir: string): Promise<boolean> {
 
 describe('clear command TypeScript route', () => {
   it('deletes circuit.json through the TypeScript route', async () => {
-    await withTempDir(async (dir) => {
-      const circuitPath = path.join(dir, 'circuit.json');
-      await writeFile(circuitPath, '{"qubits":1,"cols":[["H"]]}\n');
+    await withTempDir(
+      async (dir) => {
+        const circuitPath = path.join(dir, 'circuit.json');
+        await writeFile(circuitPath, '{"qubits":1,"cols":[["H"]]}\n');
 
-      const result = captureDispatcherRun(dir, ['clear']);
+        const result = captureDispatcherRun(dir, ['clear']);
 
-      assert.equal(result.exitStatus, 0);
-      assert.equal(result.stdout, '');
-      assert.equal(result.stderr, '');
-      assert.equal(await circuitExists(dir), false);
-    });
+        assert.equal(result.exitStatus, 0);
+        assert.equal(result.stdout, '');
+        assert.equal(result.stderr, '');
+        assert.equal(await circuitExists(dir), false);
+      },
+      TEMP_DIR_OPTIONS
+    );
   });
 
   it('succeeds without creating circuit.json when it does not exist', async () => {
-    await withTempDir(async (dir) => {
-      const result = captureDispatcherRun(dir, ['clear']);
+    await withTempDir(
+      async (dir) => {
+        const result = captureDispatcherRun(dir, ['clear']);
 
-      assert.equal(result.exitStatus, 0);
-      assert.equal(result.stdout, '');
-      assert.equal(result.stderr, '');
-      assert.equal(await circuitExists(dir), false);
-    });
+        assert.equal(result.exitStatus, 0);
+        assert.equal(result.stdout, '');
+        assert.equal(result.stderr, '');
+        assert.equal(await circuitExists(dir), false);
+      },
+      TEMP_DIR_OPTIONS
+    );
   });
 
   it('prints clear help through the TypeScript route', async () => {
-    await withTempDir(async (dir) => {
-      const result = captureDispatcherRun(dir, ['clear', '--help']);
+    await withTempDir(
+      async (dir) => {
+        const result = captureDispatcherRun(dir, ['clear', '--help']);
 
-      assert.equal(result.exitStatus, 0);
-      assert.equal(result.stdout, HELP_TEXT);
-      assert.equal(result.stderr, '');
-    });
+        assert.equal(result.exitStatus, 0);
+        assert.equal(result.stdout, HELP_TEXT);
+        assert.equal(result.stderr, '');
+      },
+      TEMP_DIR_OPTIONS
+    );
   });
 
   it('rejects extra arguments like the Ruby command', async () => {
-    await withTempDir(async (dir) => {
-      const result = captureDispatcherRun(dir, ['clear', '--bad', 'foo']);
+    await withTempDir(
+      async (dir) => {
+        const result = captureDispatcherRun(dir, ['clear', '--bad', 'foo']);
 
-      assert.equal(result.exitStatus, 1);
-      assert.equal(result.stdout, '');
-      assert.equal(
-        result.stderr,
-        'ERROR: "qni clear" was called with arguments ["--bad", "foo"]\nUsage: "qni clear"\n'
-      );
-    });
+        assert.equal(result.exitStatus, 1);
+        assert.equal(result.stdout, '');
+        assert.equal(
+          result.stderr,
+          'ERROR: "qni clear" was called with arguments ["--bad", "foo"]\nUsage: "qni clear"\n'
+        );
+      },
+      TEMP_DIR_OPTIONS
+    );
   });
 });
