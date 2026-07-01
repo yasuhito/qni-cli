@@ -2,6 +2,8 @@
 
 この文書は、量子回路AIエージェント評価基盤のMVPスモークセットを再現するための手順です。評価ランナーはAIを呼び出しません。人間、Pi、Codex、Claudeなどが同じ条件で `.qni` 提出物を作り、そのファイルを `qni benchmark run` で採点します。
 
+汎用の `qni` コマンド、画像出力、Bloch sphere、状態ベクトル操作の例は [cli.md](cli.md) に置きます。この文書は、ベンチマーク採点と研究試行ログの手順に集中します。
+
 以下の例はリポジトリルートから実行します。開発中の作業ツリーで実行する場合は、先に `npm run build` を実行し、`qni` を `node dist/bin/qni.js` に読み替えてください。
 
 ## .qni 提出物の作り方
@@ -14,7 +16,7 @@
 
 提出物には回路を作るコマンドだけを書きます。`qni run` や `qni expect` などの検証コマンドは書きません。
 
-## 14問の標準解を実行する
+## 20問の標準解を実行する
 
 ### StateFlip
 
@@ -71,6 +73,54 @@ qni benchmark run benchmarks/quantum-katas/basic-gates/toffoli-gate.md benchmark
 ```
 
 期待される結果は `PASS ToffoliGate` です。ToffoliGate は二重制御 X により、1つ目と2つ目の量子ビットがどちらも `|1>` のときだけ3つ目の量子ビットを反転します。
+
+### BellStateChange1
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/bell-state-change-1.md benchmarks/solutions/quantum-katas/basic-gates/bell-state-change-1.qni
+```
+
+期待される結果は `PASS BellStateChange1` です。BellStateChange1 は `setup_commands` で `|Φ+>` を準備し、提出物が `|Φ->` に変換することを計算基底の振幅で検証します。
+
+### BellStateChange2
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/bell-state-change-2.md benchmarks/solutions/quantum-katas/basic-gates/bell-state-change-2.qni
+```
+
+期待される結果は `PASS BellStateChange2` です。BellStateChange2 は `setup_commands` で `|Φ+>` を準備し、提出物が `|Ψ+>` に変換することを計算基底の振幅で検証します。
+
+### BellStateChange3
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/bell-state-change-3.md benchmarks/solutions/quantum-katas/basic-gates/bell-state-change-3.qni
+```
+
+期待される結果は `PASS BellStateChange3` です。BellStateChange3 は `setup_commands` で `|Φ+>` を準備し、提出物が `|Ψ->` に変換することを計算基底の振幅で検証します。
+
+### SignFlip
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/sign-flip.md benchmarks/solutions/quantum-katas/basic-gates/sign-flip.qni
+```
+
+期待される結果は `PASS SignFlip` です。SignFlip は複数の採点ケースを持ち、`setup_commands` で準備した `|+>` 入力と `|->` 入力を別々に検証します。
+
+### PhaseFlip
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/phase-flip.md benchmarks/solutions/quantum-katas/basic-gates/phase-flip.qni
+```
+
+期待される結果は `PASS PhaseFlip` です。PhaseFlip は複数の採点ケースを持ち、`setup_commands` で準備した `|0>` 入力と `|1>` 入力を別々に検証します。
+
+### PhaseChangePiOver3
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/phase-change-pi-over-3.md benchmarks/solutions/quantum-katas/basic-gates/phase-change-pi-over-3.qni
+```
+
+期待される結果は `PASS PhaseChangePiOver3` です。PhaseChangePiOver3 は Quantum Katas BasicGates の PhaseChange を固定角度 `pi/3` で評価し、`|0>` 入力と `|1>` 入力を別々に検証します。
 
 ### PlusState
 
@@ -153,6 +203,22 @@ qni benchmark run benchmarks/quantum-katas/basic-gates/two-qubit-gate-1.md bench
 ```
 
 期待される結果は `FAIL TwoQubitGate1` です。
+
+PhaseFlip には、`|0>` 入力だけに合う不正解サンプルがあります。`|1>` 入力の採点ケースで失敗するため、終了コードは `1` です。
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/phase-flip.md benchmarks/incorrect/quantum-katas/basic-gates/phase-flip-zero-only.qni
+```
+
+期待される結果は `FAIL PhaseFlip` です。
+
+BellStateChange3 には、Bell 状態の符号を取り違える不正解サンプルがあります。`|Ψ->` にすべきところを `|Ψ+>` にするため、終了コードは `1` です。
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/bell-state-change-3.md benchmarks/incorrect/quantum-katas/basic-gates/bell-state-change-3-wrong-sign.qni
+```
+
+期待される結果は `FAIL BellStateChange3` です。
 
 ## 不許可サンプルを実行する
 
@@ -238,13 +304,19 @@ grading_cases:
 qni benchmark run-all benchmarks/quantum-katas benchmarks/solutions/quantum-katas
 ```
 
-期待される結果は、14問すべてが `passed` になり、終了コードが `0` になることです。
+期待される結果は、20問すべてが `passed` になり、終了コードが `0` になることです。
 
 ```text
 PASS benchmark suite
-tasks: 14
-passed: 14, failed: 0, disallowed: 0, error: 0
+tasks: 20
+passed: 20, failed: 0, disallowed: 0, error: 0
 - passed basic-gates/basis-change BasisChange
+- passed basic-gates/bell-state-change-1 BellStateChange1
+- passed basic-gates/bell-state-change-2 BellStateChange2
+- passed basic-gates/bell-state-change-3 BellStateChange3
+- passed basic-gates/phase-change-pi-over-3 PhaseChangePiOver3
+- passed basic-gates/phase-flip PhaseFlip
+- passed basic-gates/sign-flip SignFlip
 - passed basic-gates/state-flip StateFlip
 - passed basic-gates/toffoli-gate ToffoliGate
 - passed basic-gates/two-qubit-gate-1 TwoQubitGate1
