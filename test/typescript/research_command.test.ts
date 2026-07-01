@@ -121,6 +121,9 @@ async function prepareQuantumKatasSubmissions(
 ): Promise<void> {
   const relativePaths = [
     'basic-gates/basis-change.qni',
+    'basic-gates/phase-change-pi-over-3.qni',
+    'basic-gates/phase-flip.qni',
+    'basic-gates/sign-flip.qni',
     'basic-gates/state-flip.qni',
     'superposition/all-basis-vector-with-phase-flip-two-qubits.qni',
     'superposition/all-basis-vectors-two-qubits.qni',
@@ -142,6 +145,9 @@ async function prepareQuantumKatasSubmissions(
 function quantumKatasSubmissionContent(status: UnsuccessfulResearchStatus, relativePath: string): string {
   const passedSubmissions = new Map<string, string>([
     ['basic-gates/basis-change.qni', 'qni add H --qubit 0 --step 0\n'],
+    ['basic-gates/phase-change-pi-over-3.qni', 'qni add P --angle pi/3 --qubit 0 --step 0\n'],
+    ['basic-gates/phase-flip.qni', 'qni add S --qubit 0 --step 0\n'],
+    ['basic-gates/sign-flip.qni', 'qni add Z --qubit 0 --step 0\n'],
     ['basic-gates/state-flip.qni', 'qni add X --qubit 0 --step 0\n'],
     [
       'superposition/all-basis-vector-with-phase-flip-two-qubits.qni',
@@ -766,8 +772,8 @@ describe('research command TypeScript route', () => {
       assert.match(String(metadata.createdAt), /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.000Z$/u);
       assert.equal(gradingResult.status, 'passed');
       assert.deepStrictEqual(gradingResult.summary, {
-        total: 9,
-        passed: 9,
+        total: 12,
+        passed: 12,
         failed: 0,
         disallowed: 0,
         error: 0
@@ -776,6 +782,9 @@ describe('research command TypeScript route', () => {
       assert.equal(await readFile(path.join(trialDir, 'prompt.md'), 'utf8'), 'Solve the smoke benchmark suite.\n');
       assert.equal(await readFile(path.join(trialDir, 'response.md'), 'utf8'), 'I wrote the requested .qni submissions.\n');
       assert.equal((await stat(path.join(trialDir, 'submissions'))).isDirectory(), true);
+      assert.equal((await stat(path.join(trialDir, 'submissions', 'basic-gates', 'phase-change-pi-over-3.qni'))).isFile(), true);
+      assert.equal((await stat(path.join(trialDir, 'submissions', 'basic-gates', 'phase-flip.qni'))).isFile(), true);
+      assert.equal((await stat(path.join(trialDir, 'submissions', 'basic-gates', 'sign-flip.qni'))).isFile(), true);
       assert.equal((await stat(path.join(trialDir, 'submissions', 'basic-gates', 'state-flip.qni'))).isFile(), true);
     });
   });
