@@ -16,9 +16,15 @@ interface ParsedQniCommand {
   readonly source: string;
 }
 
-export interface AllowedCommand extends ParsedQniCommand {}
+export interface AllowedCommand {
+  readonly argv: readonly string[];
+  readonly source: string;
+}
 
-export interface BenchmarkSetupCommand extends ParsedQniCommand {}
+export interface BenchmarkSetupCommand {
+  readonly argv: readonly string[];
+  readonly source: string;
+}
 
 export interface BenchmarkGradingCase {
   readonly checks: BenchmarkChecks;
