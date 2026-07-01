@@ -434,6 +434,51 @@ describe('benchmark command TypeScript route', () => {
     });
   });
 
+  it('passes the SignFlip solution using explicit grading cases', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, [
+        'benchmark',
+        'run',
+        'benchmarks/quantum-katas/basic-gates/sign-flip.md',
+        'benchmarks/solutions/quantum-katas/basic-gates/sign-flip.qni'
+      ]);
+
+      assert.equal(result.exitStatus, 0, result.stderr);
+      assert.equal(result.stdout, 'PASS SignFlip\nchecks: 2\n');
+      assert.equal(result.stderr, '');
+    });
+  });
+
+  it('passes the PhaseFlip solution using explicit grading cases', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, [
+        'benchmark',
+        'run',
+        'benchmarks/quantum-katas/basic-gates/phase-flip.md',
+        'benchmarks/solutions/quantum-katas/basic-gates/phase-flip.qni'
+      ]);
+
+      assert.equal(result.exitStatus, 0, result.stderr);
+      assert.equal(result.stdout, 'PASS PhaseFlip\nchecks: 2\n');
+      assert.equal(result.stderr, '');
+    });
+  });
+
+  it('passes the fixed-angle PhaseChange solution using explicit grading cases', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, [
+        'benchmark',
+        'run',
+        'benchmarks/quantum-katas/basic-gates/phase-change-pi-over-3.md',
+        'benchmarks/solutions/quantum-katas/basic-gates/phase-change-pi-over-3.qni'
+      ]);
+
+      assert.equal(result.exitStatus, 0, result.stderr);
+      assert.equal(result.stdout, 'PASS PhaseChangePiOver3\nchecks: 2\n');
+      assert.equal(result.stderr, '');
+    });
+  });
+
   it('passes the MinusState solution using a run check', async () => {
     await withTempDir(async (dir) => {
       const result = captureDispatcherRun(dir, [
@@ -620,6 +665,29 @@ describe('benchmark command TypeScript route', () => {
     });
   });
 
+  it('fails the PhaseFlip zero-input-only incorrect sample in the one-input grading case', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, [
+        'benchmark',
+        'run',
+        'benchmarks/quantum-katas/basic-gates/phase-flip.md',
+        'benchmarks/incorrect/quantum-katas/basic-gates/phase-flip-zero-only.qni'
+      ]);
+
+      assert.equal(result.exitStatus, 1, result.stderr);
+      assert.equal(result.stdout, [
+        'FAIL PhaseFlip',
+        'checks: 2',
+        'failed checks:',
+        '- case one-input run #1: state vector did not match expected amplitudes',
+        '  expected / actual mismatches:',
+        '  - |1>: expected 1i, actual -1',
+        ''
+      ].join('\n'));
+      assert.equal(result.stderr, '');
+    });
+  });
+
   it('prints failed grading case ids in human-readable check details', async () => {
     await withTempDir(async (dir) => {
       await writeFile(path.join(dir, 'task.md'), xOnZeroAndOneGradingCasesTask());
@@ -800,8 +868,8 @@ describe('benchmark command TypeScript route', () => {
       assert.equal(captured.value.status, 'passed');
       assert.equal(captured.value.exitCode, 0);
       assert.deepStrictEqual(captured.value.summary, {
-        total: 12,
-        passed: 12,
+        total: 15,
+        passed: 15,
         failed: 0,
         disallowed: 0,
         error: 0
@@ -838,6 +906,33 @@ describe('benchmark command TypeScript route', () => {
           status: 'passed',
           exitCode: 0,
           checks: [{ type: 'run', status: 'passed' }]
+        },
+        {
+          taskId: 'basic-gates/phase-change-pi-over-3',
+          status: 'passed',
+          exitCode: 0,
+          checks: [
+            { type: 'run', status: 'passed' },
+            { type: 'run', status: 'passed' }
+          ]
+        },
+        {
+          taskId: 'basic-gates/phase-flip',
+          status: 'passed',
+          exitCode: 0,
+          checks: [
+            { type: 'run', status: 'passed' },
+            { type: 'run', status: 'passed' }
+          ]
+        },
+        {
+          taskId: 'basic-gates/sign-flip',
+          status: 'passed',
+          exitCode: 0,
+          checks: [
+            { type: 'run', status: 'passed' },
+            { type: 'run', status: 'passed' }
+          ]
         },
         {
           taskId: 'basic-gates/state-flip',
@@ -903,12 +998,15 @@ describe('benchmark command TypeScript route', () => {
       assert.equal(result.exitStatus, 0, result.stderr);
       assert.equal(result.stdout, [
         'PASS benchmark suite',
-        'tasks: 12',
-        'passed: 12, failed: 0, disallowed: 0, error: 0',
+        'tasks: 15',
+        'passed: 15, failed: 0, disallowed: 0, error: 0',
         '- passed basic-gates/basis-change BasisChange',
         '- passed basic-gates/bell-state-change-1 BellStateChange1',
         '- passed basic-gates/bell-state-change-2 BellStateChange2',
         '- passed basic-gates/bell-state-change-3 BellStateChange3',
+        '- passed basic-gates/phase-change-pi-over-3 PhaseChangePiOver3',
+        '- passed basic-gates/phase-flip PhaseFlip',
+        '- passed basic-gates/sign-flip SignFlip',
         '- passed basic-gates/state-flip StateFlip',
         '- passed superposition/all-basis-vector-with-phase-flip-two-qubits AllBasisVectorWithPhaseFlip_TwoQubits',
         '- passed superposition/all-basis-vectors-two-qubits AllBasisVectors_TwoQubits',
@@ -935,163 +1033,371 @@ describe('benchmark command TypeScript route', () => {
       const payload = JSON.parse(result.stdout) as Record<string, unknown>;
 
       assert.equal(result.exitStatus, 0, result.stderr);
-      assert.deepStrictEqual(payload, {
-        status: 'passed',
-        exitCode: 0,
-        summary: {
-          total: 12,
-          passed: 12,
-          failed: 0,
-          disallowed: 0,
-          error: 0
+      assert.deepStrictEqual(payload, JSON.parse(`
+{
+  "status": "passed",
+  "exitCode": 0,
+  "summary": {
+    "disallowed": 0,
+    "error": 0,
+    "failed": 0,
+    "passed": 15,
+    "total": 15
+  },
+  "results": [
+    {
+      "taskId": "basic-gates/basis-change",
+      "title": "BasisChange",
+      "submission": "benchmarks/solutions/quantum-katas/basic-gates/basis-change.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "gradingCases": [
+        {
+          "caseId": "zero-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
         },
-        results: [
-          {
-            taskId: 'basic-gates/basis-change',
-            title: 'BasisChange',
-            task: 'benchmarks/quantum-katas/basic-gates/basis-change.md',
-            submission: 'benchmarks/solutions/quantum-katas/basic-gates/basis-change.qni',
-            status: 'passed',
-            exitCode: 0,
-            gradingCases: [
-              {
-                caseId: 'zero-input',
-                status: 'passed',
-                checks: [{ type: 'run', status: 'passed' }]
-              },
-              {
-                caseId: 'one-input',
-                status: 'passed',
-                checks: [{ type: 'run', status: 'passed' }]
-              }
-            ],
-            checks: [
-              { type: 'run', status: 'passed' },
-              { type: 'run', status: 'passed' }
-            ]
-          },
-          {
-            taskId: 'basic-gates/bell-state-change-1',
-            title: 'BellStateChange1',
-            task: 'benchmarks/quantum-katas/basic-gates/bell-state-change-1.md',
-            submission: 'benchmarks/solutions/quantum-katas/basic-gates/bell-state-change-1.qni',
-            status: 'passed',
-            exitCode: 0,
-            gradingCases: [
-              {
-                caseId: 'phi-plus-input',
-                status: 'passed',
-                checks: [{ type: 'run', status: 'passed' }]
-              }
-            ],
-            checks: [{ type: 'run', status: 'passed' }]
-          },
-          {
-            taskId: 'basic-gates/bell-state-change-2',
-            title: 'BellStateChange2',
-            task: 'benchmarks/quantum-katas/basic-gates/bell-state-change-2.md',
-            submission: 'benchmarks/solutions/quantum-katas/basic-gates/bell-state-change-2.qni',
-            status: 'passed',
-            exitCode: 0,
-            gradingCases: [
-              {
-                caseId: 'phi-plus-input',
-                status: 'passed',
-                checks: [{ type: 'run', status: 'passed' }]
-              }
-            ],
-            checks: [{ type: 'run', status: 'passed' }]
-          },
-          {
-            taskId: 'basic-gates/bell-state-change-3',
-            title: 'BellStateChange3',
-            task: 'benchmarks/quantum-katas/basic-gates/bell-state-change-3.md',
-            submission: 'benchmarks/solutions/quantum-katas/basic-gates/bell-state-change-3.qni',
-            status: 'passed',
-            exitCode: 0,
-            gradingCases: [
-              {
-                caseId: 'phi-plus-input',
-                status: 'passed',
-                checks: [{ type: 'run', status: 'passed' }]
-              }
-            ],
-            checks: [{ type: 'run', status: 'passed' }]
-          },
-          {
-            taskId: 'basic-gates/state-flip',
-            title: 'StateFlip',
-            task: 'benchmarks/quantum-katas/basic-gates/state-flip.md',
-            submission: 'benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni',
-            status: 'passed',
-            exitCode: 0,
-            checks: [{ type: 'run', status: 'passed' }]
-          },
-          {
-            taskId: 'superposition/all-basis-vector-with-phase-flip-two-qubits',
-            title: 'AllBasisVectorWithPhaseFlip_TwoQubits',
-            task: 'benchmarks/quantum-katas/superposition/all-basis-vector-with-phase-flip-two-qubits.md',
-            submission: 'benchmarks/solutions/quantum-katas/superposition/all-basis-vector-with-phase-flip-two-qubits.qni',
-            status: 'passed',
-            exitCode: 0,
-            checks: [{ type: 'run', status: 'passed' }]
-          },
-          {
-            taskId: 'superposition/all-basis-vectors-two-qubits',
-            title: 'AllBasisVectors_TwoQubits',
-            task: 'benchmarks/quantum-katas/superposition/all-basis-vectors-two-qubits.md',
-            submission: 'benchmarks/solutions/quantum-katas/superposition/all-basis-vectors-two-qubits.qni',
-            status: 'passed',
-            exitCode: 0,
-            checks: [{ type: 'run', status: 'passed' }]
-          },
-          {
-            taskId: 'superposition/all-basis-vectors-with-phases-two-qubits',
-            title: 'AllBasisVectorsWithPhases_TwoQubits',
-            task: 'benchmarks/quantum-katas/superposition/all-basis-vectors-with-phases-two-qubits.md',
-            submission: 'benchmarks/solutions/quantum-katas/superposition/all-basis-vectors-with-phases-two-qubits.qni',
-            status: 'passed',
-            exitCode: 0,
-            checks: [{ type: 'run', status: 'passed' }]
-          },
-          {
-            taskId: 'superposition/bell-state',
-            title: 'BellState',
-            task: 'benchmarks/quantum-katas/superposition/bell-state.md',
-            submission: 'benchmarks/solutions/quantum-katas/superposition/bell-state.qni',
-            status: 'passed',
-            exitCode: 0,
-            checks: [{ type: 'expect', status: 'passed' }]
-          },
-          {
-            taskId: 'superposition/ghz-state',
-            title: 'GHZState',
-            task: 'benchmarks/quantum-katas/superposition/ghz-state.md',
-            submission: 'benchmarks/solutions/quantum-katas/superposition/ghz-state.qni',
-            status: 'passed',
-            exitCode: 0,
-            checks: [{ type: 'run', status: 'passed' }]
-          },
-          {
-            taskId: 'superposition/minus-state',
-            title: 'MinusState',
-            task: 'benchmarks/quantum-katas/superposition/minus-state.md',
-            submission: 'benchmarks/solutions/quantum-katas/superposition/minus-state.qni',
-            status: 'passed',
-            exitCode: 0,
-            checks: [{ type: 'run', status: 'passed' }]
-          },
-          {
-            taskId: 'superposition/plus-state',
-            title: 'PlusState',
-            task: 'benchmarks/quantum-katas/superposition/plus-state.md',
-            submission: 'benchmarks/solutions/quantum-katas/superposition/plus-state.qni',
-            status: 'passed',
-            exitCode: 0,
-            checks: [{ type: 'run', status: 'passed' }]
-          }
-        ]
-      });
+        {
+          "caseId": "one-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/basic-gates/basis-change.md"
+    },
+    {
+      "taskId": "basic-gates/bell-state-change-1",
+      "title": "BellStateChange1",
+      "submission": "benchmarks/solutions/quantum-katas/basic-gates/bell-state-change-1.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "gradingCases": [
+        {
+          "caseId": "phi-plus-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/basic-gates/bell-state-change-1.md"
+    },
+    {
+      "taskId": "basic-gates/bell-state-change-2",
+      "title": "BellStateChange2",
+      "submission": "benchmarks/solutions/quantum-katas/basic-gates/bell-state-change-2.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "gradingCases": [
+        {
+          "caseId": "phi-plus-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/basic-gates/bell-state-change-2.md"
+    },
+    {
+      "taskId": "basic-gates/bell-state-change-3",
+      "title": "BellStateChange3",
+      "submission": "benchmarks/solutions/quantum-katas/basic-gates/bell-state-change-3.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "gradingCases": [
+        {
+          "caseId": "phi-plus-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/basic-gates/bell-state-change-3.md"
+    },
+    {
+      "taskId": "basic-gates/phase-change-pi-over-3",
+      "title": "PhaseChangePiOver3",
+      "submission": "benchmarks/solutions/quantum-katas/basic-gates/phase-change-pi-over-3.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "gradingCases": [
+        {
+          "caseId": "zero-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "one-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/basic-gates/phase-change-pi-over-3.md"
+    },
+    {
+      "taskId": "basic-gates/phase-flip",
+      "title": "PhaseFlip",
+      "submission": "benchmarks/solutions/quantum-katas/basic-gates/phase-flip.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "gradingCases": [
+        {
+          "caseId": "zero-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "one-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/basic-gates/phase-flip.md"
+    },
+    {
+      "taskId": "basic-gates/sign-flip",
+      "title": "SignFlip",
+      "submission": "benchmarks/solutions/quantum-katas/basic-gates/sign-flip.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "gradingCases": [
+        {
+          "caseId": "plus-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "minus-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/basic-gates/sign-flip.md"
+    },
+    {
+      "taskId": "basic-gates/state-flip",
+      "title": "StateFlip",
+      "submission": "benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/basic-gates/state-flip.md"
+    },
+    {
+      "taskId": "superposition/all-basis-vector-with-phase-flip-two-qubits",
+      "title": "AllBasisVectorWithPhaseFlip_TwoQubits",
+      "submission": "benchmarks/solutions/quantum-katas/superposition/all-basis-vector-with-phase-flip-two-qubits.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/superposition/all-basis-vector-with-phase-flip-two-qubits.md"
+    },
+    {
+      "taskId": "superposition/all-basis-vectors-two-qubits",
+      "title": "AllBasisVectors_TwoQubits",
+      "submission": "benchmarks/solutions/quantum-katas/superposition/all-basis-vectors-two-qubits.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/superposition/all-basis-vectors-two-qubits.md"
+    },
+    {
+      "taskId": "superposition/all-basis-vectors-with-phases-two-qubits",
+      "title": "AllBasisVectorsWithPhases_TwoQubits",
+      "submission": "benchmarks/solutions/quantum-katas/superposition/all-basis-vectors-with-phases-two-qubits.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/superposition/all-basis-vectors-with-phases-two-qubits.md"
+    },
+    {
+      "taskId": "superposition/bell-state",
+      "title": "BellState",
+      "submission": "benchmarks/solutions/quantum-katas/superposition/bell-state.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "checks": [
+        {
+          "type": "expect",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/superposition/bell-state.md"
+    },
+    {
+      "taskId": "superposition/ghz-state",
+      "title": "GHZState",
+      "submission": "benchmarks/solutions/quantum-katas/superposition/ghz-state.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/superposition/ghz-state.md"
+    },
+    {
+      "taskId": "superposition/minus-state",
+      "title": "MinusState",
+      "submission": "benchmarks/solutions/quantum-katas/superposition/minus-state.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/superposition/minus-state.md"
+    },
+    {
+      "taskId": "superposition/plus-state",
+      "title": "PlusState",
+      "submission": "benchmarks/solutions/quantum-katas/superposition/plus-state.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/superposition/plus-state.md"
+    }
+  ]
+}
+      `));
       assert.equal(result.stderr, '');
     });
   });

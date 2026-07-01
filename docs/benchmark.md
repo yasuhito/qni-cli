@@ -2,6 +2,8 @@
 
 この文書は、量子回路AIエージェント評価基盤のMVPスモークセットを再現するための手順です。評価ランナーはAIを呼び出しません。人間、Pi、Codex、Claudeなどが同じ条件で `.qni` 提出物を作り、そのファイルを `qni benchmark run` で採点します。
 
+汎用の `qni` コマンド、画像出力、Bloch sphere、状態ベクトル操作の例は [cli.md](cli.md) に置きます。この文書は、ベンチマーク採点と研究試行ログの手順に集中します。
+
 以下の例はリポジトリルートから実行します。開発中の作業ツリーで実行する場合は、先に `npm run build` を実行し、`qni` を `node dist/bin/qni.js` に読み替えてください。
 
 ## .qni 提出物の作り方
@@ -14,7 +16,7 @@
 
 提出物には回路を作るコマンドだけを書きます。`qni run` や `qni expect` などの検証コマンドは書きません。
 
-## 12問の標準解を実行する
+## 15問の標準解を実行する
 
 ### StateFlip
 
@@ -55,6 +57,30 @@ qni benchmark run benchmarks/quantum-katas/basic-gates/bell-state-change-3.md be
 ```
 
 期待される結果は `PASS BellStateChange3` です。BellStateChange3 は `setup_commands` で `|Φ+>` を準備し、提出物が `|Ψ->` に変換することを計算基底の振幅で検証します。
+
+### SignFlip
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/sign-flip.md benchmarks/solutions/quantum-katas/basic-gates/sign-flip.qni
+```
+
+期待される結果は `PASS SignFlip` です。SignFlip は複数の採点ケースを持ち、`setup_commands` で準備した `|+>` 入力と `|->` 入力を別々に検証します。
+
+### PhaseFlip
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/phase-flip.md benchmarks/solutions/quantum-katas/basic-gates/phase-flip.qni
+```
+
+期待される結果は `PASS PhaseFlip` です。PhaseFlip は複数の採点ケースを持ち、`setup_commands` で準備した `|0>` 入力と `|1>` 入力を別々に検証します。
+
+### PhaseChangePiOver3
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/phase-change-pi-over-3.md benchmarks/solutions/quantum-katas/basic-gates/phase-change-pi-over-3.qni
+```
+
+期待される結果は `PASS PhaseChangePiOver3` です。PhaseChangePiOver3 は Quantum Katas BasicGates の PhaseChange を固定角度 `pi/3` で評価し、`|0>` 入力と `|1>` 入力を別々に検証します。
 
 ### PlusState
 
@@ -130,6 +156,14 @@ qni benchmark run benchmarks/quantum-katas/basic-gates/basis-change.md benchmark
 
 期待される結果は `FAIL BasisChange` です。
 
+PhaseFlip には、`|0>` 入力だけに合う不正解サンプルがあります。`|1>` 入力の採点ケースで失敗するため、終了コードは `1` です。
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/phase-flip.md benchmarks/incorrect/quantum-katas/basic-gates/phase-flip-zero-only.qni
+```
+
+期待される結果は `FAIL PhaseFlip` です。
+
 BellStateChange3 には、Bell 状態の符号を取り違える不正解サンプルがあります。`|Ψ->` にすべきところを `|Ψ+>` にするため、終了コードは `1` です。
 
 ```bash
@@ -178,7 +212,7 @@ qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/
 
 `grading_cases` を使うと、同じ提出物を複数の初期条件で採点できます。各ケースは独立した一時作業ディレクトリで実行されます。`setup_commands` は採点ケースごとの初期状態準備に使い、提出物の `allowed_commands` とは別に評価ランナーが実行します。
 
-BasisChange では、既定の `|0>` 入力と、`qni state set "1|1>"` で準備する `|1>` 入力を分けています。BellStateChange 系の課題では、`qni state set "|Φ+>"` で Bell 状態を準備してから提出物を実行します。
+BasisChange では、既定の `|0>` 入力と、`qni state set "1|1>"` で準備する `|1>` 入力を分けています。
 
 ```yaml
 grading_cases:
@@ -222,16 +256,19 @@ grading_cases:
 qni benchmark run-all benchmarks/quantum-katas benchmarks/solutions/quantum-katas
 ```
 
-期待される結果は、12問すべてが `passed` になり、終了コードが `0` になることです。
+期待される結果は、15問すべてが `passed` になり、終了コードが `0` になることです。
 
 ```text
 PASS benchmark suite
-tasks: 12
-passed: 12, failed: 0, disallowed: 0, error: 0
+tasks: 15
+passed: 15, failed: 0, disallowed: 0, error: 0
 - passed basic-gates/basis-change BasisChange
 - passed basic-gates/bell-state-change-1 BellStateChange1
 - passed basic-gates/bell-state-change-2 BellStateChange2
 - passed basic-gates/bell-state-change-3 BellStateChange3
+- passed basic-gates/phase-change-pi-over-3 PhaseChangePiOver3
+- passed basic-gates/phase-flip PhaseFlip
+- passed basic-gates/sign-flip SignFlip
 - passed basic-gates/state-flip StateFlip
 - passed superposition/all-basis-vector-with-phase-flip-two-qubits AllBasisVectorWithPhaseFlip_TwoQubits
 - passed superposition/all-basis-vectors-two-qubits AllBasisVectors_TwoQubits
