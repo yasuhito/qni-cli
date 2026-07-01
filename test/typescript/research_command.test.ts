@@ -782,7 +782,9 @@ describe('research command TypeScript route', () => {
       assert.equal(await readFile(path.join(trialDir, 'prompt.md'), 'utf8'), 'Solve the smoke benchmark suite.\n');
       assert.equal(await readFile(path.join(trialDir, 'response.md'), 'utf8'), 'I wrote the requested .qni submissions.\n');
       assert.equal((await stat(path.join(trialDir, 'submissions'))).isDirectory(), true);
+      assert.equal((await stat(path.join(trialDir, 'submissions', 'basic-gates', 'phase-change-pi-over-3.qni'))).isFile(), true);
       assert.equal((await stat(path.join(trialDir, 'submissions', 'basic-gates', 'phase-flip.qni'))).isFile(), true);
+      assert.equal((await stat(path.join(trialDir, 'submissions', 'basic-gates', 'sign-flip.qni'))).isFile(), true);
       assert.equal((await stat(path.join(trialDir, 'submissions', 'basic-gates', 'state-flip.qni'))).isFile(), true);
     });
   });
