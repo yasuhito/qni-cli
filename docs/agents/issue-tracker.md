@@ -30,3 +30,38 @@ GitHub issue を作成する。
 ## スキルが「relevant ticket を fetch する」と言ったとき
 
 `gh issue view <number> --comments` で GitHub issue を読む。
+
+## GitHub Relationships
+
+親子関係や依存関係は、可能な限り issue 本文の `Parent` / `Blocked by` セクションではなく GitHub の Relationships metadata に入れる。本文には実装契約を書き、関係 metadata は GitHub UI と GraphQL で確認できる状態にする。
+
+`gh issue edit` には親子関係を直接編集するオプションがないため、`gh api graphql` を使う。
+
+親 issue に子 issue を追加する例:
+
+```bash
+gh api graphql \
+  -f issueId="$PARENT_ISSUE_ID" \
+  -f subIssueId="$CHILD_ISSUE_ID" \
+  -F replaceParent=true \
+  -f query='mutation($issueId:ID!, $subIssueId:ID!, $replaceParent:Boolean) { addSubIssue(input:{issueId:$issueId, subIssueId:$subIssueId, replaceParent:$replaceParent}) { issue { number } subIssue { number parent { number } } } }'
+```
+
+依存関係を追加する例:
+
+```bash
+gh api graphql \
+  -f issueId="$BLOCKED_ISSUE_ID" \
+  -f blockingIssueId="$BLOCKING_ISSUE_ID" \
+  -f query='mutation($issueId:ID!, $blockingIssueId:ID!) { addBlockedBy(input:{issueId:$issueId, blockingIssueId:$blockingIssueId}) { issue { number blockedBy(first:10) { nodes { number } } } } }'
+```
+
+issue ID は次のように取得する。
+
+```bash
+gh api graphql \
+  -f owner=yasuhito \
+  -f name=qni-cli \
+  -F number="$ISSUE_NUMBER" \
+  -f query='query($owner:String!, $name:String!, $number:Int!) { repository(owner:$owner, name:$name) { issue(number:$number) { id } } }'
+```
