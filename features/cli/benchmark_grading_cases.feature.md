@@ -105,8 +105,8 @@ qni-cli の評価ランナー利用者として
 
   ```markdown
   ---
-  id: grading-cases/x-on-zero-and-one
-  title: XOnZeroAndOne
+  id: grading-cases/one-case-fails
+  title: OneCaseFails
   source: test
   difficulty: smoke
   allowed_commands:
