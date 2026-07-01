@@ -7,6 +7,7 @@ export interface BenchmarkTask {
   readonly allowedCommands: readonly AllowedCommand[];
   readonly checks: BenchmarkChecks;
   readonly gradingCases: readonly BenchmarkGradingCase[];
+  readonly hasExplicitGradingCases: boolean;
   readonly id: string;
   readonly title: string;
 }
@@ -73,12 +74,14 @@ const IMPLICIT_GRADING_CASE_ID = 'default';
 export function loadBenchmarkTask(taskPath: string): BenchmarkTask {
   const frontmatter = frontmatterRecord(frontmatterOf(readFileSync(taskPath, 'utf8')));
   const allowedCommands = parseAllowedCommands(frontmatter);
+  const hasExplicitGradingCases = hasValue(frontmatter, 'grading_cases');
   const gradingCases = parseGradingCases(frontmatter);
 
   return {
     allowedCommands,
     checks: compatibleChecks(gradingCases),
     gradingCases,
+    hasExplicitGradingCases,
     id: scalarValue(frontmatter, 'id'),
     title: scalarValue(frontmatter, 'title')
   };

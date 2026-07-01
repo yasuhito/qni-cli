@@ -2,8 +2,10 @@ import type { BenchmarkTask, ComplexAmplitude } from '../evaluation_runner/bench
 import type {
   AmplitudeMismatch,
   BenchmarkCheckResult,
+  BenchmarkGradingCaseResult,
   BenchmarkResult,
   BenchmarkSuiteGradingResult,
+  BenchmarkSuiteTaskGradingResult,
   BenchmarkTaskGradingResult,
   BenchmarkTaskGradingReport,
   ExpectationMismatch,
@@ -63,8 +65,22 @@ function formatBenchmarkSuiteHumanOutput(suite: BenchmarkSuiteGradingResult): st
       `disallowed: ${suite.summary.disallowed}`,
       `error: ${suite.summary.error}`
     ].join(', '),
-    ...suite.results.map((item) => `- ${item.status} ${item.taskId ?? item.task} ${item.title ?? '(unavailable)'}`)
+    ...suite.results.flatMap(formatBenchmarkSuiteTaskLines)
   ]);
+}
+
+function formatBenchmarkSuiteTaskLines(item: BenchmarkSuiteTaskGradingResult): string[] {
+  return [
+    `- ${item.status} ${item.taskId ?? item.task} ${item.title ?? '(unavailable)'}`,
+    ...suiteTaskFailedCheckLines(item)
+  ];
+}
+
+function suiteTaskFailedCheckLines(item: BenchmarkSuiteTaskGradingResult): string[] {
+  return item.gradingCases?.flatMap((gradingCase) => gradingCase.checks
+    .map((check, index) => ({ caseId: gradingCase.caseId, check, index }))
+    .filter((entry) => entry.check.status === 'failed')
+    .map((entry) => `  - case ${entry.caseId} ${entry.check.type} #${entry.index + 1}: failed`)) ?? [];
 }
 
 function formatHumanResult(task: BenchmarkTask | undefined, result: BenchmarkResult): string {
@@ -97,6 +113,10 @@ function formatErrorResult(task: BenchmarkTask | undefined, result: BenchmarkRes
 }
 
 function failedCheckDetailsLines(result: BenchmarkResult): string[] {
+  if (result.gradingCases) {
+    return failedGradingCaseDetailsLines(result.gradingCases);
+  }
+
   const failedChecks = result.checks
     .map((check, index) => ({ check, index }))
     .filter((item) => item.check.status === 'failed');
@@ -111,31 +131,56 @@ function failedCheckDetailsLines(result: BenchmarkResult): string[] {
   ];
 }
 
-function failedCheckLines(check: BenchmarkCheckResult, index: number): string[] {
+function failedGradingCaseDetailsLines(gradingCases: readonly BenchmarkGradingCaseResult[]): string[] {
+  const failedChecks = gradingCases.flatMap((gradingCase) => gradingCase.checks
+    .map((check, index) => ({ caseId: gradingCase.caseId, check, index }))
+    .filter((item) => item.check.status === 'failed'));
+
+  if (failedChecks.length === 0) {
+    return [];
+  }
+
+  return [
+    'failed checks:',
+    ...failedChecks.flatMap((failedCheck) => failedCheckLines(
+      failedCheck.check,
+      failedCheck.index,
+      failedCheck.caseId
+    ))
+  ];
+}
+
+function failedCheckLines(check: BenchmarkCheckResult, index: number, caseId?: string): string[] {
   switch (check.type) {
     case 'expect':
-      return failedExpectationCheckLines(check, index);
+      return failedExpectationCheckLines(check, index, caseId);
     case 'run':
-      return failedRunCheckLines(check, index);
+      return failedRunCheckLines(check, index, caseId);
   }
 }
 
-function failedRunCheckLines(check: RunCheckResult, index: number): string[] {
+function failedRunCheckLines(check: RunCheckResult, index: number, caseId?: string): string[] {
   return [
-    `- ${check.type} #${index + 1}: state vector did not match expected amplitudes`,
+    `- ${failedCheckLabel(check, index, caseId)}: state vector did not match expected amplitudes`,
     '  expected / actual mismatches:',
     ...displayedAmplitudeMismatches(check.mismatches.displayed),
     ...omittedAmplitudeMismatchLines(check.mismatches.omittedCount)
   ];
 }
 
-function failedExpectationCheckLines(check: ExpectCheckResult, index: number): string[] {
+function failedExpectationCheckLines(check: ExpectCheckResult, index: number, caseId?: string): string[] {
   return [
-    `- ${check.type} #${index + 1}: expectation values did not match expected values`,
+    `- ${failedCheckLabel(check, index, caseId)}: expectation values did not match expected values`,
     '  expected / actual mismatches:',
     ...displayedExpectationMismatches(check.mismatches.displayed),
     ...omittedExpectationMismatchLines(check.mismatches.omittedCount)
   ];
+}
+
+function failedCheckLabel(check: BenchmarkCheckResult, index: number, caseId: string | undefined): string {
+  const checkLabel = `${check.type} #${index + 1}`;
+
+  return caseId === undefined ? checkLabel : `case ${caseId} ${checkLabel}`;
 }
 
 function displayedAmplitudeMismatches(mismatches: readonly AmplitudeMismatch[]): string[] {

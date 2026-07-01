@@ -563,6 +563,64 @@ describe('benchmark command TypeScript route', () => {
     });
   });
 
+  it('prints failed grading case ids in human-readable check details', async () => {
+    await withTempDir(async (dir) => {
+      await writeFile(path.join(dir, 'task.md'), xOnZeroAndOneGradingCasesTask());
+      await writeFile(path.join(dir, 'submission.qni'), 'qni add X --qubit 0 --step 0\n');
+
+      const result = captureDispatcherRun(dir, ['benchmark', 'run', 'task.md', 'submission.qni']);
+
+      assert.equal(result.exitStatus, 1, result.stderr);
+      assert.equal(result.stdout, [
+        'FAIL XOnZeroAndOne',
+        'checks: 2',
+        'failed checks:',
+        '- case one-input run #1: state vector did not match expected amplitudes',
+        '  expected / actual mismatches:',
+        '  - |0>: expected 0, actual 1',
+        '  - |1>: expected 1, actual 0',
+        ''
+      ].join('\n'));
+      assert.equal(result.stderr, '');
+    });
+  });
+
+  it('writes JSON grading case results for explicit grading cases', async () => {
+    await withTempDir(async (dir) => {
+      await writeFile(path.join(dir, 'task.md'), xOnZeroAndOneGradingCasesTask());
+      await writeFile(path.join(dir, 'submission.qni'), 'qni add X --qubit 0 --step 0\n');
+
+      const result = captureDispatcherRun(dir, ['benchmark', 'run', 'task.md', 'submission.qni', '--json']);
+      const payload = JSON.parse(result.stdout) as Record<string, unknown>;
+
+      assert.equal(result.exitStatus, 1, result.stderr);
+      assert.deepStrictEqual(payload, {
+        taskId: 'grading-cases/x-on-zero-and-one',
+        title: 'XOnZeroAndOne',
+        submission: 'submission.qni',
+        status: 'failed',
+        exitCode: 1,
+        gradingCases: [
+          {
+            caseId: 'zero-input',
+            status: 'passed',
+            checks: [{ type: 'run', status: 'passed' }]
+          },
+          {
+            caseId: 'one-input',
+            status: 'failed',
+            checks: [{ type: 'run', status: 'failed' }]
+          }
+        ],
+        checks: [
+          { type: 'run', status: 'passed' },
+          { type: 'run', status: 'failed' }
+        ]
+      });
+      assert.equal(result.stderr, '');
+    });
+  });
+
   it('limits failed check details to mismatched amplitudes that fit human-readable output', async () => {
     await withTempDir(async (dir) => {
       await writeFile(path.join(dir, 'task.md'), [
@@ -882,4 +940,128 @@ describe('benchmark command TypeScript route', () => {
       assert.equal(result.stderr, '');
     });
   });
+
+  it('prints failed grading case ids in run-all human-readable task lines', async () => {
+    await withTempDir(async (dir) => {
+      await mkdir(path.join(dir, 'benchmarks', 'grading-cases'), { recursive: true });
+      await mkdir(path.join(dir, 'solutions', 'grading-cases'), { recursive: true });
+      await writeFile(
+        path.join(dir, 'benchmarks', 'grading-cases', 'x-on-zero-and-one.md'),
+        xOnZeroAndOneGradingCasesTask()
+      );
+      await writeFile(
+        path.join(dir, 'solutions', 'grading-cases', 'x-on-zero-and-one.qni'),
+        'qni add X --qubit 0 --step 0\n'
+      );
+
+      const result = captureDispatcherRun(dir, ['benchmark', 'run-all', 'benchmarks', 'solutions']);
+
+      assert.equal(result.exitStatus, 1, result.stderr);
+      assert.equal(result.stdout, [
+        'FAIL benchmark suite',
+        'tasks: 1',
+        'passed: 0, failed: 1, disallowed: 0, error: 0',
+        '- failed grading-cases/x-on-zero-and-one XOnZeroAndOne',
+        '  - case one-input run #1: failed',
+        ''
+      ].join('\n'));
+      assert.equal(result.stderr, '');
+    });
+  });
+
+  it('keeps grading case results in run-all JSON without inflating task summary counts', async () => {
+    await withTempDir(async (dir) => {
+      await mkdir(path.join(dir, 'benchmarks', 'grading-cases'), { recursive: true });
+      await mkdir(path.join(dir, 'solutions', 'grading-cases'), { recursive: true });
+      await writeFile(
+        path.join(dir, 'benchmarks', 'grading-cases', 'x-on-zero-and-one.md'),
+        xOnZeroAndOneGradingCasesTask()
+      );
+      await writeFile(
+        path.join(dir, 'solutions', 'grading-cases', 'x-on-zero-and-one.qni'),
+        'qni add X --qubit 0 --step 0\n'
+      );
+
+      const result = captureDispatcherRun(dir, ['benchmark', 'run-all', 'benchmarks', 'solutions', '--json']);
+      const payload = JSON.parse(result.stdout) as Record<string, unknown>;
+
+      assert.equal(result.exitStatus, 1, result.stderr);
+      assert.deepStrictEqual(payload, {
+        status: 'failed',
+        exitCode: 1,
+        summary: {
+          total: 1,
+          passed: 0,
+          failed: 1,
+          disallowed: 0,
+          error: 0
+        },
+        results: [
+          {
+            taskId: 'grading-cases/x-on-zero-and-one',
+            title: 'XOnZeroAndOne',
+            task: 'benchmarks/grading-cases/x-on-zero-and-one.md',
+            submission: 'solutions/grading-cases/x-on-zero-and-one.qni',
+            status: 'failed',
+            exitCode: 1,
+            gradingCases: [
+              {
+                caseId: 'zero-input',
+                status: 'passed',
+                checks: [{ type: 'run', status: 'passed' }]
+              },
+              {
+                caseId: 'one-input',
+                status: 'failed',
+                checks: [{ type: 'run', status: 'failed' }]
+              }
+            ],
+            checks: [
+              { type: 'run', status: 'passed' },
+              { type: 'run', status: 'failed' }
+            ]
+          }
+        ]
+      });
+      assert.equal(result.stderr, '');
+    });
+  });
 });
+
+function xOnZeroAndOneGradingCasesTask(): string {
+  return [
+    '---',
+    'id: grading-cases/x-on-zero-and-one',
+    'title: XOnZeroAndOne',
+    'source: test',
+    'difficulty: smoke',
+    'allowed_commands:',
+    '  - qni add',
+    'grading_cases:',
+    '  - id: zero-input',
+    '    checks:',
+    '      tolerance: 1e-9',
+    '      items:',
+    '        - type: run',
+    '          expected:',
+    '            - basis: "|1>"',
+    '              amplitude:',
+    '                real: 1',
+    '                imaginary: 0',
+    '  - id: one-input',
+    '    setup_commands:',
+    '      - qni state set "|1>"',
+    '    checks:',
+    '      tolerance: 1e-9',
+    '      items:',
+    '        - type: run',
+    '          expected:',
+    '            - basis: "|1>"',
+    '              amplitude:',
+    '                real: 1',
+    '                imaginary: 0',
+    '---',
+    '',
+    'Apply X to both basis inputs.'
+  ].join('\n');
+}

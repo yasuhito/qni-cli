@@ -48,6 +48,7 @@ interface QniCommandResult {
 }
 
 export type BenchmarkStatus = 'passed' | 'failed' | 'disallowed' | 'error';
+export type BenchmarkGradingCaseStatus = 'passed' | 'failed' | 'error';
 
 export interface BenchmarkTaskGradingRequest {
   readonly submissionFile: string;
@@ -64,10 +65,18 @@ export interface BenchmarkCheckSummary {
   readonly type: 'expect' | 'run';
 }
 
+export interface BenchmarkGradingCaseSummary {
+  readonly caseId: string;
+  readonly checks: readonly BenchmarkCheckSummary[];
+  readonly error?: string;
+  readonly status: BenchmarkGradingCaseStatus;
+}
+
 export interface BenchmarkTaskGradingResult {
   readonly checks: readonly BenchmarkCheckSummary[];
   readonly error?: string;
   readonly exitCode: number;
+  readonly gradingCases?: readonly BenchmarkGradingCaseSummary[];
   readonly status: BenchmarkStatus;
   readonly submission: string;
   readonly taskId: string | null;
@@ -90,6 +99,7 @@ export interface BenchmarkResult {
   readonly checks: readonly BenchmarkCheckResult[];
   readonly disallowedSubmission?: DisallowedSubmission;
   readonly errorMessage?: string;
+  readonly gradingCases?: readonly BenchmarkGradingCaseResult[];
   readonly status: BenchmarkStatus;
 }
 
@@ -130,6 +140,13 @@ export interface BenchmarkSuiteSummary {
 }
 
 export type BenchmarkCheckResult = ExpectCheckResult | RunCheckResult;
+
+export interface BenchmarkGradingCaseResult {
+  readonly caseId: string;
+  readonly checks: readonly BenchmarkCheckResult[];
+  readonly errorMessage?: string;
+  readonly status: BenchmarkGradingCaseStatus;
+}
 
 export interface RunCheckResult {
   readonly mismatches: MismatchSummary;
@@ -280,10 +297,16 @@ function evaluateBenchmark(options: {
   readonly submissionPath: string;
   readonly task: BenchmarkTask;
 }): BenchmarkResult {
-  const submission = readBenchmarkSubmission({
-    allowedCommands: options.task.allowedCommands,
-    submissionPath: options.submissionPath
-  });
+  let submission: ReturnType<typeof readBenchmarkSubmission>;
+
+  try {
+    submission = readBenchmarkSubmission({
+      allowedCommands: options.task.allowedCommands,
+      submissionPath: options.submissionPath
+    });
+  } catch (error) {
+    return benchmarkErrorResultForTask(options.task, errorMessage(error));
+  }
 
   if (submission.kind === 'disallowed') {
     return {
@@ -293,16 +316,20 @@ function evaluateBenchmark(options: {
     };
   }
 
-  const checks = options.task.gradingCases.flatMap((gradingCase) => evaluateGradingCase({
+  const gradingCases = options.task.gradingCases.map((gradingCase) => evaluateGradingCase({
     context: options.context,
     gradingCase,
     submissionCommands: submission.commands,
     task: options.task
   }));
+  const checks = gradingCases.flatMap((gradingCase) => gradingCase.checks);
+  const firstCaseError = gradingCases.find((gradingCase) => gradingCase.status === 'error')?.errorMessage;
 
   return {
     checks,
-    status: checks.every((check) => check.status === 'passed') ? 'passed' : 'failed'
+    ...explicitGradingCasesResult(options.task, gradingCases),
+    ...optionalErrorMessage(firstCaseError),
+    status: benchmarkStatusForGradingCases(gradingCases)
   };
 }
 
@@ -311,7 +338,7 @@ function evaluateGradingCase(options: {
   readonly gradingCase: BenchmarkGradingCase;
   readonly submissionCommands: readonly SubmissionCommand[];
   readonly task: BenchmarkTask;
-}): BenchmarkCheckResult[] {
+}): BenchmarkGradingCaseResult {
   const workDir = mkdtempSync(path.join(tmpdir(), 'qni-benchmark-'));
 
   try {
@@ -322,11 +349,71 @@ function evaluateGradingCase(options: {
       checks: options.gradingCase.checks,
       taskId: options.task.id
     };
+    const checks = runBenchmarkChecks(options.gradingCase.checks.items, checkContext, workDir, options.context);
 
-    return options.gradingCase.checks.items.map((check) => runBenchmarkCheck(check, checkContext, workDir, options.context));
+    return {
+      caseId: options.gradingCase.id,
+      checks,
+      status: checks.every((check) => check.status === 'passed') ? 'passed' : 'failed'
+    };
+  } catch (error) {
+    return {
+      caseId: options.gradingCase.id,
+      checks: [],
+      errorMessage: errorMessage(error),
+      status: 'error'
+    };
   } finally {
     rmSync(workDir, { force: true, recursive: true });
   }
+}
+
+function runBenchmarkChecks(
+  checks: readonly BenchmarkCheck[],
+  checkContext: BenchmarkCheckContext,
+  workDir: string,
+  context: CommandHandlerContext
+): BenchmarkCheckResult[] {
+  return checks.map((check) => runBenchmarkCheck(check, checkContext, workDir, context));
+}
+
+function benchmarkErrorResultForTask(task: BenchmarkTask, error: string): BenchmarkResult {
+  const gradingCases = task.gradingCases.map((gradingCase) => ({
+    caseId: gradingCase.id,
+    checks: [],
+    errorMessage: error,
+    status: 'error' as const
+  }));
+
+  return {
+    checks: [],
+    ...explicitGradingCasesResult(task, gradingCases),
+    errorMessage: error,
+    status: 'error'
+  };
+}
+
+function explicitGradingCasesResult(
+  task: BenchmarkTask,
+  gradingCases: readonly BenchmarkGradingCaseResult[]
+): Pick<BenchmarkResult, 'gradingCases'> {
+  return task.hasExplicitGradingCases ? { gradingCases } : {};
+}
+
+function optionalErrorMessage(errorMessage: string | undefined): Pick<BenchmarkResult, 'errorMessage'> {
+  return errorMessage === undefined ? {} : { errorMessage };
+}
+
+function benchmarkStatusForGradingCases(gradingCases: readonly BenchmarkGradingCaseResult[]): BenchmarkStatus {
+  if (gradingCases.some((gradingCase) => gradingCase.status === 'error')) {
+    return 'error';
+  }
+
+  if (gradingCases.some((gradingCase) => gradingCase.status === 'failed')) {
+    return 'failed';
+  }
+
+  return 'passed';
 }
 
 function benchmarkSuiteEntries(options: {
@@ -846,6 +933,7 @@ function benchmarkResultPayload(
     submission,
     status: result.status,
     exitCode: exitCodeForResult(result),
+    ...explicitGradingCasesPayload(task, result.gradingCases),
     checks: result.checks.map((check) => ({
       type: check.type,
       status: check.status
@@ -860,6 +948,31 @@ function benchmarkResultPayload(
   }
 
   return payload;
+}
+
+function explicitGradingCasesPayload(
+  task: BenchmarkTask | undefined,
+  gradingCases: readonly BenchmarkGradingCaseResult[] | undefined
+): Pick<BenchmarkTaskGradingResult, 'gradingCases'> {
+  if (!task?.hasExplicitGradingCases || !gradingCases) {
+    return {};
+  }
+
+  return {
+    gradingCases: gradingCases.map((gradingCase) => ({
+      caseId: gradingCase.caseId,
+      status: gradingCase.status,
+      checks: gradingCase.checks.map((check) => ({
+        type: check.type,
+        status: check.status
+      })),
+      ...optionalCaseError(gradingCase.errorMessage)
+    }))
+  };
+}
+
+function optionalCaseError(error: string | undefined): Pick<BenchmarkGradingCaseSummary, 'error'> {
+  return error === undefined ? {} : { error };
 }
 
 function exitCodeForResult(result: BenchmarkResult): number {
