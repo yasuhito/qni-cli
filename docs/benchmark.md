@@ -14,7 +14,7 @@
 
 提出物には回路を作るコマンドだけを書きます。`qni run` や `qni expect` などの検証コマンドは書きません。
 
-## 8問の標準解を実行する
+## 9問の標準解を実行する
 
 ### StateFlip
 
@@ -23,6 +23,14 @@ qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/
 ```
 
 期待される結果は `PASS StateFlip` です。
+
+### BasisChange
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/basis-change.md benchmarks/solutions/quantum-katas/basic-gates/basis-change.qni
+```
+
+期待される結果は `PASS BasisChange` です。BasisChange は複数の採点ケースを持ち、既定の `|0>` 入力と `setup_commands` で準備した `|1>` 入力を別々に検証します。
 
 ### PlusState
 
@@ -90,6 +98,14 @@ qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/
 
 期待される結果は `FAIL StateFlip` です。
 
+BasisChange には、`|0>` 入力だけに合う不正解サンプルがあります。`|1>` 入力の採点ケースで失敗するため、終了コードは `1` です。
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/basis-change.md benchmarks/incorrect/quantum-katas/basic-gates/basis-change-zero-only.qni
+```
+
+期待される結果は `FAIL BasisChange` です。
+
 ## 不許可サンプルを実行する
 
 不許可サンプルは、課題ファイルの `allowed_commands` にない `qni run` を提出物に含みます。終了コードは `2` です。
@@ -126,6 +142,46 @@ qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/
 }
 ```
 
+## 複数採点ケースを持つ課題を書く
+
+`grading_cases` を使うと、同じ提出物を複数の初期条件で採点できます。各ケースは独立した一時作業ディレクトリで実行されます。`setup_commands` は採点ケースごとの初期状態準備に使い、提出物の `allowed_commands` とは別に評価ランナーが実行します。
+
+BasisChange では、既定の `|0>` 入力と、`qni state set "1|1>"` で準備する `|1>` 入力を分けています。
+
+```yaml
+grading_cases:
+  - id: zero-input
+    checks:
+      tolerance: 1e-15
+      items:
+        - type: run
+          expected:
+            - basis: "|0>"
+              amplitude:
+                real: 0.7071067811865476
+                imaginary: 0
+            - basis: "|1>"
+              amplitude:
+                real: 0.7071067811865476
+                imaginary: 0
+  - id: one-input
+    setup_commands:
+      - qni state set "1|1>"
+    checks:
+      tolerance: 1e-15
+      items:
+        - type: run
+          expected:
+            - basis: "|0>"
+              amplitude:
+                real: 0.7071067811865476
+                imaginary: 0
+            - basis: "|1>"
+              amplitude:
+                real: -0.7071067811865476
+                imaginary: 0
+```
+
 ## スモークセットを一括実行する
 
 `qni benchmark run-all` を使うと、ベンチマークディレクトリ内の課題をまとめて評価できます。第1引数に課題ディレクトリ、第2引数に対応する提出物ディレクトリを指定します。
@@ -134,12 +190,13 @@ qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/
 qni benchmark run-all benchmarks/quantum-katas benchmarks/solutions/quantum-katas
 ```
 
-期待される結果は、8問すべてが `passed` になり、終了コードが `0` になることです。
+期待される結果は、9問すべてが `passed` になり、終了コードが `0` になることです。
 
 ```text
 PASS benchmark suite
-tasks: 8
-passed: 8, failed: 0, disallowed: 0, error: 0
+tasks: 9
+passed: 9, failed: 0, disallowed: 0, error: 0
+- passed basic-gates/basis-change BasisChange
 - passed basic-gates/state-flip StateFlip
 - passed superposition/all-basis-vector-with-phase-flip-two-qubits AllBasisVectorWithPhaseFlip_TwoQubits
 - passed superposition/all-basis-vectors-two-qubits AllBasisVectors_TwoQubits
