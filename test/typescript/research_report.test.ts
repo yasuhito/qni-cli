@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, it } from 'node:test';
@@ -123,6 +123,21 @@ describe('research report reader', () => {
   it('returns an empty list when research runs do not exist', async () => {
     await withTempDir(async (dir) => {
       assert.deepStrictEqual(readResearchTrials({ cwd: dir }), []);
+    });
+  });
+
+  it('returns an empty list when research runs cannot be read', async () => {
+    await withTempDir(async (dir) => {
+      const runsDir = path.join(dir, 'research', 'runs');
+
+      await mkdir(runsDir, { recursive: true });
+      await chmod(runsDir, 0o000);
+
+      try {
+        assert.deepStrictEqual(readResearchTrials({ cwd: dir }), []);
+      } finally {
+        await chmod(runsDir, 0o700);
+      }
     });
   });
 

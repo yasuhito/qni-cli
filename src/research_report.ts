@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync, type Dirent } from 'node:fs';
 import path = require('node:path');
 
 import type { BenchmarkStatus, BenchmarkSuiteSummary } from './evaluation_runner';
@@ -54,12 +54,19 @@ const RESEARCH_TRIAL_ID_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{6}Z-[a-z0-9]+(?:-[a-z0-
 
 export function readResearchTrials(options: ReadResearchTrialsOptions): ResearchTrial[] {
   const runsDir = path.join(options.cwd, RESEARCH_RUNS_PATH);
+  let entries: Dirent[];
 
-  if (!existsSync(runsDir) || !statSync(runsDir).isDirectory()) {
+  try {
+    if (!statSync(runsDir).isDirectory()) {
+      return [];
+    }
+
+    entries = readdirSync(runsDir, { withFileTypes: true });
+  } catch {
     return [];
   }
 
-  return readdirSync(runsDir, { withFileTypes: true })
+  return entries
     .filter((entry) => entry.isDirectory())
     .map((entry) => readResearchTrial(options.cwd, path.join(runsDir, entry.name), entry.name))
     .sort(compareResearchTrials);
@@ -91,11 +98,7 @@ function readResearchTrial(cwd: string, trialDir: string, id: string): ResearchT
     invalidReason.push(`result summary total ${result.summary.total} does not match results length ${result.resultsLength}`);
   }
 
-  if (invalidReason.length > 0) {
-    return invalidResearchTrial(cwd, trialDir, id, invalidReason);
-  }
-
-  if (!metadata || !result) {
+  if (!metadata || !result || invalidReason.length > 0) {
     return invalidResearchTrial(cwd, trialDir, id, invalidReason);
   }
 
