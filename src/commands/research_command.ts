@@ -3,7 +3,12 @@ import path = require('node:path');
 
 import type { CommandHandlerContext } from '../dispatcher';
 import { gradeBenchmarkSuite, type BenchmarkSuiteGradingResult } from '../evaluation_runner';
-import { buildResearchReport, formatResearchReportHumanOutput, readResearchTrialsForReport } from '../research_report';
+import {
+  buildResearchReport,
+  formatResearchReportHumanOutput,
+  readResearchTrialsForReport,
+  type ResearchReport
+} from '../research_report';
 
 interface ResearchRecordRequest {
   readonly benchmark: string;
@@ -183,11 +188,11 @@ function isResearchReportRequest(argv: readonly string[]): boolean {
   return argv[0] === 'research' && argv[1] === 'report';
 }
 
-function runResearchReportJson(context: CommandHandlerContext): number {
+function runResearchReport(context: CommandHandlerContext, format: (report: ResearchReport) => string): number {
   try {
     const report = buildResearchReport(readResearchTrialsForReport({ cwd: context.cwd }));
 
-    process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
+    process.stdout.write(format(report));
     return report.trialSummary.invalid > 0 ? 1 : 0;
   } catch (error) {
     process.stderr.write(`${errorMessage(error)}\n`);
@@ -195,16 +200,12 @@ function runResearchReportJson(context: CommandHandlerContext): number {
   }
 }
 
-function runResearchReportHuman(context: CommandHandlerContext): number {
-  try {
-    const report = buildResearchReport(readResearchTrialsForReport({ cwd: context.cwd }));
+function runResearchReportJson(context: CommandHandlerContext): number {
+  return runResearchReport(context, (report) => `${JSON.stringify(report, null, 2)}\n`);
+}
 
-    process.stdout.write(formatResearchReportHumanOutput(report));
-    return report.trialSummary.invalid > 0 ? 1 : 0;
-  } catch (error) {
-    process.stderr.write(`${errorMessage(error)}\n`);
-    return 3;
-  }
+function runResearchReportHuman(context: CommandHandlerContext): number {
+  return runResearchReport(context, formatResearchReportHumanOutput);
 }
 
 function isHelpFlag(value: string | undefined): boolean {
