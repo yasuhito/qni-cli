@@ -218,6 +218,7 @@ function quantumKatasSubmissionContent(status, relativePath) {
     ['basic-gates/state-flip.qni', 'qni add X --qubit 0 --step 0\n'],
     ['superposition/all-basis-vectors-two-qubits.qni', 'qni add H --qubit 0 --step 0\nqni add H --qubit 1 --step 0\n'],
     ['superposition/bell-state.qni', 'qni add H --qubit 0 --step 0\nqni add X --control 0 --qubit 1 --step 1\n'],
+    ['superposition/ghz-state.qni', 'qni add H --qubit 0 --step 0\nqni add X --control 0 --qubit 1 --step 1\nqni add X --control 0 --qubit 2 --step 2\n'],
     ['superposition/minus-state.qni', 'qni add X --qubit 0 --step 0\nqni add H --qubit 0 --step 1\n'],
     ['superposition/plus-state.qni', 'qni add H --qubit 0 --step 0\n']
   ]);
@@ -249,6 +250,7 @@ function writeQuantumKatasSubmissions(scenarioDir, status, submissionsDir) {
     'basic-gates/state-flip.qni',
     'superposition/all-basis-vectors-two-qubits.qni',
     'superposition/bell-state.qni',
+    'superposition/ghz-state.qni',
     'superposition/minus-state.qni',
     'superposition/plus-state.qni'
   ];

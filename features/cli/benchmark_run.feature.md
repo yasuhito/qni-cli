@@ -152,6 +152,37 @@ qni benchmark run で最小の合格判定を実行したい。
   "type": "expect"
   ```
 
+## Scenario: GHZState 課題ファイルがある
+
+- Then リポジトリファイル "benchmarks/quantum-katas/superposition/ghz-state.md" は存在する
+
+## Scenario: GHZState 標準解がある
+
+- Then リポジトリファイル "benchmarks/solutions/quantum-katas/superposition/ghz-state.qni" は存在する
+
+## Scenario: GHZState 標準解は合格する
+
+- When "qni benchmark run benchmarks/quantum-katas/superposition/ghz-state.md benchmarks/solutions/quantum-katas/superposition/ghz-state.qni" を実行
+- Then コマンドは成功
+
+## Scenario: GHZState 標準解の合格が表示される
+
+- When "qni benchmark run benchmarks/quantum-katas/superposition/ghz-state.md benchmarks/solutions/quantum-katas/superposition/ghz-state.qni" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  PASS GHZState
+  ```
+
+## Scenario: GHZState 標準解の JSON は run 検証を含む
+
+- When "qni benchmark run benchmarks/quantum-katas/superposition/ghz-state.md benchmarks/solutions/quantum-katas/superposition/ghz-state.qni --json" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  "type": "run"
+  ```
+
 ## Scenario: StateFlip の不許可サンプルがある
 
 - Then リポジトリファイル "benchmarks/disallowed/quantum-katas/basic-gates/state-flip-disallowed.qni" は存在する
@@ -345,6 +376,10 @@ qni benchmark run で最小の合格判定を実行したい。
 
 - Then リポジトリファイル "docs/benchmark.md" は "qni benchmark run benchmarks/quantum-katas/superposition/bell-state.md benchmarks/solutions/quantum-katas/superposition/bell-state.qni" を含む
 
+## Scenario: MVP手順は GHZState 標準解の実行例を示す
+
+- Then リポジトリファイル "docs/benchmark.md" は "qni benchmark run benchmarks/quantum-katas/superposition/ghz-state.md benchmarks/solutions/quantum-katas/superposition/ghz-state.qni" を含む
+
 ## Scenario: MVP手順は MinusState 標準解の実行例を示す
 
 - Then リポジトリファイル "docs/benchmark.md" は "qni benchmark run benchmarks/quantum-katas/superposition/minus-state.md benchmarks/solutions/quantum-katas/superposition/minus-state.qni" を含む
@@ -377,11 +412,12 @@ qni benchmark run で最小の合格判定を実行したい。
 
   ```text
   PASS benchmark suite
-  tasks: 5
-  passed: 5, failed: 0, disallowed: 0, error: 0
+  tasks: 6
+  passed: 6, failed: 0, disallowed: 0, error: 0
   - passed basic-gates/state-flip StateFlip
   - passed superposition/all-basis-vectors-two-qubits AllBasisVectors_TwoQubits
   - passed superposition/bell-state BellState
+  - passed superposition/ghz-state GHZState
   - passed superposition/minus-state MinusState
   - passed superposition/plus-state PlusState
   ```
@@ -396,8 +432,8 @@ qni benchmark run で最小の合格判定を実行したい。
     "status": "passed",
     "exitCode": 0,
     "summary": {
-      "total": 5,
-      "passed": 5,
+      "total": 6,
+      "passed": 6,
       "failed": 0,
       "disallowed": 0,
       "error": 0
@@ -441,6 +477,20 @@ qni benchmark run で最小の合格判定を実行したい。
         "checks": [
           {
             "type": "expect",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "taskId": "superposition/ghz-state",
+        "title": "GHZState",
+        "task": "benchmarks/quantum-katas/superposition/ghz-state.md",
+        "submission": "benchmarks/solutions/quantum-katas/superposition/ghz-state.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "checks": [
+          {
+            "type": "run",
             "status": "passed"
           }
         ]

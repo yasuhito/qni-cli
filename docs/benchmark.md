@@ -14,7 +14,7 @@
 
 提出物には回路を作るコマンドだけを書きます。`qni run` や `qni expect` などの検証コマンドは書きません。
 
-## 5問の標準解を実行する
+## 6問の標準解を実行する
 
 ### StateFlip
 
@@ -55,6 +55,14 @@ qni benchmark run benchmarks/quantum-katas/superposition/bell-state.md benchmark
 ```
 
 期待される結果は `PASS BellState` です。
+
+### GHZState
+
+```bash
+qni benchmark run benchmarks/quantum-katas/superposition/ghz-state.md benchmarks/solutions/quantum-katas/superposition/ghz-state.qni
+```
+
+期待される結果は `PASS GHZState` です。
 
 ## 不正解サンプルを実行する
 
@@ -110,15 +118,16 @@ qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/
 qni benchmark run-all benchmarks/quantum-katas benchmarks/solutions/quantum-katas
 ```
 
-期待される結果は、5問すべてが `passed` になり、終了コードが `0` になることです。
+期待される結果は、6問すべてが `passed` になり、終了コードが `0` になることです。
 
 ```text
 PASS benchmark suite
-tasks: 5
-passed: 5, failed: 0, disallowed: 0, error: 0
+tasks: 6
+passed: 6, failed: 0, disallowed: 0, error: 0
 - passed basic-gates/state-flip StateFlip
 - passed superposition/all-basis-vectors-two-qubits AllBasisVectors_TwoQubits
 - passed superposition/bell-state BellState
+- passed superposition/ghz-state GHZState
 - passed superposition/minus-state MinusState
 - passed superposition/plus-state PlusState
 ```
