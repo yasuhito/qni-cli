@@ -38,7 +38,7 @@ qni benchmark run benchmarks/quantum-katas/basic-gates/basis-change.md benchmark
 qni benchmark run benchmarks/quantum-katas/basic-gates/two-qubit-gate-1.md benchmarks/solutions/quantum-katas/basic-gates/two-qubit-gate-1.qni
 ```
 
-期待される結果は `PASS TwoQubitGate1` です。TwoQubitGate1 は CNOT により、1つ目の量子ビットの振幅を2つ目の量子ビットへ写します。
+期待される結果は `PASS TwoQubitGate1` です。TwoQubitGate1 は CNOT により、1つ目の量子ビットが `|1>` のときに2つ目の量子ビットを反転します。
 
 ### TwoQubitGate2
 
