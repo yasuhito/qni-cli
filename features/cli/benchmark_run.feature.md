@@ -99,6 +99,72 @@ qni benchmark run で最小の合格判定を実行したい。
   PASS BasisChange
   ```
 
+## Scenario: BellStateChange1 課題ファイルがある
+
+- Then リポジトリファイル "benchmarks/quantum-katas/basic-gates/bell-state-change-1.md" は存在する
+
+## Scenario: BellStateChange1 標準解がある
+
+- Then リポジトリファイル "benchmarks/solutions/quantum-katas/basic-gates/bell-state-change-1.qni" は存在する
+
+## Scenario: BellStateChange1 標準解は合格する
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/bell-state-change-1.md benchmarks/solutions/quantum-katas/basic-gates/bell-state-change-1.qni" を実行
+- Then コマンドは成功
+
+## Scenario: BellStateChange1 標準解の合格が表示される
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/bell-state-change-1.md benchmarks/solutions/quantum-katas/basic-gates/bell-state-change-1.qni" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  PASS BellStateChange1
+  ```
+
+## Scenario: BellStateChange2 課題ファイルがある
+
+- Then リポジトリファイル "benchmarks/quantum-katas/basic-gates/bell-state-change-2.md" は存在する
+
+## Scenario: BellStateChange2 標準解がある
+
+- Then リポジトリファイル "benchmarks/solutions/quantum-katas/basic-gates/bell-state-change-2.qni" は存在する
+
+## Scenario: BellStateChange2 標準解は合格する
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/bell-state-change-2.md benchmarks/solutions/quantum-katas/basic-gates/bell-state-change-2.qni" を実行
+- Then コマンドは成功
+
+## Scenario: BellStateChange2 標準解の合格が表示される
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/bell-state-change-2.md benchmarks/solutions/quantum-katas/basic-gates/bell-state-change-2.qni" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  PASS BellStateChange2
+  ```
+
+## Scenario: BellStateChange3 課題ファイルがある
+
+- Then リポジトリファイル "benchmarks/quantum-katas/basic-gates/bell-state-change-3.md" は存在する
+
+## Scenario: BellStateChange3 標準解がある
+
+- Then リポジトリファイル "benchmarks/solutions/quantum-katas/basic-gates/bell-state-change-3.qni" は存在する
+
+## Scenario: BellStateChange3 標準解は合格する
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/bell-state-change-3.md benchmarks/solutions/quantum-katas/basic-gates/bell-state-change-3.qni" を実行
+- Then コマンドは成功
+
+## Scenario: BellStateChange3 標準解の合格が表示される
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/bell-state-change-3.md benchmarks/solutions/quantum-katas/basic-gates/bell-state-change-3.qni" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  PASS BellStateChange3
+  ```
+
 ## Scenario: FredkinGate 課題ファイルがある
 
 - Then リポジトリファイル "benchmarks/quantum-katas/basic-gates/fredkin-gate.md" は存在する
@@ -119,6 +185,72 @@ qni benchmark run で最小の合格判定を実行したい。
 
   ```text
   PASS FredkinGate
+  ```
+
+## Scenario: SignFlip 課題ファイルがある
+
+- Then リポジトリファイル "benchmarks/quantum-katas/basic-gates/sign-flip.md" は存在する
+
+## Scenario: SignFlip 標準解がある
+
+- Then リポジトリファイル "benchmarks/solutions/quantum-katas/basic-gates/sign-flip.qni" は存在する
+
+## Scenario: SignFlip 標準解は合格する
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/sign-flip.md benchmarks/solutions/quantum-katas/basic-gates/sign-flip.qni" を実行
+- Then コマンドは成功
+
+## Scenario: SignFlip 標準解の合格が表示される
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/sign-flip.md benchmarks/solutions/quantum-katas/basic-gates/sign-flip.qni" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  PASS SignFlip
+  ```
+
+## Scenario: PhaseFlip 課題ファイルがある
+
+- Then リポジトリファイル "benchmarks/quantum-katas/basic-gates/phase-flip.md" は存在する
+
+## Scenario: PhaseFlip 標準解がある
+
+- Then リポジトリファイル "benchmarks/solutions/quantum-katas/basic-gates/phase-flip.qni" は存在する
+
+## Scenario: PhaseFlip 標準解は合格する
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/phase-flip.md benchmarks/solutions/quantum-katas/basic-gates/phase-flip.qni" を実行
+- Then コマンドは成功
+
+## Scenario: PhaseFlip 標準解の合格が表示される
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/phase-flip.md benchmarks/solutions/quantum-katas/basic-gates/phase-flip.qni" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  PASS PhaseFlip
+  ```
+
+## Scenario: PhaseChangePiOver3 課題ファイルがある
+
+- Then リポジトリファイル "benchmarks/quantum-katas/basic-gates/phase-change-pi-over-3.md" は存在する
+
+## Scenario: PhaseChangePiOver3 標準解がある
+
+- Then リポジトリファイル "benchmarks/solutions/quantum-katas/basic-gates/phase-change-pi-over-3.qni" は存在する
+
+## Scenario: PhaseChangePiOver3 標準解は合格する
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/phase-change-pi-over-3.md benchmarks/solutions/quantum-katas/basic-gates/phase-change-pi-over-3.qni" を実行
+- Then コマンドは成功
+
+## Scenario: PhaseChangePiOver3 標準解の合格が表示される
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/phase-change-pi-over-3.md benchmarks/solutions/quantum-katas/basic-gates/phase-change-pi-over-3.qni" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  PASS PhaseChangePiOver3
   ```
 
 ## Scenario: MinusState 課題ファイルがある
@@ -400,6 +532,42 @@ qni benchmark run で最小の合格判定を実行したい。
   - case one-input run #1: state vector did not match expected amplitudes
   ```
 
+## Scenario: PhaseFlip の片方の入力だけに合う不正解サンプルがある
+
+- Then リポジトリファイル "benchmarks/incorrect/quantum-katas/basic-gates/phase-flip-zero-only.qni" は存在する
+
+## Scenario: PhaseFlip の片方の入力だけに合う不正解サンプルは不合格になる
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/phase-flip.md benchmarks/incorrect/quantum-katas/basic-gates/phase-flip-zero-only.qni" を実行
+- Then 終了コードは 1
+
+## Scenario: PhaseFlip の片方の入力だけに合う不正解サンプルは失敗した採点ケースを表示する
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/phase-flip.md benchmarks/incorrect/quantum-katas/basic-gates/phase-flip-zero-only.qni" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  - case one-input run #1: state vector did not match expected amplitudes
+  ```
+
+## Scenario: BellStateChange3 の符号違い不正解サンプルがある
+
+- Then リポジトリファイル "benchmarks/incorrect/quantum-katas/basic-gates/bell-state-change-3-wrong-sign.qni" は存在する
+
+## Scenario: BellStateChange3 の符号違い不正解サンプルは不合格になる
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/bell-state-change-3.md benchmarks/incorrect/quantum-katas/basic-gates/bell-state-change-3-wrong-sign.qni" を実行
+- Then 終了コードは 1
+
+## Scenario: BellStateChange3 の符号違い不正解サンプルは失敗した採点ケースを表示する
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/bell-state-change-3.md benchmarks/incorrect/quantum-katas/basic-gates/bell-state-change-3-wrong-sign.qni" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  - run #1: state vector did not match expected amplitudes
+  ```
+
 ## Scenario: FredkinGate の常に SWAP する不正解サンプルがある
 
 - Then リポジトリファイル "benchmarks/incorrect/quantum-katas/basic-gates/fredkin-gate-unconditional-swap.qni" は存在する
@@ -500,9 +668,33 @@ qni benchmark run で最小の合格判定を実行したい。
 
 - Then リポジトリファイル "docs/benchmark.md" は "qni benchmark run benchmarks/quantum-katas/basic-gates/basis-change.md benchmarks/solutions/quantum-katas/basic-gates/basis-change.qni" を含む
 
+## Scenario: MVP手順は BellStateChange1 標準解の実行例を示す
+
+- Then リポジトリファイル "docs/benchmark.md" は "qni benchmark run benchmarks/quantum-katas/basic-gates/bell-state-change-1.md benchmarks/solutions/quantum-katas/basic-gates/bell-state-change-1.qni" を含む
+
+## Scenario: MVP手順は BellStateChange2 標準解の実行例を示す
+
+- Then リポジトリファイル "docs/benchmark.md" は "qni benchmark run benchmarks/quantum-katas/basic-gates/bell-state-change-2.md benchmarks/solutions/quantum-katas/basic-gates/bell-state-change-2.qni" を含む
+
+## Scenario: MVP手順は BellStateChange3 標準解の実行例を示す
+
+- Then リポジトリファイル "docs/benchmark.md" は "qni benchmark run benchmarks/quantum-katas/basic-gates/bell-state-change-3.md benchmarks/solutions/quantum-katas/basic-gates/bell-state-change-3.qni" を含む
+
 ## Scenario: MVP手順は FredkinGate 標準解の実行例を示す
 
 - Then リポジトリファイル "docs/benchmark.md" は "qni benchmark run benchmarks/quantum-katas/basic-gates/fredkin-gate.md benchmarks/solutions/quantum-katas/basic-gates/fredkin-gate.qni" を含む
+
+## Scenario: MVP手順は SignFlip 標準解の実行例を示す
+
+- Then リポジトリファイル "docs/benchmark.md" は "qni benchmark run benchmarks/quantum-katas/basic-gates/sign-flip.md benchmarks/solutions/quantum-katas/basic-gates/sign-flip.qni" を含む
+
+## Scenario: MVP手順は PhaseFlip 標準解の実行例を示す
+
+- Then リポジトリファイル "docs/benchmark.md" は "qni benchmark run benchmarks/quantum-katas/basic-gates/phase-flip.md benchmarks/solutions/quantum-katas/basic-gates/phase-flip.qni" を含む
+
+## Scenario: MVP手順は PhaseChangePiOver3 標準解の実行例を示す
+
+- Then リポジトリファイル "docs/benchmark.md" は "qni benchmark run benchmarks/quantum-katas/basic-gates/phase-change-pi-over-3.md benchmarks/solutions/quantum-katas/basic-gates/phase-change-pi-over-3.qni" を含む
 
 ## Scenario: MVP手順は複数採点ケースの説明を示す
 
@@ -548,11 +740,22 @@ qni benchmark run で最小の合格判定を実行したい。
 
   ```text
   PASS benchmark suite
-  tasks: 10
-  passed: 10, failed: 0, disallowed: 0, error: 0
+  tasks: 21
+  passed: 21, failed: 0, disallowed: 0, error: 0
   - passed basic-gates/basis-change BasisChange
+  - passed basic-gates/bell-state-change-1 BellStateChange1
+  - passed basic-gates/bell-state-change-2 BellStateChange2
+  - passed basic-gates/bell-state-change-3 BellStateChange3
   - passed basic-gates/fredkin-gate FredkinGate
+  - passed basic-gates/phase-change-pi-over-3 PhaseChangePiOver3
+  - passed basic-gates/phase-flip PhaseFlip
+  - passed basic-gates/sign-flip SignFlip
   - passed basic-gates/state-flip StateFlip
+  - passed basic-gates/toffoli-gate ToffoliGate
+  - passed basic-gates/two-qubit-gate-1 TwoQubitGate1
+  - passed basic-gates/two-qubit-gate-2 TwoQubitGate2
+  - passed basic-gates/two-qubit-gate-3 TwoQubitGate3
+  - passed basic-gates/two-qubit-gate-4 TwoQubitGate4
   - passed superposition/all-basis-vector-with-phase-flip-two-qubits AllBasisVectorWithPhaseFlip_TwoQubits
   - passed superposition/all-basis-vectors-two-qubits AllBasisVectors_TwoQubits
   - passed superposition/all-basis-vectors-with-phases-two-qubits AllBasisVectorsWithPhases_TwoQubits
@@ -572,17 +775,16 @@ qni benchmark run で最小の合格判定を実行したい。
     "status": "passed",
     "exitCode": 0,
     "summary": {
-      "total": 10,
-      "passed": 10,
-      "failed": 0,
       "disallowed": 0,
-      "error": 0
+      "error": 0,
+      "failed": 0,
+      "passed": 21,
+      "total": 21
     },
     "results": [
       {
         "taskId": "basic-gates/basis-change",
         "title": "BasisChange",
-        "task": "benchmarks/quantum-katas/basic-gates/basis-change.md",
         "submission": "benchmarks/solutions/quantum-katas/basic-gates/basis-change.qni",
         "status": "passed",
         "exitCode": 0,
@@ -617,12 +819,90 @@ qni benchmark run で最小の合格判定を実行したい。
             "type": "run",
             "status": "passed"
           }
-        ]
+        ],
+        "task": "benchmarks/quantum-katas/basic-gates/basis-change.md"
+      },
+      {
+        "taskId": "basic-gates/bell-state-change-1",
+        "title": "BellStateChange1",
+        "submission": "benchmarks/solutions/quantum-katas/basic-gates/bell-state-change-1.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "gradingCases": [
+          {
+            "caseId": "phi-plus-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          }
+        ],
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
+        "task": "benchmarks/quantum-katas/basic-gates/bell-state-change-1.md"
+      },
+      {
+        "taskId": "basic-gates/bell-state-change-2",
+        "title": "BellStateChange2",
+        "submission": "benchmarks/solutions/quantum-katas/basic-gates/bell-state-change-2.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "gradingCases": [
+          {
+            "caseId": "phi-plus-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          }
+        ],
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
+        "task": "benchmarks/quantum-katas/basic-gates/bell-state-change-2.md"
+      },
+      {
+        "taskId": "basic-gates/bell-state-change-3",
+        "title": "BellStateChange3",
+        "submission": "benchmarks/solutions/quantum-katas/basic-gates/bell-state-change-3.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "gradingCases": [
+          {
+            "caseId": "phi-plus-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          }
+        ],
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
+        "task": "benchmarks/quantum-katas/basic-gates/bell-state-change-3.md"
       },
       {
         "taskId": "basic-gates/fredkin-gate",
         "title": "FredkinGate",
-        "task": "benchmarks/quantum-katas/basic-gates/fredkin-gate.md",
         "submission": "benchmarks/solutions/quantum-katas/basic-gates/fredkin-gate.qni",
         "status": "passed",
         "exitCode": 0,
@@ -657,12 +937,132 @@ qni benchmark run で最小の合格判定を実行したい。
             "type": "run",
             "status": "passed"
           }
-        ]
+        ],
+        "task": "benchmarks/quantum-katas/basic-gates/fredkin-gate.md"
+      },
+      {
+        "taskId": "basic-gates/phase-change-pi-over-3",
+        "title": "PhaseChangePiOver3",
+        "submission": "benchmarks/solutions/quantum-katas/basic-gates/phase-change-pi-over-3.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "gradingCases": [
+          {
+            "caseId": "zero-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "one-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          }
+        ],
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
+        "task": "benchmarks/quantum-katas/basic-gates/phase-change-pi-over-3.md"
+      },
+      {
+        "taskId": "basic-gates/phase-flip",
+        "title": "PhaseFlip",
+        "submission": "benchmarks/solutions/quantum-katas/basic-gates/phase-flip.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "gradingCases": [
+          {
+            "caseId": "zero-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "one-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          }
+        ],
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
+        "task": "benchmarks/quantum-katas/basic-gates/phase-flip.md"
+      },
+      {
+        "taskId": "basic-gates/sign-flip",
+        "title": "SignFlip",
+        "submission": "benchmarks/solutions/quantum-katas/basic-gates/sign-flip.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "gradingCases": [
+          {
+            "caseId": "plus-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "minus-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          }
+        ],
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
+        "task": "benchmarks/quantum-katas/basic-gates/sign-flip.md"
       },
       {
         "taskId": "basic-gates/state-flip",
         "title": "StateFlip",
-        "task": "benchmarks/quantum-katas/basic-gates/state-flip.md",
         "submission": "benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni",
         "status": "passed",
         "exitCode": 0,
@@ -671,12 +1071,338 @@ qni benchmark run で最小の合格判定を実行したい。
             "type": "run",
             "status": "passed"
           }
-        ]
+        ],
+        "task": "benchmarks/quantum-katas/basic-gates/state-flip.md"
+      },
+      {
+        "taskId": "basic-gates/toffoli-gate",
+        "title": "ToffoliGate",
+        "submission": "benchmarks/solutions/quantum-katas/basic-gates/toffoli-gate.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "gradingCases": [
+          {
+            "caseId": "zero-zero-zero-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "one-one-zero-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "one-one-one-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "one-zero-one-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "superposition-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          }
+        ],
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
+        "task": "benchmarks/quantum-katas/basic-gates/toffoli-gate.md"
+      },
+      {
+        "taskId": "basic-gates/two-qubit-gate-1",
+        "title": "TwoQubitGate1",
+        "submission": "benchmarks/solutions/quantum-katas/basic-gates/two-qubit-gate-1.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "gradingCases": [
+          {
+            "caseId": "zero-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "one-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "superposition-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          }
+        ],
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
+        "task": "benchmarks/quantum-katas/basic-gates/two-qubit-gate-1.md"
+      },
+      {
+        "taskId": "basic-gates/two-qubit-gate-2",
+        "title": "TwoQubitGate2",
+        "submission": "benchmarks/solutions/quantum-katas/basic-gates/two-qubit-gate-2.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "gradingCases": [
+          {
+            "caseId": "plus-plus-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "eleven-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "ten-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          }
+        ],
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
+        "task": "benchmarks/quantum-katas/basic-gates/two-qubit-gate-2.md"
+      },
+      {
+        "taskId": "basic-gates/two-qubit-gate-3",
+        "title": "TwoQubitGate3",
+        "submission": "benchmarks/solutions/quantum-katas/basic-gates/two-qubit-gate-3.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "gradingCases": [
+          {
+            "caseId": "zero-zero-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "zero-one-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "one-zero-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "superposition-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          }
+        ],
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
+        "task": "benchmarks/quantum-katas/basic-gates/two-qubit-gate-3.md"
+      },
+      {
+        "taskId": "basic-gates/two-qubit-gate-4",
+        "title": "TwoQubitGate4",
+        "submission": "benchmarks/solutions/quantum-katas/basic-gates/two-qubit-gate-4.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "gradingCases": [
+          {
+            "caseId": "zero-zero-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "zero-one-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "one-zero-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "superposition-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          }
+        ],
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
+        "task": "benchmarks/quantum-katas/basic-gates/two-qubit-gate-4.md"
       },
       {
         "taskId": "superposition/all-basis-vector-with-phase-flip-two-qubits",
         "title": "AllBasisVectorWithPhaseFlip_TwoQubits",
-        "task": "benchmarks/quantum-katas/superposition/all-basis-vector-with-phase-flip-two-qubits.md",
         "submission": "benchmarks/solutions/quantum-katas/superposition/all-basis-vector-with-phase-flip-two-qubits.qni",
         "status": "passed",
         "exitCode": 0,
@@ -685,12 +1411,12 @@ qni benchmark run で最小の合格判定を実行したい。
             "type": "run",
             "status": "passed"
           }
-        ]
+        ],
+        "task": "benchmarks/quantum-katas/superposition/all-basis-vector-with-phase-flip-two-qubits.md"
       },
       {
         "taskId": "superposition/all-basis-vectors-two-qubits",
         "title": "AllBasisVectors_TwoQubits",
-        "task": "benchmarks/quantum-katas/superposition/all-basis-vectors-two-qubits.md",
         "submission": "benchmarks/solutions/quantum-katas/superposition/all-basis-vectors-two-qubits.qni",
         "status": "passed",
         "exitCode": 0,
@@ -699,12 +1425,12 @@ qni benchmark run で最小の合格判定を実行したい。
             "type": "run",
             "status": "passed"
           }
-        ]
+        ],
+        "task": "benchmarks/quantum-katas/superposition/all-basis-vectors-two-qubits.md"
       },
       {
         "taskId": "superposition/all-basis-vectors-with-phases-two-qubits",
         "title": "AllBasisVectorsWithPhases_TwoQubits",
-        "task": "benchmarks/quantum-katas/superposition/all-basis-vectors-with-phases-two-qubits.md",
         "submission": "benchmarks/solutions/quantum-katas/superposition/all-basis-vectors-with-phases-two-qubits.qni",
         "status": "passed",
         "exitCode": 0,
@@ -713,12 +1439,12 @@ qni benchmark run で最小の合格判定を実行したい。
             "type": "run",
             "status": "passed"
           }
-        ]
+        ],
+        "task": "benchmarks/quantum-katas/superposition/all-basis-vectors-with-phases-two-qubits.md"
       },
       {
         "taskId": "superposition/bell-state",
         "title": "BellState",
-        "task": "benchmarks/quantum-katas/superposition/bell-state.md",
         "submission": "benchmarks/solutions/quantum-katas/superposition/bell-state.qni",
         "status": "passed",
         "exitCode": 0,
@@ -727,12 +1453,12 @@ qni benchmark run で最小の合格判定を実行したい。
             "type": "expect",
             "status": "passed"
           }
-        ]
+        ],
+        "task": "benchmarks/quantum-katas/superposition/bell-state.md"
       },
       {
         "taskId": "superposition/ghz-state",
         "title": "GHZState",
-        "task": "benchmarks/quantum-katas/superposition/ghz-state.md",
         "submission": "benchmarks/solutions/quantum-katas/superposition/ghz-state.qni",
         "status": "passed",
         "exitCode": 0,
@@ -741,12 +1467,12 @@ qni benchmark run で最小の合格判定を実行したい。
             "type": "run",
             "status": "passed"
           }
-        ]
+        ],
+        "task": "benchmarks/quantum-katas/superposition/ghz-state.md"
       },
       {
         "taskId": "superposition/minus-state",
         "title": "MinusState",
-        "task": "benchmarks/quantum-katas/superposition/minus-state.md",
         "submission": "benchmarks/solutions/quantum-katas/superposition/minus-state.qni",
         "status": "passed",
         "exitCode": 0,
@@ -755,12 +1481,12 @@ qni benchmark run で最小の合格判定を実行したい。
             "type": "run",
             "status": "passed"
           }
-        ]
+        ],
+        "task": "benchmarks/quantum-katas/superposition/minus-state.md"
       },
       {
         "taskId": "superposition/plus-state",
         "title": "PlusState",
-        "task": "benchmarks/quantum-katas/superposition/plus-state.md",
         "submission": "benchmarks/solutions/quantum-katas/superposition/plus-state.qni",
         "status": "passed",
         "exitCode": 0,
@@ -769,7 +1495,8 @@ qni benchmark run で最小の合格判定を実行したい。
             "type": "run",
             "status": "passed"
           }
-        ]
+        ],
+        "task": "benchmarks/quantum-katas/superposition/plus-state.md"
       }
     ]
   }

@@ -1,0 +1,1 @@
+qni add X --control 0,1 --qubit 2 --step 0
