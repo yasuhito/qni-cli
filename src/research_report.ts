@@ -87,6 +87,7 @@ interface JsonObjectReadResult {
   readonly value?: Record<string, unknown>;
 }
 
+const RESEARCH_RUNS_DISPLAY_PATH = 'research/runs';
 const RESEARCH_RUNS_PATH = path.join('research', 'runs');
 const RESEARCH_TRIAL_TIMESTAMP_PATTERN = /^(\d{4}-\d{2}-\d{2}T\d{6}Z)/u;
 const RESEARCH_TRIAL_ID_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{6}Z-[a-z0-9]+(?:-[a-z0-9]+)*$/u;
@@ -112,11 +113,7 @@ export function buildResearchReport(trials: readonly ResearchTrial[]): ResearchR
 }
 
 export function readResearchTrials(options: ReadResearchTrialsOptions): ResearchTrial[] {
-  try {
-    return readResearchTrialsFromRunsDir(options, { strict: false });
-  } catch {
-    return [];
-  }
+  return readResearchTrialsFromRunsDir(options, { strict: false });
 }
 
 export function readResearchTrialsForReport(options: ReadResearchTrialsOptions): ResearchTrial[] {
@@ -139,7 +136,7 @@ function readResearchTrialsFromRunsDir(
     }
 
     if (readOptions.strict) {
-      throw new Error(`Research runs path could not be read: ${RESEARCH_RUNS_PATH}`);
+      throw new Error(`Research runs path could not be read: ${RESEARCH_RUNS_DISPLAY_PATH}`);
     }
 
     return [];
@@ -147,7 +144,7 @@ function readResearchTrialsFromRunsDir(
 
   if (!runsDirStats.isDirectory()) {
     if (readOptions.strict) {
-      throw new Error(`Research runs path is not a directory: ${RESEARCH_RUNS_PATH}`);
+      throw new Error(`Research runs path is not a directory: ${RESEARCH_RUNS_DISPLAY_PATH}`);
     }
 
     return [];
@@ -157,7 +154,7 @@ function readResearchTrialsFromRunsDir(
     entries = readdirSync(runsDir, { withFileTypes: true });
   } catch {
     if (readOptions.strict) {
-      throw new Error(`Research runs path could not be read: ${RESEARCH_RUNS_PATH}`);
+      throw new Error(`Research runs path could not be read: ${RESEARCH_RUNS_DISPLAY_PATH}`);
     }
 
     return [];

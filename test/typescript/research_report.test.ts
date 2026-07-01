@@ -5,6 +5,13 @@ import path from 'node:path';
 import { describe, it } from 'node:test';
 
 import { buildResearchReport, readResearchTrials, type ResearchTrial } from '../../src/research_report';
+import {
+  makeStoredResearchTrialDir,
+  storedResearchMetadata,
+  storedResearchResult,
+  writeJsonFile,
+  writeStoredResearchTrial
+} from './helpers/research_trial';
 
 async function withTempDir<T>(callback: (dir: string) => Promise<T>): Promise<T> {
   const dir = await mkdtemp(path.join(tmpdir(), 'qni-cli-research-report-'));
@@ -14,102 +21,6 @@ async function withTempDir<T>(callback: (dir: string) => Promise<T>): Promise<T>
   } finally {
     await rm(dir, { force: true, recursive: true });
   }
-}
-
-async function writeResearchTrial(
-  dir: string,
-  id: string,
-  options: {
-    readonly benchmark?: string;
-    readonly collaborator?: string;
-    readonly status?: 'disallowed' | 'error' | 'failed' | 'passed';
-  } = {}
-): Promise<void> {
-  const status = options.status ?? 'passed';
-  const trialDir = path.join(dir, 'research', 'runs', id);
-
-  await mkdir(trialDir, { recursive: true });
-  await writeJsonFile(path.join(trialDir, 'metadata.json'), researchMetadata(id, {
-    benchmark: options.benchmark,
-    collaborator: options.collaborator,
-    status
-  }));
-  await writeJsonFile(path.join(trialDir, 'result.json'), researchResult(status));
-}
-
-function createdAtForTrialId(id: string): string {
-  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2})(\d{2})(\d{2})Z/u.exec(id);
-
-  if (!match) {
-    return '2026-06-30T12:34:56.000Z';
-  }
-
-  return `${match[1]}-${match[2]}-${match[3]}T${match[4]}:${match[5]}:${match[6]}.000Z`;
-}
-
-async function makeResearchTrialDir(dir: string, id: string): Promise<string> {
-  const trialDir = path.join(dir, 'research', 'runs', id);
-
-  await mkdir(trialDir, { recursive: true });
-
-  return trialDir;
-}
-
-async function writeJsonFile(filePath: string, value: unknown): Promise<void> {
-  await writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`);
-}
-
-function researchMetadata(
-  id: string,
-  options: {
-    readonly benchmark?: string;
-    readonly collaborator?: string;
-    readonly schemaVersion?: number;
-    readonly status?: 'disallowed' | 'error' | 'failed' | 'passed';
-  } = {}
-): Record<string, unknown> {
-  return {
-    schemaVersion: options.schemaVersion ?? 1,
-    id,
-    createdAt: createdAtForTrialId(id),
-    collaborator: options.collaborator ?? 'claude-sonnet-4',
-    benchmark: options.benchmark ?? 'benchmarks/quantum-katas',
-    submissions: 'submissions',
-    prompt: 'prompt.md',
-    response: 'response.md',
-    result: 'result.json',
-    status: options.status ?? 'passed'
-  };
-}
-
-function researchResult(
-  status: 'disallowed' | 'error' | 'failed' | 'passed' = 'passed',
-  options: {
-    readonly summaryTotal?: number;
-  } = {}
-): Record<string, unknown> {
-  return {
-    status,
-    exitCode: status === 'passed' ? 0 : 1,
-    summary: {
-      total: options.summaryTotal ?? 1,
-      passed: status === 'passed' ? 1 : 0,
-      failed: status === 'failed' ? 1 : 0,
-      disallowed: status === 'disallowed' ? 1 : 0,
-      error: status === 'error' ? 1 : 0
-    },
-    results: [
-      {
-        task: 'basic-gates/state-flip.md',
-        taskId: 'basic-gates/state-flip',
-        title: 'StateFlip',
-        submission: 'submissions/basic-gates/state-flip.qni',
-        status,
-        exitCode: status === 'passed' ? 0 : 1,
-        checks: [{ type: 'run', status: status === 'passed' ? 'passed' : 'failed' }]
-      }
-    ]
-  };
 }
 
 function invalidReasonsById(trials: readonly ResearchTrial[]): Map<string, string[]> {
@@ -147,7 +58,7 @@ describe('research report reader', () => {
 
       await mkdir(path.join(dir, 'research', 'runs'), { recursive: true });
       await writeFile(path.join(dir, 'research', 'runs', 'README.txt'), 'note\n');
-      await writeResearchTrial(dir, id);
+      await writeStoredResearchTrial(dir, id);
 
       assert.deepStrictEqual(readResearchTrials({ cwd: dir }).map((trial) => trial.id), [id]);
     });
@@ -155,8 +66,8 @@ describe('research report reader', () => {
 
   it('sorts research trial candidates by timestamp descending', async () => {
     await withTempDir(async (dir) => {
-      await writeResearchTrial(dir, '2026-06-30T123456Z-older');
-      await writeResearchTrial(dir, '2026-07-01T000001Z-newer');
+      await writeStoredResearchTrial(dir, '2026-06-30T123456Z-older');
+      await writeStoredResearchTrial(dir, '2026-07-01T000001Z-newer');
 
       assert.deepStrictEqual(readResearchTrials({ cwd: dir }).map((trial) => trial.id), [
         '2026-07-01T000001Z-newer',
@@ -169,7 +80,7 @@ describe('research report reader', () => {
     await withTempDir(async (dir) => {
       const id = '2026-06-30T123456Z-smoke-claude';
 
-      await writeResearchTrial(dir, id);
+      await writeStoredResearchTrial(dir, id);
 
       const trials = readResearchTrials({ cwd: dir });
       const trial = trials[0] as ResearchTrial | undefined;
@@ -200,7 +111,7 @@ describe('research report reader', () => {
 
   it('keeps research trial candidates with invalid ids', async () => {
     await withTempDir(async (dir) => {
-      await writeResearchTrial(dir, 'broken-trial');
+      await writeStoredResearchTrial(dir, 'broken-trial');
 
       const trials = readResearchTrials({ cwd: dir });
       const trial = trials[0] as ResearchTrial | undefined;
@@ -219,11 +130,11 @@ describe('research report reader', () => {
     await withTempDir(async (dir) => {
       const missingMetadataId = '2026-06-30T123456Z-missing-metadata';
       const missingResultId = '2026-06-30T123457Z-missing-result';
-      const missingMetadataDir = await makeResearchTrialDir(dir, missingMetadataId);
-      const missingResultDir = await makeResearchTrialDir(dir, missingResultId);
+      const missingMetadataDir = await makeStoredResearchTrialDir(dir, missingMetadataId);
+      const missingResultDir = await makeStoredResearchTrialDir(dir, missingResultId);
 
-      await writeJsonFile(path.join(missingMetadataDir, 'result.json'), researchResult());
-      await writeJsonFile(path.join(missingResultDir, 'metadata.json'), researchMetadata(missingResultId));
+      await writeJsonFile(path.join(missingMetadataDir, 'result.json'), storedResearchResult());
+      await writeJsonFile(path.join(missingResultDir, 'metadata.json'), storedResearchMetadata(missingResultId));
 
       assert.deepStrictEqual(invalidReasonsById(readResearchTrials({ cwd: dir })), new Map([
         [missingResultId, ['result.json is missing']],
@@ -236,12 +147,12 @@ describe('research report reader', () => {
     await withTempDir(async (dir) => {
       const malformedMetadataId = '2026-06-30T123456Z-malformed-metadata';
       const malformedResultId = '2026-06-30T123457Z-malformed-result';
-      const malformedMetadataDir = await makeResearchTrialDir(dir, malformedMetadataId);
-      const malformedResultDir = await makeResearchTrialDir(dir, malformedResultId);
+      const malformedMetadataDir = await makeStoredResearchTrialDir(dir, malformedMetadataId);
+      const malformedResultDir = await makeStoredResearchTrialDir(dir, malformedResultId);
 
       await writeFile(path.join(malformedMetadataDir, 'metadata.json'), '{\n');
-      await writeJsonFile(path.join(malformedMetadataDir, 'result.json'), researchResult());
-      await writeJsonFile(path.join(malformedResultDir, 'metadata.json'), researchMetadata(malformedResultId));
+      await writeJsonFile(path.join(malformedMetadataDir, 'result.json'), storedResearchResult());
+      await writeJsonFile(path.join(malformedResultDir, 'metadata.json'), storedResearchMetadata(malformedResultId));
       await writeFile(path.join(malformedResultDir, 'result.json'), '{\n');
 
       assert.deepStrictEqual(invalidReasonsById(readResearchTrials({ cwd: dir })), new Map([
@@ -255,12 +166,12 @@ describe('research report reader', () => {
     await withTempDir(async (dir) => {
       const unreadableMetadataId = '2026-06-30T123456Z-unreadable-metadata';
       const unreadableResultId = '2026-06-30T123457Z-unreadable-result';
-      const unreadableMetadataDir = await makeResearchTrialDir(dir, unreadableMetadataId);
-      const unreadableResultDir = await makeResearchTrialDir(dir, unreadableResultId);
+      const unreadableMetadataDir = await makeStoredResearchTrialDir(dir, unreadableMetadataId);
+      const unreadableResultDir = await makeStoredResearchTrialDir(dir, unreadableResultId);
 
       await mkdir(path.join(unreadableMetadataDir, 'metadata.json'));
-      await writeJsonFile(path.join(unreadableMetadataDir, 'result.json'), researchResult());
-      await writeJsonFile(path.join(unreadableResultDir, 'metadata.json'), researchMetadata(unreadableResultId));
+      await writeJsonFile(path.join(unreadableMetadataDir, 'result.json'), storedResearchResult());
+      await writeJsonFile(path.join(unreadableResultDir, 'metadata.json'), storedResearchMetadata(unreadableResultId));
       await mkdir(path.join(unreadableResultDir, 'result.json'));
 
       assert.deepStrictEqual(invalidReasonsById(readResearchTrials({ cwd: dir })), new Map([
@@ -273,10 +184,10 @@ describe('research report reader', () => {
   it('marks unknown metadata schemas invalid', async () => {
     await withTempDir(async (dir) => {
       const id = '2026-06-30T123456Z-schema-v2';
-      const trialDir = await makeResearchTrialDir(dir, id);
+      const trialDir = await makeStoredResearchTrialDir(dir, id);
 
-      await writeJsonFile(path.join(trialDir, 'metadata.json'), researchMetadata(id, { schemaVersion: 2 }));
-      await writeJsonFile(path.join(trialDir, 'result.json'), researchResult());
+      await writeJsonFile(path.join(trialDir, 'metadata.json'), storedResearchMetadata(id, { schemaVersion: 2 }));
+      await writeJsonFile(path.join(trialDir, 'result.json'), storedResearchResult());
 
       assert.deepStrictEqual(invalidReasonsById(readResearchTrials({ cwd: dir })).get(id), [
         'unsupported metadata schemaVersion: 2'
@@ -288,13 +199,13 @@ describe('research report reader', () => {
     await withTempDir(async (dir) => {
       const id = '2026-06-30T123456Z-id-mismatch';
       const metadataId = '2026-06-30T123456Z-other-trial';
-      const trialDir = await makeResearchTrialDir(dir, id);
+      const trialDir = await makeStoredResearchTrialDir(dir, id);
 
       await writeJsonFile(path.join(trialDir, 'metadata.json'), {
-        ...researchMetadata(id),
+        ...storedResearchMetadata(id),
         id: metadataId
       });
-      await writeJsonFile(path.join(trialDir, 'result.json'), researchResult());
+      await writeJsonFile(path.join(trialDir, 'result.json'), storedResearchResult());
 
       assert.deepStrictEqual(invalidReasonsById(readResearchTrials({ cwd: dir })).get(id), [
         `metadata id ${metadataId} does not match research trial id ${id}`
@@ -306,13 +217,13 @@ describe('research report reader', () => {
     await withTempDir(async (dir) => {
       const id = '2026-06-30T123456Z-result-path-mismatch';
       const resultPath = 'other-result.json';
-      const trialDir = await makeResearchTrialDir(dir, id);
+      const trialDir = await makeStoredResearchTrialDir(dir, id);
 
       await writeJsonFile(path.join(trialDir, 'metadata.json'), {
-        ...researchMetadata(id),
+        ...storedResearchMetadata(id),
         result: resultPath
       });
-      await writeJsonFile(path.join(trialDir, 'result.json'), researchResult());
+      await writeJsonFile(path.join(trialDir, 'result.json'), storedResearchResult());
 
       assert.deepStrictEqual(invalidReasonsById(readResearchTrials({ cwd: dir })).get(id), [
         `metadata result ${resultPath} does not point to result.json`
@@ -323,10 +234,10 @@ describe('research report reader', () => {
   it('marks metadata and result status mismatches invalid', async () => {
     await withTempDir(async (dir) => {
       const id = '2026-06-30T123456Z-status-mismatch';
-      const trialDir = await makeResearchTrialDir(dir, id);
+      const trialDir = await makeStoredResearchTrialDir(dir, id);
 
-      await writeJsonFile(path.join(trialDir, 'metadata.json'), researchMetadata(id, { status: 'passed' }));
-      await writeJsonFile(path.join(trialDir, 'result.json'), researchResult('failed'));
+      await writeJsonFile(path.join(trialDir, 'metadata.json'), storedResearchMetadata(id, { status: 'passed' }));
+      await writeJsonFile(path.join(trialDir, 'result.json'), storedResearchResult('failed'));
 
       assert.deepStrictEqual(invalidReasonsById(readResearchTrials({ cwd: dir })).get(id), [
         'metadata status passed does not match result status failed'
@@ -337,10 +248,10 @@ describe('research report reader', () => {
   it('marks result summary totals that do not match result count invalid', async () => {
     await withTempDir(async (dir) => {
       const id = '2026-06-30T123456Z-summary-mismatch';
-      const trialDir = await makeResearchTrialDir(dir, id);
+      const trialDir = await makeStoredResearchTrialDir(dir, id);
 
-      await writeJsonFile(path.join(trialDir, 'metadata.json'), researchMetadata(id));
-      await writeJsonFile(path.join(trialDir, 'result.json'), researchResult('passed', { summaryTotal: 2 }));
+      await writeJsonFile(path.join(trialDir, 'metadata.json'), storedResearchMetadata(id));
+      await writeJsonFile(path.join(trialDir, 'result.json'), storedResearchResult('passed', { summaryTotal: 2 }));
 
       assert.deepStrictEqual(invalidReasonsById(readResearchTrials({ cwd: dir })).get(id), [
         'result summary total 2 does not match results length 1'
@@ -351,11 +262,11 @@ describe('research report reader', () => {
   it('does not rewrite research trial files while reading invalid candidates', async () => {
     await withTempDir(async (dir) => {
       const id = '2026-06-30T123456Z-malformed-result';
-      const trialDir = await makeResearchTrialDir(dir, id);
+      const trialDir = await makeStoredResearchTrialDir(dir, id);
       const metadataPath = path.join(trialDir, 'metadata.json');
       const resultPath = path.join(trialDir, 'result.json');
 
-      await writeJsonFile(metadataPath, researchMetadata(id));
+      await writeJsonFile(metadataPath, storedResearchMetadata(id));
       await writeFile(resultPath, '{\n');
 
       const metadataBefore = await readFile(metadataPath, 'utf8');
@@ -394,9 +305,9 @@ describe('research report builder', () => {
 
   it('aggregates valid and invalid research trial reader results', async () => {
     await withTempDir(async (dir) => {
-      await writeResearchTrial(dir, '2026-07-01T000001Z-passed');
-      await writeResearchTrial(dir, '2026-06-30T123456Z-failed', { status: 'failed' });
-      await writeResearchTrial(dir, 'broken-trial');
+      await writeStoredResearchTrial(dir, '2026-07-01T000001Z-passed');
+      await writeStoredResearchTrial(dir, '2026-06-30T123456Z-failed', { status: 'failed' });
+      await writeStoredResearchTrial(dir, 'broken-trial');
 
       assert.deepStrictEqual(buildResearchReport(readResearchTrials({ cwd: dir })), {
         schemaVersion: 1,
