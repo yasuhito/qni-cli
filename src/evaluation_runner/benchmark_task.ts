@@ -7,7 +7,7 @@ export interface BenchmarkTask {
   readonly allowedCommands: readonly AllowedCommand[];
   readonly checks: BenchmarkChecks;
   readonly gradingCases: readonly BenchmarkGradingCase[];
-  readonly hasExplicitGradingCases: boolean;
+  readonly hasExplicitGradingCases?: boolean;
   readonly id: string;
   readonly title: string;
 }
