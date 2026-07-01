@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { describe, it } from 'node:test';
 
@@ -13,72 +12,7 @@ import {
   gradeBenchmarkTask,
   gradeBenchmarkTaskForReport
 } from '../../src/evaluation_runner';
-
-interface CapturedValue<T> {
-  readonly stderr: string;
-  readonly stdout: string;
-  readonly value: T;
-}
-
-async function withTempDir<T>(callback: (dir: string) => Promise<T>): Promise<T> {
-  const dir = await mkdtemp(path.join(tmpdir(), 'qni-cli-evaluation-runner-'));
-
-  try {
-    return await callback(dir);
-  } finally {
-    await rm(dir, { force: true, recursive: true });
-  }
-}
-
-function captureProcessWrites<T>(callback: () => T): CapturedValue<T> {
-  let stdout = '';
-  let stderr = '';
-  const originalStdoutWrite = process.stdout.write;
-  const originalStderrWrite = process.stderr.write;
-
-  process.stdout.write = ((
-    chunk: string | Uint8Array,
-    encodingOrCallback?: BufferEncoding | ((error?: Error | null) => void),
-    callback?: (error?: Error | null) => void
-  ): boolean => {
-    stdout += typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf8');
-    if (typeof encodingOrCallback === 'function') {
-      encodingOrCallback();
-    }
-    if (callback) {
-      callback();
-    }
-    return true;
-  }) as typeof process.stdout.write;
-
-  process.stderr.write = ((
-    chunk: string | Uint8Array,
-    encodingOrCallback?: BufferEncoding | ((error?: Error | null) => void),
-    callback?: BufferEncoding | ((error?: Error | null) => void)
-  ): boolean => {
-    stderr += typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf8');
-    if (typeof encodingOrCallback === 'function') {
-      encodingOrCallback();
-    }
-    if (typeof callback === 'function') {
-      callback();
-    }
-    return true;
-  }) as typeof process.stderr.write;
-
-  try {
-    const value = callback();
-
-    return {
-      stderr,
-      stdout,
-      value
-    };
-  } finally {
-    process.stdout.write = originalStdoutWrite;
-    process.stderr.write = originalStderrWrite;
-  }
-}
+import { captureProcessWrites, withTempDir } from './helpers/command';
 
 describe('evaluation runner public entrypoints', () => {
   it('reports task frontmatter errors through the evaluation runner seam', async () => {
