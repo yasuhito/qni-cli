@@ -77,6 +77,8 @@ qni variable clear
 
 ## ベンチマーク提出物を採点する
 
+次の例は、リポジトリルートから実行します。
+
 ```bash
 qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni
 ```
