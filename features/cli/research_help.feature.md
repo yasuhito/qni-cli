@@ -117,5 +117,5 @@ qni research record のヘルプを見たい。
   Exit codes:
     0  report generated and no invalid research trials were found
     1  report generated and one or more invalid research trials were found
-    3  research/runs/ could not be read
+    3  invalid arguments or research/runs/ could not be read
   ```

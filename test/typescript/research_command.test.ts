@@ -237,7 +237,7 @@ describe('research command TypeScript route', () => {
         '  qni research report [--json]',
         '',
         'Overview:',
-        '  Show a report for saved research trials under research/runs/.',
+        '  Show a report for saved research trials under research/runs/',
         '  By default, output is dependency-free plaintext for terminal reading.',
         '  Use --json for the existing machine-readable report.',
         '',
@@ -250,7 +250,7 @@ describe('research command TypeScript route', () => {
         'Exit codes:',
         '  0  report generated and no invalid research trials were found',
         '  1  report generated and one or more invalid research trials were found',
-        '  3  research/runs/ could not be read',
+        '  3  invalid arguments or research/runs/ could not be read',
         ''
       ].join('\n'));
     });

@@ -53,7 +53,7 @@ const RESEARCH_HELP_TEXT = `Usage:
 
 Commands:
   qni research record    Record one external collaborator trial for one benchmark suite.
-  qni research report    Show saved research trial summaries from research/runs/.
+  qni research report    Show saved research trial summaries from research/runs/
 
 Run qni research COMMAND --help for command details.`;
 const RECORD_HELP_TEXT = `Usage:
@@ -92,7 +92,7 @@ const REPORT_HELP_TEXT = `Usage:
   qni research report [--json]
 
 Overview:
-  Show a report for saved research trials under research/runs/.
+  Show a report for saved research trials under research/runs/
   By default, output is dependency-free plaintext for terminal reading.
   Use --json for the existing machine-readable report.
 
@@ -105,7 +105,7 @@ Output:
 Exit codes:
   0  report generated and no invalid research trials were found
   1  report generated and one or more invalid research trials were found
-  3  research/runs/ could not be read`;
+  3  invalid arguments or research/runs/ could not be read`;
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u;
 const OPTION_NAMES = new Map<string, ResearchRecordOption>([
   ['--benchmark', 'benchmark'],
