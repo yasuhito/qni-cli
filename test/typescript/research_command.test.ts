@@ -124,6 +124,7 @@ async function prepareQuantumKatasSubmissions(
     'basic-gates/bell-state-change-1.qni',
     'basic-gates/bell-state-change-2.qni',
     'basic-gates/bell-state-change-3.qni',
+    'basic-gates/fredkin-gate.qni',
     'basic-gates/phase-change-pi-over-3.qni',
     'basic-gates/phase-flip.qni',
     'basic-gates/sign-flip.qni',
@@ -156,6 +157,7 @@ function quantumKatasSubmissionContent(status: UnsuccessfulResearchStatus, relat
     ['basic-gates/bell-state-change-1.qni', 'qni add Z --qubit 0 --step 0\n'],
     ['basic-gates/bell-state-change-2.qni', 'qni add X --qubit 0 --step 0\n'],
     ['basic-gates/bell-state-change-3.qni', 'qni add X --qubit 0 --step 0\nqni add Z --qubit 0 --step 1\n'],
+    ['basic-gates/fredkin-gate.qni', 'qni add SWAP --control 0 --qubit 1,2 --step 0\n'],
     ['basic-gates/phase-change-pi-over-3.qni', 'qni add P --angle pi/3 --qubit 0 --step 0\n'],
     ['basic-gates/phase-flip.qni', 'qni add S --qubit 0 --step 0\n'],
     ['basic-gates/sign-flip.qni', 'qni add Z --qubit 0 --step 0\n'],
@@ -744,6 +746,7 @@ describe('research command TypeScript route', () => {
       assert.equal((await stat(path.join(trialDir, 'submissions', 'basic-gates', 'bell-state-change-1.qni'))).isFile(), true);
       assert.equal((await stat(path.join(trialDir, 'submissions', 'basic-gates', 'bell-state-change-2.qni'))).isFile(), true);
       assert.equal((await stat(path.join(trialDir, 'submissions', 'basic-gates', 'bell-state-change-3.qni'))).isFile(), true);
+      assert.equal((await stat(path.join(trialDir, 'submissions', 'basic-gates', 'fredkin-gate.qni'))).isFile(), true);
         assert.equal((await stat(path.join(trialDir, 'submissions', 'basic-gates', 'state-flip.qni'))).isFile(), true);
       });
     });
@@ -794,8 +797,8 @@ describe('research command TypeScript route', () => {
       assert.match(String(metadata.createdAt), /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.000Z$/u);
       assert.equal(gradingResult.status, 'passed');
       assert.deepStrictEqual(gradingResult.summary, {
-        total: 20,
-        passed: 20,
+        total: 21,
+        passed: 21,
         failed: 0,
         disallowed: 0,
         error: 0
@@ -807,6 +810,7 @@ describe('research command TypeScript route', () => {
       assert.equal((await stat(path.join(trialDir, 'submissions', 'basic-gates', 'bell-state-change-1.qni'))).isFile(), true);
       assert.equal((await stat(path.join(trialDir, 'submissions', 'basic-gates', 'bell-state-change-2.qni'))).isFile(), true);
       assert.equal((await stat(path.join(trialDir, 'submissions', 'basic-gates', 'bell-state-change-3.qni'))).isFile(), true);
+      assert.equal((await stat(path.join(trialDir, 'submissions', 'basic-gates', 'fredkin-gate.qni'))).isFile(), true);
       assert.equal((await stat(path.join(trialDir, 'submissions', 'basic-gates', 'phase-change-pi-over-3.qni'))).isFile(), true);
       assert.equal((await stat(path.join(trialDir, 'submissions', 'basic-gates', 'phase-flip.qni'))).isFile(), true);
       assert.equal((await stat(path.join(trialDir, 'submissions', 'basic-gates', 'sign-flip.qni'))).isFile(), true);

@@ -165,6 +165,28 @@ qni benchmark run で最小の合格判定を実行したい。
   PASS BellStateChange3
   ```
 
+## Scenario: FredkinGate 課題ファイルがある
+
+- Then リポジトリファイル "benchmarks/quantum-katas/basic-gates/fredkin-gate.md" は存在する
+
+## Scenario: FredkinGate 標準解がある
+
+- Then リポジトリファイル "benchmarks/solutions/quantum-katas/basic-gates/fredkin-gate.qni" は存在する
+
+## Scenario: FredkinGate 標準解は合格する
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/fredkin-gate.md benchmarks/solutions/quantum-katas/basic-gates/fredkin-gate.qni" を実行
+- Then コマンドは成功
+
+## Scenario: FredkinGate 標準解の合格が表示される
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/fredkin-gate.md benchmarks/solutions/quantum-katas/basic-gates/fredkin-gate.qni" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  PASS FredkinGate
+  ```
+
 ## Scenario: SignFlip 課題ファイルがある
 
 - Then リポジトリファイル "benchmarks/quantum-katas/basic-gates/sign-flip.md" は存在する
@@ -546,6 +568,24 @@ qni benchmark run で最小の合格判定を実行したい。
   - run #1: state vector did not match expected amplitudes
   ```
 
+## Scenario: FredkinGate の常に SWAP する不正解サンプルがある
+
+- Then リポジトリファイル "benchmarks/incorrect/quantum-katas/basic-gates/fredkin-gate-unconditional-swap.qni" は存在する
+
+## Scenario: FredkinGate の常に SWAP する不正解サンプルは不合格になる
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/fredkin-gate.md benchmarks/incorrect/quantum-katas/basic-gates/fredkin-gate-unconditional-swap.qni" を実行
+- Then 終了コードは 1
+
+## Scenario: FredkinGate の常に SWAP する不正解サンプルは制御 0 の採点ケースで失敗する
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/fredkin-gate.md benchmarks/incorrect/quantum-katas/basic-gates/fredkin-gate-unconditional-swap.qni" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  - case control-zero run #1: state vector did not match expected amplitudes
+  ```
+
 ## Scenario: frontmatter 不備の課題ファイルは終了コード 3 になる
 
 - When "qni benchmark run benchmarks/invalid/quantum-katas/basic-gates/state-flip-missing-allowed-commands.md benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni" を実行
@@ -640,6 +680,10 @@ qni benchmark run で最小の合格判定を実行したい。
 
 - Then リポジトリファイル "docs/benchmark.md" は "qni benchmark run benchmarks/quantum-katas/basic-gates/bell-state-change-3.md benchmarks/solutions/quantum-katas/basic-gates/bell-state-change-3.qni" を含む
 
+## Scenario: MVP手順は FredkinGate 標準解の実行例を示す
+
+- Then リポジトリファイル "docs/benchmark.md" は "qni benchmark run benchmarks/quantum-katas/basic-gates/fredkin-gate.md benchmarks/solutions/quantum-katas/basic-gates/fredkin-gate.qni" を含む
+
 ## Scenario: MVP手順は SignFlip 標準解の実行例を示す
 
 - Then リポジトリファイル "docs/benchmark.md" は "qni benchmark run benchmarks/quantum-katas/basic-gates/sign-flip.md benchmarks/solutions/quantum-katas/basic-gates/sign-flip.qni" を含む
@@ -696,12 +740,13 @@ qni benchmark run で最小の合格判定を実行したい。
 
   ```text
   PASS benchmark suite
-  tasks: 20
-  passed: 20, failed: 0, disallowed: 0, error: 0
+  tasks: 21
+  passed: 21, failed: 0, disallowed: 0, error: 0
   - passed basic-gates/basis-change BasisChange
   - passed basic-gates/bell-state-change-1 BellStateChange1
   - passed basic-gates/bell-state-change-2 BellStateChange2
   - passed basic-gates/bell-state-change-3 BellStateChange3
+  - passed basic-gates/fredkin-gate FredkinGate
   - passed basic-gates/phase-change-pi-over-3 PhaseChangePiOver3
   - passed basic-gates/phase-flip PhaseFlip
   - passed basic-gates/sign-flip SignFlip
@@ -733,8 +778,8 @@ qni benchmark run で最小の合格判定を実行したい。
       "disallowed": 0,
       "error": 0,
       "failed": 0,
-      "passed": 20,
-      "total": 20
+      "passed": 21,
+      "total": 21
     },
     "results": [
       {
@@ -854,6 +899,46 @@ qni benchmark run で最小の合格判定を実行したい。
           }
         ],
         "task": "benchmarks/quantum-katas/basic-gates/bell-state-change-3.md"
+      },
+      {
+        "taskId": "basic-gates/fredkin-gate",
+        "title": "FredkinGate",
+        "submission": "benchmarks/solutions/quantum-katas/basic-gates/fredkin-gate.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "gradingCases": [
+          {
+            "caseId": "control-zero",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "control-one",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          }
+        ],
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
+        "task": "benchmarks/quantum-katas/basic-gates/fredkin-gate.md"
       },
       {
         "taskId": "basic-gates/phase-change-pi-over-3",
