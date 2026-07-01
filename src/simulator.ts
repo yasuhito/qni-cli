@@ -430,7 +430,7 @@ function angledGateOperator(
   serializedGate: string,
   variables: Readonly<Record<string, string>>
 ): GateOperator | undefined {
-  const match = /^(?<gate>P|Rx|Ry|Rz)\((?<angle>.+)\)$/u.exec(serializedGate);
+  const match = /^(?<gate>P|Rx|Ry|Rz|GlobalPhase)\((?<angle>.+)\)$/u.exec(serializedGate);
 
   if (!match?.groups) {
     return undefined;
@@ -447,9 +447,18 @@ function angledGateOperator(
       return ryGate(angle);
     case 'Rz':
       return rzGate(angle);
+    case 'GlobalPhase':
+      return globalPhaseGate(angle);
     default:
       return undefined;
   }
+}
+
+function globalPhaseGate(angle: number): GateOperator {
+  const halfAngle = angle / 2;
+  const phase = new Complex(Math.cos(halfAngle), -Math.sin(halfAngle));
+
+  return (zero, one) => [phase.multiply(zero), phase.multiply(one)];
 }
 
 function phaseGate(angle: number): GateOperator {

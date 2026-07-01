@@ -39,6 +39,26 @@ describe('TypeScript numeric simulator compatibility', () => {
     assert.equal(simulator.renderExpectationValues(['X', 'Z']), 'X=0.28000000000000036\nZ=-0.9600000000000001');
   });
 
+  it('applies a single global phase to every amplitude', () => {
+    const circuit: CircuitData = {
+      cols: [['H'], ['GlobalPhase(2π)']],
+      qubits: 1
+    };
+    const simulator = new Simulator(circuit);
+
+    assert.equal(simulator.renderStateVector(), '-0.7071067811865475,-0.7071067811865475');
+  });
+
+  it('applies a controlled global phase as a relative phase', () => {
+    const circuit: CircuitData = {
+      cols: [['H', 1], ['•', 'GlobalPhase(2π)']],
+      qubits: 2
+    };
+    const simulator = new Simulator(circuit);
+
+    assert.equal(simulator.renderStateVector(), '0.7071067811865475,0.0,-0.7071067811865475,0.0');
+  });
+
   it('extends a shorter initial_state with zeroed suffix qubits', () => {
     const circuit: CircuitData = {
       cols: [[1, 'X']],

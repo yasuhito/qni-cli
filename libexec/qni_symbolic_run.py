@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from sympy import Float, I, Integer, Matrix, Symbol, cos, exp, latex, pi, simplify, sin, sqrt
 
 EPSILON = sys.float_info.epsilon
-ANGLED_GATE_PATTERN = re.compile(r"\A(?P<gate>P|Rx|Ry|Rz)\((?P<angle>.+)\)\Z")
+ANGLED_GATE_PATTERN = re.compile(r"\A(?P<gate>P|Rx|Ry|Rz|GlobalPhase)\((?P<angle>.+)\)\Z")
 IDENTIFIER_PATTERN = re.compile(r"\A[a-zA-Z_][a-zA-Z0-9_]*\Z")
 SIGNED_IDENTIFIER_PATTERN = re.compile(r"\A(?P<sign>[+-])(?P<identifier>[a-zA-Z_][a-zA-Z0-9_]*)\Z")
 NUMERIC_PATTERN = re.compile(r"\A[+-]?\d+(?:\.\d+)?\Z")
@@ -233,6 +233,9 @@ def symbolic_gate(gate, variables):
         return Matrix([[cos(angle / 2), -sin(angle / 2)], [sin(angle / 2), cos(angle / 2)]])
     if gate_name == "Rz":
         return Matrix([[exp(-I * angle / 2), 0], [0, exp(I * angle / 2)]])
+    if gate_name == "GlobalPhase":
+        phase = exp(-I * angle / 2)
+        return Matrix([[phase, 0], [0, phase]])
 
     raise ValueError(f"unsupported gate for symbolic run: {gate!r}")
 
