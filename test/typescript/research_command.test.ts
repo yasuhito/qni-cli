@@ -120,6 +120,7 @@ async function prepareQuantumKatasSubmissions(
   status: UnsuccessfulResearchStatus
 ): Promise<void> {
   const relativePaths = [
+    'basic-gates/basis-change.qni',
     'basic-gates/state-flip.qni',
     'superposition/all-basis-vector-with-phase-flip-two-qubits.qni',
     'superposition/all-basis-vectors-two-qubits.qni',
@@ -140,6 +141,7 @@ async function prepareQuantumKatasSubmissions(
 
 function quantumKatasSubmissionContent(status: UnsuccessfulResearchStatus, relativePath: string): string {
   const passedSubmissions = new Map<string, string>([
+    ['basic-gates/basis-change.qni', 'qni add H --qubit 0 --step 0\n'],
     ['basic-gates/state-flip.qni', 'qni add X --qubit 0 --step 0\n'],
     [
       'superposition/all-basis-vector-with-phase-flip-two-qubits.qni',
@@ -764,8 +766,8 @@ describe('research command TypeScript route', () => {
       assert.match(String(metadata.createdAt), /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.000Z$/u);
       assert.equal(gradingResult.status, 'passed');
       assert.deepStrictEqual(gradingResult.summary, {
-        total: 8,
-        passed: 8,
+        total: 9,
+        passed: 9,
         failed: 0,
         disallowed: 0,
         error: 0

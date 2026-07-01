@@ -419,6 +419,21 @@ describe('benchmark command TypeScript route', () => {
     });
   });
 
+  it('passes the BasisChange solution using explicit grading cases', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, [
+        'benchmark',
+        'run',
+        'benchmarks/quantum-katas/basic-gates/basis-change.md',
+        'benchmarks/solutions/quantum-katas/basic-gates/basis-change.qni'
+      ]);
+
+      assert.equal(result.exitStatus, 0, result.stderr);
+      assert.equal(result.stdout, 'PASS BasisChange\nchecks: 2\n');
+      assert.equal(result.stderr, '');
+    });
+  });
+
   it('passes the MinusState solution using a run check', async () => {
     await withTempDir(async (dir) => {
       const result = captureDispatcherRun(dir, [
@@ -575,6 +590,30 @@ describe('benchmark command TypeScript route', () => {
         '  expected / actual mismatches:',
         '  - |0>: expected 0, actual 0.7071067811865475',
         '  - |1>: expected 1, actual 0.7071067811865475',
+        ''
+      ].join('\n'));
+      assert.equal(result.stderr, '');
+    });
+  });
+
+  it('fails the BasisChange zero-input-only incorrect sample in the one-input grading case', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, [
+        'benchmark',
+        'run',
+        'benchmarks/quantum-katas/basic-gates/basis-change.md',
+        'benchmarks/incorrect/quantum-katas/basic-gates/basis-change-zero-only.qni'
+      ]);
+
+      assert.equal(result.exitStatus, 1, result.stderr);
+      assert.equal(result.stdout, [
+        'FAIL BasisChange',
+        'checks: 2',
+        'failed checks:',
+        '- case one-input run #1: state vector did not match expected amplitudes',
+        '  expected / actual mismatches:',
+        '  - |0>: expected 0.7071067811865476, actual -0.7071067811865475',
+        '  - |1>: expected -0.7071067811865476, actual 0.7071067811865475',
         ''
       ].join('\n'));
       assert.equal(result.stderr, '');
@@ -761,8 +800,8 @@ describe('benchmark command TypeScript route', () => {
       assert.equal(captured.value.status, 'passed');
       assert.equal(captured.value.exitCode, 0);
       assert.deepStrictEqual(captured.value.summary, {
-        total: 8,
-        passed: 8,
+        total: 9,
+        passed: 9,
         failed: 0,
         disallowed: 0,
         error: 0
@@ -773,6 +812,15 @@ describe('benchmark command TypeScript route', () => {
         exitCode: result.exitCode,
         checks: result.checks
       })), [
+        {
+          taskId: 'basic-gates/basis-change',
+          status: 'passed',
+          exitCode: 0,
+          checks: [
+            { type: 'run', status: 'passed' },
+            { type: 'run', status: 'passed' }
+          ]
+        },
         {
           taskId: 'basic-gates/state-flip',
           status: 'passed',
@@ -837,8 +885,9 @@ describe('benchmark command TypeScript route', () => {
       assert.equal(result.exitStatus, 0, result.stderr);
       assert.equal(result.stdout, [
         'PASS benchmark suite',
-        'tasks: 8',
-        'passed: 8, failed: 0, disallowed: 0, error: 0',
+        'tasks: 9',
+        'passed: 9, failed: 0, disallowed: 0, error: 0',
+        '- passed basic-gates/basis-change BasisChange',
         '- passed basic-gates/state-flip StateFlip',
         '- passed superposition/all-basis-vector-with-phase-flip-two-qubits AllBasisVectorWithPhaseFlip_TwoQubits',
         '- passed superposition/all-basis-vectors-two-qubits AllBasisVectors_TwoQubits',
@@ -869,13 +918,37 @@ describe('benchmark command TypeScript route', () => {
         status: 'passed',
         exitCode: 0,
         summary: {
-          total: 8,
-          passed: 8,
+          total: 9,
+          passed: 9,
           failed: 0,
           disallowed: 0,
           error: 0
         },
         results: [
+          {
+            taskId: 'basic-gates/basis-change',
+            title: 'BasisChange',
+            task: 'benchmarks/quantum-katas/basic-gates/basis-change.md',
+            submission: 'benchmarks/solutions/quantum-katas/basic-gates/basis-change.qni',
+            status: 'passed',
+            exitCode: 0,
+            gradingCases: [
+              {
+                caseId: 'zero-input',
+                status: 'passed',
+                checks: [{ type: 'run', status: 'passed' }]
+              },
+              {
+                caseId: 'one-input',
+                status: 'passed',
+                checks: [{ type: 'run', status: 'passed' }]
+              }
+            ],
+            checks: [
+              { type: 'run', status: 'passed' },
+              { type: 'run', status: 'passed' }
+            ]
+          },
           {
             taskId: 'basic-gates/state-flip',
             title: 'StateFlip',

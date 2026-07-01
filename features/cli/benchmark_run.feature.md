@@ -77,6 +77,28 @@ qni benchmark run で最小の合格判定を実行したい。
   PASS PlusState
   ```
 
+## Scenario: BasisChange 課題ファイルがある
+
+- Then リポジトリファイル "benchmarks/quantum-katas/basic-gates/basis-change.md" は存在する
+
+## Scenario: BasisChange 標準解がある
+
+- Then リポジトリファイル "benchmarks/solutions/quantum-katas/basic-gates/basis-change.qni" は存在する
+
+## Scenario: BasisChange 標準解は合格する
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/basis-change.md benchmarks/solutions/quantum-katas/basic-gates/basis-change.qni" を実行
+- Then コマンドは成功
+
+## Scenario: BasisChange 標準解の合格が表示される
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/basis-change.md benchmarks/solutions/quantum-katas/basic-gates/basis-change.qni" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  PASS BasisChange
+  ```
+
 ## Scenario: MinusState 課題ファイルがある
 
 - Then リポジトリファイル "benchmarks/quantum-katas/superposition/minus-state.md" は存在する
@@ -338,6 +360,24 @@ qni benchmark run で最小の合格判定を実行したい。
   }
   ```
 
+## Scenario: BasisChange の片方の入力だけに合う不正解サンプルがある
+
+- Then リポジトリファイル "benchmarks/incorrect/quantum-katas/basic-gates/basis-change-zero-only.qni" は存在する
+
+## Scenario: BasisChange の片方の入力だけに合う不正解サンプルは不合格になる
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/basis-change.md benchmarks/incorrect/quantum-katas/basic-gates/basis-change-zero-only.qni" を実行
+- Then 終了コードは 1
+
+## Scenario: BasisChange の片方の入力だけに合う不正解サンプルは失敗した採点ケースを表示する
+
+- When "qni benchmark run benchmarks/quantum-katas/basic-gates/basis-change.md benchmarks/incorrect/quantum-katas/basic-gates/basis-change-zero-only.qni" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  - case one-input run #1: state vector did not match expected amplitudes
+  ```
+
 ## Scenario: frontmatter 不備の課題ファイルは終了コード 3 になる
 
 - When "qni benchmark run benchmarks/invalid/quantum-katas/basic-gates/state-flip-missing-allowed-commands.md benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni" を実行
@@ -416,6 +456,14 @@ qni benchmark run で最小の合格判定を実行したい。
 
 - Then リポジトリファイル "docs/benchmark.md" は "qni benchmark run benchmarks/quantum-katas/superposition/plus-state.md benchmarks/solutions/quantum-katas/superposition/plus-state.qni" を含む
 
+## Scenario: MVP手順は BasisChange 標準解の実行例を示す
+
+- Then リポジトリファイル "docs/benchmark.md" は "qni benchmark run benchmarks/quantum-katas/basic-gates/basis-change.md benchmarks/solutions/quantum-katas/basic-gates/basis-change.qni" を含む
+
+## Scenario: MVP手順は複数採点ケースの説明を示す
+
+- Then リポジトリファイル "docs/benchmark.md" は "複数採点ケース" を含む
+
 ## Scenario: MVP手順は BellState 標準解の実行例を示す
 
 - Then リポジトリファイル "docs/benchmark.md" は "qni benchmark run benchmarks/quantum-katas/superposition/bell-state.md benchmarks/solutions/quantum-katas/superposition/bell-state.qni" を含む
@@ -456,8 +504,9 @@ qni benchmark run で最小の合格判定を実行したい。
 
   ```text
   PASS benchmark suite
-  tasks: 8
-  passed: 8, failed: 0, disallowed: 0, error: 0
+  tasks: 9
+  passed: 9, failed: 0, disallowed: 0, error: 0
+  - passed basic-gates/basis-change BasisChange
   - passed basic-gates/state-flip StateFlip
   - passed superposition/all-basis-vector-with-phase-flip-two-qubits AllBasisVectorWithPhaseFlip_TwoQubits
   - passed superposition/all-basis-vectors-two-qubits AllBasisVectors_TwoQubits
@@ -478,13 +527,53 @@ qni benchmark run で最小の合格判定を実行したい。
     "status": "passed",
     "exitCode": 0,
     "summary": {
-      "total": 8,
-      "passed": 8,
+      "total": 9,
+      "passed": 9,
       "failed": 0,
       "disallowed": 0,
       "error": 0
     },
     "results": [
+      {
+        "taskId": "basic-gates/basis-change",
+        "title": "BasisChange",
+        "task": "benchmarks/quantum-katas/basic-gates/basis-change.md",
+        "submission": "benchmarks/solutions/quantum-katas/basic-gates/basis-change.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "gradingCases": [
+          {
+            "caseId": "zero-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "one-input",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          }
+        ],
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ]
+      },
       {
         "taskId": "basic-gates/state-flip",
         "title": "StateFlip",
