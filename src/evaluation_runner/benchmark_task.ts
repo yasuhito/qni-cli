@@ -75,7 +75,7 @@ export function loadBenchmarkTask(taskPath: string): BenchmarkTask {
   const frontmatter = frontmatterRecord(frontmatterOf(readFileSync(taskPath, 'utf8')));
   const allowedCommands = parseAllowedCommands(frontmatter);
   const hasExplicitGradingCases = hasValue(frontmatter, 'grading_cases');
-  const gradingCases = parseGradingCases(frontmatter);
+  const gradingCases = parseGradingCases(frontmatter, hasExplicitGradingCases);
 
   return {
     allowedCommands,
@@ -150,9 +150,11 @@ function parseChecks(frontmatter: FrontmatterRecord): BenchmarkChecks {
   };
 }
 
-function parseGradingCases(frontmatter: FrontmatterRecord): BenchmarkGradingCase[] {
+function parseGradingCases(
+  frontmatter: FrontmatterRecord,
+  hasExplicitGradingCases: boolean
+): BenchmarkGradingCase[] {
   const hasRootChecks = hasValue(frontmatter, 'checks');
-  const hasExplicitGradingCases = hasValue(frontmatter, 'grading_cases');
 
   if (hasRootChecks && hasExplicitGradingCases) {
     throw new BenchmarkTaskError('checks and grading_cases must not both be specified');

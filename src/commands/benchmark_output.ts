@@ -2,7 +2,9 @@ import type { BenchmarkTask, ComplexAmplitude } from '../evaluation_runner/bench
 import type {
   AmplitudeMismatch,
   BenchmarkCheckResult,
+  BenchmarkCheckSummary,
   BenchmarkGradingCaseResult,
+  BenchmarkGradingCaseSummary,
   BenchmarkResult,
   BenchmarkSuiteGradingResult,
   BenchmarkSuiteTaskGradingResult,
@@ -23,6 +25,12 @@ class BenchmarkReportError extends Error {}
 
 const MAX_FAILED_AMPLITUDE_DETAILS = 16;
 const MAX_FAILED_EXPECTATION_DETAILS = 16;
+
+type FailedGradingCaseCheck<TCheck extends BenchmarkCheckResult | BenchmarkCheckSummary> = {
+  readonly caseId: string;
+  readonly check: TCheck;
+  readonly index: number;
+};
 
 export function benchmarkTaskCommandReport(
   report: BenchmarkTaskGradingReport
@@ -77,10 +85,15 @@ function formatBenchmarkSuiteTaskLines(item: BenchmarkSuiteTaskGradingResult): s
 }
 
 function suiteTaskFailedCheckLines(item: BenchmarkSuiteTaskGradingResult): string[] {
-  return item.gradingCases?.flatMap((gradingCase) => gradingCase.checks
-    .map((check, index) => ({ caseId: gradingCase.caseId, check, index }))
-    .filter((entry) => entry.check.status === 'failed')
-    .map((entry) => `  - case ${entry.caseId} ${entry.check.type} #${entry.index + 1}: failed`)) ?? [];
+  if (!item.gradingCases) {
+    return [];
+  }
+
+  return [
+    ...failedGradingCaseChecks(item.gradingCases)
+      .map((entry) => `  - case ${entry.caseId} ${entry.check.type} #${entry.index + 1}: failed`),
+    ...suiteTaskGradingCaseErrorLines(item.gradingCases)
+  ];
 }
 
 function formatHumanResult(task: BenchmarkTask | undefined, result: BenchmarkResult): string {
@@ -132,9 +145,7 @@ function failedCheckDetailsLines(result: BenchmarkResult): string[] {
 }
 
 function failedGradingCaseDetailsLines(gradingCases: readonly BenchmarkGradingCaseResult[]): string[] {
-  const failedChecks = gradingCases.flatMap((gradingCase) => gradingCase.checks
-    .map((check, index) => ({ caseId: gradingCase.caseId, check, index }))
-    .filter((item) => item.check.status === 'failed'));
+  const failedChecks = failedGradingCaseChecks(gradingCases);
 
   if (failedChecks.length === 0) {
     return [];
@@ -148,6 +159,29 @@ function failedGradingCaseDetailsLines(gradingCases: readonly BenchmarkGradingCa
       failedCheck.caseId
     ))
   ];
+}
+
+function failedGradingCaseChecks<TCheck extends BenchmarkCheckResult | BenchmarkCheckSummary>(
+  gradingCases: readonly { readonly caseId: string; readonly checks: readonly TCheck[] }[]
+): FailedGradingCaseCheck<TCheck>[] {
+  return gradingCases.flatMap((gradingCase) => gradingCase.checks
+    .map((check, index) => ({ caseId: gradingCase.caseId, check, index }))
+    .filter((entry) => entry.check.status === 'failed'));
+}
+
+function suiteTaskGradingCaseErrorLines(gradingCases: readonly BenchmarkGradingCaseSummary[]): string[] {
+  return gradingCases.flatMap((gradingCase) => {
+    if (gradingCase.error === undefined) {
+      return [];
+    }
+
+    const [firstLine = '', ...additionalLines] = gradingCase.error.split(/\r?\n/u);
+
+    return [
+      `  - case ${gradingCase.caseId} error: ${firstLine}`,
+      ...additionalLines.map((line) => `    ${line}`)
+    ];
+  });
 }
 
 function failedCheckLines(check: BenchmarkCheckResult, index: number, caseId?: string): string[] {

@@ -969,6 +969,32 @@ describe('benchmark command TypeScript route', () => {
     });
   });
 
+  it('prints grading case error messages in run-all human-readable task lines', async () => {
+    await withTempDir(async (dir) => {
+      await mkdir(path.join(dir, 'benchmarks', 'grading-cases'), { recursive: true });
+      await mkdir(path.join(dir, 'solutions', 'grading-cases'), { recursive: true });
+      await writeFile(
+        path.join(dir, 'benchmarks', 'grading-cases', 'setup-error.md'),
+        setupErrorGradingCasesTask()
+      );
+      await writeFile(path.join(dir, 'solutions', 'grading-cases', 'setup-error.qni'), '');
+
+      const result = captureDispatcherRun(dir, ['benchmark', 'run-all', 'benchmarks', 'solutions']);
+
+      assert.equal(result.exitStatus, 3, result.stderr);
+      assert.equal(result.stdout, [
+        'FAIL benchmark suite',
+        'tasks: 1',
+        'passed: 0, failed: 0, disallowed: 0, error: 1',
+        '- error grading-cases/setup-error SetupError',
+        '  - case bad-setup error: setup command failed in grading case bad-setup: qni state set ',
+        '    initial state expression is required',
+        ''
+      ].join('\n'));
+      assert.equal(result.stderr, '');
+    });
+  });
+
   it('keeps grading case results in run-all JSON without inflating task summary counts', async () => {
     await withTempDir(async (dir) => {
       await mkdir(path.join(dir, 'benchmarks', 'grading-cases'), { recursive: true });
@@ -1063,5 +1089,33 @@ function xOnZeroAndOneGradingCasesTask(): string {
     '---',
     '',
     'Apply X to both basis inputs.'
+  ].join('\n');
+}
+
+function setupErrorGradingCasesTask(): string {
+  return [
+    '---',
+    'id: grading-cases/setup-error',
+    'title: SetupError',
+    'source: test',
+    'difficulty: smoke',
+    'allowed_commands:',
+    '  - qni add',
+    'grading_cases:',
+    '  - id: bad-setup',
+    '    setup_commands:',
+    '      - qni state set ""',
+    '    checks:',
+    '      tolerance: 1e-9',
+    '      items:',
+    '        - type: run',
+    '          expected:',
+    '            - basis: "|0>"',
+    '              amplitude:',
+    '                real: 1',
+    '                imaginary: 0',
+    '---',
+    '',
+    'Setup should fail before checks run.'
   ].join('\n');
 }
