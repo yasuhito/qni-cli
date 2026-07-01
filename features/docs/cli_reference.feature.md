@@ -48,6 +48,10 @@ CLI コマンドの詳細を専用ドキュメントで確認したい。
 
 - Then リポジトリファイル "docs/cli.md" は "ベンチマーク採点と研究試行ログの詳しい手順は [benchmark.md](benchmark.md) に置きます。" を含む
 
+## Scenario: benchmark 文書本体にも責務分離の注記がある
+
+- Then リポジトリファイル "docs/benchmark.md" は "汎用の `qni` コマンド、画像出力、Bloch sphere、状態ベクトル操作の例は [cli.md](cli.md) に置きます。" を含む
+
 ## Scenario: README は開発者向け手順へリンクする
 
 - Then リポジトリファイル "README.md" は "[開発者向け手順](docs/development.md)" を含む

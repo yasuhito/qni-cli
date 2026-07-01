@@ -1,8 +1,6 @@
-# Qni CoResearcher / qni-cli
+# qni-cli
 
-Qni CoResearcher は、AI または人間の共同研究者が作った量子回路提出物を、qni-cli の決定論的な採点とリポジトリファイルの研究ログで再現可能に扱うハーネスです。
-
-`qni-cli` は、その中で量子回路を作成、実行、表示、検証、採点、研究ログ化する Node.js / TypeScript 製 CLI です。現時点では、qni-cli が AI を呼び出すのではなく、外部の共同研究者が作った `.qni` 提出物や研究試行の材料を受け取って扱います。
+`qni-cli` は、`./circuit.json` に保存した量子回路を編集、表示、実行、画像出力する Node.js / TypeScript 製 CLI です。`.qni` 提出物のベンチマーク採点と、外部共同研究者の研究試行ログ保存にも使えます。
 
 ## できること
 
@@ -26,6 +24,7 @@ Qni CoResearcher は、AI または人間の共同研究者が作った量子回
 ```bash
 npm install
 npm run build
+scripts/setup_symbolic_python.sh
 
 node dist/bin/qni.js add H --qubit 0 --step 0
 node dist/bin/qni.js add X --control 0 --qubit 1 --step 1
