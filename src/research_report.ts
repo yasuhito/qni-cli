@@ -87,6 +87,15 @@ interface JsonObjectReadResult {
   readonly value?: Record<string, unknown>;
 }
 
+interface ResearchReportHumanSummary {
+  readonly disallowed: number;
+  readonly error: number;
+  readonly failed: number;
+  readonly invalid?: number;
+  readonly passed: number;
+  readonly total: number;
+}
+
 const RESEARCH_RUNS_DISPLAY_PATH = 'research/runs';
 const RESEARCH_RUNS_PATH = path.join('research', 'runs');
 const RESEARCH_TRIAL_TIMESTAMP_PATTERN = /^(\d{4}-\d{2}-\d{2}T\d{6}Z)/u;
@@ -110,6 +119,40 @@ export function buildResearchReport(trials: readonly ResearchTrial[]): ResearchR
     taskSummary,
     trials: trials.map((trial) => researchReportTrial(trial))
   };
+}
+
+export function formatResearchReportHumanOutput(report: ResearchReport): string {
+  const lines = [
+    'Research trial report',
+    `Research runs: ${RESEARCH_RUNS_DISPLAY_PATH}`,
+    '',
+    'Trial summary:',
+    ...summaryLines(report.trialSummary, ['total', 'passed', 'failed', 'disallowed', 'error', 'invalid']),
+    '',
+    'Task summary:',
+    ...summaryLines(report.taskSummary, ['total', 'passed', 'failed', 'disallowed', 'error'])
+  ];
+
+  if (report.trials.length === 0) {
+    lines.push('', 'No research trials found.');
+    return outputLines(lines);
+  }
+
+  lines.push('', 'Trials:', `  ${'status'.padEnd(13)}${'tasks'.padEnd(7)}id`);
+  for (const trial of report.trials) {
+    lines.push(...researchReportTrialHumanLines(trial));
+  }
+
+  const invalidTrials = report.trials.filter((trial): trial is ResearchReportInvalidTrial => trial.status === 'invalid');
+
+  if (invalidTrials.length > 0) {
+    lines.push('', 'Invalid details:');
+    for (const trial of invalidTrials) {
+      lines.push(`  ${trial.id}`, ...trial.invalidReason.map((reason) => `    - ${reason}`));
+    }
+  }
+
+  return outputLines(lines);
 }
 
 export function readResearchTrials(options: ReadResearchTrialsOptions): ResearchTrial[] {
@@ -258,6 +301,29 @@ function researchReportTrial(trial: ResearchTrial): ResearchReportTrial {
     },
     path: trial.path
   };
+}
+
+function summaryLines(
+  summary: ResearchReportHumanSummary,
+  keys: readonly (keyof ResearchReportHumanSummary & string)[]
+): string[] {
+  return keys.map((key) => `  ${key}: ${summary[key] ?? 0}`);
+}
+
+function researchReportTrialHumanLines(trial: ResearchReportTrial): string[] {
+  if (trial.status === 'invalid') {
+    return [
+      `  ${trial.status.padEnd(13)}${'-'.padEnd(7)}${trial.id}`,
+      `    path: ${trial.path}`
+    ];
+  }
+
+  return [
+    `  ${trial.status.padEnd(13)}${`${trial.summary.passed}/${trial.summary.total}`.padEnd(7)}${trial.id}`,
+    `    collaborator: ${trial.collaborator}`,
+    `    benchmark: ${trial.benchmark}`,
+    `    path: ${trial.path}`
+  ];
 }
 
 function readResearchTrial(cwd: string, trialDir: string, id: string): ResearchTrial {
@@ -509,4 +575,8 @@ function compareResearchTrials(left: ResearchTrial, right: ResearchTrial): numbe
 
 function timestampPart(id: string): string {
   return RESEARCH_TRIAL_TIMESTAMP_PATTERN.exec(id)?.[1] ?? '';
+}
+
+function outputLines(lines: readonly string[]): string {
+  return `${lines.join('\n')}\n`;
 }

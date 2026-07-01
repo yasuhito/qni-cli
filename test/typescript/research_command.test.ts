@@ -215,6 +215,138 @@ async function withFixedDateNow<T>(isoTimestamp: string, callback: () => Promise
 }
 
 describe('research command TypeScript route', () => {
+  it('prints research help with record and report subcommands', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, ['research', '--help']);
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stderr, '');
+      assert.match(result.stdout, /qni research record/u);
+      assert.match(result.stdout, /qni research report/u);
+    });
+  });
+
+  it('prints research report help with usage, target path, JSON, and exit codes', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, ['research', 'report', '--help']);
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stderr, '');
+      assert.equal(result.stdout, [
+        'Usage:',
+        '  qni research report [--json]',
+        '',
+        'Overview:',
+        '  Show a report for saved research trials under research/runs/',
+        '  By default, output is dependency-free plaintext for terminal reading.',
+        '  Use --json for the existing machine-readable report.',
+        '',
+        'Output:',
+        '  summary of trial statuses',
+        '  summary of benchmark task statuses',
+        '  newest-first trial list',
+        '  invalid details when invalid research trial directories exist',
+        '',
+        'Exit codes:',
+        '  0  report generated and no invalid research trials were found',
+        '  1  report generated and one or more invalid research trials were found',
+        '  3  invalid arguments or research/runs/ could not be read',
+        ''
+      ].join('\n'));
+    });
+  });
+
+  it('prints an empty human research report when no trials exist', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, ['research', 'report']);
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stderr, '');
+      assert.equal(result.stdout, [
+        'Research trial report',
+        'Research runs: research/runs',
+        '',
+        'Trial summary:',
+        '  total: 0',
+        '  passed: 0',
+        '  failed: 0',
+        '  disallowed: 0',
+        '  error: 0',
+        '  invalid: 0',
+        '',
+        'Task summary:',
+        '  total: 0',
+        '  passed: 0',
+        '  failed: 0',
+        '  disallowed: 0',
+        '  error: 0',
+        '',
+        'No research trials found.',
+        ''
+      ].join('\n'));
+    });
+  });
+
+  it('prints a human research report and exits with 1 when a trial is invalid', async () => {
+    await withTempDir(async (dir) => {
+      await writeStoredResearchTrial(dir, '2026-07-01T000004Z-error', { status: 'error' });
+      await writeStoredResearchTrial(dir, '2026-07-01T000003Z-disallowed', { status: 'disallowed' });
+      await writeStoredResearchTrial(dir, '2026-07-01T000002Z-failed', { status: 'failed' });
+      await writeStoredResearchTrial(dir, '2026-07-01T000001Z-passed');
+      await writeStoredResearchTrial(dir, 'broken-trial');
+
+      const result = captureDispatcherRun(dir, ['research', 'report']);
+
+      assert.equal(result.exitStatus, 1);
+      assert.equal(result.stderr, '');
+      assert.equal(result.stdout, [
+        'Research trial report',
+        'Research runs: research/runs',
+        '',
+        'Trial summary:',
+        '  total: 5',
+        '  passed: 1',
+        '  failed: 1',
+        '  disallowed: 1',
+        '  error: 1',
+        '  invalid: 1',
+        '',
+        'Task summary:',
+        '  total: 4',
+        '  passed: 1',
+        '  failed: 1',
+        '  disallowed: 1',
+        '  error: 1',
+        '',
+        'Trials:',
+        '  status       tasks  id',
+        '  error        0/1    2026-07-01T000004Z-error',
+        '    collaborator: claude-sonnet-4',
+        '    benchmark: benchmarks/quantum-katas',
+        '    path: research/runs/2026-07-01T000004Z-error',
+        '  disallowed   0/1    2026-07-01T000003Z-disallowed',
+        '    collaborator: claude-sonnet-4',
+        '    benchmark: benchmarks/quantum-katas',
+        '    path: research/runs/2026-07-01T000003Z-disallowed',
+        '  failed       0/1    2026-07-01T000002Z-failed',
+        '    collaborator: claude-sonnet-4',
+        '    benchmark: benchmarks/quantum-katas',
+        '    path: research/runs/2026-07-01T000002Z-failed',
+        '  passed       1/1    2026-07-01T000001Z-passed',
+        '    collaborator: claude-sonnet-4',
+        '    benchmark: benchmarks/quantum-katas',
+        '    path: research/runs/2026-07-01T000001Z-passed',
+        '  invalid      -      broken-trial',
+        '    path: research/runs/broken-trial',
+        '',
+        'Invalid details:',
+        '  broken-trial',
+        '    - invalid research trial id: broken-trial',
+        ''
+      ].join('\n'));
+    });
+  });
+
   it('prints an empty JSON research report when no trials exist', async () => {
     await withTempDir(async (dir) => {
       const result = captureDispatcherRun(dir, ['research', 'report', '--json']);
