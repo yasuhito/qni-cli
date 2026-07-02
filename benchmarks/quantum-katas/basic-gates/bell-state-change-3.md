@@ -3,6 +3,9 @@ id: basic-gates/bell-state-change-3
 title: BellStateChange3
 source: Microsoft Quantum Katas / BasicGates
 difficulty: smoke
+available_gates:
+  - X(target)
+  - Z(target)
 allowed_commands:
   - qni add
 grading_cases:
@@ -24,7 +27,6 @@ grading_cases:
                 imaginary: 0
 ---
 
-2量子ビットの Bell 状態 `|Φ+>` を `|Ψ->` に変える量子回路を、`qni` コマンド列として作成してください。
+2量子ビットの Bell 状態 `|Φ+>` を `|Ψ->` に変える量子回路を設計してください。
 
 `|Φ+>` は `( |00> + |11> ) / sqrt(2)`、`|Ψ->` は `( |01> - |10> ) / sqrt(2)` の状態です。
-提出物は `.qni` 形式で、1行に1つずつ完全な `qni` コマンドを書いてください。

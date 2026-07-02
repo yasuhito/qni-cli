@@ -3,6 +3,10 @@ id: superposition/all-basis-vectors-with-phases-two-qubits
 title: AllBasisVectorsWithPhases_TwoQubits
 source: Microsoft Quantum Katas / Superposition
 difficulty: smoke
+available_gates:
+  - H(target)
+  - Z(target)
+  - S(target)
 allowed_commands:
   - qni add
 checks:
@@ -28,7 +32,6 @@ checks:
             imaginary: -0.5
 ---
 
-2量子ビットを `|00>` から、計算基底ごとに異なる位相を持つ一様重ね合わせに変える量子回路を、`qni` コマンド列として作成してください。
+2量子ビットを `|00>` から、計算基底ごとに異なる位相を持つ一様重ね合わせに変える量子回路を設計してください。
 
 目標状態は `( |00> + i|01> - |10> - i|11> ) / 2` です。
-提出物は `.qni` 形式で、1行に1つずつ完全な `qni` コマンドを書いてください。

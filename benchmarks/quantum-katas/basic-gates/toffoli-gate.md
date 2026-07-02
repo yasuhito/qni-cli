@@ -3,6 +3,8 @@ id: basic-gates/toffoli-gate
 title: ToffoliGate
 source: Microsoft Quantum Katas / BasicGates
 difficulty: smoke
+available_gates:
+  - CCNOT(control1, control2, target)
 allowed_commands:
   - qni add
 grading_cases:
@@ -70,6 +72,4 @@ grading_cases:
                 imaginary: 0
 ---
 
-3量子ビットの任意の状態で、1つ目と2つ目の量子ビットがどちらも `|1>` のときだけ3つ目の量子ビットを反転する量子回路を、`qni` コマンド列として作成してください。
-
-提出物は `.qni` 形式で、1行に1つずつ完全な `qni` コマンドを書いてください。
+3量子ビットの任意の状態で、1つ目と2つ目の量子ビットがどちらも `|1>` のときだけ3つ目の量子ビットを反転する量子回路を設計してください。

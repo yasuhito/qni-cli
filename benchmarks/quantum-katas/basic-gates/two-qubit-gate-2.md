@@ -3,6 +3,8 @@ id: basic-gates/two-qubit-gate-2
 title: TwoQubitGate2
 source: Microsoft Quantum Katas / BasicGates
 difficulty: smoke
+available_gates:
+  - CZ(control, target)
 allowed_commands:
   - qni add
 grading_cases:
@@ -56,7 +58,6 @@ grading_cases:
                 imaginary: 0
 ---
 
-2量子ビットを `|+> ⊗ |+>` から `(|00> + |01> + |10> - |11>) / 2` に変える量子回路を、`qni` コマンド列として作成してください。
+2量子ビットを `|+> ⊗ |+>` から `(|00> + |01> + |10> - |11>) / 2` に変える量子回路を設計してください。
 
 `|+> ⊗ |+>` は `(|00> + |01> + |10> + |11>) / 2` です。
-提出物は `.qni` 形式で、1行に1つずつ完全な `qni` コマンドを書いてください。

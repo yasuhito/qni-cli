@@ -3,6 +3,8 @@ id: basic-gates/phase-flip
 title: PhaseFlip
 source: Microsoft Quantum Katas / BasicGates
 difficulty: smoke
+available_gates:
+  - S(target)
 allowed_commands:
   - qni add
 grading_cases:
@@ -32,7 +34,6 @@ grading_cases:
                 imaginary: 1
 ---
 
-1量子ビットに対して、`|0>` を変えず、`|1>` の振幅にだけ位相 `i` を掛ける量子回路を、`qni` コマンド列として作成してください。
+1量子ビットに対して、`|0>` を変えず、`|1>` の振幅にだけ位相 `i` を掛ける量子回路を設計してください。
 
 これは一般に、`alpha|0> + beta|1>` を `alpha|0> + i beta|1>` に変える操作です。
-提出物は `.qni` 形式で、1行に1つずつ完全な `qni` コマンドを書いてください。

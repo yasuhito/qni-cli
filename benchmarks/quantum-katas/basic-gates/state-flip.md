@@ -3,6 +3,8 @@ id: basic-gates/state-flip
 title: StateFlip
 source: Microsoft Quantum Katas / BasicGates
 difficulty: smoke
+available_gates:
+  - X(target)
 allowed_commands:
   - qni add
 checks:
@@ -16,6 +18,4 @@ checks:
             imaginary: 0
 ---
 
-1量子ビットを `|0>` から `|1>` に反転する量子回路を、`qni` コマンド列として作成してください。
-
-提出物は `.qni` 形式で、1行に1つずつ完全な `qni` コマンドを書いてください。
+1量子ビットを `|0>` から `|1>` に反転する量子回路を設計してください。

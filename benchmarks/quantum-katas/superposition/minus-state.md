@@ -3,6 +3,9 @@ id: superposition/minus-state
 title: MinusState
 source: Microsoft Quantum Katas / Superposition
 difficulty: smoke
+available_gates:
+  - X(target)
+  - H(target)
 allowed_commands:
   - qni add
 checks:
@@ -20,7 +23,6 @@ checks:
             imaginary: 0
 ---
 
-1量子ビットを `|0>` から `|->` に変える量子回路を、`qni` コマンド列として作成してください。
+1量子ビットを `|0>` から `|->` に変える量子回路を設計してください。
 
 `|->` は `( |0> - |1> ) / sqrt(2)` の重ね合わせ状態です。
-提出物は `.qni` 形式で、1行に1つずつ完全な `qni` コマンドを書いてください。

@@ -3,6 +3,8 @@ id: basic-gates/phase-change-pi-over-3
 title: PhaseChangePiOver3
 source: Microsoft Quantum Katas / BasicGates
 difficulty: smoke
+available_gates:
+  - P(angle, target)
 allowed_commands:
   - qni add
 grading_cases:
@@ -32,7 +34,6 @@ grading_cases:
                 imaginary: 0.8660254037844386
 ---
 
-1量子ビットに対して、`|0>` を変えず、`|1>` の振幅にだけ位相 `exp(i*pi/3)` を掛ける量子回路を、`qni` コマンド列として作成してください。
+1量子ビットに対して、`|0>` を変えず、`|1>` の振幅にだけ位相 `exp(i*pi/3)` を掛ける量子回路を設計してください。
 
 これは Quantum Katas BasicGates の `PhaseChange` を、固定角度 `pi/3` で評価する課題です。
-提出物は `.qni` 形式で、1行に1つずつ完全な `qni` コマンドを書いてください。

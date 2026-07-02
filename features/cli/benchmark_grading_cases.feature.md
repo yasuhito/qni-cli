@@ -14,6 +14,8 @@ qni-cli の評価ランナー利用者として
   title: GradingCasesConflict
   source: test
   difficulty: smoke
+  available_gates:
+    - X(target)
   allowed_commands:
     - qni add
   checks:
@@ -60,6 +62,8 @@ qni-cli の評価ランナー利用者として
   title: XOnZeroAndOne
   source: test
   difficulty: smoke
+  available_gates:
+    - X(target)
   allowed_commands:
     - qni add
   grading_cases:
@@ -109,6 +113,8 @@ qni-cli の評価ランナー利用者として
   title: OneCaseFails
   source: test
   difficulty: smoke
+  available_gates:
+    - X(target)
   allowed_commands:
     - qni add
   grading_cases:
@@ -158,6 +164,8 @@ qni-cli の評価ランナー利用者として
   title: SetupError
   source: test
   difficulty: smoke
+  available_gates:
+    - X(target)
   allowed_commands:
     - qni add
   grading_cases:

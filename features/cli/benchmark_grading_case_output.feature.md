@@ -14,6 +14,8 @@ qni-cli の評価ランナー利用者として
   title: XOnZeroAndOne
   source: test
   difficulty: smoke
+  available_gates:
+    - X(target)
   allowed_commands:
     - qni add
   grading_cases:
@@ -67,6 +69,8 @@ qni-cli の評価ランナー利用者として
   title: XOnZeroAndOne
   source: test
   difficulty: smoke
+  available_gates:
+    - X(target)
   allowed_commands:
     - qni add
   grading_cases:
@@ -120,6 +124,8 @@ qni-cli の評価ランナー利用者として
   title: XOnZeroAndOne
   source: test
   difficulty: smoke
+  available_gates:
+    - X(target)
   allowed_commands:
     - qni add
   grading_cases:
@@ -173,6 +179,8 @@ qni-cli の評価ランナー利用者として
   title: XOnZeroAndOne
   source: test
   difficulty: smoke
+  available_gates:
+    - X(target)
   allowed_commands:
     - qni add
   grading_cases:

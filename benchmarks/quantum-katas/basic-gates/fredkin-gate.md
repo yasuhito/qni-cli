@@ -3,6 +3,8 @@ id: basic-gates/fredkin-gate
 title: FredkinGate
 source: Microsoft Quantum Katas / BasicGates
 difficulty: smoke
+available_gates:
+  - CSWAP(control, target1, target2)
 allowed_commands:
   - qni add
 grading_cases:
@@ -32,8 +34,6 @@ grading_cases:
                 imaginary: 0
 ---
 
-3量子ビットに対して Fredkin gate、つまり controlled-SWAP を作成してください。
+3量子ビットに対して Fredkin ゲート（制御付き SWAP）を実現する量子回路を設計してください。
 
 制御量子ビットは第1量子ビットです。制御量子ビットが `|1>` のときだけ、第2量子ビットと第3量子ビットを交換してください。制御量子ビットが `|0>` のときは状態を変えないでください。
-
-提出物は `.qni` 形式で、1行に1つずつ完全な `qni` コマンドを書いてください。

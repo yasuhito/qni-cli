@@ -3,6 +3,8 @@ id: basic-gates/basis-change
 title: BasisChange
 source: Microsoft Quantum Katas / BasicGates
 difficulty: smoke
+available_gates:
+  - H(target)
 allowed_commands:
   - qni add
 grading_cases:
@@ -38,7 +40,6 @@ grading_cases:
                 imaginary: 0
 ---
 
-1量子ビットに対して、`|0>` を `|+>` に、`|1>` を `|->` に変える量子回路を、`qni` コマンド列として作成してください。
+1量子ビットに対して、`|0>` を `|+>` に、`|1>` を `|->` に変える量子回路を設計してください。
 
 `|+>` は `( |0> + |1> ) / sqrt(2)`、`|->` は `( |0> - |1> ) / sqrt(2)` の状態です。
-提出物は `.qni` 形式で、1行に1つずつ完全な `qni` コマンドを書いてください。
