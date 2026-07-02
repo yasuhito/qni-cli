@@ -1,14 +1,21 @@
-import { copyFileSync, cpSync, existsSync, mkdirSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, statSync } from 'node:fs';
 import path = require('node:path');
 
 import type { CommandHandlerContext } from '../dispatcher';
-import { gradeBenchmarkSuite, type BenchmarkSuiteGradingResult } from '../evaluation_runner';
+import { gradeBenchmarkSuite } from '../evaluation_runner';
 import {
   buildResearchReport,
   formatResearchReportHumanOutput,
   readResearchTrialsForReport,
   type ResearchReport
 } from '../research_report';
+import {
+  planResearchTrialDirectory,
+  validateResearchTrialSlug,
+  writeResearchTrialDirectory,
+  type ResearchTrialInputPaths,
+  type ResearchTrialPlan
+} from '../research_trial_writer';
 
 interface ResearchRecordRequest {
   readonly benchmark: string;
@@ -19,17 +26,9 @@ interface ResearchRecordRequest {
   readonly submissions: string;
 }
 
-interface ResearchRecordInputPaths {
-  readonly prompt: string;
-  readonly response: string;
-  readonly submissions: string;
-}
-
 interface ResearchRecordPlan {
-  readonly createdAt: Date;
-  readonly id: string;
-  readonly inputPaths: ResearchRecordInputPaths;
-  readonly trialDir: string;
+  readonly inputPaths: ResearchTrialInputPaths;
+  readonly trial: ResearchTrialPlan;
 }
 
 type ResearchRecordOption = keyof ResearchRecordRequest;
@@ -106,7 +105,6 @@ Exit codes:
   0  report generated and no invalid research trials were found
   1  report generated and one or more invalid research trials were found
   3  invalid arguments or research/runs/ could not be read`;
-const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u;
 const OPTION_NAMES = new Map<string, ResearchRecordOption>([
   ['--benchmark', 'benchmark'],
   ['--collaborator', 'collaborator'],
@@ -263,56 +261,33 @@ function recordResearchTrial(request: ResearchRecordRequest, context: CommandHan
     solutionsDir: request.submissions
   }, context);
 
-  mkdirSync(path.dirname(plan.trialDir), { recursive: true });
-  mkdirSync(plan.trialDir);
-  copyFileSync(plan.inputPaths.prompt, path.join(plan.trialDir, 'prompt.md'));
-  copyFileSync(plan.inputPaths.response, path.join(plan.trialDir, 'response.md'));
-  cpSync(plan.inputPaths.submissions, path.join(plan.trialDir, 'submissions'), { recursive: true });
-  writeJsonFile(path.join(plan.trialDir, 'result.json'), result);
-  writeJsonFile(path.join(plan.trialDir, 'metadata.json'), researchMetadata({
-    createdAt: plan.createdAt,
-    id: plan.id,
-    request,
+  writeResearchTrialDirectory({
+    benchmark: request.benchmark,
+    collaborator: request.collaborator,
+    inputPaths: plan.inputPaths,
+    plan: plan.trial,
     result
-  }));
-  writeFileSync(path.join(plan.trialDir, 'trial.md'), researchTrialSummary(request, result));
-  process.stdout.write(`Recorded research trial: ${toPosixPath(path.join('research', 'runs', plan.id))}\n`);
+  });
+  process.stdout.write(`Recorded research trial: ${plan.trial.relativePath}\n`);
 
   return result.exitCode;
 }
 
 function planResearchRecord(request: ResearchRecordRequest, context: CommandHandlerContext): ResearchRecordPlan {
-  validateResearchSlug(request.slug);
+  validateResearchTrialSlug(request.slug);
   const inputPaths = validateResearchRecordInputs(request, context);
-  const createdAt = currentUtcSecond();
-  const id = `${researchTimestamp(createdAt)}-${request.slug}`;
-  const trialDir = path.join(context.cwd, 'research', 'runs', id);
-
-  validateResearchTrialDestination(trialDir, context);
+  const trial = planResearchTrialDirectory({ cwd: context.cwd, slug: request.slug });
 
   return {
-    createdAt,
-    id,
     inputPaths,
-    trialDir
+    trial
   };
-}
-
-function validateResearchSlug(slug: string): void {
-  if (SLUG_PATTERN.test(slug)) {
-    return;
-  }
-
-  throw new ResearchRecordError([
-    `Invalid --slug: ${slug}`,
-    'Use lowercase letters, digits, and hyphens between words (pattern: [a-z0-9]+(-[a-z0-9]+)*).'
-  ].join('\n'));
 }
 
 function validateResearchRecordInputs(
   request: ResearchRecordRequest,
   context: CommandHandlerContext
-): ResearchRecordInputPaths {
+): ResearchTrialInputPaths {
   requireDirectoryInput({
     inputPath: request.benchmark,
     missingMessage: `Benchmark suite directory does not exist: ${request.benchmark}`,
@@ -397,74 +372,6 @@ function requireInputPath(options: {
   return resolvedPath;
 }
 
-function validateResearchTrialDestination(trialDir: string, context: CommandHandlerContext): void {
-  if (!existsSync(trialDir)) {
-    return;
-  }
-
-  throw new ResearchRecordError([
-    `Research trial directory already exists: ${toPosixPath(path.relative(context.cwd, trialDir))}`,
-    'Choose a different --slug and run qni research record again.'
-  ].join('\n'));
-}
-
-function currentUtcSecond(): Date {
-  return new Date(Math.floor(Date.now() / 1000) * 1000);
-}
-
-function researchTimestamp(date: Date): string {
-  const iso = date.toISOString();
-
-  return `${iso.slice(0, 10)}T${iso.slice(11, 13)}${iso.slice(14, 16)}${iso.slice(17, 19)}Z`;
-}
-
-function researchMetadata(options: {
-  readonly createdAt: Date;
-  readonly id: string;
-  readonly request: ResearchRecordRequest;
-  readonly result: BenchmarkSuiteGradingResult;
-}): Record<string, unknown> {
-  return {
-    schemaVersion: 1,
-    id: options.id,
-    createdAt: options.createdAt.toISOString(),
-    collaborator: options.request.collaborator,
-    benchmark: options.request.benchmark,
-    submissions: 'submissions',
-    prompt: 'prompt.md',
-    response: 'response.md',
-    result: 'result.json',
-    status: options.result.status
-  };
-}
-
-function researchTrialSummary(request: ResearchRecordRequest, result: BenchmarkSuiteGradingResult): string {
-  return [
-    `# Research trial: ${request.slug}`,
-    '',
-    `- collaborator: ${request.collaborator}`,
-    `- benchmark: ${request.benchmark}`,
-    `- status: ${result.status}`,
-    `- tasks: ${result.summary.total}`,
-    `- passed: ${result.summary.passed}`,
-    `- failed: ${result.summary.failed}`,
-    `- disallowed: ${result.summary.disallowed}`,
-    `- error: ${result.summary.error}`,
-    '',
-    '## Files',
-    '',
-    '- Prompt: ./prompt.md',
-    '- Response: ./response.md',
-    '- Submissions: ./submissions/',
-    '- Result: ./result.json',
-    ''
-  ].join('\n');
-}
-
-function writeJsonFile(filePath: string, value: unknown): void {
-  writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`);
-}
-
 function resolveInputPath(filePath: string, context: CommandHandlerContext): string {
   if (path.isAbsolute(filePath)) {
     return filePath;
@@ -479,6 +386,3 @@ function errorMessage(error: unknown): string {
   return (error instanceof Error ? error.message : String(error)).trimEnd();
 }
 
-function toPosixPath(filePath: string): string {
-  return filePath.split(path.sep).join('/');
-}
