@@ -452,7 +452,7 @@ async function startFakeOpenAIProvider(world, content) {
   });
 
   world.fakeOpenAIRequests = [];
-  world.fakeOpenAIProvider = { content, httpStatus: 200, omitUsage: false, server };
+  world.fakeOpenAIProvider = { content, deletePathAfterRequest: null, httpStatus: 200, omitUsage: false, server };
   await listen(server);
   const address = server.address();
 
@@ -478,6 +478,14 @@ function writeFakeOpenAIModelRegistry(scenarioDir, modelId, baseUrl) {
     '    output_cost_per_million_tokens_usd: 1',
     ''
   ].join('\n'));
+}
+
+function resetFakeOpenAIProviderState(provider, overrides = {}) {
+  Object.assign(provider, {
+    deletePathAfterRequest: null,
+    httpStatus: 200,
+    omitUsage: false
+  }, overrides);
 }
 
 function assertJsonContains(actual, expected) {
@@ -1238,10 +1246,7 @@ Given('作業ディレクトリに solve 用の2課題ベンチマークスイ�
 
 Given('偽 OpenAI互換 provider は応答本文 {string} を返す', async function (content) {
   if (this.fakeOpenAIProvider) {
-    this.fakeOpenAIProvider.content = content;
-    this.fakeOpenAIProvider.deletePathAfterRequest = null;
-    this.fakeOpenAIProvider.httpStatus = 200;
-    this.fakeOpenAIProvider.omitUsage = false;
+    resetFakeOpenAIProviderState(this.fakeOpenAIProvider, { content });
     return;
   }
 
@@ -1252,10 +1257,7 @@ Given('偽 OpenAI互換 provider は次の応答本文を返す:', async functio
   const content = docStringContent(docString);
 
   if (this.fakeOpenAIProvider) {
-    this.fakeOpenAIProvider.content = content;
-    this.fakeOpenAIProvider.deletePathAfterRequest = null;
-    this.fakeOpenAIProvider.httpStatus = 200;
-    this.fakeOpenAIProvider.omitUsage = false;
+    resetFakeOpenAIProviderState(this.fakeOpenAIProvider, { content });
     return;
   }
 
@@ -1267,8 +1269,7 @@ Given('偽 OpenAI互換 provider は usage 欠落応答を返す', async functio
     await startFakeOpenAIProvider(this, 'qni add H --qubit 0 --step 1');
   }
 
-  this.fakeOpenAIProvider.httpStatus = 200;
-  this.fakeOpenAIProvider.omitUsage = true;
+  resetFakeOpenAIProviderState(this.fakeOpenAIProvider, { omitUsage: true });
 });
 
 Given('偽 OpenAI互換 provider は HTTP 500 エラーを返す', async function () {
@@ -1276,8 +1277,7 @@ Given('偽 OpenAI互換 provider は HTTP 500 エラーを返す', async functio
     await startFakeOpenAIProvider(this, 'qni add H --qubit 0 --step 1');
   }
 
-  this.fakeOpenAIProvider.httpStatus = 500;
-  this.fakeOpenAIProvider.omitUsage = false;
+  resetFakeOpenAIProviderState(this.fakeOpenAIProvider, { httpStatus: 500 });
 });
 
 Given('偽 OpenAI互換 provider は呼び出し時に {string} を削除する', async function (filePath) {
@@ -1285,7 +1285,7 @@ Given('偽 OpenAI互換 provider は呼び出し時に {string} を削除する'
     await startFakeOpenAIProvider(this, 'qni add H --qubit 0 --step 1');
   }
 
-  this.fakeOpenAIProvider.deletePathAfterRequest = filePath;
+  resetFakeOpenAIProviderState(this.fakeOpenAIProvider, { deletePathAfterRequest: filePath });
 });
 
 Given('偽 OpenAI互換 provider をモデル {string} として登録する', function (modelId) {
