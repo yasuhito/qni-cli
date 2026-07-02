@@ -26,7 +26,7 @@ export interface ResearchTrialDirectoryWriteRequest {
   readonly result: BenchmarkSuiteGradingResult;
 }
 
-export interface ResearchTrialScore {
+interface ResearchTrialScore {
   readonly passed: number;
   readonly percent: number | null;
   readonly source: 'result.json';
@@ -82,6 +82,7 @@ export function writeResearchTrialDirectory(request: ResearchTrialDirectoryWrite
   validateResearchTrialDestination(request.plan);
 
   const stagingDir = mkdtempSync(stagingPrefix);
+  const score = researchTrialScore(request.result);
   let cleanupStaging = true;
 
   try {
@@ -89,8 +90,8 @@ export function writeResearchTrialDirectory(request: ResearchTrialDirectoryWrite
     copyFileSync(request.inputPaths.response, path.join(stagingDir, 'response.md'));
     cpSync(request.inputPaths.submissions, path.join(stagingDir, 'submissions'), { recursive: true });
     writeJsonFile(path.join(stagingDir, 'result.json'), request.result);
-    writeJsonFile(path.join(stagingDir, 'metadata.json'), researchMetadata(request));
-    writeFileSync(path.join(stagingDir, 'trial.md'), researchTrialSummary(request));
+    writeJsonFile(path.join(stagingDir, 'metadata.json'), researchMetadata(request, score));
+    writeFileSync(path.join(stagingDir, 'trial.md'), researchTrialSummary(request, score));
     validateResearchTrialDestination(request.plan);
     renameSync(stagingDir, request.plan.trialDir);
     cleanupStaging = false;
@@ -143,7 +144,10 @@ function researchTimestamp(date: Date): string {
   return `${iso.slice(0, 10)}T${iso.slice(11, 13)}${iso.slice(14, 16)}${iso.slice(17, 19)}Z`;
 }
 
-function researchMetadata(request: ResearchTrialDirectoryWriteRequest): Record<string, unknown> {
+function researchMetadata(
+  request: ResearchTrialDirectoryWriteRequest,
+  score: ResearchTrialScore
+): Record<string, unknown> {
   return {
     schemaVersion: 1,
     id: request.plan.id,
@@ -155,7 +159,7 @@ function researchMetadata(request: ResearchTrialDirectoryWriteRequest): Record<s
     response: 'response.md',
     result: 'result.json',
     status: request.result.status,
-    score: researchTrialScore(request.result)
+    score
   };
 }
 
@@ -170,9 +174,7 @@ function researchTrialScore(result: BenchmarkSuiteGradingResult): ResearchTrialS
   };
 }
 
-function researchTrialSummary(request: ResearchTrialDirectoryWriteRequest): string {
-  const score = researchTrialScore(request.result);
-
+function researchTrialSummary(request: ResearchTrialDirectoryWriteRequest, score: ResearchTrialScore): string {
   return [
     `# Research trial: ${request.plan.slug}`,
     '',
