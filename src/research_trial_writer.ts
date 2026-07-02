@@ -1,4 +1,4 @@
-import { copyFileSync, cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { copyFileSync, cpSync, existsSync, mkdirSync, mkdtempSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import path = require('node:path');
 
 import type { BenchmarkSuiteGradingResult } from './evaluation_runner';
@@ -11,6 +11,7 @@ export interface ResearchTrialInputPaths {
 
 export interface ResearchTrialPlan {
   readonly createdAt: Date;
+  readonly destinationConflictHint: string;
   readonly id: string;
   readonly relativePath: string;
   readonly slug: string;
@@ -27,6 +28,7 @@ export interface ResearchTrialDirectoryWriteRequest {
 
 class ResearchTrialWriterError extends Error {}
 
+const DEFAULT_DESTINATION_CONFLICT_HINT = 'Choose a different research trial slug and try again.';
 const RESEARCH_RUNS_PATH = path.join('research', 'runs');
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u;
 
@@ -43,18 +45,21 @@ export function validateResearchTrialSlug(slug: string): void {
 
 export function planResearchTrialDirectory(options: {
   readonly cwd: string;
+  readonly destinationConflictHint?: string;
   readonly slug: string;
 }): ResearchTrialPlan {
   validateResearchTrialSlug(options.slug);
   const createdAt = currentUtcSecond();
+  const destinationConflictHint = options.destinationConflictHint ?? DEFAULT_DESTINATION_CONFLICT_HINT;
   const id = `${researchTimestamp(createdAt)}-${options.slug}`;
   const relativePath = toPosixPath(path.join(RESEARCH_RUNS_PATH, id));
   const trialDir = path.join(options.cwd, RESEARCH_RUNS_PATH, id);
 
-  validateResearchTrialDestination({ relativePath, trialDir });
+  validateResearchTrialDestination({ destinationConflictHint, relativePath, trialDir });
 
   return {
     createdAt,
+    destinationConflictHint,
     id,
     relativePath,
     slug: options.slug,
@@ -63,17 +68,38 @@ export function planResearchTrialDirectory(options: {
 }
 
 export function writeResearchTrialDirectory(request: ResearchTrialDirectoryWriteRequest): void {
-  mkdirSync(path.dirname(request.plan.trialDir), { recursive: true });
-  mkdirSync(request.plan.trialDir);
-  copyFileSync(request.inputPaths.prompt, path.join(request.plan.trialDir, 'prompt.md'));
-  copyFileSync(request.inputPaths.response, path.join(request.plan.trialDir, 'response.md'));
-  cpSync(request.inputPaths.submissions, path.join(request.plan.trialDir, 'submissions'), { recursive: true });
-  writeJsonFile(path.join(request.plan.trialDir, 'result.json'), request.result);
-  writeJsonFile(path.join(request.plan.trialDir, 'metadata.json'), researchMetadata(request));
-  writeFileSync(path.join(request.plan.trialDir, 'trial.md'), researchTrialSummary(request));
+  const parentDir = path.dirname(request.plan.trialDir);
+  const stagingPrefix = path.join(parentDir, `${path.basename(request.plan.trialDir)}.tmp-`);
+
+  mkdirSync(parentDir, { recursive: true });
+  validateResearchTrialDestination(request.plan);
+
+  const stagingDir = mkdtempSync(stagingPrefix);
+  let cleanupStaging = true;
+
+  try {
+    copyFileSync(request.inputPaths.prompt, path.join(stagingDir, 'prompt.md'));
+    copyFileSync(request.inputPaths.response, path.join(stagingDir, 'response.md'));
+    cpSync(request.inputPaths.submissions, path.join(stagingDir, 'submissions'), { recursive: true });
+    writeJsonFile(path.join(stagingDir, 'result.json'), request.result);
+    writeJsonFile(path.join(stagingDir, 'metadata.json'), researchMetadata(request));
+    writeFileSync(path.join(stagingDir, 'trial.md'), researchTrialSummary(request));
+    validateResearchTrialDestination(request.plan);
+    renameSync(stagingDir, request.plan.trialDir);
+    cleanupStaging = false;
+  } catch (error) {
+    if (cleanupStaging) {
+      rmSync(stagingDir, { force: true, recursive: true });
+    }
+    if (isDestinationConflict(error)) {
+      throw researchTrialDestinationError(request.plan);
+    }
+    throw error;
+  }
 }
 
 function validateResearchTrialDestination(options: {
+  readonly destinationConflictHint: string;
   readonly relativePath: string;
   readonly trialDir: string;
 }): void {
@@ -81,10 +107,23 @@ function validateResearchTrialDestination(options: {
     return;
   }
 
-  throw new ResearchTrialWriterError([
+  throw researchTrialDestinationError(options);
+}
+
+function researchTrialDestinationError(options: {
+  readonly destinationConflictHint: string;
+  readonly relativePath: string;
+}): ResearchTrialWriterError {
+  return new ResearchTrialWriterError([
     `Research trial directory already exists: ${options.relativePath}`,
-    'Choose a different --slug and run qni research record again.'
+    options.destinationConflictHint
   ].join('\n'));
+}
+
+function isDestinationConflict(error: unknown): boolean {
+  const code = error instanceof Error && 'code' in error ? (error as NodeJS.ErrnoException).code : undefined;
+
+  return code === 'EEXIST' || code === 'ENOTEMPTY';
 }
 
 function currentUtcSecond(): Date {

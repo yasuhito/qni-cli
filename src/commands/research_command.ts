@@ -276,7 +276,11 @@ function recordResearchTrial(request: ResearchRecordRequest, context: CommandHan
 function planResearchRecord(request: ResearchRecordRequest, context: CommandHandlerContext): ResearchRecordPlan {
   validateResearchTrialSlug(request.slug);
   const inputPaths = validateResearchRecordInputs(request, context);
-  const trial = planResearchTrialDirectory({ cwd: context.cwd, slug: request.slug });
+  const trial = planResearchTrialDirectory({
+    cwd: context.cwd,
+    destinationConflictHint: 'Choose a different --slug and run qni research record again.',
+    slug: request.slug
+  });
 
   return {
     inputPaths,
