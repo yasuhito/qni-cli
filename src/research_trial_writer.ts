@@ -9,6 +9,25 @@ export interface ResearchTrialInputPaths {
   readonly submissions: string;
 }
 
+export interface ResearchTrialExtraInputPaths {
+  readonly calls?: string;
+  readonly prompts?: string;
+  readonly responses?: string;
+}
+
+export interface ResearchTrialSummaryExtras {
+  readonly cost?: {
+    readonly perProblemUsd: number | null;
+    readonly totalUsd: number;
+  };
+  readonly model?: string;
+  readonly tokens?: {
+    readonly inputTokens: number;
+    readonly outputTokens: number;
+    readonly totalTokens: number;
+  };
+}
+
 export interface ResearchTrialPlan {
   readonly createdAt: Date;
   readonly destinationConflictHint: string;
@@ -21,9 +40,12 @@ export interface ResearchTrialPlan {
 export interface ResearchTrialDirectoryWriteRequest {
   readonly benchmark: string;
   readonly collaborator: string;
+  readonly extraInputPaths?: ResearchTrialExtraInputPaths;
   readonly inputPaths: ResearchTrialInputPaths;
+  readonly metadata?: Record<string, unknown>;
   readonly plan: ResearchTrialPlan;
   readonly result: BenchmarkSuiteGradingResult;
+  readonly summary?: ResearchTrialSummaryExtras;
 }
 
 interface ResearchTrialScore {
@@ -89,6 +111,7 @@ export function writeResearchTrialDirectory(request: ResearchTrialDirectoryWrite
     copyFileSync(request.inputPaths.prompt, path.join(stagingDir, 'prompt.md'));
     copyFileSync(request.inputPaths.response, path.join(stagingDir, 'response.md'));
     cpSync(request.inputPaths.submissions, path.join(stagingDir, 'submissions'), { recursive: true });
+    copyExtraResearchTrialInputs(request.extraInputPaths, stagingDir);
     writeJsonFile(path.join(stagingDir, 'result.json'), request.result);
     writeJsonFile(path.join(stagingDir, 'metadata.json'), researchMetadata(request, score));
     writeFileSync(path.join(stagingDir, 'trial.md'), researchTrialSummary(request, score));
@@ -103,6 +126,22 @@ export function writeResearchTrialDirectory(request: ResearchTrialDirectoryWrite
       throw researchTrialDestinationError(request.plan);
     }
     throw error;
+  }
+}
+
+function copyExtraResearchTrialInputs(inputPaths: ResearchTrialExtraInputPaths | undefined, stagingDir: string): void {
+  if (!inputPaths) {
+    return;
+  }
+
+  if (inputPaths.prompts) {
+    cpSync(inputPaths.prompts, path.join(stagingDir, 'prompts'), { recursive: true });
+  }
+  if (inputPaths.responses) {
+    cpSync(inputPaths.responses, path.join(stagingDir, 'responses'), { recursive: true });
+  }
+  if (inputPaths.calls) {
+    copyFileSync(inputPaths.calls, path.join(stagingDir, 'calls.json'));
   }
 }
 
@@ -159,7 +198,8 @@ function researchMetadata(
     response: 'response.md',
     result: 'result.json',
     status: request.result.status,
-    score
+    score,
+    ...request.metadata
   };
 }
 
@@ -187,19 +227,57 @@ function researchTrialSummary(request: ResearchTrialDirectoryWriteRequest, score
     `- disallowed: ${request.result.summary.disallowed}`,
     `- error: ${request.result.summary.error}`,
     `- score: ${formatScorePercent(score.percent)}`,
+    ...researchTrialSummaryExtraLines(request.summary),
     '',
     '## Files',
     '',
     '- Prompt: ./prompt.md',
     '- Response: ./response.md',
+    ...researchTrialSummaryExtraFileLines(request.extraInputPaths),
     '- Submissions: ./submissions/',
     '- Result: ./result.json',
     ''
   ].join('\n');
 }
 
+function researchTrialSummaryExtraLines(summary: ResearchTrialSummaryExtras | undefined): string[] {
+  if (!summary) {
+    return [];
+  }
+
+  return [
+    ...optionalSummaryLine(summary.model, (model) => `- model: ${model}`),
+    ...optionalSummaryLine(summary.tokens, (tokens) => `- tokens: input ${tokens.inputTokens}, output ${tokens.outputTokens}, total ${tokens.totalTokens}`),
+    ...optionalSummaryLine(summary.cost, (cost) => `- cost: total ${formatUsd(cost.totalUsd)}, per problem ${formatNullableUsd(cost.perProblemUsd)}`)
+  ];
+}
+
+function researchTrialSummaryExtraFileLines(inputPaths: ResearchTrialExtraInputPaths | undefined): string[] {
+  if (!inputPaths) {
+    return [];
+  }
+
+  return [
+    ...(inputPaths.prompts ? ['- Per-task prompts: ./prompts/'] : []),
+    ...(inputPaths.responses ? ['- Per-task responses: ./responses/'] : []),
+    ...(inputPaths.calls ? ['- Calls: ./calls.json'] : [])
+  ];
+}
+
+function optionalSummaryLine<T>(value: T | undefined, format: (value: T) => string): string[] {
+  return value === undefined ? [] : [format(value)];
+}
+
 function formatScorePercent(percent: number | null): string {
   return percent === null ? 'unknown' : `${percent.toFixed(2)}%`;
+}
+
+function formatUsd(value: number): string {
+  return `$${value.toPrecision(4)}`;
+}
+
+function formatNullableUsd(value: number | null): string {
+  return value === null ? 'unknown' : formatUsd(value);
 }
 
 function writeJsonFile(filePath: string, value: unknown): void {

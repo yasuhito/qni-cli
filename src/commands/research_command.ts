@@ -9,6 +9,7 @@ import {
   readResearchTrialsForReport,
   type ResearchReport
 } from '../research_report';
+import { solveResearchTrial, type ResearchSolveRequest } from '../research_solver';
 import {
   planResearchTrialDirectory,
   validateResearchTrialSlug,
@@ -32,6 +33,7 @@ interface ResearchRecordPlan {
 }
 
 type ResearchRecordOption = keyof ResearchRecordRequest;
+type ResearchSolveOption = keyof ResearchSolveRequest;
 
 class ResearchRecordError extends Error {}
 
@@ -43,6 +45,10 @@ const RECORD_USAGE = [
   'Usage: qni research record --collaborator <name> --benchmark <dir> --submissions <dir> --prompt <file> --response <file> --slug <slug>',
   ''
 ].join('\n');
+const SOLVE_USAGE = [
+  'Usage: qni research solve --model <registry-id> --benchmark <dir> --slug <slug>',
+  ''
+].join('\n');
 const REPORT_USAGE = [
   'Usage: qni research report [--json]',
   ''
@@ -52,6 +58,7 @@ const RESEARCH_HELP_TEXT = `Usage:
 
 Commands:
   qni research record    Record one external collaborator trial for one benchmark suite.
+  qni research solve     Run one registered model against one benchmark suite.
   qni research report    Show saved research trial summaries from research/runs/
 
 Run qni research COMMAND --help for command details.`;
@@ -87,6 +94,38 @@ Exit codes:
 
 Example:
   qni research record --collaborator claude-sonnet-4 --benchmark benchmarks/quantum-katas --submissions tmp/submissions --prompt tmp/prompt.md --response tmp/response.md --slug smoke-claude`;
+const SOLVE_HELP_TEXT = `Usage:
+  qni research solve --model <registry-id> --benchmark <dir> --slug <slug>
+
+Overview:
+  Run one model from research/models.yaml against one benchmark suite.
+  qni research solve calls an OpenAI-compatible Chat Completions provider.
+  It saves prompts, responses, trimmed submissions, usage, estimated cost, and grading output.
+
+Required inputs:
+  --model <registry-id>
+  --benchmark <dir>
+  --slug <slug>
+
+Model registry:
+  research/models.yaml
+
+Saved files:
+  research/runs/<timestamp>-<slug>/trial.md
+  research/runs/<timestamp>-<slug>/metadata.json
+  research/runs/<timestamp>-<slug>/prompt.md
+  research/runs/<timestamp>-<slug>/response.md
+  research/runs/<timestamp>-<slug>/prompts/
+  research/runs/<timestamp>-<slug>/responses/
+  research/runs/<timestamp>-<slug>/submissions/
+  research/runs/<timestamp>-<slug>/calls.json
+  research/runs/<timestamp>-<slug>/result.json
+
+Exit codes:
+  0  passed
+  1  failed
+  2  disallowed
+  3  error or input/save/provider failure`;
 const REPORT_HELP_TEXT = `Usage:
   qni research report [--json]
 
@@ -105,13 +144,18 @@ Exit codes:
   0  report generated and no invalid research trials were found
   1  report generated and one or more invalid research trials were found
   3  invalid arguments or research/runs/ could not be read`;
-const OPTION_NAMES = new Map<string, ResearchRecordOption>([
+const RECORD_OPTION_NAMES = new Map<string, ResearchRecordOption>([
   ['--benchmark', 'benchmark'],
   ['--collaborator', 'collaborator'],
   ['--prompt', 'prompt'],
   ['--response', 'response'],
   ['--slug', 'slug'],
   ['--submissions', 'submissions']
+]);
+const SOLVE_OPTION_NAMES = new Map<string, ResearchSolveOption>([
+  ['--benchmark', 'benchmark'],
+  ['--model', 'model'],
+  ['--slug', 'slug']
 ]);
 
 export function runResearchCommand(argv: string[], context: CommandHandlerContext): number {
@@ -122,6 +166,11 @@ export function runResearchCommand(argv: string[], context: CommandHandlerContex
 
   if (isResearchRecordHelpRequest(argv)) {
     process.stdout.write(`${RECORD_HELP_TEXT}\n`);
+    return 0;
+  }
+
+  if (isResearchSolveHelpRequest(argv)) {
+    process.stdout.write(`${SOLVE_HELP_TEXT}\n`);
     return 0;
   }
 
@@ -140,6 +189,22 @@ export function runResearchCommand(argv: string[], context: CommandHandlerContex
 
   if (isResearchReportRequest(argv)) {
     process.stderr.write(REPORT_USAGE);
+    return 3;
+  }
+
+  const solveRequest = parseResearchSolveRequest(argv);
+
+  if (solveRequest) {
+    try {
+      return solveResearchTrial(solveRequest, context);
+    } catch (error) {
+      process.stderr.write(`${errorMessage(error)}\n`);
+      return 3;
+    }
+  }
+
+  if (isResearchSolveRequest(argv)) {
+    process.stderr.write(SOLVE_USAGE);
     return 3;
   }
 
@@ -170,6 +235,10 @@ function isResearchRecordHelpRequest(argv: readonly string[]): boolean {
   return argv[0] === 'research' && argv[1] === 'record' && argv.length === 3 && isHelpFlag(argv[2]);
 }
 
+function isResearchSolveHelpRequest(argv: readonly string[]): boolean {
+  return argv[0] === 'research' && argv[1] === 'solve' && argv.length === 3 && isHelpFlag(argv[2]);
+}
+
 function isResearchReportHelpRequest(argv: readonly string[]): boolean {
   return argv[0] === 'research' && argv[1] === 'report' && argv.length === 3 && isHelpFlag(argv[2]);
 }
@@ -184,6 +253,10 @@ function isResearchReportHumanRequest(argv: readonly string[]): boolean {
 
 function isResearchReportRequest(argv: readonly string[]): boolean {
   return argv[0] === 'research' && argv[1] === 'report';
+}
+
+function isResearchSolveRequest(argv: readonly string[]): boolean {
+  return argv[0] === 'research' && argv[1] === 'solve';
 }
 
 function runResearchReport(context: CommandHandlerContext, format: (report: ResearchReport) => string): number {
@@ -215,25 +288,9 @@ function parseResearchRecordRequest(argv: readonly string[]): ResearchRecordRequ
     return undefined;
   }
 
-  const values: Partial<Record<ResearchRecordOption, string>> = {};
-  const args = argv.slice(2);
+  const values = parseOptionValues<ResearchRecordOption>(argv.slice(2), RECORD_OPTION_NAMES);
 
-  if (args.length % 2 !== 0) {
-    return undefined;
-  }
-
-  for (let index = 0; index < args.length; index += 2) {
-    const optionName = OPTION_NAMES.get(args[index] ?? '');
-    const optionValue = args[index + 1];
-
-    if (!optionName || optionValue === undefined) {
-      return undefined;
-    }
-
-    values[optionName] = optionValue;
-  }
-
-  if (
+  if (!values ||
     values.benchmark === undefined ||
     values.collaborator === undefined ||
     values.prompt === undefined ||
@@ -252,6 +309,48 @@ function parseResearchRecordRequest(argv: readonly string[]): ResearchRecordRequ
     slug: values.slug,
     submissions: values.submissions
   };
+}
+
+function parseResearchSolveRequest(argv: readonly string[]): ResearchSolveRequest | undefined {
+  if (argv[0] !== 'research' || argv[1] !== 'solve') {
+    return undefined;
+  }
+
+  const values = parseOptionValues<ResearchSolveOption>(argv.slice(2), SOLVE_OPTION_NAMES);
+
+  if (!values || values.benchmark === undefined || values.model === undefined || values.slug === undefined) {
+    return undefined;
+  }
+
+  return {
+    benchmark: values.benchmark,
+    model: values.model,
+    slug: values.slug
+  };
+}
+
+function parseOptionValues<OptionName extends string>(
+  args: readonly string[],
+  optionNames: ReadonlyMap<string, OptionName>
+): Partial<Record<OptionName, string>> | undefined {
+  const values: Partial<Record<OptionName, string>> = {};
+
+  if (args.length % 2 !== 0) {
+    return undefined;
+  }
+
+  for (let index = 0; index < args.length; index += 2) {
+    const optionName = optionNames.get(args[index] ?? '');
+    const optionValue = args[index + 1];
+
+    if (!optionName || optionValue === undefined) {
+      return undefined;
+    }
+
+    values[optionName] = optionValue;
+  }
+
+  return values;
 }
 
 function recordResearchTrial(request: ResearchRecordRequest, context: CommandHandlerContext): number {
