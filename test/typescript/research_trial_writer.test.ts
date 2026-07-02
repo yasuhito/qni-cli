@@ -97,7 +97,13 @@ describe('research trial writer', () => {
           prompt: 'prompt.md',
           response: 'response.md',
           result: 'result.json',
-          status: 'passed'
+          status: 'passed',
+          score: {
+            passed: 1,
+            total: 1,
+            percent: 100,
+            source: 'result.json'
+          }
         });
         assert.equal(await readFile(path.join(plan.trialDir, 'trial.md'), 'utf8'), [
           '# Research trial: solve-smoke',
@@ -110,6 +116,7 @@ describe('research trial writer', () => {
           '- failed: 0',
           '- disallowed: 0',
           '- error: 0',
+          '- score: 100.00%',
           '',
           '## Files',
           '',

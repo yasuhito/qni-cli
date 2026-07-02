@@ -109,6 +109,41 @@ describe('research report reader', () => {
     });
   });
 
+  it('keeps score metadata out of research report fields', async () => {
+    await withTempDir(async (dir) => {
+      const id = '2026-06-30T123456Z-score-metadata';
+      const trialDir = await makeStoredResearchTrialDir(dir, id);
+
+      await writeJsonFile(path.join(trialDir, 'metadata.json'), storedResearchMetadata(id, {
+        score: {
+          percent: 'not a number',
+          source: 123
+        }
+      }));
+      await writeJsonFile(path.join(trialDir, 'result.json'), storedResearchResult());
+
+      const report = buildResearchReport(readResearchTrials({ cwd: dir }));
+
+      assert.equal(Object.hasOwn(report.trials[0] ?? {}, 'score'), false);
+      assert.equal(report.trials[0]?.status, 'passed');
+    });
+  });
+
+  it('does not backfill score into existing research trial metadata while reading reports', async () => {
+    await withTempDir(async (dir) => {
+      const id = '2026-06-30T123456Z-without-score';
+      const metadataPath = path.join(dir, 'research', 'runs', id, 'metadata.json');
+
+      await writeStoredResearchTrial(dir, id);
+      const before = await readFile(metadataPath, 'utf8');
+
+      buildResearchReport(readResearchTrials({ cwd: dir }));
+
+      assert.equal(await readFile(metadataPath, 'utf8'), before);
+      assert.equal(Object.hasOwn(JSON.parse(before) as Record<string, unknown>, 'score'), false);
+    });
+  });
+
   it('keeps research trial candidates with invalid ids', async () => {
     await withTempDir(async (dir) => {
       await writeStoredResearchTrial(dir, 'broken-trial');

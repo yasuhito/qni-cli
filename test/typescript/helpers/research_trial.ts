@@ -45,6 +45,7 @@ export function storedResearchMetadata(
     readonly collaborator?: string;
     readonly result?: string;
     readonly schemaVersion?: number;
+    readonly score?: Record<string, unknown>;
     readonly status?: StoredResearchStatus;
   } = {}
 ): Record<string, unknown> {
@@ -58,8 +59,13 @@ export function storedResearchMetadata(
     prompt: 'prompt.md',
     response: 'response.md',
     result: options.result ?? 'result.json',
-    status: options.status ?? 'passed'
+    status: options.status ?? 'passed',
+    ...optionalScore(options.score)
   };
+}
+
+function optionalScore(score: Record<string, unknown> | undefined): { readonly score?: Record<string, unknown> } {
+  return score === undefined ? {} : { score };
 }
 
 export function storedResearchResult(

@@ -26,6 +26,13 @@ export interface ResearchTrialDirectoryWriteRequest {
   readonly result: BenchmarkSuiteGradingResult;
 }
 
+export interface ResearchTrialScore {
+  readonly passed: number;
+  readonly percent: number | null;
+  readonly source: 'result.json';
+  readonly total: number;
+}
+
 class ResearchTrialWriterError extends Error {}
 
 const DEFAULT_DESTINATION_CONFLICT_HINT = 'Choose a different research trial slug and try again.';
@@ -147,11 +154,25 @@ function researchMetadata(request: ResearchTrialDirectoryWriteRequest): Record<s
     prompt: 'prompt.md',
     response: 'response.md',
     result: 'result.json',
-    status: request.result.status
+    status: request.result.status,
+    score: researchTrialScore(request.result)
+  };
+}
+
+function researchTrialScore(result: BenchmarkSuiteGradingResult): ResearchTrialScore {
+  const { passed, total } = result.summary;
+
+  return {
+    passed,
+    total,
+    percent: total === 0 ? null : (passed / total) * 100,
+    source: 'result.json'
   };
 }
 
 function researchTrialSummary(request: ResearchTrialDirectoryWriteRequest): string {
+  const score = researchTrialScore(request.result);
+
   return [
     `# Research trial: ${request.plan.slug}`,
     '',
@@ -163,6 +184,7 @@ function researchTrialSummary(request: ResearchTrialDirectoryWriteRequest): stri
     `- failed: ${request.result.summary.failed}`,
     `- disallowed: ${request.result.summary.disallowed}`,
     `- error: ${request.result.summary.error}`,
+    `- score: ${formatScorePercent(score.percent)}`,
     '',
     '## Files',
     '',
@@ -172,6 +194,10 @@ function researchTrialSummary(request: ResearchTrialDirectoryWriteRequest): stri
     '- Result: ./result.json',
     ''
   ].join('\n');
+}
+
+function formatScorePercent(percent: number | null): string {
+  return percent === null ? 'unknown' : `${percent.toFixed(2)}%`;
 }
 
 function writeJsonFile(filePath: string, value: unknown): void {

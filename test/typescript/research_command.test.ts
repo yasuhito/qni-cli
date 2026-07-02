@@ -744,15 +744,22 @@ describe('research command TypeScript route', () => {
         );
         assert.match(trialId, new RegExp(`^\\d{4}-\\d{2}-\\d{2}T\\d{6}Z-${gradingCase.status}-claude$`, 'u'));
         assert.equal(metadata.status, gradingCase.status);
+        assert.deepStrictEqual(metadata.score, {
+          passed: 21,
+          total: 22,
+          percent: 95.45454545454545,
+          source: 'result.json'
+        });
         assert.equal(gradingResult.status, gradingCase.status);
         assert.equal(gradingResult.exitCode, gradingCase.exitCode);
         assert.ok(trialSummary.includes(`- status: ${gradingCase.status}\n`));
+        assert.ok(trialSummary.includes('- score: 95.45%\n'));
         assert.equal((await stat(path.join(trialDir, 'submissions'))).isDirectory(), true);
-      assert.equal((await stat(path.join(trialDir, 'submissions', 'basic-gates', 'bell-state-change-1.qni'))).isFile(), true);
-      assert.equal((await stat(path.join(trialDir, 'submissions', 'basic-gates', 'bell-state-change-2.qni'))).isFile(), true);
-      assert.equal((await stat(path.join(trialDir, 'submissions', 'basic-gates', 'bell-state-change-3.qni'))).isFile(), true);
-      assert.equal((await stat(path.join(trialDir, 'submissions', 'basic-gates', 'fredkin-gate.qni'))).isFile(), true);
-      assert.equal((await stat(path.join(trialDir, 'submissions', 'basic-gates', 'global-phase-change.qni'))).isFile(), true);
+        assert.equal((await stat(path.join(trialDir, 'submissions', 'basic-gates', 'bell-state-change-1.qni'))).isFile(), true);
+        assert.equal((await stat(path.join(trialDir, 'submissions', 'basic-gates', 'bell-state-change-2.qni'))).isFile(), true);
+        assert.equal((await stat(path.join(trialDir, 'submissions', 'basic-gates', 'bell-state-change-3.qni'))).isFile(), true);
+        assert.equal((await stat(path.join(trialDir, 'submissions', 'basic-gates', 'fredkin-gate.qni'))).isFile(), true);
+        assert.equal((await stat(path.join(trialDir, 'submissions', 'basic-gates', 'global-phase-change.qni'))).isFile(), true);
         assert.equal((await stat(path.join(trialDir, 'submissions', 'basic-gates', 'state-flip.qni'))).isFile(), true);
       });
     });
@@ -798,7 +805,13 @@ describe('research command TypeScript route', () => {
         prompt: 'prompt.md',
         response: 'response.md',
         result: 'result.json',
-        status: 'passed'
+        status: 'passed',
+        score: {
+          passed: 22,
+          total: 22,
+          percent: 100,
+          source: 'result.json'
+        }
       });
       assert.match(String(metadata.createdAt), /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.000Z$/u);
       assert.equal(gradingResult.status, 'passed');
@@ -810,6 +823,7 @@ describe('research command TypeScript route', () => {
         error: 0
       });
       assert.ok(trialSummary.includes('- status: passed\n'));
+      assert.ok(trialSummary.includes('- score: 100.00%\n'));
       assert.equal(await readFile(path.join(trialDir, 'prompt.md'), 'utf8'), 'Solve the smoke benchmark suite.\n');
       assert.equal(await readFile(path.join(trialDir, 'response.md'), 'utf8'), 'I wrote the requested .qni submissions.\n');
       assert.equal((await stat(path.join(trialDir, 'submissions'))).isDirectory(), true);
