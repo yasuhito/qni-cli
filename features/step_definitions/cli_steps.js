@@ -1785,13 +1785,19 @@ Then('偽 OpenAI互換 provider への呼び出しは次の順で行われる:',
   });
 });
 
-Then('研究試行の calls 件数と score の分母は {int}', function (expectedTotal) {
+Then('研究試行の calls 件数は {int}', function (expectedTotal) {
   assert.equal(this.lastCommand.code, 0, commandFailureMessage(this.lastCommand));
   const trialDir = singleResearchTrialDir(this.scenarioDir);
-  const metadata = JSON.parse(fs.readFileSync(path.join(trialDir, 'metadata.json'), 'utf8'));
   const calls = JSON.parse(fs.readFileSync(path.join(trialDir, 'calls.json'), 'utf8'));
 
   assert.equal(calls.calls.length, expectedTotal);
+});
+
+Then('研究試行の score 分母は {int}', function (expectedTotal) {
+  assert.equal(this.lastCommand.code, 0, commandFailureMessage(this.lastCommand));
+  const trialDir = singleResearchTrialDir(this.scenarioDir);
+  const metadata = JSON.parse(fs.readFileSync(path.join(trialDir, 'metadata.json'), 'utf8'));
+
   assert.equal(metadata.score.total, expectedTotal);
 });
 

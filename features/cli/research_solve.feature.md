@@ -195,11 +195,17 @@ OpenAI互換 provider を使って qni research solve を実行したい。
   qni add H --qubit 0 --step 1
   ```
 
-## Scenario: calls の件数と score の分母が一致する
+## Scenario: 複数課題の calls 件数は課題数と一致する
 
 - Given 作業ディレクトリに solve 用の2課題ベンチマークスイート "benchmarks/smoke" を作る
 - When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
-- Then 研究試行の calls 件数と score の分母は 2
+- Then 研究試行の calls 件数は 2
+
+## Scenario: 複数課題の score 分母は課題数と一致する
+
+- Given 作業ディレクトリに solve 用の2課題ベンチマークスイート "benchmarks/smoke" を作る
+- When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
+- Then 研究試行の score 分母は 2
 
 ## Scenario: 研究試行の tokens は calls の合計から保存される
 
