@@ -95,7 +95,7 @@ export function createOpenAICompatibleChatCompletion(
   }
 
   if (!envelope.ok) {
-    throw new OpenAICompatibleProviderError(`OpenAI-compatible provider returned HTTP ${envelope.status ?? 'unknown'}`);
+    throw new OpenAICompatibleProviderError(httpErrorMessage(envelope));
   }
 
   return parseChatCompletionResponse(envelope.body ?? '');
@@ -120,14 +120,26 @@ function fetchChatCompletion(request: {
   readonly body: Record<string, unknown>;
   readonly url: string;
 }): FetchEnvelope {
-  const output = execFileSync(process.execPath, ['-e', FETCH_HELPER_SCRIPT], {
-    encoding: 'utf8',
-    input: JSON.stringify(request),
-    maxBuffer: 10 * 1024 * 1024,
-    timeout: 30_000
-  });
+  let output: string;
 
-  const parsed = JSON.parse(output) as unknown;
+  try {
+    output = execFileSync(process.execPath, ['-e', FETCH_HELPER_SCRIPT], {
+      encoding: 'utf8',
+      input: JSON.stringify(request),
+      maxBuffer: 10 * 1024 * 1024,
+      timeout: 30_000
+    });
+  } catch (error) {
+    throw new OpenAICompatibleProviderError(`OpenAI-compatible provider helper failed: ${errorMessage(error)}`);
+  }
+
+  let parsed: unknown;
+
+  try {
+    parsed = JSON.parse(output) as unknown;
+  } catch (error) {
+    throw new OpenAICompatibleProviderError(`OpenAI-compatible provider helper returned invalid JSON: ${errorMessage(error)}`);
+  }
 
   if (!isRecord(parsed)) {
     throw new OpenAICompatibleProviderError('OpenAI-compatible provider helper returned an invalid response');
@@ -205,6 +217,28 @@ function requiredInteger(value: unknown, message: string): number {
   }
 
   return parsed;
+}
+
+function httpErrorMessage(envelope: FetchEnvelope): string {
+  const status = envelope.status ?? 'unknown';
+  const statusText = typeof envelope.statusText === 'string' && envelope.statusText.trim().length > 0
+    ? ` ${envelope.statusText.trim()}`
+    : '';
+  const body = responseBodySnippet(envelope.body);
+
+  return body.length > 0
+    ? `OpenAI-compatible provider returned HTTP ${status}${statusText}: ${body}`
+    : `OpenAI-compatible provider returned HTTP ${status}${statusText}`;
+}
+
+function responseBodySnippet(body: string | undefined): string {
+  if (!body) {
+    return '';
+  }
+
+  const normalized = body.replace(/\s+/gu, ' ').trim();
+
+  return normalized.length > 500 ? `${normalized.slice(0, 500)}…` : normalized;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

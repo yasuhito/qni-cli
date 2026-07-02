@@ -92,11 +92,11 @@ function parseModelRegistration(registryId: string, value: ModelRegistryRecord):
     apiKeyEnv: requiredString(value.api_key_env, `models.${registryId}.api_key_env must be a string`),
     inputCostPerMillionTokensUsd: requiredNumber(
       value.input_cost_per_million_tokens_usd,
-      `models.${registryId}.input_cost_per_million_tokens_usd must be a number`
+      `models.${registryId}.input_cost_per_million_tokens_usd must be a non-negative number`
     ),
     outputCostPerMillionTokensUsd: requiredNumber(
       value.output_cost_per_million_tokens_usd,
-      `models.${registryId}.output_cost_per_million_tokens_usd must be a number`
+      `models.${registryId}.output_cost_per_million_tokens_usd must be a non-negative number`
     )
   };
 }
@@ -120,7 +120,7 @@ function requiredString(value: unknown, message: string): string {
 function requiredNumber(value: unknown, message: string): number {
   const parsed = typeof value === 'number' ? value : Number(String(value));
 
-  if (!Number.isFinite(parsed)) {
+  if (!Number.isFinite(parsed) || parsed < 0) {
     throw new ResearchModelRegistryError(message);
   }
 

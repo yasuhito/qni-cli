@@ -180,7 +180,7 @@ function runResearchSolveCalls(options: {
     });
     const submission = completion.content.trim();
 
-    writeTextFile(responsePath, completion.content);
+    writeTextFile(responsePath, submission);
     writeTextFile(submissionPath, submission);
 
     return {

@@ -188,6 +188,7 @@ function researchMetadata(
   score: ResearchTrialScore
 ): Record<string, unknown> {
   return {
+    ...request.metadata,
     schemaVersion: 1,
     id: request.plan.id,
     createdAt: request.plan.createdAt.toISOString(),
@@ -198,8 +199,7 @@ function researchMetadata(
     response: 'response.md',
     result: 'result.json',
     status: request.result.status,
-    score,
-    ...request.metadata
+    score
   };
 }
 

@@ -55,6 +55,15 @@ OpenAI互換 provider を使って qni research solve を実行したい。
   qni add H --qubit 0 --step 1
   ```
 
+## Scenario: モデル応答の保存成果物も提出物と同じ trim 済み本文になる
+
+- When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
+- Then 研究試行ファイル "responses/state-flip.md" の内容は:
+
+  ```text
+  qni add H --qubit 0 --step 1
+  ```
+
 ## Scenario: モデル応答から Markdown コードフェンスや qni 行を抽出しない
 
 - Given 偽 OpenAI互換 provider は次の応答本文を返す:

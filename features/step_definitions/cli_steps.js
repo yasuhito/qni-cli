@@ -372,35 +372,42 @@ function readHttpRequestBody(request) {
 
 async function startFakeOpenAIProvider(world, content) {
   const server = http.createServer(async (request, response) => {
-    const body = await readHttpRequestBody(request);
+    try {
+      const body = await readHttpRequestBody(request);
 
-    world.fakeOpenAIRequests.push({
-      authorization: request.headers.authorization,
-      body: JSON.parse(body),
-      method: request.method,
-      url: request.url
-    });
+      world.fakeOpenAIRequests.push({
+        authorization: request.headers.authorization,
+        body: JSON.parse(body),
+        method: request.method,
+        url: request.url
+      });
 
-    response.writeHead(200, { 'content-type': 'application/json' });
-    response.end(JSON.stringify({
-      id: 'chatcmpl-qni-fake',
-      object: 'chat.completion',
-      choices: [
-        {
-          index: 0,
-          message: {
-            role: 'assistant',
-            content: world.fakeOpenAIProvider.content
-          },
-          finish_reason: 'stop'
+      response.writeHead(200, { 'content-type': 'application/json' });
+      response.end(JSON.stringify({
+        id: 'chatcmpl-qni-fake',
+        object: 'chat.completion',
+        choices: [
+          {
+            index: 0,
+            message: {
+              role: 'assistant',
+              content: world.fakeOpenAIProvider.content
+            },
+            finish_reason: 'stop'
+          }
+        ],
+        usage: {
+          prompt_tokens: 100,
+          completion_tokens: 20,
+          total_tokens: 120
         }
-      ],
-      usage: {
-        prompt_tokens: 100,
-        completion_tokens: 20,
-        total_tokens: 120
-      }
-    }));
+      }));
+    } catch (error) {
+      response.writeHead(500, { 'content-type': 'application/json' });
+      response.end(JSON.stringify({
+        error: error instanceof Error ? error.message : String(error)
+      }));
+    }
   });
 
   world.fakeOpenAIRequests = [];
