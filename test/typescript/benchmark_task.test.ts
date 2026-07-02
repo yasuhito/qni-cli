@@ -236,17 +236,7 @@ describe('benchmark task frontmatter parser', () => {
       'title: MissingAvailableGates',
       'source: test',
       'difficulty: smoke',
-      'allowed_commands:',
-      '  - qni add',
-      'checks:',
-      '  tolerance: 1e-9',
-      '  items:',
-      '    - type: run',
-      '      expected:',
-      '        - basis: "|1>"',
-      '          amplitude:',
-      '            real: 1',
-      '            imaginary: 0'
+      ...rootRunCheckFrontmatterLines()
     ], /available_gates is required/u, { includeDefaultAvailableGates: false });
   });
 
@@ -257,17 +247,7 @@ describe('benchmark task frontmatter parser', () => {
       'source: test',
       'difficulty: smoke',
       'available_gates: []',
-      'allowed_commands:',
-      '  - qni add',
-      'checks:',
-      '  tolerance: 1e-9',
-      '  items:',
-      '    - type: run',
-      '      expected:',
-      '        - basis: "|1>"',
-      '          amplitude:',
-      '            real: 1',
-      '            imaginary: 0'
+      ...rootRunCheckFrontmatterLines()
     ], /available_gates must list at least one gate/u);
   });
 
@@ -278,17 +258,7 @@ describe('benchmark task frontmatter parser', () => {
       'source: test',
       'difficulty: smoke',
       'available_gates: X(target)',
-      'allowed_commands:',
-      '  - qni add',
-      'checks:',
-      '  tolerance: 1e-9',
-      '  items:',
-      '    - type: run',
-      '      expected:',
-      '        - basis: "|1>"',
-      '          amplitude:',
-      '            real: 1',
-      '            imaginary: 0'
+      ...rootRunCheckFrontmatterLines()
     ], /available_gates must list at least one gate/u);
   });
 
@@ -301,17 +271,7 @@ describe('benchmark task frontmatter parser', () => {
       'available_gates:',
       '  - X(target)',
       '  - 42',
-      'allowed_commands:',
-      '  - qni add',
-      'checks:',
-      '  tolerance: 1e-9',
-      '  items:',
-      '    - type: run',
-      '      expected:',
-      '        - basis: "|1>"',
-      '          amplitude:',
-      '            real: 1',
-      '            imaginary: 0'
+      ...rootRunCheckFrontmatterLines()
     ], /available_gates entries must be strings/u);
   });
 
@@ -323,17 +283,7 @@ describe('benchmark task frontmatter parser', () => {
       'difficulty: smoke',
       'available_gates:',
       '  - ""',
-      'allowed_commands:',
-      '  - qni add',
-      'checks:',
-      '  tolerance: 1e-9',
-      '  items:',
-      '    - type: run',
-      '      expected:',
-      '        - basis: "|1>"',
-      '          amplitude:',
-      '            real: 1',
-      '            imaginary: 0'
+      ...rootRunCheckFrontmatterLines()
     ], /available_gates entries must not be empty/u);
   });
 
@@ -483,6 +433,22 @@ describe('benchmark task frontmatter parser', () => {
     ], /setup_commands entries must start with a qni subcommand: qni/u);
   });
 });
+
+function rootRunCheckFrontmatterLines(): string[] {
+  return [
+    'allowed_commands:',
+    '  - qni add',
+    'checks:',
+    '  tolerance: 1e-9',
+    '  items:',
+    '    - type: run',
+    '      expected:',
+    '        - basis: "|1>"',
+    '          amplitude:',
+    '            real: 1',
+    '            imaginary: 0'
+  ];
+}
 
 interface WriteTaskOptions {
   readonly includeDefaultAvailableGates?: boolean;

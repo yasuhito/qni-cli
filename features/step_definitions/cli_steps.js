@@ -566,6 +566,27 @@ function markdownFrontmatterRecord(markdown, filePath) {
   return value;
 }
 
+function quantumKatasTaskEntries() {
+  return quantumKatasTaskFiles().map((taskFile) => {
+    const relativePath = path.relative(PROJECT_ROOT, taskFile);
+    const markdown = fs.readFileSync(taskFile, 'utf8');
+    const { body } = markdownFrontmatterAndBody(markdown, relativePath);
+
+    return {
+      body,
+      frontmatter: markdownFrontmatterRecord(markdown, relativePath),
+      relativePath
+    };
+  });
+}
+
+function assertQuantumKatasTaskFailures(buildFailures) {
+  const taskEntries = quantumKatasTaskEntries();
+
+  assert.equal(taskEntries.length, 22, 'expected Quantum Katas task count');
+  assert.deepEqual(taskEntries.flatMap(buildFailures), []);
+}
+
 function researchRunsDir(scenarioDir) {
   return path.join(scenarioDir, 'research', 'runs');
 }
@@ -1653,50 +1674,27 @@ Then('リポジトリファイル {string} は存在する', function (filePath)
 });
 
 Then('Quantum Katas 課題はすべて available_gates を持つ', function () {
-  const taskFiles = quantumKatasTaskFiles();
-  const failures = [];
-
-  assert.equal(taskFiles.length, 22, 'expected Quantum Katas task count');
-
-  for (const taskFile of taskFiles) {
-    const relativePath = path.relative(PROJECT_ROOT, taskFile);
-    const frontmatter = markdownFrontmatterRecord(fs.readFileSync(taskFile, 'utf8'), relativePath);
+  assertQuantumKatasTaskFailures(({ frontmatter, relativePath }) => {
     const availableGates = frontmatter.available_gates;
 
     if (!Array.isArray(availableGates) || availableGates.length === 0) {
-      failures.push(`${relativePath}: available_gates must list at least one gate`);
-      continue;
+      return [`${relativePath}: available_gates must list at least one gate`];
     }
 
-    availableGates.forEach((gate, index) => {
-      if (typeof gate !== 'string' || gate.trim().length === 0) {
-        failures.push(`${relativePath}: available_gates[${index}] must be a non-empty string`);
-      }
-    });
-  }
-
-  assert.deepEqual(failures, []);
+    return availableGates.flatMap((gate, index) => (
+      typeof gate === 'string' && gate.trim().length > 0
+        ? []
+        : [`${relativePath}: available_gates[${index}] must be a non-empty string`]
+    ));
+  });
 });
 
 Then('Quantum Katas 課題本文は qni-cli 固有表現を含まない', function () {
-  const taskFiles = quantumKatasTaskFiles();
   const forbiddenTerms = ['qni', '.qni', 'qni add', 'allowed_commands', 'setup_commands'];
-  const failures = [];
 
-  assert.equal(taskFiles.length, 22, 'expected Quantum Katas task count');
-
-  for (const taskFile of taskFiles) {
-    const relativePath = path.relative(PROJECT_ROOT, taskFile);
-    const { body } = markdownFrontmatterAndBody(fs.readFileSync(taskFile, 'utf8'), relativePath);
-
-    for (const term of forbiddenTerms) {
-      if (body.includes(term)) {
-        failures.push(`${relativePath}: body contains ${term}`);
-      }
-    }
-  }
-
-  assert.deepEqual(failures, []);
+  assertQuantumKatasTaskFailures(({ body, relativePath }) => forbiddenTerms.flatMap((term) => (
+    body.includes(term) ? [`${relativePath}: body contains ${term}`] : []
+  )));
 });
 
 Then('UTC秒精度タイムスタンプと slug {string} の研究試行ディレクトリが作られる', function (slug) {
