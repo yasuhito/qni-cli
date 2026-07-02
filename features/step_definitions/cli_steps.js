@@ -370,8 +370,9 @@ function writeResearchReportJsonFile(filePath, value) {
   fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`);
 }
 
-function writeResearchReportTrial(scenarioDir, id) {
+function writeResearchReportTrial(scenarioDir, id, options = {}) {
   const trialDir = path.join(researchRunsDir(scenarioDir), id);
+  const status = options.status || 'passed';
 
   fs.mkdirSync(trialDir, { recursive: true });
   writeResearchReportJsonFile(path.join(trialDir, 'metadata.json'), {
@@ -384,17 +385,18 @@ function writeResearchReportTrial(scenarioDir, id) {
     prompt: 'prompt.md',
     response: 'response.md',
     result: 'result.json',
-    status: 'passed'
+    status,
+    ...researchReportScoreMetadata(options.includeScore, status)
   });
   writeResearchReportJsonFile(path.join(trialDir, 'result.json'), {
-    status: 'passed',
-    exitCode: 0,
+    status,
+    exitCode: researchReportStatusExitCode(status),
     summary: {
       total: 1,
-      passed: 1,
-      failed: 0,
-      disallowed: 0,
-      error: 0
+      passed: status === 'passed' ? 1 : 0,
+      failed: status === 'failed' ? 1 : 0,
+      disallowed: status === 'disallowed' ? 1 : 0,
+      error: status === 'error' ? 1 : 0
     },
     results: [
       {
@@ -402,12 +404,44 @@ function writeResearchReportTrial(scenarioDir, id) {
         taskId: 'basic-gates/state-flip',
         title: 'StateFlip',
         submission: 'submissions/basic-gates/state-flip.qni',
-        status: 'passed',
-        exitCode: 0,
-        checks: [{ type: 'run', status: 'passed' }]
+        status,
+        exitCode: researchReportStatusExitCode(status),
+        checks: [{ type: 'run', status: status === 'passed' ? 'passed' : 'failed' }]
       }
     ]
   });
+}
+
+function researchReportScoreMetadata(includeScore, status) {
+  if (!includeScore) {
+    return {};
+  }
+
+  const passed = status === 'passed' ? 1 : 0;
+
+  return {
+    score: {
+      passed,
+      total: 1,
+      percent: passed * 100,
+      source: 'result.json'
+    }
+  };
+}
+
+function researchReportStatusExitCode(status) {
+  switch (status) {
+    case 'passed':
+      return 0;
+    case 'failed':
+      return 1;
+    case 'disallowed':
+      return 2;
+    case 'error':
+      return 3;
+    default:
+      throw new Error(`unsupported research report trial status: ${status}`);
+  }
 }
 
 function readResearchReportTrials(scenarioDir) {
@@ -985,6 +1019,10 @@ Given('有効な研究試行 {string} を研究ログに保存済み', function 
   writeResearchReportTrial(this.scenarioDir, id);
 });
 
+Given('score を持つ有効な研究試行 {string} を研究ログに保存済み', function (id) {
+  writeResearchReportTrial(this.scenarioDir, id, { includeScore: true });
+});
+
 Given('無効な研究試行候補 {string} を研究ログに保存済み', function (id) {
   writeResearchReportTrial(this.scenarioDir, id);
 });
@@ -1242,6 +1280,21 @@ Then('研究試行 JSON ファイル {string} の {string} は {string}', functi
   const actual = JSON.parse(fs.readFileSync(actualPath, 'utf8'));
 
   assert.equal(actual[key], value);
+});
+
+Then('研究試行 JSON ファイル {string} の {string} は次の JSON と一致する:', function (filePath, key, docString) {
+  const actualPath = researchTrialPath(this.scenarioDir, filePath);
+  const actual = JSON.parse(fs.readFileSync(actualPath, 'utf8'));
+  const expected = JSON.parse(docStringContent(docString));
+
+  assert.deepStrictEqual(actual[key], expected);
+});
+
+Then('研究試行 {string} のメタデータ JSON は {string} を含まない', function (id, key) {
+  const actualPath = path.join(researchRunsDir(this.scenarioDir), id, 'metadata.json');
+  const actual = JSON.parse(fs.readFileSync(actualPath, 'utf8'));
+
+  assert.equal(Object.hasOwn(actual, key), false);
 });
 
 Then('読み取った研究試行数は {int}', function (expectedCount) {

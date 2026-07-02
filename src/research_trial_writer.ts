@@ -26,6 +26,13 @@ export interface ResearchTrialDirectoryWriteRequest {
   readonly result: BenchmarkSuiteGradingResult;
 }
 
+interface ResearchTrialScore {
+  readonly passed: number;
+  readonly percent: number | null;
+  readonly source: 'result.json';
+  readonly total: number;
+}
+
 class ResearchTrialWriterError extends Error {}
 
 const DEFAULT_DESTINATION_CONFLICT_HINT = 'Choose a different research trial slug and try again.';
@@ -75,6 +82,7 @@ export function writeResearchTrialDirectory(request: ResearchTrialDirectoryWrite
   validateResearchTrialDestination(request.plan);
 
   const stagingDir = mkdtempSync(stagingPrefix);
+  const score = researchTrialScore(request.result);
   let cleanupStaging = true;
 
   try {
@@ -82,8 +90,8 @@ export function writeResearchTrialDirectory(request: ResearchTrialDirectoryWrite
     copyFileSync(request.inputPaths.response, path.join(stagingDir, 'response.md'));
     cpSync(request.inputPaths.submissions, path.join(stagingDir, 'submissions'), { recursive: true });
     writeJsonFile(path.join(stagingDir, 'result.json'), request.result);
-    writeJsonFile(path.join(stagingDir, 'metadata.json'), researchMetadata(request));
-    writeFileSync(path.join(stagingDir, 'trial.md'), researchTrialSummary(request));
+    writeJsonFile(path.join(stagingDir, 'metadata.json'), researchMetadata(request, score));
+    writeFileSync(path.join(stagingDir, 'trial.md'), researchTrialSummary(request, score));
     validateResearchTrialDestination(request.plan);
     renameSync(stagingDir, request.plan.trialDir);
     cleanupStaging = false;
@@ -136,7 +144,10 @@ function researchTimestamp(date: Date): string {
   return `${iso.slice(0, 10)}T${iso.slice(11, 13)}${iso.slice(14, 16)}${iso.slice(17, 19)}Z`;
 }
 
-function researchMetadata(request: ResearchTrialDirectoryWriteRequest): Record<string, unknown> {
+function researchMetadata(
+  request: ResearchTrialDirectoryWriteRequest,
+  score: ResearchTrialScore
+): Record<string, unknown> {
   return {
     schemaVersion: 1,
     id: request.plan.id,
@@ -147,11 +158,23 @@ function researchMetadata(request: ResearchTrialDirectoryWriteRequest): Record<s
     prompt: 'prompt.md',
     response: 'response.md',
     result: 'result.json',
-    status: request.result.status
+    status: request.result.status,
+    score
   };
 }
 
-function researchTrialSummary(request: ResearchTrialDirectoryWriteRequest): string {
+function researchTrialScore(result: BenchmarkSuiteGradingResult): ResearchTrialScore {
+  const { passed, total } = result.summary;
+
+  return {
+    passed,
+    total,
+    percent: total === 0 ? null : (passed / total) * 100,
+    source: 'result.json'
+  };
+}
+
+function researchTrialSummary(request: ResearchTrialDirectoryWriteRequest, score: ResearchTrialScore): string {
   return [
     `# Research trial: ${request.plan.slug}`,
     '',
@@ -163,6 +186,7 @@ function researchTrialSummary(request: ResearchTrialDirectoryWriteRequest): stri
     `- failed: ${request.result.summary.failed}`,
     `- disallowed: ${request.result.summary.disallowed}`,
     `- error: ${request.result.summary.error}`,
+    `- score: ${formatScorePercent(score.percent)}`,
     '',
     '## Files',
     '',
@@ -172,6 +196,10 @@ function researchTrialSummary(request: ResearchTrialDirectoryWriteRequest): stri
     '- Result: ./result.json',
     ''
   ].join('\n');
+}
+
+function formatScorePercent(percent: number | null): string {
+  return percent === null ? 'unknown' : `${percent.toFixed(2)}%`;
 }
 
 function writeJsonFile(filePath: string, value: unknown): void {
