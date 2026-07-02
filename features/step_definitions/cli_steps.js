@@ -412,6 +412,93 @@ function writeResearchReportTrial(scenarioDir, id, options = {}) {
   });
 }
 
+function writeResearchPlotTrial(scenarioDir, id, options) {
+  const trialDir = path.join(researchRunsDir(scenarioDir), id);
+  const status = options.status || 'passed';
+  const score = options.score || {
+    passed: status === 'passed' ? 1 : 0,
+    total: 1,
+    percent: status === 'passed' ? 100 : 0,
+    source: 'result.json'
+  };
+
+  fs.mkdirSync(trialDir, { recursive: true });
+  writeResearchReportJsonFile(path.join(trialDir, 'metadata.json'), {
+    schemaVersion: 1,
+    id,
+    createdAt: researchReportCreatedAtForId(id),
+    collaborator: options.collaborator || 'claude-sonnet-4',
+    benchmark: options.benchmark || 'benchmarks/quantum-katas',
+    submissions: 'submissions',
+    prompt: 'prompt.md',
+    response: 'response.md',
+    result: 'result.json',
+    status,
+    ...(Object.hasOwn(options, 'score') ? { score: options.score } : {}),
+    ...(Object.hasOwn(options, 'model') ? { model: options.model } : {}),
+    ...(Object.hasOwn(options, 'tokens') ? { tokens: options.tokens } : {}),
+    ...(Object.hasOwn(options, 'cost') ? { cost: options.cost } : {})
+  });
+  writeResearchReportJsonFile(path.join(trialDir, 'result.json'), researchPlotResult(status, score));
+}
+
+function researchPlotResult(status, score) {
+  const total = Number.isInteger(score.total) && score.total >= 0 ? score.total : 1;
+  const passed = Number.isInteger(score.passed) && score.passed >= 0 ? score.passed : 0;
+  const unsuccessful = Math.max(0, total - passed);
+
+  return {
+    status,
+    exitCode: researchReportStatusExitCode(status),
+    summary: {
+      total,
+      passed,
+      failed: status === 'failed' ? unsuccessful : 0,
+      disallowed: status === 'disallowed' ? unsuccessful : 0,
+      error: status === 'error' ? unsuccessful : 0
+    },
+    results: Array.from({ length: total }, (_, index) => ({
+      task: `task-${index + 1}.md`,
+      taskId: `task-${index + 1}`,
+      title: `Task ${index + 1}`,
+      submission: `submissions/task-${index + 1}.qni`,
+      status: index < passed ? 'passed' : status,
+      exitCode: index < passed ? 0 : researchReportStatusExitCode(status),
+      checks: [{ type: 'run', status: index < passed ? 'passed' : 'failed' }]
+    }))
+  };
+}
+
+function snapshotResearchRuns(scenarioDir) {
+  const runsDir = researchRunsDir(scenarioDir);
+  const snapshot = new Map();
+
+  if (!fs.existsSync(runsDir)) {
+    return snapshot;
+  }
+
+  addDirectorySnapshot(snapshot, runsDir, '');
+  return snapshot;
+}
+
+function addDirectorySnapshot(snapshot, root, relativeDir) {
+  const absoluteDir = path.join(root, relativeDir);
+  const entries = fs.readdirSync(absoluteDir, { withFileTypes: true })
+    .sort((left, right) => left.name.localeCompare(right.name));
+
+  for (const entry of entries) {
+    const relativePath = path.join(relativeDir, entry.name);
+    const absolutePath = path.join(root, relativePath);
+
+    if (entry.isDirectory()) {
+      snapshot.set(`${relativePath}/`, '<dir>');
+      addDirectorySnapshot(snapshot, root, relativePath);
+    } else if (entry.isFile()) {
+      snapshot.set(relativePath, fs.readFileSync(absolutePath, 'utf8'));
+    }
+  }
+}
+
 function researchReportScoreMetadata(includeScore, status) {
   if (!includeScore) {
     return {};
@@ -1023,6 +1110,25 @@ Given('score を持つ有効な研究試行 {string} を研究ログに保存済
   writeResearchReportTrial(this.scenarioDir, id, { includeScore: true });
 });
 
+Given('cost 指標を持つ有効な研究試行 {string} を研究ログに保存済み:', function (id, docString) {
+  writeResearchPlotTrial(this.scenarioDir, id, JSON.parse(docStringContent(docString)));
+});
+
+Given('cost 指標が不正な研究試行 {string} を研究ログに保存済み', function (id) {
+  writeResearchPlotTrial(this.scenarioDir, id, {
+    collaborator: 'missing-cost-model',
+    benchmark: 'benchmarks/quantum-katas',
+    status: 'passed',
+    score: { passed: 1, total: 1, percent: 100, source: 'result.json' },
+    tokens: { inputTokens: 1, outputTokens: 1, totalTokens: 2, source: 'provider_usage' },
+    cost: {}
+  });
+});
+
+Given('研究ログの現在の内容を記録する', function () {
+  this.researchRunsSnapshot = snapshotResearchRuns(this.scenarioDir);
+});
+
 Given('無効な研究試行候補 {string} を研究ログに保存済み', function (id) {
   writeResearchReportTrial(this.scenarioDir, id);
 });
@@ -1344,6 +1450,57 @@ Then('作業ディレクトリのファイル {string} は {string} を含む', 
       `expected: ${text}`
     ].join('\n')
   );
+});
+
+Then('作業ディレクトリのファイル {string} は次を含む:', function (filePath, docString) {
+  const actualPath = path.join(this.scenarioDir, filePath);
+  assert.ok(fs.existsSync(actualPath), `expected workspace file to exist: ${filePath}`);
+
+  const actual = fs.readFileSync(actualPath, 'utf8');
+  const expected = docStringContent(docString);
+
+  assert.ok(
+    actual.includes(expected),
+    [
+      'expected workspace file to include text',
+      `file: ${filePath}`,
+      'expected:',
+      expected,
+      'actual:',
+      actual
+    ].join('\n')
+  );
+});
+
+Then('作業ディレクトリのファイル {string} は {string} を含まない', function (filePath, text) {
+  const actualPath = path.join(this.scenarioDir, filePath);
+  assert.ok(fs.existsSync(actualPath), `expected workspace file to exist: ${filePath}`);
+
+  const actual = fs.readFileSync(actualPath, 'utf8');
+  assert.ok(
+    !actual.includes(text),
+    [
+      'expected workspace file not to include text',
+      `file: ${filePath}`,
+      `unexpected: ${text}`
+    ].join('\n')
+  );
+});
+
+Then('作業ディレクトリのファイル {string} は自己完結 HTML の研究散布図である', function (filePath) {
+  const actualPath = path.join(this.scenarioDir, filePath);
+  assert.ok(fs.existsSync(actualPath), `expected workspace file to exist: ${filePath}`);
+
+  const actual = fs.readFileSync(actualPath, 'utf8');
+  assert.ok(actual.startsWith('<!doctype html>'), `expected self-contained HTML doctype: ${filePath}`);
+  assert.ok(actual.includes('<svg'), `expected inline SVG scatter plot: ${filePath}`);
+  assert.ok(!actual.includes('<script src='), `expected no external script: ${filePath}`);
+  assert.ok(!actual.includes('https://'), `expected no external HTTPS reference: ${filePath}`);
+  assert.ok(!actual.includes('http://'), `expected no external HTTP reference: ${filePath}`);
+});
+
+Then('研究ログの内容は記録時点と一致する', function () {
+  assert.deepEqual(snapshotResearchRuns(this.scenarioDir), this.researchRunsSnapshot);
 });
 
 Then('リポジトリファイル {string} は {string} を含む', function (filePath, text) {
