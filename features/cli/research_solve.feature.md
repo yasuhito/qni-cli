@@ -158,6 +158,167 @@ OpenAI互換 provider を使って qni research solve を実行したい。
   }
   ```
 
+## Scenario: 複数課題のベンチマークスイートは1課題1呼び出しで逐次実行される
+
+- Given 作業ディレクトリに solve 用の2課題ベンチマークスイート "benchmarks/smoke" を作る
+- When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
+- Then 偽 OpenAI互換 provider への呼び出しは次の順で行われる:
+
+  ```text
+  smoke-state-flip
+  smoke-state-return
+  ```
+
+## Scenario: 複数課題の2つ目のプロンプトが保存される
+
+- Given 作業ディレクトリに solve 用の2課題ベンチマークスイート "benchmarks/smoke" を作る
+- When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
+- Then 研究試行ファイル "prompts/state-return.md" は "smoke-state-return" を含む
+
+## Scenario: 複数課題の2つ目の応答が保存される
+
+- Given 作業ディレクトリに solve 用の2課題ベンチマークスイート "benchmarks/smoke" を作る
+- When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
+- Then 研究試行ファイル "responses/state-return.md" の内容は:
+
+  ```text
+  qni add H --qubit 0 --step 1
+  ```
+
+## Scenario: 複数課題の2つ目の提出物が保存される
+
+- Given 作業ディレクトリに solve 用の2課題ベンチマークスイート "benchmarks/smoke" を作る
+- When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
+- Then 研究試行ファイル "submissions/state-return.qni" の内容は:
+
+  ```text
+  qni add H --qubit 0 --step 1
+  ```
+
+## Scenario: 複数課題の calls 件数は課題数と一致する
+
+- Given 作業ディレクトリに solve 用の2課題ベンチマークスイート "benchmarks/smoke" を作る
+- When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
+- Then 研究試行の calls 件数は 2
+
+## Scenario: 複数課題の score 分母は課題数と一致する
+
+- Given 作業ディレクトリに solve 用の2課題ベンチマークスイート "benchmarks/smoke" を作る
+- When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
+- Then 研究試行の score 分母は 2
+
+## Scenario: 研究試行の tokens は calls の合計から保存される
+
+- Given 作業ディレクトリに solve 用の2課題ベンチマークスイート "benchmarks/smoke" を作る
+- When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
+- Then 研究試行 JSON ファイル "metadata.json" の "tokens" は次の JSON と一致する:
+
+  ```json
+  {
+    "inputTokens": 200,
+    "outputTokens": 40,
+    "totalTokens": 240,
+    "source": "provider_usage"
+  }
+  ```
+
+## Scenario: 研究試行の cost は calls の合計と score の分母から保存される
+
+- Given 作業ディレクトリに solve 用の2課題ベンチマークスイート "benchmarks/smoke" を作る
+- When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
+- Then 研究試行 JSON ファイル "metadata.json" の "cost" は次の JSON と一致する:
+
+  ```json
+  {
+    "totalUsd": 0.00024,
+    "perProblemUsd": 0.00012,
+    "source": "estimated_from_model_registry",
+    "inputCostPerMillionTokensUsd": 1,
+    "outputCostPerMillionTokensUsd": 1
+  }
+  ```
+
+## Scenario: 研究試行の score はスイート全体の採点結果から保存される
+
+- Given 作業ディレクトリに solve 用の2課題ベンチマークスイート "benchmarks/smoke" を作る
+- When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
+- Then 研究試行 JSON ファイル "metadata.json" の "score" は次の JSON と一致する:
+
+  ```json
+  {
+    "passed": 2,
+    "total": 2,
+    "percent": 100,
+    "source": "result.json"
+  }
+  ```
+
+## Scenario: calls の件数と score の分母が一致しない場合は終了コード3を返す
+
+- Given 作業ディレクトリに solve 用の2課題ベンチマークスイート "benchmarks/smoke" を作る
+- Given 偽 OpenAI互換 provider は呼び出し時に "benchmarks/smoke/state-return.md" を削除する
+- When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
+- Then 終了コードは 3
+
+## Scenario: calls の件数と score の分母が一致しない場合は研究試行を保存しない
+
+- Given 作業ディレクトリに solve 用の2課題ベンチマークスイート "benchmarks/smoke" を作る
+- Given 偽 OpenAI互換 provider は呼び出し時に "benchmarks/smoke/state-return.md" を削除する
+- When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
+- Then 研究試行ディレクトリは作られない
+
+## Scenario: usage 欠落では終了コード3を返す
+
+- Given 偽 OpenAI互換 provider は usage 欠落応答を返す
+- When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
+- Then 終了コードは 3
+
+## Scenario: usage 欠落では研究試行を保存しない
+
+- Given 偽 OpenAI互換 provider は usage 欠落応答を返す
+- When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
+- Then 研究試行ディレクトリは作られない
+
+## Scenario: provider エラーでは終了コード3を返す
+
+- Given 偽 OpenAI互換 provider は HTTP 500 エラーを返す
+- When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
+- Then 終了コードは 3
+
+## Scenario: provider エラーでは研究試行を保存しない
+
+- Given 偽 OpenAI互換 provider は HTTP 500 エラーを返す
+- When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
+- Then 研究試行ディレクトリは作られない
+
+## Scenario: 空応答では終了コード3を返す
+
+- Given 偽 OpenAI互換 provider は応答本文 "   " を返す
+- When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
+- Then 終了コードは 3
+
+## Scenario: 空応答では研究試行を保存しない
+
+- Given 偽 OpenAI互換 provider は応答本文 "   " を返す
+- When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
+- Then 研究試行ディレクトリは作られない
+
+## Scenario: 不正な `.qni` 応答では採点結果に対応する終了コードを返す
+
+- Given 偽 OpenAI互換 provider は応答本文 "これは qni コマンドではありません" を返す
+- When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
+- Then 終了コードは 3
+
+## Scenario: 不正な `.qni` 応答は研究試行に保存される
+
+- Given 偽 OpenAI互換 provider は応答本文 "これは qni コマンドではありません" を返す
+- When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
+- Then 研究試行ファイル "submissions/state-flip.qni" の内容は:
+
+  ```text
+  これは qni コマンドではありません
+  ```
+
 ## Scenario: APIキーの値は保存された研究試行ファイルに含まれない
 
 - When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行

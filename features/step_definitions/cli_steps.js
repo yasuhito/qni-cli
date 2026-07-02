@@ -317,13 +317,36 @@ function writeQuantumKatasSubmissions(scenarioDir, status, submissionsDir) {
 }
 
 function writeMinimalSolveBenchmark(scenarioDir, benchmarkDir) {
-  const taskPath = path.join(scenarioDir, benchmarkDir, 'state-flip.md');
+  writeSolveBenchmarkTask({
+    benchmarkDir,
+    fileName: 'state-flip.md',
+    marker: 'smoke-state-flip',
+    scenarioDir,
+    taskId: 'smoke/state-flip',
+    title: 'Smoke State Flip'
+  });
+}
+
+function writeTwoTaskSolveBenchmark(scenarioDir, benchmarkDir) {
+  writeMinimalSolveBenchmark(scenarioDir, benchmarkDir);
+  writeSolveBenchmarkTask({
+    benchmarkDir,
+    fileName: 'state-return.md',
+    marker: 'smoke-state-return',
+    scenarioDir,
+    taskId: 'smoke/state-return',
+    title: 'Smoke State Return'
+  });
+}
+
+function writeSolveBenchmarkTask(options) {
+  const taskPath = path.join(options.scenarioDir, options.benchmarkDir, options.fileName);
 
   fs.mkdirSync(path.dirname(taskPath), { recursive: true });
   fs.writeFileSync(taskPath, [
     '---',
-    'id: smoke/state-flip',
-    'title: Smoke State Flip',
+    `id: ${options.taskId}`,
+    `title: ${options.title}`,
     'source: qni-cli cucumber',
     'difficulty: smoke',
     'allowed_commands:',
@@ -343,7 +366,7 @@ function writeMinimalSolveBenchmark(scenarioDir, benchmarkDir) {
     '                imaginary: 0',
     '---',
     '',
-    '課題本文の目印: smoke-state-flip',
+    `課題本文の目印: ${options.marker}`,
     '',
     '1量子ビットに Hadamard ゲートを適用し、指定された状態へ戻す `.qni` 提出物を書いてください。',
     ''
@@ -382,8 +405,20 @@ async function startFakeOpenAIProvider(world, content) {
         url: request.url
       });
 
-      response.writeHead(200, { 'content-type': 'application/json' });
-      response.end(JSON.stringify({
+      if (world.fakeOpenAIProvider.deletePathAfterRequest) {
+        fs.rmSync(path.join(world.scenarioDir, world.fakeOpenAIProvider.deletePathAfterRequest), { force: true, recursive: true });
+        world.fakeOpenAIProvider.deletePathAfterRequest = null;
+      }
+
+      if (world.fakeOpenAIProvider.httpStatus !== 200) {
+        response.writeHead(world.fakeOpenAIProvider.httpStatus, { 'content-type': 'application/json' });
+        response.end(JSON.stringify({
+          error: 'fake provider error'
+        }));
+        return;
+      }
+
+      const payload = {
         id: 'chatcmpl-qni-fake',
         object: 'chat.completion',
         choices: [
@@ -395,13 +430,19 @@ async function startFakeOpenAIProvider(world, content) {
             },
             finish_reason: 'stop'
           }
-        ],
-        usage: {
+        ]
+      };
+
+      if (!world.fakeOpenAIProvider.omitUsage) {
+        payload.usage = {
           prompt_tokens: 100,
           completion_tokens: 20,
           total_tokens: 120
-        }
-      }));
+        };
+      }
+
+      response.writeHead(200, { 'content-type': 'application/json' });
+      response.end(JSON.stringify(payload));
     } catch (error) {
       response.writeHead(500, { 'content-type': 'application/json' });
       response.end(JSON.stringify({
@@ -411,7 +452,7 @@ async function startFakeOpenAIProvider(world, content) {
   });
 
   world.fakeOpenAIRequests = [];
-  world.fakeOpenAIProvider = { content, server };
+  world.fakeOpenAIProvider = { content, deletePathAfterRequest: null, httpStatus: 200, omitUsage: false, server };
   await listen(server);
   const address = server.address();
 
@@ -437,6 +478,14 @@ function writeFakeOpenAIModelRegistry(scenarioDir, modelId, baseUrl) {
     '    output_cost_per_million_tokens_usd: 1',
     ''
   ].join('\n'));
+}
+
+function resetFakeOpenAIProviderState(provider, overrides = {}) {
+  Object.assign(provider, {
+    deletePathAfterRequest: null,
+    httpStatus: 200,
+    omitUsage: false
+  }, overrides);
 }
 
 function assertJsonContains(actual, expected) {
@@ -1191,9 +1240,13 @@ Given('作業ディレクトリに solve 用の最小ベンチマークスイー
   writeMinimalSolveBenchmark(this.scenarioDir, benchmarkDir);
 });
 
+Given('作業ディレクトリに solve 用の2課題ベンチマークスイート {string} を作る', function (benchmarkDir) {
+  writeTwoTaskSolveBenchmark(this.scenarioDir, benchmarkDir);
+});
+
 Given('偽 OpenAI互換 provider は応答本文 {string} を返す', async function (content) {
   if (this.fakeOpenAIProvider) {
-    this.fakeOpenAIProvider.content = content;
+    resetFakeOpenAIProviderState(this.fakeOpenAIProvider, { content });
     return;
   }
 
@@ -1204,11 +1257,35 @@ Given('偽 OpenAI互換 provider は次の応答本文を返す:', async functio
   const content = docStringContent(docString);
 
   if (this.fakeOpenAIProvider) {
-    this.fakeOpenAIProvider.content = content;
+    resetFakeOpenAIProviderState(this.fakeOpenAIProvider, { content });
     return;
   }
 
   await startFakeOpenAIProvider(this, content);
+});
+
+Given('偽 OpenAI互換 provider は usage 欠落応答を返す', async function () {
+  if (!this.fakeOpenAIProvider) {
+    await startFakeOpenAIProvider(this, 'qni add H --qubit 0 --step 1');
+  }
+
+  resetFakeOpenAIProviderState(this.fakeOpenAIProvider, { omitUsage: true });
+});
+
+Given('偽 OpenAI互換 provider は HTTP 500 エラーを返す', async function () {
+  if (!this.fakeOpenAIProvider) {
+    await startFakeOpenAIProvider(this, 'qni add H --qubit 0 --step 1');
+  }
+
+  resetFakeOpenAIProviderState(this.fakeOpenAIProvider, { httpStatus: 500 });
+});
+
+Given('偽 OpenAI互換 provider は呼び出し時に {string} を削除する', async function (filePath) {
+  if (!this.fakeOpenAIProvider) {
+    await startFakeOpenAIProvider(this, 'qni add H --qubit 0 --step 1');
+  }
+
+  resetFakeOpenAIProviderState(this.fakeOpenAIProvider, { deletePathAfterRequest: filePath });
 });
 
 Given('偽 OpenAI互換 provider をモデル {string} として登録する', function (modelId) {
@@ -1681,6 +1758,47 @@ Then('研究試行 JSON ファイル {string} は次の部分 JSON を含む:', 
   const expected = JSON.parse(docStringContent(docString));
 
   assertJsonContains(actual, expected);
+});
+
+Then('偽 OpenAI互換 provider への呼び出しは次の順で行われる:', function (docString) {
+  assert.equal(this.lastCommand.code, 0, commandFailureMessage(this.lastCommand));
+  const expectedMarkers = docStringContent(docString).split(/\r?\n/u).filter((line) => line.length > 0);
+
+  assert.ok(this.fakeOpenAIRequests, 'expected fake OpenAI provider requests to be recorded');
+  assert.equal(this.fakeOpenAIRequests.length, expectedMarkers.length);
+
+  expectedMarkers.forEach((marker, index) => {
+    const request = this.fakeOpenAIRequests[index];
+    const messages = request.body.messages;
+
+    assert.ok(Array.isArray(messages), 'expected fake OpenAI request body to contain messages');
+    assert.ok(
+      messages.map((message) => message.content).join('\n').includes(marker),
+      [
+        'expected fake OpenAI provider prompt to include marker',
+        `request index: ${index}`,
+        `expected: ${marker}`,
+        'actual:',
+        JSON.stringify(messages)
+      ].join('\n')
+    );
+  });
+});
+
+Then('研究試行の calls 件数は {int}', function (expectedTotal) {
+  assert.equal(this.lastCommand.code, 0, commandFailureMessage(this.lastCommand));
+  const trialDir = singleResearchTrialDir(this.scenarioDir);
+  const calls = JSON.parse(fs.readFileSync(path.join(trialDir, 'calls.json'), 'utf8'));
+
+  assert.equal(calls.calls.length, expectedTotal);
+});
+
+Then('研究試行の score 分母は {int}', function (expectedTotal) {
+  assert.equal(this.lastCommand.code, 0, commandFailureMessage(this.lastCommand));
+  const trialDir = singleResearchTrialDir(this.scenarioDir);
+  const metadata = JSON.parse(fs.readFileSync(path.join(trialDir, 'metadata.json'), 'utf8'));
+
+  assert.equal(metadata.score.total, expectedTotal);
 });
 
 Then('研究試行 JSON ファイル {string} の {string} は {string}', function (filePath, key, value) {

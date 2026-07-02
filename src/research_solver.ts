@@ -61,6 +61,8 @@ interface ResearchSolveTotals {
   readonly totalTokens: number;
 }
 
+class ResearchSolveError extends Error {}
+
 export function solveResearchTrial(request: ResearchSolveRequest, context: CommandHandlerContext): number {
   validateResearchTrialSlug(request.slug);
   const model = loadResearchModelRegistration({ context, modelId: request.model });
@@ -91,6 +93,10 @@ export function solveResearchTrial(request: ResearchSolveRequest, context: Comma
         solutionsDir: artifacts.submissions
       }, context),
       tasks
+    });
+    validateResearchSolveCallCount({
+      calls,
+      result
     });
     const totals = researchSolveTotals(calls);
 
@@ -180,6 +186,10 @@ function runResearchSolveCalls(options: {
     });
     const submission = completion.content.trim();
 
+    if (submission.length === 0) {
+      throw new ResearchSolveError(`OpenAI-compatible provider returned an empty response for task: ${task.taskId}`);
+    }
+
     writeTextFile(responsePath, submission);
     writeTextFile(submissionPath, submission);
 
@@ -254,6 +264,21 @@ function writeResearchSolveSuiteResponse(options: {
     '',
     ...options.calls.map((call) => `- ${call.taskId}: ./${call.response} -> ./${call.submission}`),
     ''
+  ].join('\n'));
+}
+
+function validateResearchSolveCallCount(options: {
+  readonly calls: readonly ResearchSolveCallRecord[];
+  readonly result: BenchmarkSuiteGradingResult;
+}): void {
+  if (options.calls.length === options.result.summary.total) {
+    return;
+  }
+
+  throw new ResearchSolveError([
+    'Research solve call count does not match score denominator.',
+    `calls: ${options.calls.length}`,
+    `score total: ${options.result.summary.total}`
   ].join('\n'));
 }
 
