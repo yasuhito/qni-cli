@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "id": "2026-07-02T010728Z-initial-pi-22q",
+  "createdAt": "2026-07-02T01:07:28.000Z",
+  "collaborator": "pi-current-session",
+  "benchmark": "benchmarks/quantum-katas",
+  "submissions": "submissions",
+  "prompt": "prompt.md",
+  "response": "response.md",
+  "result": "result.json",
+  "status": "passed"
+}

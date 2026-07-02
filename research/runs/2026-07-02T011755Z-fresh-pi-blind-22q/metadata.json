@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "id": "2026-07-02T011755Z-fresh-pi-blind-22q",
+  "createdAt": "2026-07-02T01:17:55.000Z",
+  "collaborator": "pi-fresh-worker",
+  "benchmark": "benchmarks/quantum-katas",
+  "submissions": "submissions",
+  "prompt": "prompt.md",
+  "response": "response.md",
+  "result": "result.json",
+  "status": "failed"
+}

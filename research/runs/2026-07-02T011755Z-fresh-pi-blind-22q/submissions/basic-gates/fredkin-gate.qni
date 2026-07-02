@@ -1,0 +1,17 @@
+qni add X --control 2 --qubit 1 --step 0
+qni add H --qubit 2 --step 1
+qni add X --control 1 --qubit 2 --step 2
+qni add T† --qubit 2 --step 3
+qni add X --control 0 --qubit 2 --step 4
+qni add T --qubit 2 --step 5
+qni add X --control 1 --qubit 2 --step 6
+qni add T† --qubit 2 --step 7
+qni add X --control 0 --qubit 2 --step 8
+qni add T --qubit 1 --step 9
+qni add T --qubit 2 --step 10
+qni add H --qubit 2 --step 11
+qni add X --control 0 --qubit 1 --step 12
+qni add T --qubit 0 --step 13
+qni add T† --qubit 1 --step 14
+qni add X --control 0 --qubit 1 --step 15
+qni add X --control 2 --qubit 1 --step 16

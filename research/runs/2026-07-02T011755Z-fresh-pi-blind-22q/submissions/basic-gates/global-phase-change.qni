@@ -1,0 +1,1 @@
+qni add GlobalPhase --angle 2π --control 0 --qubit 1 --step 0
