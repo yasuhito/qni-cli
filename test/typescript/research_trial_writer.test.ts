@@ -130,6 +130,59 @@ describe('research trial writer', () => {
     });
   });
 
+  it('keeps fixed metadata fields authoritative over caller metadata extras', async () => {
+    await withFixedDateNow('2026-07-02T03:04:05.987Z', async () => {
+      await withTempDir(async (dir) => {
+        const submissionsDir = path.join(dir, 'generated-submissions');
+
+        await mkdir(submissionsDir, { recursive: true });
+        await writeFile(path.join(dir, 'generated-prompt.md'), 'Solve the suite.\n');
+        await writeFile(path.join(dir, 'generated-response.md'), 'qni add X --qubit 0 --step 0\n');
+        await writeFile(path.join(submissionsDir, 'state-flip.qni'), 'qni add X --qubit 0 --step 0\n');
+
+        const plan = planResearchTrialDirectory({ cwd: dir, slug: 'solve-smoke' });
+
+        writeResearchTrialDirectory({
+          benchmark: 'benchmarks/smoke',
+          collaborator: 'gpt-4-1-mini',
+          inputPaths: {
+            prompt: path.join(dir, 'generated-prompt.md'),
+            response: path.join(dir, 'generated-response.md'),
+            submissions: submissionsDir
+          },
+          metadata: {
+            schemaVersion: 999,
+            id: 'wrong-id',
+            createdAt: '1999-01-01T00:00:00.000Z',
+            collaborator: 'wrong-collaborator',
+            benchmark: 'wrong-benchmark',
+            status: 'failed',
+            score: { passed: 0, total: 1, percent: 0, source: 'caller' },
+            model: { registryId: 'fake-qni' }
+          },
+          plan,
+          result: gradingResult()
+        });
+
+        const metadata = JSON.parse(await readFile(path.join(plan.trialDir, 'metadata.json'), 'utf8')) as Record<string, unknown>;
+
+        assert.equal(metadata.schemaVersion, 1);
+        assert.equal(metadata.id, '2026-07-02T030405Z-solve-smoke');
+        assert.equal(metadata.createdAt, '2026-07-02T03:04:05.000Z');
+        assert.equal(metadata.collaborator, 'gpt-4-1-mini');
+        assert.equal(metadata.benchmark, 'benchmarks/smoke');
+        assert.equal(metadata.status, 'passed');
+        assert.deepStrictEqual(metadata.score, {
+          passed: 1,
+          total: 1,
+          percent: 100,
+          source: 'result.json'
+        });
+        assert.deepStrictEqual(metadata.model, { registryId: 'fake-qni' });
+      });
+    });
+  });
+
   it('rejects a slug that does not match the required pattern', () => {
     assert.throws(
       () => planResearchTrialDirectory({ cwd: '/tmp/unused', slug: 'Invalid_Slug' }),

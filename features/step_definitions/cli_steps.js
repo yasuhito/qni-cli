@@ -2,9 +2,10 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { execFileSync, spawn } = require('node:child_process');
+const http = require('node:http');
 const assert = require('node:assert/strict');
 
-const { Given, Then, When } = require('@cucumber/cucumber');
+const { After, Given, Then, When } = require('@cucumber/cucumber');
 
 const PROJECT_ROOT = path.resolve(__dirname, '../..');
 const NODE_QNI_BIN = path.join(PROJECT_ROOT, 'dist', 'bin', 'qni.js');
@@ -24,6 +25,14 @@ const TWO_QUBIT_INITIAL_STATE_COLS = new Map([
   ['|11>', [['X', 'X']]],
   ['0.6|00> + 0.8|01>', [[1, 'Ry(1.8545904360032246)']]]
 ]);
+
+After(async function () {
+  if (!this.fakeOpenAIProvider) {
+    return;
+  }
+
+  await new Promise((resolve) => this.fakeOpenAIProvider.server.close(resolve));
+});
 
 function splitCommand(command) {
   const words = [];
@@ -305,6 +314,176 @@ function writeQuantumKatasSubmissions(scenarioDir, status, submissionsDir) {
     fs.mkdirSync(path.dirname(actualPath), { recursive: true });
     fs.writeFileSync(actualPath, quantumKatasSubmissionContent(status, relativePath));
   }
+}
+
+function writeMinimalSolveBenchmark(scenarioDir, benchmarkDir) {
+  const taskPath = path.join(scenarioDir, benchmarkDir, 'state-flip.md');
+
+  fs.mkdirSync(path.dirname(taskPath), { recursive: true });
+  fs.writeFileSync(taskPath, [
+    '---',
+    'id: smoke/state-flip',
+    'title: Smoke State Flip',
+    'source: qni-cli cucumber',
+    'difficulty: smoke',
+    'allowed_commands:',
+    '  - qni add',
+    'grading_cases:',
+    '  - id: hidden-setup',
+    '    setup_commands:',
+    '      - qni add H --qubit 0 --step 0',
+    '    checks:',
+    '      tolerance: 1e-9',
+    '      items:',
+    '        - type: run',
+    '          expected:',
+    '            - basis: "|0>"',
+    '              amplitude:',
+    '                real: 1',
+    '                imaginary: 0',
+    '---',
+    '',
+    '課題本文の目印: smoke-state-flip',
+    '',
+    '1量子ビットに Hadamard ゲートを適用し、指定された状態へ戻す `.qni` 提出物を書いてください。',
+    ''
+  ].join('\n'));
+}
+
+function listen(server) {
+  return new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', () => {
+      server.off('error', reject);
+      resolve();
+    });
+  });
+}
+
+function readHttpRequestBody(request) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+
+    request.on('data', (chunk) => chunks.push(chunk));
+    request.on('error', reject);
+    request.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+  });
+}
+
+async function startFakeOpenAIProvider(world, content) {
+  const server = http.createServer(async (request, response) => {
+    try {
+      const body = await readHttpRequestBody(request);
+
+      world.fakeOpenAIRequests.push({
+        authorization: request.headers.authorization,
+        body: JSON.parse(body),
+        method: request.method,
+        url: request.url
+      });
+
+      response.writeHead(200, { 'content-type': 'application/json' });
+      response.end(JSON.stringify({
+        id: 'chatcmpl-qni-fake',
+        object: 'chat.completion',
+        choices: [
+          {
+            index: 0,
+            message: {
+              role: 'assistant',
+              content: world.fakeOpenAIProvider.content
+            },
+            finish_reason: 'stop'
+          }
+        ],
+        usage: {
+          prompt_tokens: 100,
+          completion_tokens: 20,
+          total_tokens: 120
+        }
+      }));
+    } catch (error) {
+      response.writeHead(500, { 'content-type': 'application/json' });
+      response.end(JSON.stringify({
+        error: error instanceof Error ? error.message : String(error)
+      }));
+    }
+  });
+
+  world.fakeOpenAIRequests = [];
+  world.fakeOpenAIProvider = { content, server };
+  await listen(server);
+  const address = server.address();
+
+  if (!address || typeof address === 'string') {
+    throw new Error('fake OpenAI provider did not bind to a TCP port');
+  }
+
+  world.fakeOpenAIProvider.baseUrl = `http://127.0.0.1:${address.port}/v1`;
+}
+
+function writeFakeOpenAIModelRegistry(scenarioDir, modelId, baseUrl) {
+  const modelsPath = path.join(scenarioDir, 'research', 'models.yaml');
+
+  fs.mkdirSync(path.dirname(modelsPath), { recursive: true });
+  fs.writeFileSync(modelsPath, [
+    'models:',
+    `  ${modelId}:`,
+    '    provider: openai-compatible',
+    '    api_model: fake-qni-api',
+    `    base_url: ${baseUrl}`,
+    '    api_key_env: QNI_FAKE_OPENAI_API_KEY',
+    '    input_cost_per_million_tokens_usd: 1',
+    '    output_cost_per_million_tokens_usd: 1',
+    ''
+  ].join('\n'));
+}
+
+function assertJsonContains(actual, expected) {
+  if (Array.isArray(expected)) {
+    assert.ok(Array.isArray(actual), `expected JSON array, got ${JSON.stringify(actual)}`);
+    assert.ok(actual.length >= expected.length, `expected JSON array length at least ${expected.length}, got ${actual.length}`);
+    expected.forEach((item, index) => assertJsonContains(actual[index], item));
+    return;
+  }
+
+  if (expected && typeof expected === 'object') {
+    assert.ok(actual && typeof actual === 'object' && !Array.isArray(actual), `expected JSON object, got ${JSON.stringify(actual)}`);
+    for (const [key, value] of Object.entries(expected)) {
+      assert.ok(Object.hasOwn(actual, key), `expected JSON object to have key: ${key}`);
+      assertJsonContains(actual[key], value);
+    }
+    return;
+  }
+
+  assert.deepStrictEqual(actual, expected);
+}
+
+function filesUnder(dir) {
+  if (!fs.existsSync(dir)) {
+    return [];
+  }
+
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const actualPath = path.join(dir, entry.name);
+
+    if (entry.isDirectory()) {
+      return filesUnder(actualPath);
+    }
+    if (entry.isFile()) {
+      return [actualPath];
+    }
+    return [];
+  });
+}
+
+function fakeOpenAIPromptText(world) {
+  assert.ok(world.fakeOpenAIRequests, 'expected fake OpenAI provider requests to be recorded');
+  assert.ok(world.fakeOpenAIRequests.length > 0, 'expected fake OpenAI provider to receive at least one request');
+  const messages = world.fakeOpenAIRequests[0].body.messages;
+
+  assert.ok(Array.isArray(messages), 'expected fake OpenAI request body to contain messages');
+  return messages.map((message) => message.content).join('\n');
 }
 
 function projectFilePath(filePath) {
@@ -1008,6 +1187,35 @@ Given('作業ディレクトリに {string} を作る:', function (filePath, doc
   fs.writeFileSync(actualPath, docStringContent(docString));
 });
 
+Given('作業ディレクトリに solve 用の最小ベンチマークスイート {string} を作る', function (benchmarkDir) {
+  writeMinimalSolveBenchmark(this.scenarioDir, benchmarkDir);
+});
+
+Given('偽 OpenAI互換 provider は応答本文 {string} を返す', async function (content) {
+  if (this.fakeOpenAIProvider) {
+    this.fakeOpenAIProvider.content = content;
+    return;
+  }
+
+  await startFakeOpenAIProvider(this, content);
+});
+
+Given('偽 OpenAI互換 provider は次の応答本文を返す:', async function (docString) {
+  const content = docStringContent(docString);
+
+  if (this.fakeOpenAIProvider) {
+    this.fakeOpenAIProvider.content = content;
+    return;
+  }
+
+  await startFakeOpenAIProvider(this, content);
+});
+
+Given('偽 OpenAI互換 provider をモデル {string} として登録する', function (modelId) {
+  assert.ok(this.fakeOpenAIProvider, 'fake OpenAI provider must be started before registering the model');
+  writeFakeOpenAIModelRegistry(this.scenarioDir, modelId, this.fakeOpenAIProvider.baseUrl);
+});
+
 Given('作業ディレクトリに採点状態 {string} の Quantum Katas 提出物群 {string} を作る', function (status, submissionsDir) {
   writeQuantumKatasSubmissions(this.scenarioDir, status, submissionsDir);
 });
@@ -1379,6 +1587,100 @@ Then('研究試行ファイル {string} は {string} を含む', function (fileP
       `expected: ${text}`
     ].join('\n')
   );
+});
+
+Then('研究試行ファイル {string} は次をすべて含む:', function (filePath, docString) {
+  const actualPath = researchTrialPath(this.scenarioDir, filePath);
+  const actual = fs.readFileSync(actualPath, 'utf8');
+  const expectedItems = docStringContent(docString).split(/\r?\n/u).filter((line) => line.length > 0);
+
+  for (const expected of expectedItems) {
+    assert.ok(
+      actual.includes(expected),
+      [
+        'expected research trial file to include text',
+        `file: ${filePath}`,
+        `expected: ${expected}`,
+        'actual:',
+        actual
+      ].join('\n')
+    );
+  }
+});
+
+Then('偽 OpenAI互換 provider が受け取ったプロンプトは次をすべて含む:', function (docString) {
+  const actual = fakeOpenAIPromptText(this);
+  const expectedItems = docStringContent(docString).split(/\r?\n/u).filter((line) => line.length > 0);
+
+  for (const expected of expectedItems) {
+    assert.ok(
+      actual.includes(expected),
+      [
+        'expected fake OpenAI provider prompt to include text',
+        `expected: ${expected}`,
+        'actual:',
+        actual
+      ].join('\n')
+    );
+  }
+});
+
+Then('研究試行ファイル {string} は次をすべて含まない:', function (filePath, docString) {
+  const actualPath = researchTrialPath(this.scenarioDir, filePath);
+  const actual = fs.readFileSync(actualPath, 'utf8');
+  const unexpectedItems = docStringContent(docString).split(/\r?\n/u).filter((line) => line.length > 0);
+
+  for (const unexpected of unexpectedItems) {
+    assert.ok(
+      !actual.includes(unexpected),
+      [
+        'expected research trial file not to include text',
+        `file: ${filePath}`,
+        `unexpected: ${unexpected}`,
+        'actual:',
+        actual
+      ].join('\n')
+    );
+  }
+});
+
+Then('偽 OpenAI互換 provider が受け取ったプロンプトは次をすべて含まない:', function (docString) {
+  const actual = fakeOpenAIPromptText(this);
+  const unexpectedItems = docStringContent(docString).split(/\r?\n/u).filter((line) => line.length > 0);
+
+  for (const unexpected of unexpectedItems) {
+    assert.ok(
+      !actual.includes(unexpected),
+      [
+        'expected fake OpenAI provider prompt not to include text',
+        `unexpected: ${unexpected}`,
+        'actual:',
+        actual
+      ].join('\n')
+    );
+  }
+});
+
+Then('研究試行ファイル {string} の内容は:', function (filePath, docString) {
+  const actualPath = researchTrialPath(this.scenarioDir, filePath);
+  const actual = fs.readFileSync(actualPath, 'utf8');
+
+  assert.equal(actual, docStringContent(docString));
+});
+
+Then('研究試行ファイル群は {string} を含まない', function (text) {
+  const trialDir = singleResearchTrialDir(this.scenarioDir);
+  const matchingFiles = filesUnder(trialDir).filter((filePath) => fs.readFileSync(filePath, 'utf8').includes(text));
+
+  assert.deepEqual(matchingFiles.map((filePath) => path.relative(trialDir, filePath)).sort(), []);
+});
+
+Then('研究試行 JSON ファイル {string} は次の部分 JSON を含む:', function (filePath, docString) {
+  const actualPath = researchTrialPath(this.scenarioDir, filePath);
+  const actual = JSON.parse(fs.readFileSync(actualPath, 'utf8'));
+  const expected = JSON.parse(docStringContent(docString));
+
+  assertJsonContains(actual, expected);
 });
 
 Then('研究試行 JSON ファイル {string} の {string} は {string}', function (filePath, key, value) {
