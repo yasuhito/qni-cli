@@ -4,6 +4,8 @@
 
 汎用の `qni` コマンド、画像出力、Bloch sphere、状態ベクトル操作の例は [cli.md](cli.md) に置きます。この文書は、ベンチマーク採点と研究試行ログの手順に集中します。
 
+モデル登録ファイルを使って `qni research solve` を実行し、`qni research plot` で cost per problem と score を可視化する手順は [モデル別コストベンチマーク利用手順](model-cost-benchmark.md) を参照してください。
+
 以下の例はリポジトリルートから実行します。開発中の作業ツリーで実行する場合は、先に `npm run build` を実行し、`qni` を `node dist/bin/qni.js` に読み替えてください。
 
 ## .qni 提出物の作り方
@@ -427,3 +429,7 @@ qni research report
 研究試行が無い場合も空の集計と `No research trials found.` を表示して終了コード `0` で終了します。無効な研究試行が1件以上ある場合は、読み取れた範囲のレポートを表示して終了コード `1` で終了します。
 
 機械処理には `qni research report --json` を使います。JSON 出力も保存済みの `metadata.json` と `result.json` を読むだけで、再採点や修復は行いません。
+
+## モデル別コストベンチマークを実行する
+
+`qni research solve` は、`research/models.yaml` に登録した単一モデルを使って OpenAI互換 Chat Completions API を直接呼び出し、ベンチマークスイートを1課題ずつ逐次実行します。`qni research record` は AI を呼びません。モデル登録ファイル、APIキー環境変数、score と cost の計算式、`qni research plot` の HTML 出力、初期スコープ外の項目は [モデル別コストベンチマーク利用手順](model-cost-benchmark.md) にまとめています。

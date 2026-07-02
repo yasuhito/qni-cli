@@ -16,9 +16,9 @@ README でプロジェクト全体の流れと実装済み範囲を確認した�
 
 - Then リポジトリファイル "README.md" は "ベンチマーク課題 → `.qni` 提出物 → 決定論的な採点 → 研究試行ログとレポート" を含む
 
-## Scenario: README は qni-cli が AI を呼び出さないことを示す
+## Scenario: README は record と solve の AI 呼び出し範囲を示す
 
-- Then リポジトリファイル "README.md" は "qni-cli は AI を呼び出しません。外部の AI または人間の共同研究者が提出物を作ります。" を含む
+- Then リポジトリファイル "README.md" は "`qni benchmark` と `qni research record` は AI を呼びません。モデル別コストベンチマークで使う `qni research solve` だけは、`research/models.yaml` の登録に従って OpenAI互換 Chat Completions API を直接呼び出します。" を含む
 
 ## Scenario: README はリポジトリファイルを永続的な研究状態として説明する
 
@@ -26,11 +26,11 @@ README でプロジェクト全体の流れと実装済み範囲を確認した�
 
 ## Scenario: README は PhysicsIntern 風の構想と実装済み範囲を区別する
 
-- Then リポジトリファイル "README.md" は "PhysicsIntern の `ResearchState` や `multi-agent pipeline` に近い構想はありますが、Qni の現時点の実装済み範囲は qni-cli による決定論的な回路操作、ベンチマーク採点、研究試行の記録とレポートです。" を含む
+- Then リポジトリファイル "README.md" は "PhysicsIntern の `ResearchState` や `multi-agent pipeline` に近い構想はありますが、Qni の現時点の実装済み範囲は qni-cli による決定論的な回路操作、ベンチマーク採点、研究試行の記録、単一モデルの OpenAI互換 API の直接実行、コスト散布図、レポートです。" を含む
 
 ## Scenario: README は制限事項と次の段階を示す
 
-- Then リポジトリファイル "README.md" は "AI 呼び出し、複数エージェント処理、プロバイダー抽象、作業場所の自動準備はまだ qni-cli にありません。" を含む
+- Then リポジトリファイル "README.md" は "複数モデルの一括実行、複数試行、再試行、自己修正、外部エージェント自動実行、既存試行の移行、プロバイダー抽象、作業場所の自動準備はまだ qni-cli にありません。" を含む
 
 ## Scenario: README はセットアップ手順を残す
 
