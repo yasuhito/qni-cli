@@ -28,6 +28,8 @@ Qni CoResearcher の現状説明では、PhysicsIntern のような `multi-agent
 
 qni-cli は引き続き、外部の AI または人間の共同研究者が作ったプロンプト、回答、`.qni` 提出物を受け取り、決定論的な採点と研究試行ログを作る CLI として扱う。
 
+後続の ADR 0021 では、`qni research record` を AI を呼ばない記録経路として維持しつつ、`qni research solve` をモデル別コストベンチマーク向けの上位自動化として扱う判断を追加した。この追加後も、複数エージェント処理やプロバイダー抽象を実装済みとは書かない。
+
 ## 影響
 
 `CONTEXT.md` と `docs/research/project-naming.md` は、`Qni CoResearcher` と `qni-cli` の責務分離に合わせて更新する。README 全体の書き換え、GitHub repository 名の変更、npm package 名の変更、`qni` コマンド名の変更は別課題として扱う。

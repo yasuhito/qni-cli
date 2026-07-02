@@ -1,6 +1,6 @@
 # qni-cli コマンドリファレンス
 
-この文書は、汎用の `qni` コマンドを実用例で確認するためのリファレンスです。ベンチマーク採点と研究試行ログの詳しい手順は [benchmark.md](benchmark.md) に置きます。
+この文書は、汎用の `qni` コマンドを実用例で確認するためのリファレンスです。ベンチマーク採点と研究試行ログの詳しい手順は [benchmark.md](benchmark.md) に置きます。モデル別コストベンチマークの `qni research solve` と `qni research plot` は [model-cost-benchmark.md](model-cost-benchmark.md) を参照してください。
 
 実行例では、インストール済みの CLI として `qni` を使います。リポジトリ内で開発中の実装を直接使う場合は、先に `npm run build` を実行し、`qni` を `node dist/bin/qni.js` に読み替えてください。
 
