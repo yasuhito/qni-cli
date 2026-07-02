@@ -10,6 +10,7 @@ describe('benchmark task frontmatter parser', () => {
   it('keeps the explicit grading cases marker optional on the exported task type', () => {
     const task: BenchmarkTask = {
       allowedCommands: [{ argv: ['add'], source: 'qni add' }],
+      availableGates: ['X(target)'],
       checks: {
         tolerance: 1e-9,
         items: []
@@ -20,6 +21,37 @@ describe('benchmark task frontmatter parser', () => {
     };
 
     assert.equal(task.hasExplicitGradingCases, undefined);
+  });
+
+  it('parses neutral available gates', async () => {
+    await withTempDir(async (dir) => {
+      const taskPath = path.join(dir, 'task.md');
+
+      await writeTask(taskPath, [
+        'id: basic-gates/state-flip',
+        'title: StateFlip',
+        'source: test',
+        'difficulty: smoke',
+        'available_gates:',
+        '  - X(target)',
+        '  - CNOT(control, target)',
+        'allowed_commands:',
+        '  - qni add',
+        'checks:',
+        '  tolerance: 1e-9',
+        '  items:',
+        '    - type: run',
+        '      expected:',
+        '        - basis: "|1>"',
+        '          amplitude:',
+        '            real: 1',
+        '            imaginary: 0'
+      ]);
+
+      const task = loadBenchmarkTask(taskPath);
+
+      assert.deepStrictEqual(task.availableGates, ['X(target)', 'CNOT(control, target)']);
+    });
   });
 
   it('normalizes root checks into an implicit grading case', async () => {
@@ -198,6 +230,63 @@ describe('benchmark task frontmatter parser', () => {
     });
   });
 
+  it('rejects missing available gates', async () => {
+    await assertInvalidTask([
+      'id: neutral-gates/missing',
+      'title: MissingAvailableGates',
+      'source: test',
+      'difficulty: smoke',
+      ...rootRunCheckFrontmatterLines()
+    ], /available_gates is required/u, { includeDefaultAvailableGates: false });
+  });
+
+  it('rejects empty available gates', async () => {
+    await assertInvalidTask([
+      'id: neutral-gates/empty',
+      'title: EmptyAvailableGates',
+      'source: test',
+      'difficulty: smoke',
+      'available_gates: []',
+      ...rootRunCheckFrontmatterLines()
+    ], /available_gates must list at least one gate/u);
+  });
+
+  it('rejects available gates that are not a list', async () => {
+    await assertInvalidTask([
+      'id: neutral-gates/not-a-list',
+      'title: AvailableGatesNotAList',
+      'source: test',
+      'difficulty: smoke',
+      'available_gates: X(target)',
+      ...rootRunCheckFrontmatterLines()
+    ], /available_gates must list at least one gate/u);
+  });
+
+  it('rejects available gates entries that are not strings', async () => {
+    await assertInvalidTask([
+      'id: neutral-gates/non-string',
+      'title: NonStringAvailableGates',
+      'source: test',
+      'difficulty: smoke',
+      'available_gates:',
+      '  - X(target)',
+      '  - 42',
+      ...rootRunCheckFrontmatterLines()
+    ], /available_gates entries must be strings/u);
+  });
+
+  it('rejects empty available gates entries', async () => {
+    await assertInvalidTask([
+      'id: neutral-gates/empty-entry',
+      'title: EmptyAvailableGatesEntry',
+      'source: test',
+      'difficulty: smoke',
+      'available_gates:',
+      '  - ""',
+      ...rootRunCheckFrontmatterLines()
+    ], /available_gates entries must not be empty/u);
+  });
+
   it('rejects root checks and explicit grading cases together', async () => {
     await assertInvalidTask([
       'id: grading-cases/conflict',
@@ -345,22 +434,71 @@ describe('benchmark task frontmatter parser', () => {
   });
 });
 
-async function assertInvalidTask(frontmatterLines: readonly string[], errorPattern: RegExp): Promise<void> {
+function rootRunCheckFrontmatterLines(): string[] {
+  return [
+    'allowed_commands:',
+    '  - qni add',
+    'checks:',
+    '  tolerance: 1e-9',
+    '  items:',
+    '    - type: run',
+    '      expected:',
+    '        - basis: "|1>"',
+    '          amplitude:',
+    '            real: 1',
+    '            imaginary: 0'
+  ];
+}
+
+interface WriteTaskOptions {
+  readonly includeDefaultAvailableGates?: boolean;
+}
+
+async function assertInvalidTask(
+  frontmatterLines: readonly string[],
+  errorPattern: RegExp,
+  options: WriteTaskOptions = {}
+): Promise<void> {
   await withTempDir(async (dir) => {
     const taskPath = path.join(dir, 'task.md');
 
-    await writeTask(taskPath, frontmatterLines);
+    await writeTask(taskPath, frontmatterLines, options);
 
     assert.throws(() => loadBenchmarkTask(taskPath), errorPattern);
   });
 }
 
-async function writeTask(taskPath: string, frontmatterLines: readonly string[]): Promise<void> {
+async function writeTask(
+  taskPath: string,
+  frontmatterLines: readonly string[],
+  options: WriteTaskOptions = {}
+): Promise<void> {
   await writeFile(taskPath, [
     '---',
-    ...frontmatterLines,
+    ...withDefaultAvailableGates(frontmatterLines, options),
     '---',
     '',
     'Grade the submission.'
   ].join('\n'));
+}
+
+function withDefaultAvailableGates(
+  frontmatterLines: readonly string[],
+  options: WriteTaskOptions
+): readonly string[] {
+  const includeDefault = options.includeDefaultAvailableGates ?? true;
+
+  if (!includeDefault || frontmatterLines.some((line) => line.trim().startsWith('available_gates:'))) {
+    return frontmatterLines;
+  }
+
+  const difficultyIndex = frontmatterLines.findIndex((line) => line.trim().startsWith('difficulty:'));
+  const insertIndex = difficultyIndex === -1 ? frontmatterLines.length : difficultyIndex + 1;
+
+  return [
+    ...frontmatterLines.slice(0, insertIndex),
+    'available_gates:',
+    '  - X(target)',
+    ...frontmatterLines.slice(insertIndex)
+  ];
 }

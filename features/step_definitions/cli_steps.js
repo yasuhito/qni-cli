@@ -6,6 +6,7 @@ const http = require('node:http');
 const assert = require('node:assert/strict');
 
 const { After, Given, Then, When } = require('@cucumber/cucumber');
+const { parseDocument } = require('yaml');
 
 const PROJECT_ROOT = path.resolve(__dirname, '../..');
 const NODE_QNI_BIN = path.join(PROJECT_ROOT, 'dist', 'bin', 'qni.js');
@@ -349,6 +350,8 @@ function writeSolveBenchmarkTask(options) {
     `title: ${options.title}`,
     'source: qni-cli cucumber',
     'difficulty: smoke',
+    'available_gates:',
+    '  - H(target)',
     'allowed_commands:',
     '  - qni add',
     'grading_cases:',
@@ -537,6 +540,51 @@ function fakeOpenAIPromptText(world) {
 
 function projectFilePath(filePath) {
   return path.join(PROJECT_ROOT, filePath);
+}
+
+function quantumKatasTaskFiles() {
+  return filesUnder(projectFilePath('benchmarks/quantum-katas'))
+    .filter((filePath) => filePath.endsWith('.md'))
+    .sort();
+}
+
+function markdownFrontmatterAndBody(markdown, filePath) {
+  const match = /^---\r?\n(?<frontmatter>[\s\S]*?)\r?\n---(?:\r?\n|$)(?<body>[\s\S]*)$/u.exec(markdown);
+
+  assert.ok(match?.groups, `expected Markdown frontmatter in ${filePath}`);
+  return match.groups;
+}
+
+function markdownFrontmatterRecord(markdown, filePath) {
+  const { frontmatter } = markdownFrontmatterAndBody(markdown, filePath);
+  const document = parseDocument(frontmatter);
+
+  assert.equal(document.errors.length, 0, `expected valid YAML frontmatter in ${filePath}`);
+  const value = document.toJS();
+
+  assert.ok(value && typeof value === 'object' && !Array.isArray(value), `expected frontmatter mapping in ${filePath}`);
+  return value;
+}
+
+function quantumKatasTaskEntries() {
+  return quantumKatasTaskFiles().map((taskFile) => {
+    const relativePath = path.relative(PROJECT_ROOT, taskFile);
+    const markdown = fs.readFileSync(taskFile, 'utf8');
+    const { body } = markdownFrontmatterAndBody(markdown, relativePath);
+
+    return {
+      body,
+      frontmatter: markdownFrontmatterRecord(markdown, relativePath),
+      relativePath
+    };
+  });
+}
+
+function assertQuantumKatasTaskFailures(buildFailures) {
+  const taskEntries = quantumKatasTaskEntries();
+
+  assert.equal(taskEntries.length, 22, 'expected Quantum Katas task count');
+  assert.deepEqual(taskEntries.flatMap(buildFailures), []);
 }
 
 function researchRunsDir(scenarioDir) {
@@ -1623,6 +1671,30 @@ Then('リポジトリファイル {string} は存在する', function (filePath)
     fs.existsSync(projectFilePath(filePath)),
     `expected repository file to exist: ${filePath}`
   );
+});
+
+Then('Quantum Katas 課題はすべて available_gates を持つ', function () {
+  assertQuantumKatasTaskFailures(({ frontmatter, relativePath }) => {
+    const availableGates = frontmatter.available_gates;
+
+    if (!Array.isArray(availableGates) || availableGates.length === 0) {
+      return [`${relativePath}: available_gates must list at least one gate`];
+    }
+
+    return availableGates.flatMap((gate, index) => (
+      typeof gate === 'string' && gate.trim().length > 0
+        ? []
+        : [`${relativePath}: available_gates[${index}] must be a non-empty string`]
+    ));
+  });
+});
+
+Then('Quantum Katas 課題本文は qni-cli 固有表現を含まない', function () {
+  const forbiddenTerms = ['qni', '.qni', 'qni add', 'allowed_commands', 'setup_commands'];
+
+  assertQuantumKatasTaskFailures(({ body, relativePath }) => forbiddenTerms.flatMap((term) => (
+    body.includes(term) ? [`${relativePath}: body contains ${term}`] : []
+  )));
 });
 
 Then('UTC秒精度タイムスタンプと slug {string} の研究試行ディレクトリが作られる', function (slug) {

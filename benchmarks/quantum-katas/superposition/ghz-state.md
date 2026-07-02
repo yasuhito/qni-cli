@@ -3,6 +3,9 @@ id: superposition/ghz-state
 title: GHZState
 source: Microsoft Quantum Katas / Superposition
 difficulty: smoke
+available_gates:
+  - H(target)
+  - CNOT(control, target)
 allowed_commands:
   - qni add
 checks:
@@ -21,7 +24,6 @@ checks:
 ---
 
 このベンチマーク課題は、`N = 3` に固定した GHZState です。
-3量子ビットを `|000>` から GHZ 状態 `( |000> + |111> ) / sqrt(2)` に変える量子回路を、`qni` コマンド列として作成してください。
+3量子ビットを `|000>` から GHZ 状態 `( |000> + |111> ) / sqrt(2)` に変える量子回路を設計してください。
 
 任意の `N` に対応する必要はありません。
-提出物は `.qni` 形式で、1行に1つずつ完全な `qni` コマンドを書いてください。

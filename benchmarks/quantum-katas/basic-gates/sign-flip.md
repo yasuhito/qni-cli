@@ -3,6 +3,8 @@ id: basic-gates/sign-flip
 title: SignFlip
 source: Microsoft Quantum Katas / BasicGates
 difficulty: smoke
+available_gates:
+  - Z(target)
 allowed_commands:
   - qni add
 grading_cases:
@@ -40,7 +42,6 @@ grading_cases:
                 imaginary: 0
 ---
 
-1量子ビットに対して、`|+>` を `|->` に、`|->` を `|+>` に変える量子回路を、`qni` コマンド列として作成してください。
+1量子ビットに対して、`|+>` を `|->` に、`|->` を `|+>` に変える量子回路を設計してください。
 
 これは一般に、`alpha|0> + beta|1>` を `alpha|0> - beta|1>` に変える操作です。
-提出物は `.qni` 形式で、1行に1つずつ完全な `qni` コマンドを書いてください。

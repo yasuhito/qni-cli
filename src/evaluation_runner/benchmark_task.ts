@@ -5,6 +5,7 @@ import { splitCommandLine } from '../qni_command_line';
 
 export interface BenchmarkTask {
   readonly allowedCommands: readonly AllowedCommand[];
+  readonly availableGates: readonly string[];
   readonly checks: BenchmarkChecks;
   readonly gradingCases: readonly BenchmarkGradingCase[];
   readonly hasExplicitGradingCases?: boolean;
@@ -74,11 +75,13 @@ const IMPLICIT_GRADING_CASE_ID = 'default';
 export function loadBenchmarkTask(taskPath: string): BenchmarkTask {
   const frontmatter = frontmatterRecord(frontmatterOf(readFileSync(taskPath, 'utf8')));
   const allowedCommands = parseAllowedCommands(frontmatter);
+  const availableGates = parseAvailableGates(frontmatter);
   const hasExplicitGradingCases = hasValue(frontmatter, 'grading_cases');
   const gradingCases = parseGradingCases(frontmatter, hasExplicitGradingCases);
 
   return {
     allowedCommands,
+    availableGates,
     checks: compatibleChecks(gradingCases),
     gradingCases,
     hasExplicitGradingCases,
@@ -127,15 +130,28 @@ function parseAllowedCommands(frontmatter: FrontmatterRecord): AllowedCommand[] 
     .map((source) => parseQniCommand(source, 'allowed_commands entries must start with a qni subcommand'));
 }
 
-function frontmatterListValues(frontmatter: FrontmatterRecord, key: string): string[] {
+function parseAvailableGates(frontmatter: FrontmatterRecord): string[] {
+  return frontmatterListValues(frontmatter, 'available_gates', 'gate')
+    .map((source) => {
+      const gate = source.trim();
+
+      if (gate.length === 0) {
+        throw new BenchmarkTaskError('available_gates entries must not be empty');
+      }
+
+      return gate;
+    });
+}
+
+function frontmatterListValues(frontmatter: FrontmatterRecord, key: string, itemName = 'item'): string[] {
   const value = requiredValue(frontmatter, key);
 
   if (!Array.isArray(value)) {
-    throw new BenchmarkTaskError(`${key} must list at least one item`);
+    throw new BenchmarkTaskError(`${key} must list at least one ${itemName}`);
   }
 
   if (value.length === 0) {
-    throw new BenchmarkTaskError(`${key} must list at least one item`);
+    throw new BenchmarkTaskError(`${key} must list at least one ${itemName}`);
   }
 
   return value.map((item) => stringListValue(item, key));

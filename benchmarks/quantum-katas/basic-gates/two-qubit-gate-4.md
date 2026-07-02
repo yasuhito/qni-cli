@@ -3,6 +3,9 @@ id: basic-gates/two-qubit-gate-4
 title: TwoQubitGate4
 source: Microsoft Quantum Katas / BasicGates
 difficulty: smoke
+available_gates:
+  - CNOT(control, target)
+  - X(target)
 allowed_commands:
   - qni add
 grading_cases:
@@ -58,6 +61,4 @@ grading_cases:
                 imaginary: 0
 ---
 
-2量子ビットの任意の状態 `α|00> + β|01> + γ|10> + δ|11>` を、`β|00> + α|01> + γ|10> + δ|11>` に変える量子回路を、`qni` コマンド列として作成してください。
-
-提出物は `.qni` 形式で、1行に1つずつ完全な `qni` コマンドを書いてください。
+2量子ビットの任意の状態 `α|00> + β|01> + γ|10> + δ|11>` を、`β|00> + α|01> + γ|10> + δ|11>` に変える量子回路を設計してください。
