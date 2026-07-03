@@ -1,97 +1,145 @@
 # Feature: qni research solve
 
 qni-cli の利用者として
-モデルが見た課題情報と推定コストを研究試行として残すために
-OpenAI互換 provider を使って qni research solve を実行したい。
+モデルに qni-cli 固有の提出形式を知らせずに課題を解かせるために
+OpenAI互換 provider から中立回路 JSON を受け取り、研究試行として採点したい。
 
 ## Background:
 
 - Given 作業ディレクトリに solve 用の最小ベンチマークスイート "benchmarks/smoke" を作る
-- Given 偽 OpenAI互換 provider は応答本文 "  qni add H --qubit 0 --step 1  " を返す
+- Given 偽 OpenAI互換 provider は次の応答本文を返す:
+
+  ```json
+  {
+    "operations": [
+      {
+        "gate": "H",
+        "targets": [0]
+      }
+    ]
+  }
+  ```
+
 - Given 偽 OpenAI互換 provider をモデル "fake-qni" として登録する
 - Given 環境変数 "QNI_FAKE_OPENAI_API_KEY" を "test-secret-api-key" に設定する
 
-## Scenario: 偽 OpenAI互換 provider で研究試行を成功として保存する
+## Scenario: 偽 OpenAI互換 provider の中立 JSON で研究試行を成功として保存する
 
 - When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
 - Then コマンドは成功
 
-## Scenario: モデルへ送ったプロンプトには課題本文、許可コマンド、出力ルール、最小限の qni 書式が含まれる
+## Scenario: モデルへ送ったプロンプトには課題本文、利用可能ゲート、中立 JSON 出力ルールが含まれる
 
 - When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
 - Then 偽 OpenAI互換 provider が受け取ったプロンプトは次をすべて含む:
 
   ```text
   課題本文の目印: smoke-state-flip
-  qni add
-  回答は `.qni` 形式だけにしてください。
-  qni add <gate> --qubit <index> --step <index>
+  available_gates
+  H(target)
+  有効な JSON だけを返す。Markdown で囲まない。説明を書かない。
+  operations
   ```
 
-## Scenario: モデルへ送ったプロンプトには採点情報が含まれない
+## Scenario: モデルへ送ったプロンプトには qni-cli 固有表現が含まれない
 
 - When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
 - Then 偽 OpenAI互換 provider が受け取ったプロンプトは次をすべて含まない:
 
   ```text
-  採点条件
-  採点ケース
-  準備コマンド
-  期待される振幅
-  期待値
-  grading_cases
+  qni
+  .qni
+  qni add
+  qni run
+  qni expect
+  allowed_commands
   setup_commands
-  checks
-  expected
-  amplitude
   ```
 
-## Scenario: モデル応答を trim した本文そのものが提出物として保存される
+## Scenario: 保存された課題別プロンプトには qni-cli 固有表現が含まれない
 
 - When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
-- Then 研究試行ファイル "submissions/state-flip.qni" の内容は:
+- Then 研究試行ファイル "prompts/state-flip.md" は次をすべて含まない:
 
   ```text
-  qni add H --qubit 0 --step 1
+  qni
+  .qni
+  qni add
+  qni run
+  qni expect
+  allowed_commands
+  setup_commands
   ```
 
-## Scenario: モデル応答の保存成果物も提出物と同じ trim 済み本文になる
+## Scenario: provider の生応答が保存される
 
 - When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
 - Then 研究試行ファイル "responses/state-flip.md" の内容は:
 
-  ```text
-  qni add H --qubit 0 --step 1
+  ```json
+  {
+    "operations": [
+      {
+        "gate": "H",
+        "targets": [0]
+      }
+    ]
+  }
   ```
 
-## Scenario: モデル応答から Markdown コードフェンスや qni 行を抽出しない
+## Scenario: 検証済みの中立 JSON 提出が保存される
 
-- Given 偽 OpenAI互換 provider は次の応答本文を返す:
+- When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
+- Then 研究試行 JSON ファイル "circuit-json/state-flip.json" は次の部分 JSON を含む:
 
-  ````text
-  ```qni
-  qni add H --qubit 0 --step 1
+  ```json
+  {
+    "operations": [
+      {
+        "gate": "H",
+        "targets": [0]
+      }
+    ]
+  }
   ```
-  補足
-  ````
+
+## Scenario: 中立 JSON から変換した .qni 提出物が保存される
 
 - When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
 - Then 研究試行ファイル "submissions/state-flip.qni" の内容は:
 
-  ````text
-  ```qni
-  qni add H --qubit 0 --step 1
+  ```text
+  qni add H --qubit 0 --step 0
   ```
-  補足
-  ````
 
-## Scenario: 研究試行メタデータには solve の索引が保存される
+## Scenario: responses ディレクトリが保存される
+
+- When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
+- Then 研究試行ディレクトリ "responses" が作られる
+
+## Scenario: circuit-json ディレクトリが保存される
+
+- When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
+- Then 研究試行ディレクトリ "circuit-json" が作られる
+
+## Scenario: submissions ディレクトリが保存される
+
+- When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
+- Then 研究試行ディレクトリ "submissions" が作られる
+
+## Scenario: result.json が保存される
+
+- When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
+- Then 研究試行ファイル "result.json" が作られる
+
+## Scenario: 研究試行メタデータには中立 JSON 提出プロトコルと solve の索引が保存される
 
 - When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
 - Then 研究試行 JSON ファイル "metadata.json" は次の部分 JSON を含む:
 
   ```json
   {
+    "submissionProtocol": "blind-neutral-circuit-json-v1",
     "model": {
       "registryId": "fake-qni",
       "provider": "openai-compatible",
@@ -107,8 +155,9 @@ OpenAI互換 provider を使って qni research solve を実行したい。
       "name": "qni-cli",
       "command": "qni research solve",
       "benchmarkRunner": "qni benchmark run-all",
-      "promptView": "sanitized-benchmark-task",
-      "submissionExtraction": "strict-trimmed-response"
+      "promptView": "neutral-benchmark-task",
+      "submissionExtraction": "strict-neutral-circuit-json-conversion",
+      "submissionProtocol": "blind-neutral-circuit-json-v1"
     },
     "tokens": {
       "inputTokens": 100,
@@ -127,7 +176,7 @@ OpenAI互換 provider を使って qni research solve を実行したい。
   }
   ```
 
-## Scenario: calls の索引には課題、プロンプト、応答、提出物、finish reason、tokens、cost の対応が保存される
+## Scenario: calls の索引には中立 JSON 提出プロトコル、課題、プロンプト、応答、提出物、finish reason、tokens、cost の対応が保存される
 
 - When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
 - Then 研究試行 JSON ファイル "calls.json" は次の部分 JSON を含む:
@@ -135,16 +184,22 @@ OpenAI互換 provider を使って qni research solve を実行したい。
   ```json
   {
     "schemaVersion": 1,
+    "submissionProtocol": "blind-neutral-circuit-json-v1",
     "calls": [
       {
         "taskId": "smoke/state-flip",
         "task": "benchmarks/smoke/state-flip.md",
         "prompt": "prompts/state-flip.md",
         "response": "responses/state-flip.md",
+        "circuitJson": "circuit-json/state-flip.json",
         "submission": "submissions/state-flip.qni",
+        "submissionProtocol": "blind-neutral-circuit-json-v1",
         "provider": "openai-compatible",
         "apiModel": "fake-qni-api",
         "finishReason": "stop",
+        "responseValidation": {
+          "status": "valid"
+        },
         "tokens": {
           "inputTokens": 100,
           "outputTokens": 20,
@@ -181,8 +236,32 @@ OpenAI互換 provider を使って qni research solve を実行したい。
 - When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
 - Then 研究試行ファイル "responses/state-return.md" の内容は:
 
-  ```text
-  qni add H --qubit 0 --step 1
+  ```json
+  {
+    "operations": [
+      {
+        "gate": "H",
+        "targets": [0]
+      }
+    ]
+  }
+  ```
+
+## Scenario: 複数課題の2つ目の中立 JSON 提出が保存される
+
+- Given 作業ディレクトリに solve 用の2課題ベンチマークスイート "benchmarks/smoke" を作る
+- When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
+- Then 研究試行 JSON ファイル "circuit-json/state-return.json" は次の部分 JSON を含む:
+
+  ```json
+  {
+    "operations": [
+      {
+        "gate": "H",
+        "targets": [0]
+      }
+    ]
+  }
   ```
 
 ## Scenario: 複数課題の2つ目の提出物が保存される
@@ -192,7 +271,7 @@ OpenAI互換 provider を使って qni research solve を実行したい。
 - Then 研究試行ファイル "submissions/state-return.qni" の内容は:
 
   ```text
-  qni add H --qubit 0 --step 1
+  qni add H --qubit 0 --step 0
   ```
 
 ## Scenario: 複数課題の calls 件数は課題数と一致する
@@ -303,20 +382,78 @@ OpenAI互換 provider を使って qni research solve を実行したい。
 - When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
 - Then 研究試行ディレクトリは作られない
 
-## Scenario: 不正な `.qni` 応答では採点結果に対応する終了コードを返す
+## Scenario: JSON 形式違反の応答では採点結果に対応する終了コードを返す
 
-- Given 偽 OpenAI互換 provider は応答本文 "これは qni コマンドではありません" を返す
+- Given 偽 OpenAI互換 provider は応答本文 "これは JSON ではありません" を返す
 - When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
-- Then 終了コードは 3
+- Then 終了コードは 2
 
-## Scenario: 不正な `.qni` 応答は研究試行に保存される
+## Scenario: JSON 形式違反の応答は disallowed として研究試行に保存される
 
-- Given 偽 OpenAI互換 provider は応答本文 "これは qni コマンドではありません" を返す
+- Given 偽 OpenAI互換 provider は応答本文 "これは JSON ではありません" を返す
 - When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
-- Then 研究試行ファイル "submissions/state-flip.qni" の内容は:
+- Then 研究試行 JSON ファイル "result.json" は次の部分 JSON を含む:
+
+  ```json
+  {
+    "status": "disallowed",
+    "summary": {
+      "total": 1,
+      "passed": 0,
+      "failed": 0,
+      "disallowed": 1,
+      "error": 0
+    },
+    "results": [
+      {
+        "status": "disallowed",
+        "submission": "submissions/state-flip.qni"
+      }
+    ]
+  }
+  ```
+
+## Scenario: JSON 形式違反の生応答は研究試行に保存される
+
+- Given 偽 OpenAI互換 provider は応答本文 "これは JSON ではありません" を返す
+- When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
+- Then 研究試行ファイル "responses/state-flip.md" の内容は:
 
   ```text
-  これは qni コマンドではありません
+  これは JSON ではありません
+  ```
+
+## Scenario: スキーマ違反の応答も disallowed として研究試行に保存される
+
+- Given 偽 OpenAI互換 provider は次の応答本文を返す:
+
+  ```json
+  {
+    "operations": [
+      {
+        "gate": "X",
+        "targets": [0]
+      }
+    ]
+  }
+  ```
+
+- When "qni research solve --model fake-qni --benchmark benchmarks/smoke --slug fake-openai" を実行
+- Then 研究試行 JSON ファイル "result.json" は次の部分 JSON を含む:
+
+  ```json
+  {
+    "status": "disallowed",
+    "summary": {
+      "total": 1,
+      "disallowed": 1
+    },
+    "results": [
+      {
+        "status": "disallowed"
+      }
+    ]
+  }
   ```
 
 ## Scenario: APIキーの値は保存された研究試行ファイルに含まれない

@@ -112,7 +112,7 @@ const SOLVE_HELP_TEXT = `Usage:
 Overview:
   Run one model from research/models.yaml against one benchmark suite.
   qni research solve calls an OpenAI-compatible Chat Completions provider.
-  It saves prompts, responses, trimmed submissions, usage, estimated cost, and grading output.
+  It saves prompts, raw responses, neutral circuit JSON, converted submissions, usage, estimated cost, and grading output.
 
 Required inputs:
   --model <registry-id>
@@ -129,6 +129,7 @@ Saved files:
   research/runs/<timestamp>-<slug>/response.md
   research/runs/<timestamp>-<slug>/prompts/
   research/runs/<timestamp>-<slug>/responses/
+  research/runs/<timestamp>-<slug>/circuit-json/
   research/runs/<timestamp>-<slug>/submissions/
   research/runs/<timestamp>-<slug>/calls.json
   research/runs/<timestamp>-<slug>/result.json
