@@ -12,6 +12,7 @@ export interface ResearchTrialInputPaths {
 
 export interface ResearchTrialExtraInputPaths {
   readonly calls?: string;
+  readonly circuitJson?: string;
   readonly prompts?: string;
   readonly responses?: string;
 }
@@ -148,6 +149,9 @@ function copyExtraResearchTrialInputs(inputPaths: ResearchTrialExtraInputPaths |
   if (inputPaths.responses) {
     cpSync(inputPaths.responses, path.join(stagingDir, 'responses'), { recursive: true });
   }
+  if (inputPaths.circuitJson) {
+    cpSync(inputPaths.circuitJson, path.join(stagingDir, 'circuit-json'), { recursive: true });
+  }
   if (inputPaths.calls) {
     copyFileSync(inputPaths.calls, path.join(stagingDir, 'calls.json'));
   }
@@ -278,6 +282,7 @@ function researchTrialSummaryExtraFileLines(inputPaths: ResearchTrialExtraInputP
   return [
     ...(inputPaths.prompts ? ['- Per-task prompts: ./prompts/'] : []),
     ...(inputPaths.responses ? ['- Per-task responses: ./responses/'] : []),
+    ...(inputPaths.circuitJson ? ['- Per-task circuit JSON: ./circuit-json/'] : []),
     ...(inputPaths.calls ? ['- Calls: ./calls.json'] : [])
   ];
 }

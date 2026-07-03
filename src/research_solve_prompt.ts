@@ -2,12 +2,15 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import path = require('node:path');
 
 import type { CommandHandlerContext } from './dispatcher';
-import { loadBenchmarkTask, type AllowedCommand } from './evaluation_runner/benchmark_task';
+import { loadBenchmarkTask } from './evaluation_runner/benchmark_task';
 import type { OpenAICompatibleMessage } from './openai_compatible_provider';
+import { BLIND_NEUTRAL_CIRCUIT_JSON_SUBMISSION_PROTOCOL } from './research_submission_protocol';
 
 export interface ResearchSolveTaskPrompt {
   readonly messages: readonly OpenAICompatibleMessage[];
+  readonly availableGates: readonly string[];
   readonly promptText: string;
+  readonly relativeCircuitJsonPath: string;
   readonly relativePromptPath: string;
   readonly relativeResponsePath: string;
   readonly relativeSubmissionPath: string;
@@ -37,16 +40,17 @@ export function buildResearchSolveTaskPrompts(options: {
     const taskBody = benchmarkTaskBody(readFileSync(taskPath, 'utf8'));
     const relativeTaskFilePosix = toPosixPath(relativeTaskFile);
     const relativeSubmissionFile = relativeTaskFilePosix.replace(/\.md$/u, '.qni');
+    const relativeCircuitJsonFile = relativeTaskFilePosix.replace(/\.md$/u, '.json');
     const messages = promptMessages({
-      allowedCommands: task.allowedCommands,
-      taskBody,
-      taskId: task.id,
-      title: task.title
+      availableGates: task.availableGates,
+      taskBody
     });
 
     return {
+      availableGates: task.availableGates,
       messages,
       promptText: savedPromptText(messages),
+      relativeCircuitJsonPath: toPosixPath(path.join('circuit-json', relativeCircuitJsonFile)),
       relativePromptPath: toPosixPath(path.join('prompts', relativeTaskFilePosix)),
       relativeResponsePath: toPosixPath(path.join('responses', relativeTaskFilePosix)),
       relativeSubmissionPath: toPosixPath(path.join('submissions', relativeSubmissionFile)),
@@ -60,50 +64,40 @@ export function buildResearchSolveTaskPrompts(options: {
 }
 
 function promptMessages(options: {
-  readonly allowedCommands: readonly AllowedCommand[];
+  readonly availableGates: readonly string[];
   readonly taskBody: string;
-  readonly taskId: string;
-  readonly title: string;
 }): readonly OpenAICompatibleMessage[] {
+  const responseRule = '有効な JSON だけを返す。Markdown で囲まない。説明を書かない。';
+
   return [
     {
       role: 'system',
       content: [
-        'あなたは qni-cli のベンチマーク課題に解答するAIです。',
-        '課題本文と許可コマンドだけを使って、評価ランナーへ提出する `.qni` ファイルの本文を作成してください。',
-        '検証用の内部情報は与えられていません。回答には検証用の内部情報を推測して書かないでください。'
+        'あなたは量子回路課題に解答するAIです。',
+        `利用可能ゲート一覧と課題本文だけを根拠に、中立回路 JSON プロトコル ${BLIND_NEUTRAL_CIRCUIT_JSON_SUBMISSION_PROTOCOL} の提出を作成してください。`,
+        responseRule
       ].join('\n')
     },
     {
       role: 'user',
       content: [
-        '# ベンチマーク課題',
+        '# neutral circuit task',
         '',
-        `- id: ${options.taskId}`,
-        `- title: ${options.title}`,
+        '## available_gates',
         '',
-        '## 許可コマンド',
+        ...options.availableGates.map((gate) => `- ${gate}`),
         '',
-        ...options.allowedCommands.map((command) => `- ${command.source}`),
+        '## response_format',
         '',
-        '## 出力ルール',
+        responseRule,
+        'トップレベルは object で、キーは operations だけです。',
+        'operations は配列です。配列の順序が回路の操作順序です。',
+        '各 operation は gate と targets を持ち、必要な場合だけ controls と angle を持ちます。',
+        'gate は available_gates にある名前を使います。',
+        'targets と controls は0始まりの非負整数配列です。',
+        'angle は pi を使った記号式の文字列です。数値ラジアンは使いません。',
         '',
-        '- 回答は `.qni` 形式だけにしてください。',
-        '- 1行に1つ、完全な `qni` コマンドを書いてください。',
-        '- 説明文、Markdown のコードフェンス、箇条書き、余談は出力しないでください。',
-        '- `qni run` や `qni expect` などの検証コマンドは書かないでください。',
-        '- 使用してよいのは、上の許可コマンドで始まる `qni` コマンドだけです。',
-        '- `--qubit` と `--step` は0始まりです。',
-        '',
-        '## 最小限の qni 書式',
-        '',
-        '```text',
-        'qni add <gate> --qubit <index> --step <index>',
-        'qni add <gate> --control <index>[,<index>...] --qubit <index>[,<index>...] --step <index>',
-        'qni add P --angle <angle> --qubit <index> --step <index>',
-        '```',
-        '',
-        '## 課題本文',
+        '## neutral_task_body',
         '',
         options.taskBody
       ].join('\n')

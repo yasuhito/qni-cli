@@ -72,12 +72,13 @@ qni research solve \
 2. `api_key_env` の環境変数から APIキーを読みます。
 3. ベンチマーク課題から、モデルに見せてよい課題ビューを生成します。
 4. 課題ごとに OpenAI互換 Chat Completions API を呼び出します。
-5. `choices[0].message.content` を `trim` し、その本文そのものを `.qni` 提出物として保存します。
-6. provider の `usage.prompt_tokens`、`usage.completion_tokens`、`usage.total_tokens` からトークン数と推定コストを集計します。
-7. `qni benchmark run-all` 相当の採点を実行します。
-8. `research/runs/<timestamp>-<slug>/` にプロンプト、応答、提出物、採点結果、calls、メタデータ、要約を保存します。
+5. `choices[0].message.content` の生応答を保存し、空白を除いて空なら試行不成立にします。
+6. 応答を `blind-neutral-circuit-json-v1` の中立回路 JSON として厳格に検証し、妥当な場合は `circuit-json/` に保存して `.qni` 提出物へ変換します。
+7. provider の `usage.prompt_tokens`、`usage.completion_tokens`、`usage.total_tokens` からトークン数と推定コストを集計します。
+8. `qni benchmark run-all` 相当の採点を実行します。
+9. `research/runs/<timestamp>-<slug>/` にプロンプト、応答、中立 JSON、提出物、採点結果、calls、メタデータ、要約を保存します。
 
-モデルに渡す課題ビューには、課題ID、タイトル、許可コマンド、frontmatter を除いた課題本文、出力ルール、最小限の `qni` 書式を含めます。採点用の `checks`、`grading_cases`、`setup_commands`、期待振幅、期待値、標準解、不正解サンプル、`research/runs` は渡しません。
+モデルに渡す課題ビューには、frontmatter の `available_gates` と frontmatter を除いた中立課題本文、中立 JSON 出力ルールだけを含めます。`qni`、`.qni`、許可コマンド、採点用の `checks`、`grading_cases`、`setup_commands`、期待振幅、期待値、標準解、不正解サンプル、`research/runs` は渡しません。
 
 保存される主なファイルは次のとおりです。
 
@@ -89,12 +90,13 @@ research/runs/<timestamp>-<slug>/
 ├── response.md
 ├── prompts/
 ├── responses/
+├── circuit-json/
 ├── submissions/
 ├── calls.json
 └── result.json
 ```
 
-`prompts/` には実際に送った課題ごとのプロンプト、`responses/` には provider から返った課題ごとの応答、`submissions/` には採点対象の `.qni` 提出物を保存します。`calls.json` には本文を重複保存せず、各課題のプロンプト、応答、提出物への相対パス、finish reason、トークン数、推定コストを保存します。`metadata.json` には `model`、`generation`、`harness`、`tokens`、`cost`、`score` などの索引を保存しますが、`base_url`、`api_key_env`、APIキー、HTTP headers は保存しません。
+`prompts/` には実際に送った課題ごとのプロンプト、`responses/` には provider から返った課題ごとの生応答、`circuit-json/` には検証済みの中立 JSON 提出、`submissions/` には採点対象の `.qni` 提出物を保存します。`calls.json` には本文を重複保存せず、各課題のプロンプト、応答、中立 JSON、提出物への相対パス、finish reason、トークン数、推定コスト、`submissionProtocol` を保存します。`metadata.json` には `submissionProtocol`、`model`、`generation`、`harness`、`tokens`、`cost`、`score` などの索引を保存しますが、`base_url`、`api_key_env`、APIキー、HTTP headers は保存しません。
 
 終了コードは次のとおりです。
 
@@ -105,7 +107,7 @@ research/runs/<timestamp>-<slug>/
 | `2` | 研究試行が成立し、採点状態が `disallowed`。 |
 | `3` | API、設定、usage 欠落、空応答、保存失敗、または採点状態 `error`。 |
 
-API 接続失敗、認証失敗、エラー応答、usage 欠落、空応答では、コストベンチマークとして成立しないため研究試行を作りません。モデル応答が `.qni` として不正な内容でも、応答が空でなければ提出物として保存し、採点結果に応じて研究試行に残します。
+API 接続失敗、認証失敗、エラー応答、usage 欠落、空応答では、コストベンチマークとして成立しないため研究試行を作りません。モデル応答が空ではないが JSON 形式違反またはスキーマ違反の場合は、生応答と不許可扱いの提出物を保存し、該当課題を `disallowed` として `score.total` に含めます。
 
 ## `qni research plot` を実行する
 

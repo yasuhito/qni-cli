@@ -355,9 +355,9 @@ function writeSolveBenchmarkTask(options) {
     'allowed_commands:',
     '  - qni add',
     'grading_cases:',
-    '  - id: hidden-setup',
+    '  - id: hidden-input',
     '    setup_commands:',
-    '      - qni add H --qubit 0 --step 0',
+    '      - qni state set "|0>"',
     '    checks:',
     '      tolerance: 1e-9',
     '      items:',
@@ -365,13 +365,17 @@ function writeSolveBenchmarkTask(options) {
     '          expected:',
     '            - basis: "|0>"',
     '              amplitude:',
-    '                real: 1',
+    '                real: 0.7071067811865475',
+    '                imaginary: 0',
+    '            - basis: "|1>"',
+    '              amplitude:',
+    '                real: 0.7071067811865475',
     '                imaginary: 0',
     '---',
     '',
     `課題本文の目印: ${options.marker}`,
     '',
-    '1量子ビットに Hadamard ゲートを適用し、指定された状態へ戻す `.qni` 提出物を書いてください。',
+    '1量子ビットを |0> から均等な重ね合わせ状態へ変える量子回路を設計してください。',
     ''
   ].join('\n'));
 }
@@ -1314,7 +1318,7 @@ Given('偽 OpenAI互換 provider は次の応答本文を返す:', async functio
 
 Given('偽 OpenAI互換 provider は usage 欠落応答を返す', async function () {
   if (!this.fakeOpenAIProvider) {
-    await startFakeOpenAIProvider(this, 'qni add H --qubit 0 --step 1');
+    await startFakeOpenAIProvider(this, '{"operations":[{"gate":"H","targets":[0]}]}');
   }
 
   resetFakeOpenAIProviderState(this.fakeOpenAIProvider, { omitUsage: true });
@@ -1322,7 +1326,7 @@ Given('偽 OpenAI互換 provider は usage 欠落応答を返す', async functio
 
 Given('偽 OpenAI互換 provider は HTTP 500 エラーを返す', async function () {
   if (!this.fakeOpenAIProvider) {
-    await startFakeOpenAIProvider(this, 'qni add H --qubit 0 --step 1');
+    await startFakeOpenAIProvider(this, '{"operations":[{"gate":"H","targets":[0]}]}');
   }
 
   resetFakeOpenAIProviderState(this.fakeOpenAIProvider, { httpStatus: 500 });
@@ -1330,7 +1334,7 @@ Given('偽 OpenAI互換 provider は HTTP 500 エラーを返す', async functio
 
 Given('偽 OpenAI互換 provider は呼び出し時に {string} を削除する', async function (filePath) {
   if (!this.fakeOpenAIProvider) {
-    await startFakeOpenAIProvider(this, 'qni add H --qubit 0 --step 1');
+    await startFakeOpenAIProvider(this, '{"operations":[{"gate":"H","targets":[0]}]}');
   }
 
   resetFakeOpenAIProviderState(this.fakeOpenAIProvider, { deletePathAfterRequest: filePath });

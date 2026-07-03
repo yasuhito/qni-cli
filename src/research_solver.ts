@@ -5,12 +5,17 @@ import path = require('node:path');
 import type { CommandHandlerContext } from './dispatcher';
 import { gradeBenchmarkSuite, type BenchmarkSuiteGradingResult } from './evaluation_runner';
 import {
+  convertNeutralCircuitJsonToQniSubmission,
+  NeutralCircuitJsonSubmissionError
+} from './evaluation_runner/neutral_circuit_json_submission';
+import {
   createOpenAICompatibleChatCompletion,
   openAICompatibleGenerationOptions,
   type OpenAICompatibleGenerationOptions,
   type OpenAICompatibleUsage
 } from './openai_compatible_provider';
 import { loadResearchModelRegistration, resolveModelApiKey, type ResearchModelRegistration } from './research_models';
+import { BLIND_NEUTRAL_CIRCUIT_JSON_SUBMISSION_PROTOCOL } from './research_submission_protocol';
 import { buildResearchSolveTaskPrompts, type ResearchSolveTaskPrompt } from './research_solve_prompt';
 import {
   planResearchTrialDirectory,
@@ -27,6 +32,7 @@ export interface ResearchSolveRequest {
 
 interface ResearchSolveArtifactPaths {
   readonly calls: string;
+  readonly circuitJson: string;
   readonly prompt: string;
   readonly prompts: string;
   readonly response: string;
@@ -37,6 +43,7 @@ interface ResearchSolveArtifactPaths {
 
 interface ResearchSolveCallRecord {
   readonly apiModel: string;
+  readonly circuitJson: string | null;
   readonly cost: {
     readonly totalUsd: number;
   };
@@ -44,7 +51,9 @@ interface ResearchSolveCallRecord {
   readonly prompt: string;
   readonly provider: 'openai-compatible';
   readonly response: string;
+  readonly responseValidation: ResearchSolveResponseValidation;
   readonly submission: string;
+  readonly submissionProtocol: typeof SUBMISSION_PROTOCOL;
   readonly task: string;
   readonly taskId: string;
   readonly tokens: {
@@ -54,6 +63,17 @@ interface ResearchSolveCallRecord {
   };
 }
 
+interface ValidResearchSolveResponseValidation {
+  readonly status: 'valid';
+}
+
+interface InvalidResearchSolveResponseValidation {
+  readonly error: string;
+  readonly status: 'invalid';
+}
+
+type ResearchSolveResponseValidation = ValidResearchSolveResponseValidation | InvalidResearchSolveResponseValidation;
+
 interface ResearchSolveTotals {
   readonly costTotalUsd: number;
   readonly inputTokens: number;
@@ -62,6 +82,9 @@ interface ResearchSolveTotals {
 }
 
 class ResearchSolveError extends Error {}
+
+const SUBMISSION_PROTOCOL = BLIND_NEUTRAL_CIRCUIT_JSON_SUBMISSION_PROTOCOL;
+const INVALID_NEUTRAL_CIRCUIT_JSON_SUBMISSION = 'qni __invalid-neutral-circuit-json-submission__';
 
 export function solveResearchTrial(request: ResearchSolveRequest, context: CommandHandlerContext): number {
   validateResearchTrialSlug(request.slug);
@@ -84,6 +107,7 @@ export function solveResearchTrial(request: ResearchSolveRequest, context: Comma
     writeResearchSolveSuiteResponse({ artifacts, calls, model, request });
     writeJsonFile(artifacts.calls, {
       schemaVersion: 1,
+      submissionProtocol: SUBMISSION_PROTOCOL,
       calls
     });
 
@@ -106,6 +130,7 @@ export function solveResearchTrial(request: ResearchSolveRequest, context: Comma
       extraInputPaths: {
         prompts: artifacts.prompts,
         responses: artifacts.responses,
+        circuitJson: artifacts.circuitJson,
         calls: artifacts.calls
       },
       inputPaths: {
@@ -144,10 +169,12 @@ function planResearchSolveTrialDirectory(
 
 function createResearchSolveArtifacts(): ResearchSolveArtifactPaths {
   const root = mkdtempSync(path.join(tmpdir(), 'qni-research-solve-'));
+  const circuitJson = path.join(root, 'circuit-json');
   const prompts = path.join(root, 'prompts');
   const responses = path.join(root, 'responses');
   const submissions = path.join(root, 'submissions');
 
+  mkdirSync(circuitJson, { recursive: true });
   mkdirSync(prompts, { recursive: true });
   mkdirSync(responses, { recursive: true });
   mkdirSync(submissions, { recursive: true });
@@ -155,6 +182,7 @@ function createResearchSolveArtifacts(): ResearchSolveArtifactPaths {
   return {
     root,
     calls: path.join(root, 'calls.json'),
+    circuitJson,
     prompt: path.join(root, 'prompt.md'),
     prompts,
     response: path.join(root, 'response.md'),
@@ -173,6 +201,7 @@ function runResearchSolveCalls(options: {
   return options.tasks.map((task) => {
     const promptPath = path.join(options.artifacts.root, task.relativePromptPath);
     const responsePath = path.join(options.artifacts.root, task.relativeResponsePath);
+    const circuitJsonPath = path.join(options.artifacts.root, task.relativeCircuitJsonPath);
     const submissionPath = path.join(options.artifacts.root, task.relativeSubmissionPath);
 
     writeTextFile(promptPath, task.promptText);
@@ -184,21 +213,37 @@ function runResearchSolveCalls(options: {
       generation: options.generation,
       messages: task.messages
     });
-    const submission = completion.content.trim();
+    const rawResponse = completion.content;
 
-    if (submission.length === 0) {
+    if (rawResponse.trim().length === 0) {
       throw new ResearchSolveError(`OpenAI-compatible provider returned an empty response for task: ${task.taskId}`);
     }
 
-    writeTextFile(responsePath, submission);
-    writeTextFile(submissionPath, submission);
+    writeTextFile(responsePath, rawResponse);
+
+    const submission = neutralCircuitJsonSubmission({
+      availableGates: task.availableGates,
+      rawResponse
+    });
+
+    if (submission.kind === 'valid') {
+      writeTextFile(circuitJsonPath, submission.circuitJson);
+      writeTextFile(submissionPath, submission.qniSubmission.trimEnd());
+    } else {
+      writeTextFile(submissionPath, INVALID_NEUTRAL_CIRCUIT_JSON_SUBMISSION);
+    }
 
     return {
       taskId: task.taskId,
       task: task.taskFile,
       prompt: task.relativePromptPath,
       response: task.relativeResponsePath,
+      circuitJson: submission.kind === 'valid' ? task.relativeCircuitJsonPath : null,
       submission: task.relativeSubmissionPath,
+      submissionProtocol: SUBMISSION_PROTOCOL,
+      responseValidation: submission.kind === 'valid'
+        ? { status: 'valid' }
+        : { status: 'invalid', error: submission.error },
       provider: options.model.provider,
       apiModel: options.model.apiModel,
       finishReason: completion.finishReason,
@@ -208,6 +253,36 @@ function runResearchSolveCalls(options: {
       }
     };
   });
+}
+
+function neutralCircuitJsonSubmission(options: {
+  readonly availableGates: readonly string[];
+  readonly rawResponse: string;
+}):
+  | { readonly circuitJson: string; readonly kind: 'valid'; readonly qniSubmission: string }
+  | { readonly error: string; readonly kind: 'invalid' } {
+  try {
+    const qniSubmission = convertNeutralCircuitJsonToQniSubmission({
+      availableGates: options.availableGates,
+      submissionText: options.rawResponse
+    });
+    const parsed = JSON.parse(options.rawResponse) as unknown;
+
+    return {
+      circuitJson: `${JSON.stringify(parsed, null, 2)}\n`,
+      kind: 'valid',
+      qniSubmission
+    };
+  } catch (error) {
+    if (error instanceof NeutralCircuitJsonSubmissionError) {
+      return {
+        error: error.message,
+        kind: 'invalid'
+      };
+    }
+
+    throw error;
+  }
 }
 
 function solveGradingResult(options: {
@@ -237,8 +312,9 @@ function writeResearchSolveSuitePrompt(options: {
     `- model: ${options.model.registryId}`,
     `- benchmark: ${options.request.benchmark}`,
     `- tasks: ${options.tasks.length}`,
-    '- prompt view: sanitized-benchmark-task',
-    '- submission extraction: strict-trimmed-response',
+    '- prompt view: neutral-benchmark-task',
+    `- submission protocol: ${SUBMISSION_PROTOCOL}`,
+    '- submission extraction: strict-neutral-circuit-json-conversion',
     '',
     '## Per-task prompts',
     '',
@@ -262,7 +338,11 @@ function writeResearchSolveSuiteResponse(options: {
     '',
     '## Per-task responses and submissions',
     '',
-    ...options.calls.map((call) => `- ${call.taskId}: ./${call.response} -> ./${call.submission}`),
+    ...options.calls.map((call) => [
+      `- ${call.taskId}: ./${call.response}`,
+      call.circuitJson ? ` -> ./${call.circuitJson}` : ' -> invalid neutral circuit JSON',
+      ` -> ./${call.submission}`
+    ].join('')),
     ''
   ].join('\n'));
 }
@@ -291,6 +371,7 @@ function researchSolveMetadata(options: {
   const scoreTotal = options.result.summary.total;
 
   return {
+    submissionProtocol: SUBMISSION_PROTOCOL,
     model: {
       registryId: options.model.registryId,
       provider: options.model.provider,
@@ -301,8 +382,9 @@ function researchSolveMetadata(options: {
       name: 'qni-cli',
       command: 'qni research solve',
       benchmarkRunner: 'qni benchmark run-all',
-      promptView: 'sanitized-benchmark-task',
-      submissionExtraction: 'strict-trimmed-response'
+      promptView: 'neutral-benchmark-task',
+      submissionExtraction: 'strict-neutral-circuit-json-conversion',
+      submissionProtocol: SUBMISSION_PROTOCOL
     },
     tokens: {
       inputTokens: options.totals.inputTokens,
