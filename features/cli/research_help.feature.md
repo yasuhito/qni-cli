@@ -18,7 +18,7 @@ qni research record のヘルプを見たい。
   Required inputs:
     --collaborator <name>
     --benchmark <dir>
-    --submissions <dir>
+    one of --submissions <dir> or --circuit-json-dir <dir>
     --prompt <file>
     --response <file>
     --slug <slug>
@@ -36,6 +36,7 @@ qni research record のヘルプを見たい。
     research/runs/<timestamp>-<slug>/prompt.md
     research/runs/<timestamp>-<slug>/response.md
     research/runs/<timestamp>-<slug>/submissions/
+    research/runs/<timestamp>-<slug>/circuit-json/  (when --circuit-json-dir is used)
     research/runs/<timestamp>-<slug>/result.json
   ```
 

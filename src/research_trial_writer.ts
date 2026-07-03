@@ -4,6 +4,7 @@ import path = require('node:path');
 import type { BenchmarkSuiteGradingResult } from './evaluation_runner';
 
 export interface ResearchTrialInputPaths {
+  readonly circuitJson?: string;
   readonly prompt: string;
   readonly response: string;
   readonly submissions: string;
@@ -111,6 +112,7 @@ export function writeResearchTrialDirectory(request: ResearchTrialDirectoryWrite
     copyFileSync(request.inputPaths.prompt, path.join(stagingDir, 'prompt.md'));
     copyFileSync(request.inputPaths.response, path.join(stagingDir, 'response.md'));
     cpSync(request.inputPaths.submissions, path.join(stagingDir, 'submissions'), { recursive: true });
+    copyOptionalResearchTrialInputDirectory(request.inputPaths.circuitJson, path.join(stagingDir, 'circuit-json'));
     copyExtraResearchTrialInputs(request.extraInputPaths, stagingDir);
     writeJsonFile(path.join(stagingDir, 'result.json'), request.result);
     writeJsonFile(path.join(stagingDir, 'metadata.json'), researchMetadata(request, score));
@@ -126,6 +128,12 @@ export function writeResearchTrialDirectory(request: ResearchTrialDirectoryWrite
       throw researchTrialDestinationError(request.plan);
     }
     throw error;
+  }
+}
+
+function copyOptionalResearchTrialInputDirectory(inputPath: string | undefined, destination: string): void {
+  if (inputPath) {
+    cpSync(inputPath, destination, { recursive: true });
   }
 }
 
@@ -195,12 +203,17 @@ function researchMetadata(
     collaborator: request.collaborator,
     benchmark: request.benchmark,
     submissions: 'submissions',
+    ...optionalCircuitJsonMetadata(request.inputPaths),
     prompt: 'prompt.md',
     response: 'response.md',
     result: 'result.json',
     status: request.result.status,
     score
   };
+}
+
+function optionalCircuitJsonMetadata(inputPaths: ResearchTrialInputPaths): Record<string, string> {
+  return inputPaths.circuitJson ? { circuitJson: 'circuit-json' } : {};
 }
 
 function researchTrialScore(result: BenchmarkSuiteGradingResult): ResearchTrialScore {
@@ -234,10 +247,15 @@ function researchTrialSummary(request: ResearchTrialDirectoryWriteRequest, score
     '- Prompt: ./prompt.md',
     '- Response: ./response.md',
     ...researchTrialSummaryExtraFileLines(request.extraInputPaths),
+    ...researchTrialSummaryCircuitJsonFileLines(request.inputPaths),
     '- Submissions: ./submissions/',
     '- Result: ./result.json',
     ''
   ].join('\n');
+}
+
+function researchTrialSummaryCircuitJsonFileLines(inputPaths: ResearchTrialInputPaths): string[] {
+  return inputPaths.circuitJson ? ['- Circuit JSON: ./circuit-json/'] : [];
 }
 
 function researchTrialSummaryExtraLines(summary: ResearchTrialSummaryExtras | undefined): string[] {
