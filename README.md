@@ -6,14 +6,16 @@ Qni CoResearcher は、自然言語の量子回路課題、`.qni` 提出物、qn
 
 `qni benchmark` と `qni research record` は AI を呼びません。モデル別コストベンチマークで使う `qni research solve` だけは、`research/models.yaml` の登録に従って OpenAI互換 Chat Completions API を直接呼び出します。複数エージェント処理やプロバイダー抽象は、現時点では qni-cli にありません。
 
+評価ランナーと研究プロトコルの違いは [ベンチマークと研究試行](docs/benchmark.md) で確認できます。`qni benchmark` は `.qni` 提出物を採点する評価ランナーで、`qni research solve` と `qni research record --circuit-json-dir` は中立回路 JSON を受け取る `blind-neutral-circuit-json-v1` の研究プロトコルです。既存の `.qni` 直接提出は `qni-command-output-v0` の legacy protocol として残し、公平比較用の結果とは分けて扱います。
+
 ## 研究の流れ
 
 Qni CoResearcher の基本的な流れは、ベンチマーク課題 → `.qni` 提出物 → 決定論的な採点 → 研究試行ログとレポートです。
 
 1. ベンチマーク課題は、自然言語の課題文と採点用の検証条件を Markdown と frontmatter で持ちます。
-2. 共同研究者は、課題文を読み、1行に1つの完全な `qni ...` コマンドを書く `.qni` 提出物を作ります。
-3. `qni benchmark run` または `qni benchmark run-all` が、提出物を一時的な作業場所で実行し、状態ベクトルや期待値などの検証条件に照らして採点します。
-4. 外部で作った成果物は `qni research record` が、登録済みモデルを直接実行する場合は `qni research solve` が、プロンプト、回答、提出物、採点結果を `research/runs/<timestamp>-<slug>/` に保存します。
+2. 公平比較用の主経路では、共同研究者やモデルは qni-cli 固有語彙を見ずに中立回路 JSON を作ります。既存の `.qni` 直接提出経路では、1行に1つの完全な `qni ...` コマンドを書く `.qni` 提出物を作ります。
+3. `qni benchmark run` または `qni benchmark run-all` が、`.qni` 提出物を一時的な作業場所で実行し、状態ベクトルや期待値などの検証条件に照らして採点します。中立回路 JSON は研究コマンド内で `.qni` に変換してから同じ評価ランナーに渡します。
+4. 外部で作った成果物は `qni research record` が、登録済みモデルを直接実行する場合は `qni research solve` が、プロンプト、回答、提出物、採点結果を `research/runs/<timestamp>-<slug>/` に保存します。研究試行の `submissionProtocol` で `blind-neutral-circuit-json-v1` と `qni-command-output-v0` を区別します。
 5. `qni research report` が保存済みの研究試行を読み、`qni research plot` がモデル別コストベンチマークの散布図を生成します。
 
 研究ログでは、リポジトリファイルを永続的な状態として扱い、会話セッションは一時的な作業文脈として扱います。共同研究者とのやり取りが終わっても、課題、提出物、プロンプト、回答、採点結果がファイルとして残るため、後から比較、レビュー、再利用できます。

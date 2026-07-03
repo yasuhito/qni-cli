@@ -4,6 +4,12 @@
 
 以下の例はリポジトリルートから実行します。開発中の作業ツリーで試す場合は、先に `npm run build` を実行し、`qni` を `node dist/bin/qni.js` に読み替えてください。
 
+## 提出プロトコル
+
+`qni research solve` の既定の提出プロトコルは `blind-neutral-circuit-json-v1` です。モデルには qni-cli 固有のコマンドや `.qni` 形式を知らせず、利用可能ゲート一覧と中立化された課題本文だけを渡し、有効な JSON だけを返させます。qni-cli は返答を厳格に検証して `circuit-json/` に保存し、内部で `.qni` 提出物へ変換してから評価ランナーで採点します。
+
+既存の `.qni` 直接提出は `qni-command-output-v0` の legacy protocol として残します。モデル別コストベンチマークで公平比較する結果は、`metadata.json` と `calls.json` の `submissionProtocol` が `blind-neutral-circuit-json-v1` の研究試行にそろえてください。`qni-command-output-v0` の結果は、qni-cli の使い方を知っている共同研究者の legacy 経路として別枠で扱います。
+
 ## 実行前に確認すること
 
 `qni research record` と `qni research solve` は、同じ研究試行ディレクトリ形式を使いますが、AI 呼び出しの有無が違います。
