@@ -4,6 +4,7 @@ import path = require('node:path');
 import type { CommandHandlerContext } from './dispatcher';
 import { loadBenchmarkTask } from './evaluation_runner/benchmark_task';
 import type { OpenAICompatibleMessage } from './openai_compatible_provider';
+import { BLIND_NEUTRAL_CIRCUIT_JSON_SUBMISSION_PROTOCOL } from './research_submission_protocol';
 
 export interface ResearchSolveTaskPrompt {
   readonly messages: readonly OpenAICompatibleMessage[];
@@ -73,7 +74,7 @@ function promptMessages(options: {
       role: 'system',
       content: [
         'あなたは量子回路課題に解答するAIです。',
-        '利用可能ゲート一覧と課題本文だけを根拠に、中立回路 JSON プロトコル blind-neutral-circuit-json-v1 の提出を作成してください。',
+        `利用可能ゲート一覧と課題本文だけを根拠に、中立回路 JSON プロトコル ${BLIND_NEUTRAL_CIRCUIT_JSON_SUBMISSION_PROTOCOL} の提出を作成してください。`,
         responseRule
       ].join('\n')
     },

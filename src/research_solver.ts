@@ -15,6 +15,7 @@ import {
   type OpenAICompatibleUsage
 } from './openai_compatible_provider';
 import { loadResearchModelRegistration, resolveModelApiKey, type ResearchModelRegistration } from './research_models';
+import { BLIND_NEUTRAL_CIRCUIT_JSON_SUBMISSION_PROTOCOL } from './research_submission_protocol';
 import { buildResearchSolveTaskPrompts, type ResearchSolveTaskPrompt } from './research_solve_prompt';
 import {
   planResearchTrialDirectory,
@@ -82,7 +83,7 @@ interface ResearchSolveTotals {
 
 class ResearchSolveError extends Error {}
 
-const SUBMISSION_PROTOCOL = 'blind-neutral-circuit-json-v1';
+const SUBMISSION_PROTOCOL = BLIND_NEUTRAL_CIRCUIT_JSON_SUBMISSION_PROTOCOL;
 const INVALID_NEUTRAL_CIRCUIT_JSON_SUBMISSION = 'qni __invalid-neutral-circuit-json-submission__';
 
 export function solveResearchTrial(request: ResearchSolveRequest, context: CommandHandlerContext): number {
