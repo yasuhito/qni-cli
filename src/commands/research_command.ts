@@ -1,8 +1,10 @@
-import { existsSync, statSync } from 'node:fs';
+import { existsSync, mkdtempSync, rmSync, statSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import path = require('node:path');
 
 import type { CommandHandlerContext } from '../dispatcher';
-import { gradeBenchmarkSuite } from '../evaluation_runner';
+import { gradeBenchmarkSuite, type BenchmarkSuiteGradingResult } from '../evaluation_runner';
+import { writeNeutralCircuitJsonDirectoryAsQniSubmissions } from '../evaluation_runner/neutral_circuit_json_submission';
 import { writeResearchPlotHtml } from '../research_plot';
 import {
   buildResearchReport,
@@ -21,11 +23,12 @@ import {
 
 interface ResearchRecordRequest {
   readonly benchmark: string;
+  readonly circuitJsonDir?: string;
   readonly collaborator: string;
   readonly prompt: string;
   readonly response: string;
   readonly slug: string;
-  readonly submissions: string;
+  readonly submissions?: string;
 }
 
 interface ResearchPlotRequest {
@@ -33,10 +36,27 @@ interface ResearchPlotRequest {
   readonly output: string;
 }
 
-interface ResearchRecordPlan {
+interface ResearchRecordInputPaths {
+  readonly benchmark: string;
+  readonly circuitJsonDir?: string;
+  readonly prompt: string;
+  readonly response: string;
+  readonly submissions?: string;
+}
+
+interface ResearchRecordPreparedSubmissionInput {
   readonly inputPaths: ResearchTrialInputPaths;
+  readonly result: BenchmarkSuiteGradingResult;
+  readonly submissionProtocol: SubmissionProtocol;
+  readonly temporarySubmissionsDir?: string;
+}
+
+interface ResearchRecordPlan {
+  readonly inputPaths: ResearchRecordInputPaths;
   readonly trial: ResearchTrialPlan;
 }
+
+type SubmissionProtocol = 'blind-neutral-circuit-json-v1' | 'qni-command-output-v0';
 
 type ResearchRecordOption = keyof ResearchRecordRequest;
 type ResearchSolveOption = keyof ResearchSolveRequest;
@@ -49,7 +69,7 @@ const RESEARCH_USAGE = [
   ''
 ].join('\n');
 const RECORD_USAGE = [
-  'Usage: qni research record --collaborator <name> --benchmark <dir> --submissions <dir> --prompt <file> --response <file> --slug <slug>',
+  'Usage: qni research record --collaborator <name> --benchmark <dir> (--submissions <dir> | --circuit-json-dir <dir>) --prompt <file> --response <file> --slug <slug>',
   ''
 ].join('\n');
 const SOLVE_USAGE = [
@@ -75,7 +95,7 @@ Commands:
 
 Run qni research COMMAND --help for command details.`;
 const RECORD_HELP_TEXT = `Usage:
-  qni research record --collaborator <name> --benchmark <dir> --submissions <dir> --prompt <file> --response <file> --slug <slug>
+  qni research record --collaborator <name> --benchmark <dir> (--submissions <dir> | --circuit-json-dir <dir>) --prompt <file> --response <file> --slug <slug>
 
 Overview:
   Record one external collaborator trial for one benchmark suite.
@@ -85,7 +105,7 @@ Overview:
 Required inputs:
   --collaborator <name>
   --benchmark <dir>
-  --submissions <dir>
+  one of --submissions <dir> or --circuit-json-dir <dir>
   --prompt <file>
   --response <file>
   --slug <slug>
@@ -96,6 +116,7 @@ Saved files:
   research/runs/<timestamp>-<slug>/prompt.md
   research/runs/<timestamp>-<slug>/response.md
   research/runs/<timestamp>-<slug>/submissions/
+  research/runs/<timestamp>-<slug>/circuit-json/  (when --circuit-json-dir is used)
   research/runs/<timestamp>-<slug>/result.json
 
 Exit codes:
@@ -105,7 +126,8 @@ Exit codes:
   3  error or input/save failure
 
 Example:
-  qni research record --collaborator claude-sonnet-4 --benchmark benchmarks/quantum-katas --submissions tmp/submissions --prompt tmp/prompt.md --response tmp/response.md --slug smoke-claude`;
+  qni research record --collaborator claude-sonnet-4 --benchmark benchmarks/quantum-katas --submissions tmp/submissions --prompt tmp/prompt.md --response tmp/response.md --slug smoke-claude
+  qni research record --collaborator external-agent --benchmark benchmarks/quantum-katas --circuit-json-dir tmp/circuit-json --prompt tmp/prompt.md --response tmp/response.md --slug neutral-json`;
 const SOLVE_HELP_TEXT = `Usage:
   qni research solve --model <registry-id> --benchmark <dir> --slug <slug>
 
@@ -179,6 +201,7 @@ Exit codes:
   3  invalid arguments or research/runs/ could not be read`;
 const RECORD_OPTION_NAMES = new Map<string, ResearchRecordOption>([
   ['--benchmark', 'benchmark'],
+  ['--circuit-json-dir', 'circuitJsonDir'],
   ['--collaborator', 'collaborator'],
   ['--prompt', 'prompt'],
   ['--response', 'response'],
@@ -372,19 +395,19 @@ function parseResearchRecordRequest(argv: readonly string[]): ResearchRecordRequ
     values.collaborator === undefined ||
     values.prompt === undefined ||
     values.response === undefined ||
-    values.slug === undefined ||
-    values.submissions === undefined
+    values.slug === undefined
   ) {
     return undefined;
   }
 
   return {
     benchmark: values.benchmark,
+    ...(values.circuitJsonDir === undefined ? {} : { circuitJsonDir: values.circuitJsonDir }),
     collaborator: values.collaborator,
     prompt: values.prompt,
     response: values.response,
     slug: values.slug,
-    submissions: values.submissions
+    ...(values.submissions === undefined ? {} : { submissions: values.submissions })
   };
 }
 
@@ -449,21 +472,108 @@ function parseOptionValues<OptionName extends string>(
 
 function recordResearchTrial(request: ResearchRecordRequest, context: CommandHandlerContext): number {
   const plan = planResearchRecord(request, context);
-  const result = gradeBenchmarkSuite({
-    benchmarkDir: request.benchmark,
-    solutionsDir: request.submissions
-  }, context);
+  const preparedInput = prepareResearchRecordSubmissionInput({ context, plan, request });
 
-  writeResearchTrialDirectory({
-    benchmark: request.benchmark,
-    collaborator: request.collaborator,
-    inputPaths: plan.inputPaths,
-    plan: plan.trial,
-    result
-  });
-  process.stdout.write(`Recorded research trial: ${plan.trial.relativePath}\n`);
+  try {
+    writeResearchTrialDirectory({
+      benchmark: request.benchmark,
+      collaborator: request.collaborator,
+      inputPaths: preparedInput.inputPaths,
+      metadata: {
+        submissionProtocol: preparedInput.submissionProtocol
+      },
+      plan: plan.trial,
+      result: preparedInput.result
+    });
+    process.stdout.write(`Recorded research trial: ${plan.trial.relativePath}\n`);
 
-  return result.exitCode;
+    return preparedInput.result.exitCode;
+  } finally {
+    cleanupPreparedResearchRecordSubmissionInput(preparedInput);
+  }
+}
+
+function prepareResearchRecordSubmissionInput(options: {
+  readonly context: CommandHandlerContext;
+  readonly plan: ResearchRecordPlan;
+  readonly request: ResearchRecordRequest;
+}): ResearchRecordPreparedSubmissionInput {
+  if (options.plan.inputPaths.submissions) {
+    return {
+      inputPaths: {
+        prompt: options.plan.inputPaths.prompt,
+        response: options.plan.inputPaths.response,
+        submissions: options.plan.inputPaths.submissions
+      },
+      result: gradeBenchmarkSuite({
+        benchmarkDir: options.request.benchmark,
+        solutionsDir: options.request.submissions ?? ''
+      }, options.context),
+      submissionProtocol: 'qni-command-output-v0'
+    };
+  }
+
+  return prepareNeutralCircuitJsonRecordSubmissionInput(options);
+}
+
+function prepareNeutralCircuitJsonRecordSubmissionInput(options: {
+  readonly context: CommandHandlerContext;
+  readonly plan: ResearchRecordPlan;
+  readonly request: ResearchRecordRequest;
+}): ResearchRecordPreparedSubmissionInput {
+  if (!options.plan.inputPaths.circuitJsonDir) {
+    throw new ResearchRecordError('Internal error: missing validated --circuit-json-dir path.');
+  }
+
+  const temporarySubmissionsDir = mkdtempSync(path.join(tmpdir(), 'qni-research-record-submissions-'));
+
+  try {
+    const conversion = writeNeutralCircuitJsonDirectoryAsQniSubmissions({
+      benchmarkDirPath: options.plan.inputPaths.benchmark,
+      circuitJsonDirPath: options.plan.inputPaths.circuitJsonDir,
+      outputDirPath: temporarySubmissionsDir
+    });
+    const result = rewriteNeutralCircuitJsonSubmissionPaths(gradeBenchmarkSuite({
+      benchmarkDir: options.request.benchmark,
+      solutionsDir: temporarySubmissionsDir
+    }, options.context), conversion.relativeSubmissionFiles);
+
+    return {
+      inputPaths: {
+        circuitJson: options.plan.inputPaths.circuitJsonDir,
+        prompt: options.plan.inputPaths.prompt,
+        response: options.plan.inputPaths.response,
+        submissions: temporarySubmissionsDir
+      },
+      result,
+      submissionProtocol: 'blind-neutral-circuit-json-v1',
+      temporarySubmissionsDir
+    };
+  } catch (error) {
+    rmSync(temporarySubmissionsDir, { force: true, recursive: true });
+    throw error;
+  }
+}
+
+function rewriteNeutralCircuitJsonSubmissionPaths(
+  result: BenchmarkSuiteGradingResult,
+  relativeSubmissionFiles: readonly string[]
+): BenchmarkSuiteGradingResult {
+  return {
+    ...result,
+    results: result.results.map((item, index) => ({
+      ...item,
+      submission: relativeSubmissionFiles[index]
+        ? toPosixPath(path.join('submissions', relativeSubmissionFiles[index]))
+        : item.submission
+    }))
+  };
+}
+
+function cleanupPreparedResearchRecordSubmissionInput(input: ResearchRecordPreparedSubmissionInput): void {
+  if (input.temporarySubmissionsDir) {
+    rmSync(input.temporarySubmissionsDir, { force: true, recursive: true });
+  }
 }
 
 function planResearchRecord(request: ResearchRecordRequest, context: CommandHandlerContext): ResearchRecordPlan {
@@ -484,34 +594,78 @@ function planResearchRecord(request: ResearchRecordRequest, context: CommandHand
 function validateResearchRecordInputs(
   request: ResearchRecordRequest,
   context: CommandHandlerContext
-): ResearchTrialInputPaths {
-  requireDirectoryInput({
+): ResearchRecordInputPaths {
+  validateResearchRecordSubmissionSource(request);
+
+  const benchmark = requireDirectoryInput({
     inputPath: request.benchmark,
     missingMessage: `Benchmark suite directory does not exist: ${request.benchmark}`,
     optionName: '--benchmark',
     typeMessage: `Benchmark suite path is not a directory: ${request.benchmark}`
   }, context);
+  const prompt = requireFileInput({
+    inputPath: request.prompt,
+    missingMessage: `Prompt file does not exist: ${request.prompt}`,
+    optionName: '--prompt',
+    typeMessage: `Prompt path is not a file: ${request.prompt}`
+  }, context);
+  const response = requireFileInput({
+    inputPath: request.response,
+    missingMessage: `AI response file does not exist: ${request.response}`,
+    optionName: '--response',
+    typeMessage: `AI response path is not a file: ${request.response}`
+  }, context);
 
-  return {
-    prompt: requireFileInput({
-      inputPath: request.prompt,
-      missingMessage: `Prompt file does not exist: ${request.prompt}`,
-      optionName: '--prompt',
-      typeMessage: `Prompt path is not a file: ${request.prompt}`
-    }, context),
-    response: requireFileInput({
-      inputPath: request.response,
-      missingMessage: `AI response file does not exist: ${request.response}`,
-      optionName: '--response',
-      typeMessage: `AI response path is not a file: ${request.response}`
-    }, context),
-    submissions: requireDirectoryInput({
-      inputPath: request.submissions,
-      missingMessage: `Submissions directory does not exist: ${request.submissions}`,
-      optionName: '--submissions',
-      typeMessage: `Submissions path is not a directory: ${request.submissions}`
-    }, context)
-  };
+  if (request.submissions !== undefined) {
+    return {
+      benchmark,
+      prompt,
+      response,
+      submissions: requireDirectoryInput({
+        inputPath: request.submissions,
+        missingMessage: `Submissions directory does not exist: ${request.submissions}`,
+        optionName: '--submissions',
+        typeMessage: `Submissions path is not a directory: ${request.submissions}`
+      }, context)
+    };
+  }
+
+  if (request.circuitJsonDir !== undefined) {
+    return {
+      benchmark,
+      circuitJsonDir: requireDirectoryInput({
+        inputPath: request.circuitJsonDir,
+        missingMessage: `Circuit JSON directory does not exist: ${request.circuitJsonDir}`,
+        optionName: '--circuit-json-dir',
+        typeMessage: `Circuit JSON path is not a directory: ${request.circuitJsonDir}`
+      }, context),
+      prompt,
+      response
+    };
+  }
+
+  throw new ResearchRecordError('Internal error: missing submission input after validation.');
+}
+
+function validateResearchRecordSubmissionSource(request: ResearchRecordRequest): void {
+  const sourceCount = [request.submissions, request.circuitJsonDir]
+    .filter((value) => value !== undefined).length;
+
+  if (sourceCount === 1) {
+    return;
+  }
+
+  if (sourceCount === 0) {
+    throw new ResearchRecordError([
+      'Specify exactly one submission input: --submissions or --circuit-json-dir.',
+      'Pass --submissions <dir> for .qni submissions or --circuit-json-dir <dir> for neutral circuit JSON submissions.'
+    ].join('\n'));
+  }
+
+  throw new ResearchRecordError([
+    'Specify exactly one submission input: --submissions or --circuit-json-dir.',
+    'Remove one of --submissions or --circuit-json-dir.'
+  ].join('\n'));
 }
 
 function requireFileInput(options: {
@@ -577,6 +731,10 @@ function resolveInputPath(filePath: string, context: CommandHandlerContext): str
   const cwdPath = path.resolve(context.cwd, filePath);
 
   return existsSync(cwdPath) ? cwdPath : path.resolve(context.projectRoot, filePath);
+}
+
+function toPosixPath(filePath: string): string {
+  return filePath.split(path.sep).join('/');
 }
 
 function errorMessage(error: unknown): string {

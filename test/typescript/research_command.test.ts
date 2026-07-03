@@ -114,6 +114,43 @@ async function prepareResearchInputs(dir: string): Promise<void> {
   await writeFile(path.join(dir, 'response.md'), 'I wrote the requested .qni submissions.\n');
 }
 
+async function prepareNeutralCircuitJsonBenchmark(dir: string): Promise<void> {
+  const taskPath = path.join(dir, 'neutral-benchmark', 'basic', 'state-flip.md');
+
+  await mkdir(path.dirname(taskPath), { recursive: true });
+  await writeFile(taskPath, [
+    '---',
+    'id: smoke/state-flip',
+    'title: Smoke State Flip',
+    'source: qni-cli test',
+    'difficulty: smoke',
+    'available_gates:',
+    '  - X(target)',
+    'allowed_commands:',
+    '  - qni add',
+    'checks:',
+    '  tolerance: 1e-9',
+    '  items:',
+    '    - type: run',
+    '      expected:',
+    '        - basis: "|1>"',
+    '          amplitude:',
+    '            real: 1',
+    '            imaginary: 0',
+    '---',
+    '',
+    '1量子ビットを |1> にしてください。',
+    ''
+  ].join('\n'));
+}
+
+async function writeNeutralCircuitJsonSubmission(dir: string, submissionText: string): Promise<void> {
+  const submissionPath = path.join(dir, 'neutral-json', 'basic', 'state-flip.json');
+
+  await mkdir(path.dirname(submissionPath), { recursive: true });
+  await writeFile(submissionPath, submissionText);
+}
+
 async function prepareQuantumKatasSubmissions(
   dir: string,
   submissionsDir: string,
@@ -802,6 +839,7 @@ describe('research command TypeScript route', () => {
         collaborator: 'claude-sonnet-4',
         benchmark: 'benchmarks/quantum-katas',
         submissions: 'submissions',
+        submissionProtocol: 'qni-command-output-v0',
         prompt: 'prompt.md',
         response: 'response.md',
         result: 'result.json',
@@ -836,6 +874,145 @@ describe('research command TypeScript route', () => {
       assert.equal((await stat(path.join(trialDir, 'submissions', 'basic-gates', 'phase-flip.qni'))).isFile(), true);
       assert.equal((await stat(path.join(trialDir, 'submissions', 'basic-gates', 'sign-flip.qni'))).isFile(), true);
       assert.equal((await stat(path.join(trialDir, 'submissions', 'basic-gates', 'state-flip.qni'))).isFile(), true);
+    });
+  });
+
+  it('records neutral circuit JSON input with raw and converted submissions', async () => {
+    await withTempDir(async (dir) => {
+      await prepareResearchInputs(dir);
+      await prepareNeutralCircuitJsonBenchmark(dir);
+      await writeNeutralCircuitJsonSubmission(dir, JSON.stringify({
+        operations: [
+          { gate: 'X', targets: [0] }
+        ]
+      }));
+
+      const result = captureDispatcherRun(dir, [
+        'research',
+        'record',
+        '--collaborator',
+        'external-agent',
+        '--benchmark',
+        'neutral-benchmark',
+        '--circuit-json-dir',
+        'neutral-json',
+        '--prompt',
+        'prompt.md',
+        '--response',
+        'response.md',
+        '--slug',
+        'neutral-json'
+      ]);
+      const trialDir = await singleTrialDir(dir);
+      const metadata = await readJsonFile(path.join(trialDir, 'metadata.json'));
+      const gradingResult = await readJsonFile(path.join(trialDir, 'result.json'));
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stderr, '');
+      assert.equal(metadata.submissionProtocol, 'blind-neutral-circuit-json-v1');
+      assert.equal(metadata.circuitJson, 'circuit-json');
+      assert.equal(metadata.submissions, 'submissions');
+      assert.equal(gradingResult.status, 'passed');
+      assert.deepStrictEqual(gradingResult.summary, {
+        total: 1,
+        passed: 1,
+        failed: 0,
+        disallowed: 0,
+        error: 0
+      });
+      assert.deepStrictEqual(
+        (gradingResult.results as readonly Record<string, unknown>[]).map((item) => item.submission),
+        ['submissions/basic/state-flip.qni']
+      );
+      assert.equal(
+        await readFile(path.join(trialDir, 'circuit-json', 'basic', 'state-flip.json'), 'utf8'),
+        JSON.stringify({ operations: [{ gate: 'X', targets: [0] }] })
+      );
+      assert.equal(
+        await readFile(path.join(trialDir, 'submissions', 'basic', 'state-flip.qni'), 'utf8'),
+        'qni add X --qubit 0 --step 0\n'
+      );
+    });
+  });
+
+  it('records invalid neutral circuit JSON as a disallowed research trial', async () => {
+    await withTempDir(async (dir) => {
+      await prepareResearchInputs(dir);
+      await prepareNeutralCircuitJsonBenchmark(dir);
+      await writeNeutralCircuitJsonSubmission(dir, JSON.stringify({
+        operations: [
+          { gate: 'RX', angle: 'pi/2', targets: [0] }
+        ]
+      }));
+
+      const result = captureDispatcherRun(dir, [
+        'research',
+        'record',
+        '--collaborator',
+        'external-agent',
+        '--benchmark',
+        'neutral-benchmark',
+        '--circuit-json-dir',
+        'neutral-json',
+        '--prompt',
+        'prompt.md',
+        '--response',
+        'response.md',
+        '--slug',
+        'invalid-neutral-json'
+      ]);
+      const trialDir = await singleTrialDir(dir);
+      const gradingResult = await readJsonFile(path.join(trialDir, 'result.json'));
+
+      assert.equal(result.exitStatus, 2);
+      assert.equal(result.stderr, '');
+      assert.equal(gradingResult.status, 'disallowed');
+      assert.deepStrictEqual(gradingResult.summary, {
+        total: 1,
+        passed: 0,
+        failed: 0,
+        disallowed: 1,
+        error: 0
+      });
+      assert.deepStrictEqual(
+        (gradingResult.results as readonly Record<string, unknown>[]).map((item) => item.status),
+        ['disallowed']
+      );
+      assert.equal((await stat(path.join(trialDir, 'circuit-json'))).isDirectory(), true);
+      assert.equal((await stat(path.join(trialDir, 'submissions'))).isDirectory(), true);
+    });
+  });
+
+  it('rejects records that specify both qni submissions and neutral circuit JSON input', async () => {
+    await withTempDir(async (dir) => {
+      await prepareResearchInputs(dir);
+      await prepareNeutralCircuitJsonBenchmark(dir);
+      await writeNeutralCircuitJsonSubmission(dir, JSON.stringify({ operations: [{ gate: 'X', targets: [0] }] }));
+      await mkdir(path.join(dir, 'qni-submissions'), { recursive: true });
+
+      const result = captureDispatcherRun(dir, [
+        'research',
+        'record',
+        '--collaborator',
+        'external-agent',
+        '--benchmark',
+        'neutral-benchmark',
+        '--submissions',
+        'qni-submissions',
+        '--circuit-json-dir',
+        'neutral-json',
+        '--prompt',
+        'prompt.md',
+        '--response',
+        'response.md',
+        '--slug',
+        'duplicate-inputs'
+      ]);
+
+      assert.equal(result.exitStatus, 3);
+      assert.equal(result.stdout, '');
+      assert.match(result.stderr, /Specify exactly one submission input/u);
+      assert.deepStrictEqual(await researchTrialDirs(dir), []);
     });
   });
 

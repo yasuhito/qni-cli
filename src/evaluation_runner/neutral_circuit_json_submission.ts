@@ -1,4 +1,8 @@
+import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import path = require('node:path');
+
 import { AngleExpression, AngleExpressionError } from '../angle_expression';
+import { loadBenchmarkTask } from './benchmark_task';
 
 export class NeutralCircuitJsonSubmissionError extends Error {
   constructor(message: string) {
@@ -10,6 +14,16 @@ export class NeutralCircuitJsonSubmissionError extends Error {
 export interface NeutralCircuitJsonToQniSubmissionOptions {
   readonly availableGates: readonly string[];
   readonly submissionText: string;
+}
+
+export interface NeutralCircuitJsonDirectoryConversionResult {
+  readonly relativeSubmissionFiles: readonly string[];
+}
+
+export interface NeutralCircuitJsonDirectoryConversionOptions {
+  readonly benchmarkDirPath: string;
+  readonly circuitJsonDirPath: string;
+  readonly outputDirPath: string;
 }
 
 interface NeutralCircuitJsonSubmission {
@@ -113,6 +127,100 @@ export function convertNeutralCircuitJsonToQniSubmission(
   }));
 
   return commands.length === 0 ? '' : `${commands.join('\n')}\n`;
+}
+
+export function writeNeutralCircuitJsonDirectoryAsQniSubmissions(
+  options: NeutralCircuitJsonDirectoryConversionOptions
+): NeutralCircuitJsonDirectoryConversionResult {
+  const relativeTaskFiles = markdownFilesInDirectory(options.benchmarkDirPath);
+  const relativeSubmissionFiles: string[] = [];
+
+  for (const relativeTaskFile of relativeTaskFiles) {
+    const relativeJsonFile = relativeTaskFile.replace(/\.md$/u, '.json');
+    const relativeSubmissionFile = relativeTaskFile.replace(/\.md$/u, '.qni');
+    const availableGates = availableGatesForBenchmarkTask(path.join(options.benchmarkDirPath, relativeTaskFile));
+    const qniSubmission = availableGates
+      ? qniSubmissionForNeutralCircuitJsonFile({
+        availableGates,
+        circuitJsonPath: path.join(options.circuitJsonDirPath, relativeJsonFile),
+        relativeJsonFile
+      })
+      : '';
+    const outputPath = path.join(options.outputDirPath, relativeSubmissionFile);
+
+    mkdirSync(path.dirname(outputPath), { recursive: true });
+    writeFileSync(outputPath, qniSubmission);
+    relativeSubmissionFiles.push(toPosixPath(relativeSubmissionFile));
+  }
+
+  return { relativeSubmissionFiles };
+}
+
+function availableGatesForBenchmarkTask(taskPath: string): readonly string[] | undefined {
+  try {
+    return loadBenchmarkTask(taskPath).availableGates;
+  } catch {
+    return undefined;
+  }
+}
+
+function qniSubmissionForNeutralCircuitJsonFile(options: {
+  readonly availableGates: readonly string[];
+  readonly circuitJsonPath: string;
+  readonly relativeJsonFile: string;
+}): string {
+  try {
+    return convertNeutralCircuitJsonToQniSubmission({
+      availableGates: options.availableGates,
+      submissionText: readNeutralCircuitJsonFile(options.circuitJsonPath, options.relativeJsonFile)
+    });
+  } catch (error) {
+    if (error instanceof NeutralCircuitJsonSubmissionError) {
+      return disallowedNeutralCircuitJsonSubmission(error);
+    }
+
+    throw error;
+  }
+}
+
+function readNeutralCircuitJsonFile(circuitJsonPath: string, relativeJsonFile: string): string {
+  if (!existsSync(circuitJsonPath)) {
+    throw new NeutralCircuitJsonSubmissionError(`neutral circuit JSON file does not exist: ${toPosixPath(relativeJsonFile)}`);
+  }
+
+  if (!statSync(circuitJsonPath).isFile()) {
+    throw new NeutralCircuitJsonSubmissionError(`neutral circuit JSON path is not a file: ${toPosixPath(relativeJsonFile)}`);
+  }
+
+  return readFileSync(circuitJsonPath, 'utf8');
+}
+
+function disallowedNeutralCircuitJsonSubmission(error: NeutralCircuitJsonSubmissionError): string {
+  const encodedMessage = Buffer.from(error.message, 'utf8').toString('base64url');
+
+  return `qni neutral-circuit-json-invalid --message ${encodedMessage}\n`;
+}
+
+function markdownFilesInDirectory(dir: string): string[] {
+  return markdownFilesInDirectoryEntries(dir, '').sort();
+}
+
+function markdownFilesInDirectoryEntries(root: string, relativeDir: string): string[] {
+  const dir = path.join(root, relativeDir);
+  const entries = readdirSync(dir, { withFileTypes: true }).sort((left, right) => left.name.localeCompare(right.name));
+  const files: string[] = [];
+
+  for (const entry of entries) {
+    const relativePath = path.join(relativeDir, entry.name);
+
+    if (entry.isDirectory()) {
+      files.push(...markdownFilesInDirectoryEntries(root, relativePath));
+    } else if (entry.isFile() && entry.name.endsWith('.md')) {
+      files.push(relativePath);
+    }
+  }
+
+  return files;
 }
 
 function fixedSingleQubitGateDefinitions(gates: readonly string[]): Array<readonly [string, GateDefinition]> {
@@ -355,6 +463,10 @@ function canonicalAvailableGateName(signature: string): string {
 
   const gate = match.groups.gate;
   return GATE_DEFINITIONS.get(gate)?.canonicalGate ?? gate;
+}
+
+function toPosixPath(filePath: string): string {
+  return filePath.split(path.sep).join('/');
 }
 
 function jsonRecord(value: unknown, message: string): JsonRecord {
