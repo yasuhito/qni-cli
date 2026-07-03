@@ -1,4 +1,6 @@
-# .qni 提出物生成プロンプト
+# legacy .qni 提出物生成プロンプト
+
+このプロンプトは `qni-command-output-v0` の legacy protocol 用です。AI に qni-cli のコマンド形式を知らせて `.qni` 直接提出を作る経路でだけ使います。公平比較用の `blind-neutral-circuit-json-v1` では、`qni research solve` または `qni research record --circuit-json-dir` の中立回路 JSON 手順を使ってください。
 
 あなたは `qni-cli` のベンチマーク課題に解答するAIです。課題本文を読み、条件を満たす量子回路を `qni` コマンド列として作成してください。
 

@@ -8,9 +8,19 @@
 
 以下の例はリポジトリルートから実行します。開発中の作業ツリーで実行する場合は、先に `npm run build` を実行し、`qni` を `node dist/bin/qni.js` に読み替えてください。
 
-## .qni 提出物の作り方
+## 評価ランナーと研究プロトコル
 
-1. `benchmarks/prompts/qni-solution.md` をAIへの指示として使います。
+`qni benchmark run` と `qni benchmark run-all` は `.qni` 採点器です。提出物を一時的な作業場所で実行し、課題 frontmatter の検証条件に照らして採点します。AI は呼び出さず、研究試行ディレクトリも作りません。
+
+`qni research solve` と `qni research record --circuit-json-dir` は、`blind-neutral-circuit-json-v1` の研究プロトコルです。共同研究者やモデルには qni-cli 固有語彙を見せず、トップレベルが `operations` だけの中立回路 JSON を提出させます。qni-cli は中立 JSON を保存し、内部で `.qni` へ変換してから同じ評価ランナーに渡します。
+
+`.qni` 直接提出は `qni-command-output-v0` の legacy protocol です。`qni benchmark` で手元の `.qni` 提出物を採点したい場合や、`qni research record --submissions` で既存の `.qni` 提出物群を研究試行に残したい場合に使います。共同研究者が qni-cli のコマンド形式や許可コマンドを見ているため、`blind-neutral-circuit-json-v1` の結果と `qni-command-output-v0` の結果を同じ順位表や散布図で混ぜて比較しないでください。
+
+研究試行の `metadata.json` と、`solve` が保存する `calls.json` では `submissionProtocol` を確認します。`submissionProtocol` は `blind-neutral-circuit-json-v1` または `qni-command-output-v0` を保存します。`blind-neutral-circuit-json-v1` は中立回路 JSON を採点前に `.qni` へ変換した公平比較用の提出プロトコル、`qni-command-output-v0` は既存の `.qni` コマンド列を直接提出した legacy protocol です。
+
+## legacy .qni 直接提出の作り方
+
+1. `benchmarks/prompts/qni-solution.md` を legacy `.qni` 直接提出用のAIへの指示として使います。
 2. 対象の課題ファイルを選びます。
 3. 課題ファイルの frontmatter にある `allowed_commands` と、frontmatter の後ろにある課題本文をプロンプトへ渡します。
 4. AIの回答を、そのまま `.qni` ファイルとして保存します。
@@ -378,11 +388,11 @@ qni benchmark run-all benchmarks/quantum-katas benchmarks/solutions/quantum-kata
 
 `benchmark` は提出物を採点し、`research` は研究ログを保存します。`qni benchmark run` と `qni benchmark run-all` は `.qni` 提出物を評価し、結果を標準出力へ出します。`qni research record` は、1つのベンチマークスイートに対する外部共同研究者の1回の研究試行を `research/runs/<timestamp>-<slug>/` に保存します。保存時には `qni benchmark run-all --json` 相当の採点を実行し、その結果も同じ研究試行ディレクトリに残します。
 
-`qni research record` は AI を呼び出さず、git commit も作りません。Pi、Claude、Codex、人間などが外部で作ったプロンプト、AI回答、`.qni` 提出物ディレクトリをファイルパスで渡します。`git commit` が必要な場合は、生成された `research/runs/...` を確認してから手動または上位の実行環境で作ります。
+`qni research record` は AI を呼び出さず、git commit も作りません。Pi、Claude、Codex、人間などが外部で作ったプロンプト、AI回答、提出物ディレクトリをファイルパスで渡します。`--circuit-json-dir` は `blind-neutral-circuit-json-v1` の中立 JSON 提出物群、`--submissions` は `qni-command-output-v0` の legacy `.qni` 提出物群として扱います。`git commit` が必要な場合は、生成された `research/runs/...` を確認してから手動または上位の実行環境で作ります。
 
 ## 研究試行を記録する最小例
 
-プロンプト、AI回答、提出物ディレクトリを用意してから `qni research record` を実行します。次の例では、スモークセットの標準解を外部共同研究者の提出物として扱い、研究試行ディレクトリを作ります。
+プロンプト、AI回答、提出物ディレクトリを用意してから `qni research record` を実行します。次の例は `qni-command-output-v0` の legacy `.qni` 直接提出です。スモークセットの標準解を外部共同研究者の提出物として扱い、研究試行ディレクトリを作ります。
 
 ```bash
 mkdir -p tmp/research-example/submissions
@@ -417,6 +427,60 @@ result.json
 ```
 
 終了コードは採点状態を表します。`passed` は `0`、`failed` は `1`、`disallowed` は `2`、`error` または入力検証や保存の失敗は `3` です。不合格、不許可、実行エラーの研究試行も保存対象です。
+
+## 中立 JSON 研究試行を記録する例
+
+外部エージェントや人間が qni-cli を知らずに作った中立回路 JSON 提出を記録する場合は、`--submissions` ではなく `--circuit-json-dir` を使います。提出ディレクトリには、ベンチマーク課題と同じ相対パスで `.json` ファイルを置きます。たとえば `tmp/research-example/benchmark/basic/state-flip.md` への提出は `tmp/research-example/circuit-json/basic/state-flip.json` です。
+
+```bash
+mkdir -p tmp/research-example/benchmark/basic
+cat > tmp/research-example/benchmark/basic/state-flip.md <<'MD'
+---
+id: basic/state-flip
+title: StateFlip Smoke
+source: qni-cli docs
+difficulty: smoke
+available_gates:
+  - X(target)
+allowed_commands:
+  - qni add
+checks:
+  tolerance: 1e-9
+  items:
+    - type: run
+      expected:
+        - basis: "|1>"
+          amplitude:
+            real: 1
+            imaginary: 0
+---
+
+1量子ビットを |1> にしてください。
+MD
+
+mkdir -p tmp/research-example/circuit-json/basic
+cat > tmp/research-example/circuit-json/basic/state-flip.json <<'JSON'
+{"operations":[{"gate":"X","targets":[0]}]}
+JSON
+
+cat > tmp/research-example/prompt.md <<'MD'
+中立回路 JSON 形式で解いてください。
+MD
+
+cat > tmp/research-example/response.md <<'MD'
+各課題の JSON ファイルを保存しました。
+MD
+
+qni research record \
+  --collaborator external-agent \
+  --benchmark tmp/research-example/benchmark \
+  --circuit-json-dir tmp/research-example/circuit-json \
+  --prompt tmp/research-example/prompt.md \
+  --response tmp/research-example/response.md \
+  --slug neutral-json-agent
+```
+
+この経路では `metadata.json` の `submissionProtocol` が `blind-neutral-circuit-json-v1` になり、元の JSON は `circuit-json/`、変換後の採点用 `.qni` は `submissions/` に保存されます。中立 JSON の形式違反は、研究試行を残したうえで該当課題を `disallowed` として記録します。
 
 ## 研究試行レポートを見る
 

@@ -49,11 +49,27 @@ AIエージェントや人間が読む、ベンチマーク課題の自然言語
 _Avoid_: frontmatter, checks
 
 **提出物**:
-ベンチマーク課題に対する解答として提出される `.qni` ファイル。
-_Avoid_: shell script, circuit.json, 説明文
+ベンチマーク課題に対する解答として提出される回路データ。公平比較用の主経路では中立回路 JSON、評価ランナー入力や legacy 経路では `.qni` ファイルを指す。どちらの経路かは提出プロトコルで区別する。
+_Avoid_: 任意 shell script, 説明文だけの回答, 提出プロトコル不明の結果
+
+**提出プロトコル**:
+研究試行で、共同研究者がどの形式の提出物を作り、qni-cli が採点前にどう扱ったかを示す識別子。`metadata.json` と、`qni research solve` の `calls.json` では `submissionProtocol` として保存する。
+_Avoid_: 採点状態, モデル名, ベンチマーク名
+
+**中立回路 JSON**:
+`blind-neutral-circuit-json-v1` で共同研究者やモデルが返す厳格な JSON 形式の量子回路提出物。トップレベルは `operations` だけを持つオブジェクトで、qni-cli 固有語彙、`.qni`、許可コマンド、検証条件を含めない。qni-cli は採点前にこれを `.qni` へ変換する。
+_Avoid_: `circuit.json` 直接提出, Markdown コードフェンス付き回答, qni-cli コマンド列
+
+**`blind-neutral-circuit-json-v1`**:
+公平比較用の提出プロトコル。`qni research solve` の既定と、`qni research record --circuit-json-dir` の入力で使う。結果比較ではこの値を持つ研究試行同士を比べる。
+_Avoid_: legacy `.qni` 直接提出, qni-cli を知っている共同研究者の結果
+
+**`qni-command-output-v0`**:
+既存の `.qni` 直接提出を研究試行に残すための legacy protocol。`qni research record --submissions` の入力で使い、共同研究者が qni-cli のコマンド形式を見ている結果として扱う。
+_Avoid_: blind-neutral 結果との混在比較, 中立回路 JSON
 
 **`.qni` ファイル**:
-1行に1つの完全な `qni ...` コマンドを書く提出物形式。
+1行に1つの完全な `qni ...` コマンドを書く提出物形式。`qni benchmark run` / `run-all` が直接採点し、研究試行では `qni-command-output-v0` の legacy protocol として保存する。
 _Avoid_: 任意コマンド列, 生の shell script
 
 **標準解**:

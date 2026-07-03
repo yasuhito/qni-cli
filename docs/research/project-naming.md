@@ -12,6 +12,8 @@
 
 Qni CoResearcher は、自然言語の量子回路課題、`.qni` 提出物、qni-cli の決定論的な採点、研究試行ログをリポジトリファイルとして束ねる量子回路AI共同研究者ハーネスです。
 
+公平比較用の主経路では、中立回路 JSON を `blind-neutral-circuit-json-v1` として記録し、既存の `.qni` 直接提出は `qni-command-output-v0` の legacy protocol として分けて扱います。
+
 通常の記録経路では、外部の AI または人間の共同研究者が作った成果物を `qni research record` で記録・採点し、再現可能に比較します。モデル別コストベンチマークでは、`qni research solve` が登録済みモデルを OpenAI互換 Chat Completions API で直接呼び出します。qni-cli は、共同研究者が使う決定論的な量子回路ツールを中心にした CLI であり、プロジェクト全体そのものではありません。
 
 短い説明にする場合は、次のように書く。
