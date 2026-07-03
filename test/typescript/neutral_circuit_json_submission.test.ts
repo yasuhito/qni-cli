@@ -117,6 +117,21 @@ describe('neutral circuit JSON submission converter', () => {
         /must be valid JSON with no explanatory text/u
       ],
       [
+        'missing operations key',
+        JSON.stringify({}),
+        /top-level operations is required/u
+      ],
+      [
+        'array root',
+        JSON.stringify([]),
+        /neutral circuit submission must be a top-level object/u
+      ],
+      [
+        'string root',
+        JSON.stringify('not an object'),
+        /neutral circuit submission must be a top-level object/u
+      ],
+      [
         'unknown operation key',
         JSON.stringify({ operations: [{ gate: 'H', targets: [0], note: 'extra' }] }),
         /unknown operation key at operations\[0\]: note/u
@@ -130,6 +145,21 @@ describe('neutral circuit JSON submission converter', () => {
         'numeric angle',
         JSON.stringify({ operations: [{ gate: 'Phase', angle: Math.PI / 2, targets: [0] }] }),
         /angle at operations\[0\] must be a string/u
+      ],
+      [
+        'numeric angle string',
+        JSON.stringify({ operations: [{ gate: 'Phase', angle: '3.14', targets: [0] }] }),
+        /angle at operations\[0\] must use a symbolic pi expression, not numeric radians/u
+      ],
+      [
+        'variable angle string',
+        JSON.stringify({ operations: [{ gate: 'Phase', angle: 'notanangle', targets: [0] }] }),
+        /angle at operations\[0\] must use a symbolic pi expression/u
+      ],
+      [
+        'malformed pi angle string',
+        JSON.stringify({ operations: [{ gate: 'Phase', angle: 'pi//2', targets: [0] }] }),
+        /invalid angle at operations\[0\]/u
       ],
       [
         'missing arguments',
@@ -171,6 +201,7 @@ function assertInvalidSubmission(
         assert.fail(`${message}: expected converter error`);
       }
 
+      assert.equal(error.name, 'NeutralCircuitJsonSubmissionError', message);
       assert.match(error.message, errorPattern, message);
       return true;
     }

@@ -1,6 +1,11 @@
 import { AngleExpression, AngleExpressionError } from '../angle_expression';
 
-export class NeutralCircuitJsonSubmissionError extends Error {}
+export class NeutralCircuitJsonSubmissionError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'NeutralCircuitJsonSubmissionError';
+  }
+}
 
 export interface NeutralCircuitJsonToQniSubmissionOptions {
   readonly availableGates: readonly string[];
@@ -237,7 +242,13 @@ function normalizedAngle(angle: unknown, index: number): string {
   }
 
   try {
-    return new AngleExpression(angle).toString();
+    const expression = new AngleExpression(angle);
+
+    if (!expression.concrete()) {
+      throw new NeutralCircuitJsonSubmissionError(`angle at operations[${index}] must use a symbolic pi expression`);
+    }
+
+    return expression.toString();
   } catch (error) {
     if (error instanceof AngleExpressionError) {
       throw new NeutralCircuitJsonSubmissionError(`invalid angle at operations[${index}]: ${error.message}`);
