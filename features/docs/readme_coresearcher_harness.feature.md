@@ -12,9 +12,9 @@ README でプロジェクト全体の流れと実装済み範囲を確認した�
 
 - Then リポジトリファイル "README.md" は "`qni-cli` は、共同研究者や外部エージェントホストが使う決定論的な量子回路 CLI です。" を含む
 
-## Scenario: README はベンチマーク課題から研究ログまでの流れを示す
+## Scenario: README は評価ランナーと研究プロトコルの提出経路を分ける
 
-- Then リポジトリファイル "README.md" は "ベンチマーク課題 → `.qni` 提出物 → 決定論的な採点 → 研究試行ログとレポート" を含む
+- Then リポジトリファイル "README.md" は "Qni CoResearcher には、評価ランナー（`.qni`）と研究プロトコル（`blind-neutral-circuit-json-v1` / `qni-command-output-v0`）の 2 つの提出経路があります。" を含む
 
 ## Scenario: README は record と solve の AI 呼び出し範囲を示す
 

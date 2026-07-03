@@ -10,7 +10,8 @@ Qni CoResearcher は、自然言語の量子回路課題、`.qni` 提出物、qn
 
 ## 研究の流れ
 
-Qni CoResearcher の基本的な流れは、ベンチマーク課題 → `.qni` 提出物 → 決定論的な採点 → 研究試行ログとレポートです。
+Qni CoResearcher には、評価ランナー（`.qni`）と研究プロトコル（`blind-neutral-circuit-json-v1` / `qni-command-output-v0`）の 2 つの提出経路があります。
+ベンチマーク課題は `.qni` で採点し、研究試行では中立回路 JSON と legacy `.qni` を `submissionProtocol` で区別します。
 
 1. ベンチマーク課題は、自然言語の課題文と採点用の検証条件を Markdown と frontmatter で持ちます。
 2. 公平比較用の主経路では、共同研究者やモデルは qni-cli 固有語彙を見ずに中立回路 JSON を作ります。既存の `.qni` 直接提出経路では、1行に1つの完全な `qni ...` コマンドを書く `.qni` 提出物を作ります。
