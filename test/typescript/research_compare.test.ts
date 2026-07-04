@@ -202,6 +202,48 @@ describe('research compare builder', () => {
     });
   });
 
+  it('excludes result details when summary buckets disagree with task results', async () => {
+    await withTempDir(async (dir) => {
+      await writeCompareTrial(dir, '2026-07-02T000001Z-inconsistent-summary', {
+        resultOverride: {
+          status: 'passed',
+          exitCode: 0,
+          summary: { total: 2, passed: 2, failed: 0, disallowed: 0, error: 0 },
+          results: [
+            {
+              task: 'task-1.md',
+              taskId: 'task-1',
+              title: 'Task 1',
+              submission: 'submissions/task-1.qni',
+              status: 'passed',
+              exitCode: 0,
+              checks: [{ type: 'run', status: 'passed' }]
+            },
+            {
+              task: 'task-2.md',
+              taskId: 'task-2',
+              title: 'Task 2',
+              submission: 'submissions/task-2.qni',
+              status: 'failed',
+              exitCode: 1,
+              checks: [{ type: 'run', status: 'failed' }]
+            }
+          ]
+        }
+      });
+
+      const compare = buildResearchCompare({ benchmark: 'benchmarks/quantum-katas', cwd: dir });
+
+      assert.deepStrictEqual(compare.exclusions, {
+        benchmarkMismatch: 0,
+        invalidTrial: 0,
+        missingOrInvalidResultDetails: 1
+      });
+      assert.deepStrictEqual(compare.trials, []);
+      assert.deepStrictEqual(compare.tasks, []);
+    });
+  });
+
   it('formats human output with the task matrix and differing tasks', async () => {
     await withTempDir(async (dir) => {
       await writeCompareTrial(dir, '2026-07-02T000001Z-perfect', {

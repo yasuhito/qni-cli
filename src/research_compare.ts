@@ -328,8 +328,8 @@ function readCompareResultDetails(
     invalidReason.push(`metadata status ${expectedStatus} does not match result status ${status}`);
   }
 
-  if (summary && results && summary.total !== results.length) {
-    invalidReason.push(`result summary total ${summary.total} does not match results length ${results.length}`);
+  if (summary && results) {
+    validateSummaryMatchesResults(summary, results, invalidReason);
   }
 
   if (!status || !summary || !results || invalidReason.length > 0) {
@@ -340,6 +340,30 @@ function readCompareResultDetails(
     status,
     summary,
     results
+  };
+}
+
+function validateSummaryMatchesResults(
+  summary: BenchmarkSuiteSummary,
+  results: readonly TrialTaskResult[],
+  invalidReason: string[]
+): void {
+  const actual = summaryForTaskResults(results);
+
+  for (const field of ['total', 'passed', 'failed', 'disallowed', 'error'] as const) {
+    if (summary[field] !== actual[field]) {
+      invalidReason.push(`result summary ${field} ${summary[field]} does not match results ${field} ${actual[field]}`);
+    }
+  }
+}
+
+function summaryForTaskResults(results: readonly TrialTaskResult[]): BenchmarkSuiteSummary {
+  return {
+    total: results.length,
+    passed: results.filter((result) => result.status === 'passed').length,
+    failed: results.filter((result) => result.status === 'failed').length,
+    disallowed: results.filter((result) => result.status === 'disallowed').length,
+    error: results.filter((result) => result.status === 'error').length
   };
 }
 
