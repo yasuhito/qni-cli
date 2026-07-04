@@ -494,6 +494,24 @@ qni research report
 
 機械処理には `qni research report --json` を使います。JSON 出力も保存済みの `metadata.json` と `result.json` を読むだけで、再採点や修復は行いません。
 
+## 研究試行を課題別に比較する
+
+同じベンチマークに対する保存済み研究試行の差分を見るには `qni research compare` を使います。比較は `research/runs/` の `metadata.json` と `result.json` を読むだけで、再採点、AI 呼び出し、研究試行ファイルの変更は行いません。
+
+```bash
+qni research compare --benchmark benchmarks/quantum-katas
+```
+
+人間向け出力では、研究試行ごとの score、課題別の採点結果マトリクス、研究試行間で結果が分かれた課題、除外された研究試行数を表示します。`submissionProtocol` が混在している場合は注意を表示します。中立回路 JSON と legacy `.qni` 直接提出は公平比較の前提が違うため、混在した結果は順位表として扱わず、差分確認の手がかりとして読んでください。
+
+機械処理には `--json` を使います。
+
+```bash
+qni research compare --benchmark benchmarks/quantum-katas --json
+```
+
+終了コードは、比較を生成できて無効な研究試行が無ければ `0`、比較は生成できたが無効な研究試行がある場合は `1`、引数不正や `research/runs/` の読み取り失敗では `3` です。
+
 ## モデル別コストベンチマークを実行する
 
 `qni research solve` は、`research/models.yaml` に登録した単一モデルを使って OpenAI互換 Chat Completions API を直接呼び出し、ベンチマークスイートを1課題ずつ逐次実行します。`qni research record` は AI を呼びません。モデル登録ファイル、APIキー環境変数、score と cost の計算式、`qni research plot` の HTML 出力、初期スコープ外の項目は [モデル別コストベンチマーク利用手順](model-cost-benchmark.md) にまとめています。

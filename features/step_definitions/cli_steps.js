@@ -717,9 +717,45 @@ function writeResearchPlotTrial(scenarioDir, id, options) {
     ...(Object.hasOwn(options, 'score') ? { score: options.score } : {}),
     ...(Object.hasOwn(options, 'model') ? { model: options.model } : {}),
     ...(Object.hasOwn(options, 'tokens') ? { tokens: options.tokens } : {}),
-    ...(Object.hasOwn(options, 'cost') ? { cost: options.cost } : {})
+    ...(Object.hasOwn(options, 'cost') ? { cost: options.cost } : {}),
+    ...(Object.hasOwn(options, 'submissionProtocol') ? { submissionProtocol: options.submissionProtocol } : {})
   });
   writeResearchReportJsonFile(path.join(trialDir, 'result.json'), researchPlotResult(status, score));
+}
+
+function writeResearchCompareInvalidResultDetailsTrial(scenarioDir, id) {
+  const trialDir = path.join(researchRunsDir(scenarioDir), id);
+
+  fs.mkdirSync(trialDir, { recursive: true });
+  writeResearchReportJsonFile(path.join(trialDir, 'metadata.json'), {
+    schemaVersion: 1,
+    id,
+    createdAt: researchReportCreatedAtForId(id),
+    collaborator: 'bad-result-agent',
+    benchmark: 'benchmarks/quantum-katas',
+    submissions: 'submissions',
+    prompt: 'prompt.md',
+    response: 'response.md',
+    result: 'result.json',
+    status: 'passed'
+  });
+  writeResearchReportJsonFile(path.join(trialDir, 'result.json'), {
+    status: 'passed',
+    exitCode: 0,
+    summary: {
+      total: 1,
+      passed: 1,
+      failed: 0,
+      disallowed: 0,
+      error: 0
+    },
+    results: [
+      {
+        title: 'Task without id',
+        status: 'passed'
+      }
+    ]
+  });
 }
 
 function researchPlotResult(status, score) {
@@ -1460,6 +1496,10 @@ Given('cost 指標が不正な研究試行 {string} を研究ログに保存済�
     tokens: { inputTokens: 1, outputTokens: 1, totalTokens: 2, source: 'provider_usage' },
     cost: {}
   });
+});
+
+Given('比較に必要な結果が不正な研究試行 {string} を研究ログに保存済み', function (id) {
+  writeResearchCompareInvalidResultDetailsTrial(this.scenarioDir, id);
 });
 
 Given('研究ログの現在の内容を記録する', function () {
