@@ -5,6 +5,7 @@ import path = require('node:path');
 import type { CommandHandlerContext } from '../dispatcher';
 import { gradeBenchmarkSuite, type BenchmarkSuiteGradingResult } from '../evaluation_runner';
 import { writeNeutralCircuitJsonDirectoryAsQniSubmissions } from '../evaluation_runner/neutral_circuit_json_submission';
+import { buildResearchCompare, formatResearchCompareHumanOutput, type ResearchCompare } from '../research_compare';
 import { writeResearchPlotHtml } from '../research_plot';
 import {
   buildResearchReport,
@@ -34,6 +35,11 @@ interface ResearchRecordRequest {
 interface ResearchPlotRequest {
   readonly benchmark: string;
   readonly output: string;
+}
+
+interface ResearchCompareRequest {
+  readonly benchmark: string;
+  readonly json: boolean;
 }
 
 interface ResearchRecordInputPaths {
@@ -84,6 +90,10 @@ const PLOT_USAGE = [
   'Usage: qni research plot --benchmark <dir> --output <file>',
   ''
 ].join('\n');
+const COMPARE_USAGE = [
+  'Usage: qni research compare --benchmark <dir> [--json]',
+  ''
+].join('\n');
 const RESEARCH_HELP_TEXT = `Usage:
   qni research <command>
 
@@ -92,6 +102,7 @@ Commands:
   qni research solve     Run one registered model against one benchmark suite.
   qni research report    Show saved research trial summaries from research/runs/
   qni research plot      Write cost per problem vs score scatter plot HTML.
+  qni research compare   Compare saved research trials task by task.
 
 Run qni research COMMAND --help for command details.`;
 const RECORD_HELP_TEXT = `Usage:
@@ -200,6 +211,30 @@ Output:
 Exit codes:
   0  plot generated
   3  invalid arguments or research/runs/ could not be read`;
+const COMPARE_HELP_TEXT = `Usage:
+  qni research compare --benchmark <dir> [--json]
+
+Overview:
+  Compare saved research trials under research/runs/ for one benchmark.
+  qni research compare reads saved research logs only. It does not call AI, regrade submissions, or modify research trials.
+
+Required inputs:
+  --benchmark <dir>
+
+Options:
+  --json  Print the machine-readable comparison instead of plaintext.
+
+Output:
+  included trial scores
+  task-by-trial status matrix
+  tasks whose status differs between trials
+  warnings for mixed submission protocols
+  exclusion counts for invalid trials, benchmark mismatches, and missing result details
+
+Exit codes:
+  0  comparison generated and no invalid research trials were found
+  1  comparison generated and one or more invalid research trials were found
+  3  invalid arguments or research/runs/ could not be read`;
 const RECORD_OPTION_NAMES = new Map<string, ResearchRecordOption>([
   ['--benchmark', 'benchmark'],
   ['--circuit-json-dir', 'circuitJsonDir'],
@@ -243,6 +278,22 @@ export function runResearchCommand(argv: string[], context: CommandHandlerContex
   if (isResearchPlotHelpRequest(argv)) {
     process.stdout.write(`${PLOT_HELP_TEXT}\n`);
     return 0;
+  }
+
+  if (isResearchCompareHelpRequest(argv)) {
+    process.stdout.write(`${COMPARE_HELP_TEXT}\n`);
+    return 0;
+  }
+
+  const compareRequest = parseResearchCompareRequest(argv);
+
+  if (compareRequest) {
+    return runResearchCompare(compareRequest, context);
+  }
+
+  if (isResearchCompareRequest(argv)) {
+    process.stderr.write(COMPARE_USAGE);
+    return 3;
   }
 
   if (isResearchReportJsonRequest(argv)) {
@@ -324,6 +375,10 @@ function isResearchPlotHelpRequest(argv: readonly string[]): boolean {
   return argv[0] === 'research' && argv[1] === 'plot' && argv.length === 3 && isHelpFlag(argv[2]);
 }
 
+function isResearchCompareHelpRequest(argv: readonly string[]): boolean {
+  return argv[0] === 'research' && argv[1] === 'compare' && argv.length === 3 && isHelpFlag(argv[2]);
+}
+
 function isResearchReportJsonRequest(argv: readonly string[]): boolean {
   return argv[0] === 'research' && argv[1] === 'report' && argv.length === 3 && argv[2] === '--json';
 }
@@ -342,6 +397,10 @@ function isResearchSolveRequest(argv: readonly string[]): boolean {
 
 function isResearchPlotRequest(argv: readonly string[]): boolean {
   return argv[0] === 'research' && argv[1] === 'plot';
+}
+
+function isResearchCompareRequest(argv: readonly string[]): boolean {
+  return argv[0] === 'research' && argv[1] === 'compare';
 }
 
 function runResearchReport(context: CommandHandlerContext, format: (report: ResearchReport) => string): number {
@@ -374,6 +433,31 @@ function runResearchPlot(request: ResearchPlotRequest, context: CommandHandlerCo
 
     process.stdout.write(`Wrote research plot: ${result.outputPath}\n`);
     return 0;
+  } catch (error) {
+    process.stderr.write(`${errorMessage(error)}\n`);
+    return 3;
+  }
+}
+
+function runResearchCompare(request: ResearchCompareRequest, context: CommandHandlerContext): number {
+  return runResearchCompareWithFormat(request, context, (compare) => (
+    request.json ? `${JSON.stringify(compare, null, 2)}\n` : formatResearchCompareHumanOutput(compare)
+  ));
+}
+
+function runResearchCompareWithFormat(
+  request: ResearchCompareRequest,
+  context: CommandHandlerContext,
+  format: (compare: ResearchCompare) => string
+): number {
+  try {
+    const compare = buildResearchCompare({
+      benchmark: request.benchmark,
+      cwd: context.cwd
+    });
+
+    process.stdout.write(format(compare));
+    return compare.exclusions.invalidTrial > 0 ? 1 : 0;
   } catch (error) {
     process.stderr.write(`${errorMessage(error)}\n`);
     return 3;
@@ -445,6 +529,41 @@ function parseResearchPlotRequest(argv: readonly string[]): ResearchPlotRequest 
     benchmark: values.benchmark,
     output: values.output
   };
+}
+
+function parseResearchCompareRequest(argv: readonly string[]): ResearchCompareRequest | undefined {
+  if (argv[0] !== 'research' || argv[1] !== 'compare') {
+    return undefined;
+  }
+
+  let benchmark: string | undefined;
+  let json = false;
+
+  for (let index = 2; index < argv.length;) {
+    const value = argv[index];
+
+    if (value === '--json') {
+      if (json) {
+        return undefined;
+      }
+      json = true;
+      index += 1;
+      continue;
+    }
+
+    if (value === '--benchmark') {
+      if (benchmark !== undefined || argv[index + 1] === undefined) {
+        return undefined;
+      }
+      benchmark = argv[index + 1];
+      index += 2;
+      continue;
+    }
+
+    return undefined;
+  }
+
+  return benchmark === undefined ? undefined : { benchmark, json };
 }
 
 function parseOptionValues<OptionName extends string>(

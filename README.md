@@ -27,7 +27,7 @@ Qni CoResearcher には、評価ランナー（`.qni`）と研究プロトコル
 - `qni state`、`qni run`、`qni expect` による初期状態、状態ベクトル、期待値の確認
 - `qni export`、`qni bloch` による回路図、状態ベクトル、Bloch sphere 画像の出力
 - `qni benchmark` による `.qni` 提出物の決定論的な採点
-- `qni research` による外部共同研究者の研究試行ログ保存、単一モデルの直接実行、レポート、コスト散布図の生成
+- `qni research` による外部共同研究者の研究試行ログ保存、単一モデルの直接実行、レポート、研究試行比較、コスト散布図の生成
 
 `qni` は常に現在の作業ディレクトリの `./circuit.json` を読み書きします。インストール済みパッケージから使う場合は `qni ...`、リポジトリ内で開発中の実装を使う場合は `node dist/bin/qni.js ...` を実行します。
 
@@ -65,14 +65,14 @@ node dist/bin/qni.js benchmark run \
 ## ドキュメント
 
 - [CLI コマンドリファレンス](docs/cli.md): 汎用の `qni` コマンド、画像出力、Bloch sphere、状態ベクトル操作の例
-- [ベンチマークと研究試行](docs/benchmark.md): `.qni` 提出物の採点、スモークセット、研究試行ログの手順
+- [ベンチマークと研究試行](docs/benchmark.md): `.qni` 提出物の採点、スモークセット、研究試行ログ、研究試行比較の手順
 - [モデル別コストベンチマーク利用手順](docs/model-cost-benchmark.md): モデル登録、`qni research solve`、`qni research plot`、score と cost、初期スコープ外の説明
 - [開発者向け手順](docs/development.md): セットアップ、ビルド、通常チェック、npm パッケージのスモーク検証
 - [仕様](SPEC.md): `qni-cli` の詳細仕様
 
 ## 制限事項と次の段階
 
-`qni research solve` は、単一モデル・単一試行・逐次実行の OpenAI互換 Chat Completions API の直接呼び出しだけを扱います。複数モデルの一括実行、複数試行、再試行、自己修正、外部エージェント自動実行、既存試行の移行、プロバイダー抽象、作業場所の自動準備はまだ qni-cli にありません。`qni research record` は AI を呼ばず、研究試行ディレクトリを作りますが、git commit は作りません。構造化された `ResearchState` も現時点では実装済みの API ではなく、研究ログのファイル構造を将来深める方向の構想です。
+`qni research solve` は、単一モデル・単一試行・逐次実行の OpenAI互換 Chat Completions API の直接呼び出しだけを扱います。複数モデルの一括実行、複数試行、再試行、自己修正、外部エージェント自動実行、既存試行の移行、プロバイダー抽象、作業場所の自動準備はまだ qni-cli にありません。`qni research record` は AI を呼ばず、研究試行ディレクトリを作りますが、git commit は作りません。`qni research compare` は保存済み研究試行を読むだけで、再採点や公平比較用の順位付けは行いません。構造化された `ResearchState` も現時点では実装済みの API ではなく、研究ログのファイル構造を将来深める方向の構想です。
 
 次の段階では、外部エージェントホストとの接続、研究試行の比較、より豊かな研究状態の表現、ベンチマーク課題の拡充を検討します。これらを追加する場合も、qni-cli の決定論的な採点とリポジトリファイルによる研究ログを中心に保ちます。
 
