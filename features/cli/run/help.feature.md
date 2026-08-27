@@ -17,11 +17,15 @@ qni run のヘルプで利用できるオプションを確認したい。
   ```text
   Usage:
     qni run [--symbolic] [--basis=BASIS]
+    qni run [--shots N] [--seed N] [--json]
 
   Overview:
     Simulate ./circuit.json and print the resulting state vector.
     Without --symbolic, output is numeric amplitudes in the computational basis.
     A circuit containing Measure is run once and prints qN=0 or qN=1 for each measured qubit.
+    Use --shots to run a measurement circuit independently from its initial state and print a joint distribution.
+    Use --seed to reproduce the same joint distribution. Without it, measurement uses ordinary unfixed randomness.
+    Use --json to return shots, seed, classical bit names, values, and counts as structured data.
     Measurement follows computational-basis probabilities and collapses the state before later operations.
     --symbolic prints a symbolic ket expression for supported small circuits.
     --basis currently works only with --symbolic and supports x or y for 1-qubit output, and bell for 2-qubit output.
@@ -29,6 +33,9 @@ qni run のヘルプで利用できるオプションを確認したい。
   Options:
     [--symbolic]       # Show a 1-qubit symbolic state expression
     [--basis=BASIS]    # Show a symbolic state in a named basis such as x, y, or bell
+    [--shots N]        # Run a measurement circuit N independent times
+    [--seed N]         # Use an unsigned 32-bit seed for reproducible measurement
+    [--json]           # Print a machine-readable measurement distribution
 
   Examples:
     qni run
@@ -36,4 +43,7 @@ qni run のヘルプで利用できるオプションを確認したい。
     qni run --symbolic --basis x
     qni run --symbolic --basis y
     qni run --symbolic --basis bell
+    qni run --shots 100
+    qni run --shots 100 --seed 42
+    qni run --shots 100 --seed 42 --json
   ```

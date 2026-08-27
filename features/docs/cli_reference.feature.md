@@ -32,6 +32,22 @@ CLI コマンドの詳細を専用ドキュメントで確認したい。
 
 - Then リポジトリファイル "docs/cli.md" は "`qni run` は回路を1回実行し" を含む
 
+## Scenario: CLI リファレンスは複数回測定を段階的に説明する
+
+- Then リポジトリファイル "docs/cli.md" は "qni run --shots 100" を含む
+
+## Scenario: CLI リファレンスはシード値による再現を説明する
+
+- Then リポジトリファイル "docs/cli.md" は "qni run --shots 100 --seed 42" を含む
+
+## Scenario: CLI リファレンスは測定の JSON 出力を説明する
+
+- Then リポジトリファイル "docs/cli.md" は "qni run --shots 100 --seed 42 --json" を含む
+
+## Scenario: CLI リファレンスは JSON の値を古典ビット名で参照できると説明する
+
+- Then リポジトリファイル "docs/cli.md" は "`values` は文字列のビット順ではなく、`classicalBits` の各名前をキーにして値を参照できます。" を含む
+
 ## Scenario: CLI リファレンスは gate コマンドの読み取り例を示す
 
 - Then リポジトリファイル "docs/cli.md" は "qni gate --qubit 0 --step 0" を含む
