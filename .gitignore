@@ -7,4 +7,5 @@ node_modules/
 dist/
 __pycache__/
 .codex/
+.pi-subagents/
 excalidraw.log
