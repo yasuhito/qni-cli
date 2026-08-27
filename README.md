@@ -65,6 +65,7 @@ node dist/bin/qni.js benchmark run \
 ## ドキュメント
 
 - [CLI コマンドリファレンス](docs/cli.md): 汎用の `qni` コマンド、画像出力、Bloch sphere、状態ベクトル操作の例
+- [超密度符号化の端から端の例](examples/superdense-coding/README.md): ランダム入力、Bell 対、古典条件付き符号化、復号、測定、画像出力
 - [ベンチマークと研究試行](docs/benchmark.md): `.qni` 提出物の採点、スモークセット、研究試行ログ、研究試行比較の手順
 - [モデル別コストベンチマーク利用手順](docs/model-cost-benchmark.md): Pi のモデル認証、`qni research solve`、`qni research plot`、score と cost、初期スコープ外の説明
 - [開発者向け手順](docs/development.md): セットアップ、ビルド、通常チェック、npm パッケージのスモーク検証

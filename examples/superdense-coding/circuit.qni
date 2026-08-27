@@ -1,0 +1,12 @@
+qni add H --qubit 0 --step 0
+qni add H --qubit 1 --step 0
+qni add Measure --name input_high --qubit 0 --step 1
+qni add Measure --name input_low --qubit 1 --step 1
+qni add H --qubit 2 --step 2
+qni add X --control 2 --qubit 3 --step 3
+qni add Z --if input_high --qubit 2 --step 4
+qni add X --if input_low --qubit 2 --step 5
+qni add X --control 2 --qubit 3 --step 6
+qni add H --qubit 2 --step 7
+qni add Measure --name output_high --qubit 2 --step 8
+qni add Measure --name output_low --qubit 3 --step 8

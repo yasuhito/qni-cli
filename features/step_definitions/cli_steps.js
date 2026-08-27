@@ -1305,6 +1305,17 @@ Given(/^空の 3 (?:qubit 回路|量子ビット回路)がある$/, function () 
   });
 });
 
+Given('リポジトリの qni コマンド列 {string} を実行', async function (filePath) {
+  const commands = fs.readFileSync(projectFilePath(filePath), 'utf8')
+    .split('\n')
+    .filter((line) => line.trim() !== '');
+
+  for (const command of commands) {
+    this.lastCommand = await runQniCommand(this.scenarioDir, command, this.commandEnv);
+    assert.equal(this.lastCommand.code, 0, commandFailureMessage(this.lastCommand));
+  }
+});
+
 When('{string} を実行', async function (command) {
   this.lastCommand = await runQniCommand(this.scenarioDir, command, this.commandEnv);
 });
