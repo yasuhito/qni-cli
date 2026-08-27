@@ -2,10 +2,16 @@ import { readFileSync, readdirSync, statSync, type Dirent } from 'node:fs';
 import path = require('node:path');
 
 import type { BenchmarkStatus, BenchmarkSuiteSummary } from './evaluation_runner';
+import {
+  matchesResearchTaskSelection,
+  readStoredResearchTaskSelection,
+  type StoredResearchTaskSelection
+} from './research_task_selection';
 
 export interface BuildResearchCompareOptions {
   readonly benchmark: string;
   readonly cwd: string;
+  readonly taskSelection?: readonly string[];
 }
 
 export interface ResearchCompare {
@@ -67,7 +73,7 @@ export interface ResearchCompareWarning {
   readonly type: 'mixed-submission-protocols';
 }
 
-interface ResearchCompareMetadata {
+interface ResearchCompareMetadata extends StoredResearchTaskSelection {
   readonly benchmark: string;
   readonly collaborator: string;
   readonly createdAt: string;
@@ -124,7 +130,8 @@ export function buildResearchCompare(options: BuildResearchCompareOptions): Rese
       continue;
     }
 
-    if (candidate.metadata.benchmark !== options.benchmark) {
+    if (candidate.metadata.benchmark !== options.benchmark ||
+      !matchesResearchTaskSelection(candidate.metadata, options.taskSelection ?? [])) {
       benchmarkMismatch += 1;
       continue;
     }
@@ -303,7 +310,8 @@ function researchCompareMetadata(
     benchmark,
     result,
     status,
-    submissionProtocol: submissionProtocol(value)
+    submissionProtocol: submissionProtocol(value),
+    ...readStoredResearchTaskSelection(value, invalidReason)
   };
 }
 

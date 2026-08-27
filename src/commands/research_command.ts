@@ -35,11 +35,13 @@ interface ResearchRecordRequest {
 interface ResearchPlotRequest {
   readonly benchmark: string;
   readonly output: string;
+  readonly tasks: readonly string[];
 }
 
 interface ResearchCompareRequest {
   readonly benchmark: string;
   readonly json: boolean;
+  readonly tasks: readonly string[];
 }
 
 interface ResearchRecordInputPaths {
@@ -65,8 +67,6 @@ interface ResearchRecordPlan {
 type SubmissionProtocol = 'blind-neutral-circuit-json-v1' | 'qni-command-output-v0';
 
 type ResearchRecordOption = keyof ResearchRecordRequest;
-type ResearchSolveOption = keyof ResearchSolveRequest;
-type ResearchPlotOption = keyof ResearchPlotRequest;
 
 class ResearchRecordError extends Error {}
 
@@ -79,7 +79,7 @@ const RECORD_USAGE = [
   ''
 ].join('\n');
 const SOLVE_USAGE = [
-  'Usage: qni research solve --model <registry-id> --benchmark <dir> --slug <slug>',
+  'Usage: qni research solve --model <pi-model-id> --thinking <level> --benchmark <dir> [--task <task-id> ...] --slug <slug>',
   ''
 ].join('\n');
 const REPORT_USAGE = [
@@ -87,11 +87,11 @@ const REPORT_USAGE = [
   ''
 ].join('\n');
 const PLOT_USAGE = [
-  'Usage: qni research plot --benchmark <dir> --output <file>',
+  'Usage: qni research plot --benchmark <dir> [--task <task-id> ...] --output <file>',
   ''
 ].join('\n');
 const COMPARE_USAGE = [
-  'Usage: qni research compare --benchmark <dir> [--json]',
+  'Usage: qni research compare --benchmark <dir> [--task <task-id> ...] [--json]',
   ''
 ].join('\n');
 const RESEARCH_HELP_TEXT = `Usage:
@@ -99,7 +99,7 @@ const RESEARCH_HELP_TEXT = `Usage:
 
 Commands:
   qni research record    Record one external collaborator trial for one benchmark suite.
-  qni research solve     Run one registered model against one benchmark suite.
+  qni research solve     Run one Pi model against one benchmark suite.
   qni research report    Show saved research trial summaries from research/runs/
   qni research plot      Write cost per problem vs score scatter plot HTML.
   qni research compare   Compare saved research trials task by task.
@@ -140,20 +140,20 @@ Example:
   qni research record --collaborator claude-sonnet-4 --benchmark benchmarks/quantum-katas --submissions tmp/submissions --prompt tmp/prompt.md --response tmp/response.md --slug smoke-claude
   qni research record --collaborator external-agent --benchmark benchmarks/quantum-katas --circuit-json-dir tmp/circuit-json --prompt tmp/prompt.md --response tmp/response.md --slug neutral-json`;
 const SOLVE_HELP_TEXT = `Usage:
-  qni research solve --model <registry-id> --benchmark <dir> --slug <slug>
+  qni research solve --model <pi-model-id> --thinking <level> --benchmark <dir> [--task <task-id> ...] --slug <slug>
 
 Overview:
-  Run one model from research/models.yaml against one benchmark suite.
-  qni research solve calls an OpenAI-compatible Chat Completions provider.
-  It saves prompts, raw responses, neutral circuit JSON, converted submissions, usage, estimated cost, and grading output.
+  Run one model through a fresh, tool-free Pi process for each benchmark task.
+  It saves prompts, final responses, neutral circuit JSON, converted submissions, Pi usage, reported cost, and grading output.
 
 Required inputs:
-  --model <registry-id>
+  --model <pi-model-id>
+  --thinking <off|minimal|low|medium|high|xhigh|max>
   --benchmark <dir>
   --slug <slug>
 
-Model registry:
-  research/models.yaml
+Options:
+  --task <task-id>  Select one task. Repeat to select multiple tasks.
 
 Saved files:
   research/runs/<timestamp>-<slug>/trial.md
@@ -171,7 +171,7 @@ Exit codes:
   0  passed
   1  failed
   2  disallowed
-  3  error or input/save/provider failure`;
+  3  error or input/save/Pi failure`;
 const REPORT_HELP_TEXT = `Usage:
   qni research report [--json]
 
@@ -202,6 +202,9 @@ Required inputs:
   --benchmark <dir>
   --output <file>
 
+Options:
+  --task <task-id>  Select one task set. Repeat to select multiple tasks.
+
 Output:
   self-contained HTML with inline SVG
   cost per problem on the x axis
@@ -222,6 +225,7 @@ Required inputs:
   --benchmark <dir>
 
 Options:
+  --task <task-id>  Select one task set. Repeat to select multiple tasks.
   --json  Print the machine-readable comparison instead of plaintext.
 
 Output:
@@ -243,15 +247,6 @@ const RECORD_OPTION_NAMES = new Map<string, ResearchRecordOption>([
   ['--response', 'response'],
   ['--slug', 'slug'],
   ['--submissions', 'submissions']
-]);
-const SOLVE_OPTION_NAMES = new Map<string, ResearchSolveOption>([
-  ['--benchmark', 'benchmark'],
-  ['--model', 'model'],
-  ['--slug', 'slug']
-]);
-const PLOT_OPTION_NAMES = new Map<string, ResearchPlotOption>([
-  ['--benchmark', 'benchmark'],
-  ['--output', 'output']
 ]);
 
 export function runResearchCommand(argv: string[], context: CommandHandlerContext): number {
@@ -428,7 +423,8 @@ function runResearchPlot(request: ResearchPlotRequest, context: CommandHandlerCo
     const result = writeResearchPlotHtml({
       benchmark: request.benchmark,
       cwd: context.cwd,
-      output: request.output
+      output: request.output,
+      taskSelection: request.tasks
     });
 
     process.stdout.write(`Wrote research plot: ${result.outputPath}\n`);
@@ -453,7 +449,8 @@ function runResearchCompareWithFormat(
   try {
     const compare = buildResearchCompare({
       benchmark: request.benchmark,
-      cwd: context.cwd
+      cwd: context.cwd,
+      taskSelection: request.tasks
     });
 
     process.stdout.write(format(compare));
@@ -497,73 +494,61 @@ function parseResearchRecordRequest(argv: readonly string[]): ResearchRecordRequ
 }
 
 function parseResearchSolveRequest(argv: readonly string[]): ResearchSolveRequest | undefined {
-  if (argv[0] !== 'research' || argv[1] !== 'solve') {
-    return undefined;
-  }
-
-  const values = parseOptionValues<ResearchSolveOption>(argv.slice(2), SOLVE_OPTION_NAMES);
-
-  if (!values || values.benchmark === undefined || values.model === undefined || values.slug === undefined) {
-    return undefined;
-  }
-
-  return {
-    benchmark: values.benchmark,
-    model: values.model,
-    slug: values.slug
-  };
+  if (argv[0] !== 'research' || argv[1] !== 'solve') return undefined;
+  const parsed = parseRepeatableTaskOptions(argv.slice(2), new Set(['--benchmark', '--model', '--thinking', '--slug']));
+  if (!parsed) return undefined;
+  const benchmark = parsed.values.get('--benchmark');
+  const model = parsed.values.get('--model');
+  const slug = parsed.values.get('--slug');
+  const thinking = parsed.values.get('--thinking');
+  if (!benchmark || !model || !slug || !isResearchThinking(thinking)) return undefined;
+  return { benchmark, model, slug, thinking, tasks: parsed.tasks };
 }
 
 function parseResearchPlotRequest(argv: readonly string[]): ResearchPlotRequest | undefined {
-  if (argv[0] !== 'research' || argv[1] !== 'plot') {
-    return undefined;
-  }
-
-  const values = parseOptionValues<ResearchPlotOption>(argv.slice(2), PLOT_OPTION_NAMES);
-
-  if (!values || values.benchmark === undefined || values.output === undefined) {
-    return undefined;
-  }
-
-  return {
-    benchmark: values.benchmark,
-    output: values.output
-  };
+  if (argv[0] !== 'research' || argv[1] !== 'plot') return undefined;
+  const parsed = parseRepeatableTaskOptions(argv.slice(2), new Set(['--benchmark', '--output']));
+  if (!parsed) return undefined;
+  const benchmark = parsed.values.get('--benchmark');
+  const output = parsed.values.get('--output');
+  return benchmark && output ? { benchmark, output, tasks: parsed.tasks } : undefined;
 }
 
 function parseResearchCompareRequest(argv: readonly string[]): ResearchCompareRequest | undefined {
-  if (argv[0] !== 'research' || argv[1] !== 'compare') {
-    return undefined;
-  }
+  if (argv[0] !== 'research' || argv[1] !== 'compare') return undefined;
+  const args = argv.slice(2);
+  const jsonCount = args.filter((value) => value === '--json').length;
+  if (jsonCount > 1) return undefined;
+  const parsed = parseRepeatableTaskOptions(args.filter((value) => value !== '--json'), new Set(['--benchmark']));
+  if (!parsed) return undefined;
+  const benchmark = parsed.values.get('--benchmark');
+  return benchmark ? { benchmark, json: jsonCount === 1, tasks: parsed.tasks } : undefined;
+}
 
-  let benchmark: string | undefined;
-  let json = false;
-
-  for (let index = 2; index < argv.length;) {
-    const value = argv[index];
-
-    if (value === '--json') {
-      if (json) {
-        return undefined;
-      }
-      json = true;
-      index += 1;
+function parseRepeatableTaskOptions(
+  args: readonly string[],
+  uniqueOptions: ReadonlySet<string>
+): { readonly tasks: readonly string[]; readonly values: ReadonlyMap<string, string> } | undefined {
+  if (args.length % 2 !== 0) return undefined;
+  const values = new Map<string, string>();
+  const tasks: string[] = [];
+  for (let index = 0; index < args.length; index += 2) {
+    const name = args[index];
+    const value = args[index + 1];
+    if (!name || !value) return undefined;
+    if (name === '--task') {
+      if (tasks.includes(value)) return undefined;
+      tasks.push(value);
       continue;
     }
-
-    if (value === '--benchmark') {
-      if (benchmark !== undefined || argv[index + 1] === undefined) {
-        return undefined;
-      }
-      benchmark = argv[index + 1];
-      index += 2;
-      continue;
-    }
-
-    return undefined;
+    if (!uniqueOptions.has(name) || values.has(name)) return undefined;
+    values.set(name, value);
   }
+  return { tasks: [...tasks].sort(), values };
+}
 
-  return benchmark === undefined ? undefined : { benchmark, json };
+function isResearchThinking(value: string | undefined): value is ResearchSolveRequest['thinking'] {
+  return value === 'off' || value === 'minimal' || value === 'low' || value === 'medium' || value === 'high' || value === 'xhigh' || value === 'max';
 }
 
 function parseOptionValues<OptionName extends string>(

@@ -2,11 +2,17 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSy
 import path = require('node:path');
 
 import type { BenchmarkStatus } from './evaluation_runner';
+import {
+  matchesResearchTaskSelection,
+  readStoredResearchTaskSelection,
+  type StoredResearchTaskSelection
+} from './research_task_selection';
 
 export interface WriteResearchPlotRequest {
   readonly benchmark: string;
   readonly cwd: string;
   readonly output: string;
+  readonly taskSelection?: readonly string[];
 }
 
 export interface WriteResearchPlotResult {
@@ -58,7 +64,7 @@ interface ResearchPlotTrialCandidate {
   readonly metadata?: ResearchPlotMetadata;
 }
 
-interface ResearchPlotMetadata {
+interface ResearchPlotMetadata extends StoredResearchTaskSelection {
   readonly benchmark: string;
   readonly collaborator: string;
   readonly cost?: unknown;
@@ -93,7 +99,8 @@ const Y_TICKS = [0, 25, 50, 75, 100] as const;
 export function writeResearchPlotHtml(request: WriteResearchPlotRequest): WriteResearchPlotResult {
   const plot = buildResearchPlot({
     benchmark: request.benchmark,
-    cwd: request.cwd
+    cwd: request.cwd,
+    taskSelection: request.taskSelection
   });
   const outputPath = path.resolve(request.cwd, request.output);
 
@@ -106,7 +113,7 @@ export function writeResearchPlotHtml(request: WriteResearchPlotRequest): WriteR
   };
 }
 
-export function buildResearchPlot(options: { readonly benchmark: string; readonly cwd: string }): ResearchPlot {
+export function buildResearchPlot(options: { readonly benchmark: string; readonly cwd: string; readonly taskSelection?: readonly string[] }): ResearchPlot {
   const exclusions = {
     invalidTrial: 0,
     benchmarkMismatch: 0,
@@ -120,7 +127,8 @@ export function buildResearchPlot(options: { readonly benchmark: string; readonl
       continue;
     }
 
-    if (candidate.metadata.benchmark !== options.benchmark) {
+    if (candidate.metadata.benchmark !== options.benchmark ||
+      !matchesResearchTaskSelection(candidate.metadata, options.taskSelection ?? [])) {
       exclusions.benchmarkMismatch += 1;
       continue;
     }
@@ -336,7 +344,8 @@ function researchPlotMetadata(
     score: value.score,
     cost: value.cost,
     tokens: value.tokens,
-    model: value.model
+    model: value.model,
+    ...readStoredResearchTaskSelection(value, invalidReason)
   };
 }
 

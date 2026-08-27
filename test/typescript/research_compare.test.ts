@@ -37,6 +37,8 @@ async function writeCompareTrial(
     readonly resultOverride?: Record<string, unknown>;
     readonly status?: StoredResearchStatus;
     readonly submissionProtocol?: string;
+    readonly taskSelection?: readonly string[];
+    readonly taskSelectionMode?: 'full' | 'selected';
     readonly tasks?: readonly CompareTaskFixture[];
   } = {}
 ): Promise<void> {
@@ -52,7 +54,9 @@ async function writeCompareTrial(
       collaborator: options.collaborator,
       status
     }),
-    ...(options.submissionProtocol === undefined ? {} : { submissionProtocol: options.submissionProtocol })
+    ...(options.submissionProtocol === undefined ? {} : { submissionProtocol: options.submissionProtocol }),
+    ...(options.taskSelection === undefined ? {} : { taskSelection: options.taskSelection }),
+    ...(options.taskSelectionMode === undefined ? {} : { taskSelectionMode: options.taskSelectionMode })
   });
   await writeJsonFile(path.join(trialDir, 'result.json'), options.resultOverride ?? {
     status,
@@ -241,6 +245,35 @@ describe('research compare builder', () => {
       });
       assert.deepStrictEqual(compare.trials, []);
       assert.deepStrictEqual(compare.tasks, []);
+    });
+  });
+
+  it('includes only trials with the requested task selection', async () => {
+    await withTempDir(async (dir) => {
+      await writeCompareTrial(dir, '2026-07-02T000001Z-full');
+      await writeCompareTrial(dir, '2026-07-02T000002Z-subset', { taskSelection: ['task-1'] });
+
+      const compare = buildResearchCompare({
+        benchmark: 'benchmarks/quantum-katas',
+        cwd: dir,
+        taskSelection: ['task-1']
+      });
+
+      assert.deepStrictEqual(compare.trials.map((trial) => trial.id), ['2026-07-02T000002Z-subset']);
+      assert.equal(compare.exclusions.benchmarkMismatch, 1);
+    });
+  });
+
+  it('includes a new full-suite trial when task selection is omitted', async () => {
+    await withTempDir(async (dir) => {
+      await writeCompareTrial(dir, '2026-07-02T000001Z-full', {
+        taskSelection: ['task-1'],
+        taskSelectionMode: 'full'
+      });
+
+      const compare = buildResearchCompare({ benchmark: 'benchmarks/quantum-katas', cwd: dir });
+
+      assert.deepStrictEqual(compare.trials.map((trial) => trial.id), ['2026-07-02T000001Z-full']);
     });
   });
 

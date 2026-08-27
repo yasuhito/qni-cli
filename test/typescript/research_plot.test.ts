@@ -27,6 +27,8 @@ interface PlotTrialOptions {
   readonly resultContent?: string;
   readonly score?: Record<string, unknown>;
   readonly status?: StoredResearchStatus;
+  readonly taskSelection?: readonly string[];
+  readonly taskSelectionMode?: 'full' | 'selected';
   readonly tokens?: Record<string, unknown>;
 }
 
@@ -124,6 +126,8 @@ async function writePlotTrial(dir: string, id: string, options: PlotTrialOptions
     response: 'response.md',
     result: 'result.json',
     status,
+    ...(options.taskSelection === undefined ? {} : { taskSelection: options.taskSelection }),
+    ...(options.taskSelectionMode === undefined ? {} : { taskSelectionMode: options.taskSelectionMode }),
     ...(options.score === undefined ? {
       score: {
         passed: status === 'passed' ? 22 : 21,
@@ -362,6 +366,40 @@ describe('research plot command', () => {
     });
   });
 
+  it('plots only trials with the requested task selection', async () => {
+    await withTempDir(async (dir) => {
+      await writePlotTrial(dir, '2026-07-02T000001Z-full');
+      await writePlotTrial(dir, '2026-07-02T000002Z-subset', { taskSelection: ['task-1'] });
+
+      const result = captureDispatcherRun(dir, [
+        'research', 'plot', '--benchmark', 'benchmarks/quantum-katas',
+        '--task', 'task-1', '--output', 'plot.html'
+      ]);
+      const html = await readFile(path.join(dir, 'plot.html'), 'utf8');
+
+      assert.equal(result.exitStatus, 0);
+      assert.match(html, /2026-07-02T000002Z-subset/u);
+      assert.doesNotMatch(html, /2026-07-02T000001Z-full/u);
+    });
+  });
+
+  it('plots a new full-suite trial when task selection is omitted', async () => {
+    await withTempDir(async (dir) => {
+      await writePlotTrial(dir, '2026-07-02T000001Z-full', {
+        taskSelection: ['task-1'],
+        taskSelectionMode: 'full'
+      });
+
+      const result = captureDispatcherRun(dir, [
+        'research', 'plot', '--benchmark', 'benchmarks/quantum-katas', '--output', 'plot.html'
+      ]);
+      const html = await readFile(path.join(dir, 'plot.html'), 'utf8');
+
+      assert.equal(result.exitStatus, 0);
+      assert.match(html, /2026-07-02T000001Z-full/u);
+    });
+  });
+
   it('rejects incomplete plot arguments before writing HTML', async () => {
     await withTempDir(async (dir) => {
       const result = captureDispatcherRun(dir, [
@@ -373,7 +411,7 @@ describe('research plot command', () => {
 
       assert.equal(result.exitStatus, 3);
       assert.equal(result.stdout, '');
-      assert.match(result.stderr, /Usage: qni research plot --benchmark <dir> --output <file>/u);
+      assert.match(result.stderr, /Usage: qni research plot --benchmark <dir> \[--task <task-id> \.\.\.\] --output <file>/u);
       assert.equal(await fileExists(path.join(dir, 'plot.html')), false);
     });
   });

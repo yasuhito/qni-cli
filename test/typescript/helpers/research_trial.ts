@@ -11,6 +11,7 @@ export async function writeStoredResearchTrial(
     readonly collaborator?: string;
     readonly status?: StoredResearchStatus;
     readonly summaryTotal?: number;
+    readonly taskSelection?: readonly string[];
   } = {}
 ): Promise<void> {
   const status = options.status ?? 'passed';
@@ -19,7 +20,8 @@ export async function writeStoredResearchTrial(
   await writeJsonFile(path.join(trialDir, 'metadata.json'), storedResearchMetadata(id, {
     benchmark: options.benchmark,
     collaborator: options.collaborator,
-    status
+    status,
+    taskSelection: options.taskSelection
   }));
   await writeJsonFile(path.join(trialDir, 'result.json'), storedResearchResult(status, {
     summaryTotal: options.summaryTotal
@@ -47,6 +49,7 @@ export function storedResearchMetadata(
     readonly schemaVersion?: number;
     readonly score?: Record<string, unknown>;
     readonly status?: StoredResearchStatus;
+    readonly taskSelection?: readonly string[];
   } = {}
 ): Record<string, unknown> {
   return {
@@ -60,6 +63,7 @@ export function storedResearchMetadata(
     response: 'response.md',
     result: options.result ?? 'result.json',
     status: options.status ?? 'passed',
+    ...(options.taskSelection === undefined ? {} : { taskSelection: options.taskSelection }),
     ...optionalScore(options.score)
   };
 }

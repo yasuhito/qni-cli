@@ -1,5 +1,7 @@
 # モデル別コストベンチマーク PRD
 
+> この初期 PRD の OpenAI互換 API 直接呼び出しと `research/models.yaml` は [ADR 0023](../adr/0023-run-model-written-tests-through-isolated-pi.md) で Pi 経由へ置き換えられた。現在の利用手順は [model-cost-benchmark.md](../model-cost-benchmark.md) を参照する。
+
 ## 概要
 
 本PRDは、qni-cli に PhysicsIntern / CritPt 風のモデル別ベンチマーク機能を追加するための範囲を定義する。対象は、同じベンチマークスイートを複数のモデルに解かせ、採点結果、入力・出力トークン数、推定コストを研究試行として保存し、`cost per problem` と `score` の散布図で比較できる最小機能である。

@@ -4,7 +4,7 @@
 
 汎用の `qni` コマンド、画像出力、Bloch sphere、状態ベクトル操作の例は [cli.md](cli.md) に置きます。この文書は、ベンチマーク採点と研究試行ログの手順に集中します。
 
-モデル登録ファイルを使って `qni research solve` を実行し、`qni research plot` で cost per problem と score を可視化する手順は [モデル別コストベンチマーク利用手順](model-cost-benchmark.md) を参照してください。
+Pi 経由で `qni research solve` を実行し、`qni research plot` で cost per problem と score を可視化する手順は [モデル別コストベンチマーク利用手順](model-cost-benchmark.md) を参照してください。
 
 以下の例はリポジトリルートから実行します。開発中の作業ツリーで実行する場合は、先に `npm run build` を実行し、`qni` を `node dist/bin/qni.js` に読み替えてください。
 
@@ -514,4 +514,4 @@ qni research compare --benchmark benchmarks/quantum-katas --json
 
 ## モデル別コストベンチマークを実行する
 
-`qni research solve` は、`research/models.yaml` に登録した単一モデルを使って OpenAI互換 Chat Completions API を直接呼び出し、ベンチマークスイートを1課題ずつ逐次実行します。`qni research record` は AI を呼びません。モデル登録ファイル、APIキー環境変数、score と cost の計算式、`qni research plot` の HTML 出力、初期スコープ外の項目は [モデル別コストベンチマーク利用手順](model-cost-benchmark.md) にまとめています。
+`qni research solve` は、インストール済み Pi の指定モデルを道具・セッション・リポジトリ文脈なしで課題ごとに起動します。`--model` と `--thinking` は必須で、`--task` を繰り返すと小さな課題集合だけを実行できます。`qni research record` は AI を呼びません。Pi の準備、score と cost、`qni research plot` の HTML 出力、初期スコープ外の項目は [モデル別コストベンチマーク利用手順](model-cost-benchmark.md) にまとめています。
