@@ -2,6 +2,7 @@ import { readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { AngleExpression, AngleExpressionError, validAngleIdentifier } from './angle_expression';
+import { parseCircuitOperationSlot } from './circuit_operation';
 import {
   formatInitialState,
   initialStateQubitCount,
@@ -79,19 +80,24 @@ export class CircuitFile {
     this.addPlacement(step, new Map([...controls.map((control) => [control, CONTROL_SYMBOL] as const), [target, gate]]));
   }
 
-  addSwapGate(step: number, targets: number[]): void {
+  addSwapGate(step: number, targets: number[], symbol = SWAP_SYMBOL): void {
     validateSwapTargets(targets);
-    this.addPlacement(step, new Map(targets.map((target) => [target, SWAP_SYMBOL] as const)));
+    this.addPlacement(step, new Map(targets.map((target) => [target, symbol] as const)));
   }
 
-  addControlledSwapGate(step: number, controls: number[], targets: number[]): void {
+  addControlledSwapGate(
+    step: number,
+    controls: number[],
+    targets: number[],
+    symbol = SWAP_SYMBOL
+  ): void {
     validateSwapTargets(targets);
     validateControls(controls, targets);
     this.addPlacement(
       step,
       new Map([
         ...controls.map((control) => [control, CONTROL_SYMBOL] as const),
-        ...targets.map((target) => [target, SWAP_SYMBOL] as const)
+        ...targets.map((target) => [target, symbol] as const)
       ])
     );
   }
@@ -320,7 +326,7 @@ function removableQubits(
     return controlledSwapQubits(col, step);
   }
 
-  if (selectedSlot === SWAP_SYMBOL) {
+  if (operationKind(selectedSlot) === 'swap') {
     return swapQubits(col, step);
   }
 
@@ -334,8 +340,8 @@ function removableQubits(
 function controlledSwapSlot(col: unknown[], selectedSlot: unknown): boolean {
   return (
     col.includes(CONTROL_SYMBOL) &&
-    col.includes(SWAP_SYMBOL) &&
-    (selectedSlot === CONTROL_SYMBOL || selectedSlot === SWAP_SYMBOL)
+    swapSlots(col).length > 0 &&
+    (selectedSlot === CONTROL_SYMBOL || operationKind(selectedSlot) === 'swap')
   );
 }
 
@@ -343,7 +349,7 @@ function controlledSwapQubits(col: unknown[], step: number): number[] {
   const controls = slotIndices(col, CONTROL_SYMBOL);
   const swaps = swapQubits(col, step);
 
-  if (!col.every((slot) => slot === EMPTY_SLOT || slot === CONTROL_SYMBOL || slot === SWAP_SYMBOL)) {
+  if (!col.every((slot) => slot === EMPTY_SLOT || slot === CONTROL_SYMBOL || operationKind(slot) === 'swap')) {
     throw new CircuitFileError(`unsupported controlled swap step: cols[${step}] = ${JSON.stringify(col)}`);
   }
 
@@ -372,13 +378,25 @@ function targetQubits(col: unknown[]): number[] {
 }
 
 function swapQubits(col: unknown[], step: number): number[] {
-  const indices = slotIndices(col, SWAP_SYMBOL);
+  const indices = swapSlots(col);
 
   if (indices.length !== 2) {
     throw new CircuitFileError(`unsupported swap step: cols[${step}] = ${JSON.stringify(col)}`);
   }
 
   return indices;
+}
+
+function swapSlots(col: unknown[]): number[] {
+  return col.flatMap((slot, index) => (operationKind(slot) === 'swap' ? [index] : []));
+}
+
+function operationKind(slot: unknown): 'gate' | 'measurement' | 'swap' | undefined {
+  try {
+    return parseCircuitOperationSlot(slot)?.kind;
+  } catch {
+    return undefined;
+  }
 }
 
 function slotIndices(col: unknown[], symbol: string): number[] {

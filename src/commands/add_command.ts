@@ -1,5 +1,6 @@
 import { AngleExpression, AngleExpressionError } from '../angle_expression';
 import { CircuitFileError, currentCircuitFile } from '../circuit_file';
+import { namedMeasurementSymbol, validateClassicalBitName, withClassicalCondition } from '../circuit_operation';
 import type { CommandHandlerContext } from '../dispatcher';
 import { thorArgumentsError } from './thor_compatibility';
 
@@ -10,6 +11,9 @@ const HELP_TEXT = `Usage:
   qni add ANGLED_GATE --angle=ANGLE --control=CONTROL --qubit=N --step=N
   qni add SWAP --qubit=N,N --step=N
   qni add SWAP --control=CONTROL --qubit=N,N --step=N
+  qni add Measure --name=NAME --qubit=N --step=N
+
+  Add --if=NAME to any quantum gate to run it only when that named classical bit is 1.
 
 Overview:
   Add a gate to ./circuit.json.
@@ -27,6 +31,8 @@ Options:
   --qubit=N            # 0-based qubit index
   [--control=CONTROL]  # comma-separated control qubit indices
   [--angle=ANGLE]      # angle for P, Rx, Ry, Rz, or GlobalPhase, such as π/3 or pi/3
+  [--name=NAME]        # save a Measure result as this classical bit
+  [--if=NAME]          # run a quantum gate only when this classical bit is 1
 
 Examples:
   qni add H --qubit 0 --step 0
@@ -41,10 +47,12 @@ Examples:
   qni add GlobalPhase --angle 2π --qubit 0 --step 4
   qni add SWAP --qubit 0,1 --step 0
   qni add SWAP --control 0 --qubit 1,2 --step 0
+  qni add X --if input --qubit 0 --step 2
 
 Measurement:
   qni add Measure --qubit 0 --step 0
-  Measure saves an unnamed computational-basis measurement as "Measure".`;
+  qni add Measure --name input --qubit 0 --step 1
+  Measure saves "Measure" or the Qni-compatible named form "Measure>input".`;
 
 const FIXED_GATES = new Map<string, string>([
   ['H', 'H'],
@@ -72,7 +80,9 @@ const SWAP_GATE = 'Swap';
 
 interface AddOptions {
   readonly angle?: string;
+  readonly classicalCondition?: string;
   readonly controls: number[];
+  readonly measurementName?: string;
   readonly qubits: number[];
   readonly step: number;
 }
@@ -90,17 +100,18 @@ export function runAddCommand(argv: string[], context: CommandHandlerContext): n
     validateAngleUsage(gate, options);
     validateMeasurementUsage(gate, options);
     const circuitFile = currentCircuitFile(context.cwd);
+    const gateSymbol = serializedGate(gate, options);
 
     if (gate === SWAP_GATE) {
       if (controlled(options)) {
-        circuitFile.addControlledSwapGate(options.step, options.controls, options.qubits);
+        circuitFile.addControlledSwapGate(options.step, options.controls, options.qubits, gateSymbol);
       } else {
-        circuitFile.addSwapGate(options.step, options.qubits);
+        circuitFile.addSwapGate(options.step, options.qubits, gateSymbol);
       }
     } else if (controlled(options)) {
-      circuitFile.addControlledGate(serializedGate(gate, options), options.step, options.controls, singleQubit(options));
+      circuitFile.addControlledGate(gateSymbol, options.step, options.controls, singleQubit(options));
     } else {
-      circuitFile.addGate(serializedGate(gate, options), options.step, singleQubit(options));
+      circuitFile.addGate(gateSymbol, options.step, singleQubit(options));
     }
 
     return 0;
@@ -138,7 +149,7 @@ function parseAddOptions(gateArgument: string, args: string[]): AddOptions {
 
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
-    const match = /^--(?<name>angle|control|qubit|step)(?:=(?<value>.*))?$/u.exec(arg);
+    const match = /^--(?<name>angle|control|if|name|qubit|step)(?:=(?<value>.*))?$/u.exec(arg);
 
     if (!match?.groups) {
       throw new CircuitFileError(thorArgumentsError('qni add', [gateArgument, arg], 'qni add GATE --qubit=N --step=N --qubit=QUBIT --step=N'));
@@ -158,7 +169,9 @@ function parseAddOptions(gateArgument: string, args: string[]): AddOptions {
 
   return {
     angle: values.get('angle'),
+    classicalCondition: optionalClassicalBitName(values.get('if'), 'if'),
     controls: optionalNonNegativeIntegers(values.get('control'), 'control'),
+    measurementName: optionalClassicalBitName(values.get('name'), 'name'),
     qubits: requiredNonNegativeIntegers(values.get('qubit'), 'qubit'),
     step: requiredNonNegativeStep(values.get('step'))
   };
@@ -177,12 +190,17 @@ function controlled(options: AddOptions): boolean {
 }
 
 function serializedGate(gate: string, options: AddOptions): string {
+  if (gate === 'Measure') {
+    return namedMeasurementSymbol(options.measurementName);
+  }
+
   if (!angledGate(gate)) {
-    return gate;
+    return withClassicalCondition(gate, options.classicalCondition);
   }
 
   try {
-    return `${gate}(${new AngleExpression(requiredAngle(options, gate)).toString()})`;
+    const angledSymbol = `${gate}(${new AngleExpression(requiredAngle(options, gate)).toString()})`;
+    return withClassicalCondition(angledSymbol, options.classicalCondition);
   } catch (error) {
     if (error instanceof AngleExpressionError) {
       throw new CircuitFileError(error.message);
@@ -201,6 +219,14 @@ function validateAngleUsage(gate: string, options: AddOptions): void {
 function validateMeasurementUsage(gate: string, options: AddOptions): void {
   if (gate === 'Measure' && controlled(options)) {
     throw new CircuitFileError('control is not supported for Measure');
+  }
+
+  if (gate === 'Measure' && options.classicalCondition !== undefined) {
+    throw new CircuitFileError('if is not supported for Measure');
+  }
+
+  if (gate !== 'Measure' && options.measurementName !== undefined) {
+    throw new CircuitFileError('name is only supported for Measure');
   }
 }
 
@@ -230,6 +256,18 @@ function optionalNonNegativeIntegers(value: string | undefined, name: string): n
   }
 
   return value.split(',').map((entry) => parseNonNegativeInteger(entry, name));
+}
+
+function optionalClassicalBitName(value: string | undefined, option: string): string | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (value.length === 0) {
+    throw new CircuitFileError(`No value provided for option '--${option}'`);
+  }
+
+  return validateClassicalBitName(value);
 }
 
 function requiredNonNegativeInteger(value: string | undefined, name: string): number {

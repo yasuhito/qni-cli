@@ -1,4 +1,9 @@
 import { CircuitFileError, type CircuitData } from '../circuit_file';
+import {
+  parseCircuitOperation,
+  parseCircuitOperationSlot,
+  type ParsedCircuitOperation
+} from '../circuit_operation';
 
 const CONTROL_SYMBOL = '•';
 const DIM_SUFFIX_PATTERN = /┤ ([A-Z])([xyz†])├/gu;
@@ -7,7 +12,6 @@ const EMPTY_SLOT = 1;
 const RESET_FORMATTING = '\u001B[0m';
 const SQRT_X_SYMBOL = 'X^½';
 const SQRT_X_VIEW_SYMBOL = '√X';
-const SWAP_SYMBOL = 'Swap';
 
 class ConnectedLineStyle {
   readonly background: string;
@@ -189,14 +193,18 @@ class AngledBoxOnQuWire extends BoxOnQuWire {
 }
 
 class DirectOnQuWire extends DrawElement {
-  constructor(label: string, options: { botConnect?: string; topConnect?: string } = {}) {
+  constructor(
+    label: string,
+    options: { annotationText?: string; botConnect?: string; topConnect?: string } = {}
+  ) {
     super(
       label,
       new CellStyle({
         bot: new ConnectedLineStyle({ connect: options.botConnect ?? ' ', format: ' %s ' }),
         mid: new MidLineStyle({ background: '─', format: '─%s─', padding: '─' }),
         top: new ConnectedLineStyle({ connect: options.topConnect ?? ' ', format: ' %s ' })
-      })
+      }),
+      options.annotationText ?? ''
     );
   }
 }
@@ -208,7 +216,7 @@ class Bullet extends DirectOnQuWire {
 }
 
 class Ex extends DirectOnQuWire {
-  constructor(options: { botConnect?: string; topConnect?: string } = {}) {
+  constructor(options: { annotationText?: string; botConnect?: string; topConnect?: string } = {}) {
     super('X', options);
   }
 }
@@ -235,11 +243,11 @@ class EmptyWire extends DrawElement {
 class TextGateCell {
   private static readonly ANGLED_GATE_PATTERN = /^(?<symbol>[A-Za-z]+)\((?<angle>.+)\)$/u;
   private readonly botConnect: string;
-  private readonly slot: unknown;
+  private readonly operation: ParsedCircuitOperation;
   private readonly topConnect: string;
 
   constructor(slot: unknown, options: { botConnect?: string; topConnect?: string } = {}) {
-    this.slot = slot;
+    this.operation = parseCircuitOperation(slot);
     this.topConnect = options.topConnect ?? '─';
     this.botConnect = options.botConnect ?? '─';
   }
@@ -263,17 +271,25 @@ class TextGateCell {
   }
 
   private angledMatch(): RegExpExecArray | null {
-    return TextGateCell.ANGLED_GATE_PATTERN.exec(String(this.slot));
+    return TextGateCell.ANGLED_GATE_PATTERN.exec(this.operation.symbol);
   }
 
   private label(): string {
     const angledMatch = this.angledMatch();
+    const baseLabel =
+      this.operation.symbol === SQRT_X_SYMBOL
+        ? SQRT_X_VIEW_SYMBOL
+        : (angledMatch?.groups?.symbol ?? this.measurementLabel());
 
-    if (this.slot === SQRT_X_SYMBOL) {
-      return SQRT_X_VIEW_SYMBOL;
-    }
+    return this.operation.classicalCondition === undefined
+      ? baseLabel
+      : `${baseLabel}<${this.operation.classicalCondition}`;
+  }
 
-    return angledMatch?.groups?.symbol ?? String(this.slot);
+  private measurementLabel(): string {
+    return this.operation.measurementName === undefined
+      ? this.operation.symbol
+      : `${this.operation.symbol}>${this.operation.measurementName}`;
   }
 
   private renderedAngle(angle: string): string {
@@ -310,7 +326,6 @@ class GatePlacement {
 }
 
 class TextStep {
-  private static readonly NON_GATE_SLOTS = new Set<unknown>([EMPTY_SLOT, CONTROL_SYMBOL, SWAP_SYMBOL]);
   private readonly rawStep: unknown[];
 
   constructor(rawStep: unknown[]) {
@@ -343,7 +358,9 @@ class TextStep {
   }
 
   swapPair(): readonly [number, number] | undefined {
-    const swapQubits = this.rawStep.flatMap((slot, index) => (slot === SWAP_SYMBOL ? [index] : []));
+    const swapQubits = this.rawStep.flatMap((slot, index) =>
+      this.operationKind(slot) === 'swap' ? [index] : []
+    );
 
     if (swapQubits.length !== 2) {
       return undefined;
@@ -352,10 +369,32 @@ class TextStep {
     return [Math.min(...swapQubits), Math.max(...swapQubits)];
   }
 
+  swapCondition(): string | undefined {
+    const conditions = this.rawStep.flatMap((slot) => {
+      if (this.operationKind(slot) !== 'swap') {
+        return [];
+      }
+
+      return [parseCircuitOperation(slot).classicalCondition];
+    });
+
+    if (new Set(conditions).size > 1) {
+      throw new CircuitFileError('SWAP targets must use the same classical condition');
+    }
+
+    return conditions[0];
+  }
+
   private singleGates(): GatePlacement[] {
     return this.rawStep.flatMap((slot, qubit) =>
-      TextStep.NON_GATE_SLOTS.has(slot) ? [] : [new GatePlacement(slot, qubit)]
+      slot === EMPTY_SLOT || slot === CONTROL_SYMBOL || this.operationKind(slot) === 'swap'
+        ? []
+        : [new GatePlacement(slot, qubit)]
     );
+  }
+
+  private operationKind(slot: unknown): 'gate' | 'measurement' | 'swap' | undefined {
+    return parseCircuitOperationSlot(slot)?.kind;
   }
 
   private targetedGates(): GatePlacement[] {
@@ -398,7 +437,10 @@ class TextLayer {
     this.cells[qubit] = cell;
   }
 
-  placeSwapEndpoint(qubit: number, options: { botConnect?: string; topConnect?: string } = {}): void {
+  placeSwapEndpoint(
+    qubit: number,
+    options: { annotationText?: string; botConnect?: string; topConnect?: string } = {}
+  ): void {
     this.place(qubit, new Ex(options));
   }
 
@@ -531,7 +573,10 @@ class TextStepLayerBuilder {
       layer.place(controlQubit, new Bullet(span.connectorsFor(controlQubit)));
     }
 
-    layer.placeSwapEndpoint(topQubit, span.connectorsFor(topQubit));
+    layer.placeSwapEndpoint(topQubit, {
+      ...span.connectorsFor(topQubit),
+      annotationText: this.step.swapCondition() ? `<${this.step.swapCondition()}` : undefined
+    });
     layer.placeSwapEndpoint(bottomQubit, span.connectorsFor(bottomQubit));
     this.placeSwapBridges(layer, span);
   }

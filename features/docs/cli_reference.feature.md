@@ -20,6 +20,14 @@ CLI コマンドの詳細を専用ドキュメントで確認したい。
 
 - Then リポジトリファイル "docs/cli.md" は "qni add Measure --qubit 0 --step 4" を含む
 
+## Scenario: CLI リファレンスは名前付き測定の追加例を示す
+
+- Then リポジトリファイル "docs/cli.md" は "qni add Measure --name input --qubit 0 --step 5" を含む
+
+## Scenario: CLI リファレンスは古典条件付きゲートの追加例を示す
+
+- Then リポジトリファイル "docs/cli.md" は "qni add X --if input --qubit 0 --step 6" を含む
+
 ## Scenario: CLI リファレンスは測定回路の1回実行を説明する
 
 - Then リポジトリファイル "docs/cli.md" は "`qni run` は回路を1回実行し" を含む

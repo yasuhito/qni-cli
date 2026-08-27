@@ -53,7 +53,7 @@ export function runRunCommand(argv: string[], context: CommandHandlerContext): n
     const output = containsMeasurements
       ? new Simulator(circuit)
           .runMeasurements()
-          .map(({ qubit, value }) => `q${qubit}=${value}`)
+          .map(({ name, qubit, value }) => `${name ?? `q${qubit}`}=${value}`)
           .join('\n')
       : options.symbolic
         ? renderSymbolicStateVector({

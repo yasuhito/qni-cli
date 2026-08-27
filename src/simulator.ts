@@ -1,11 +1,13 @@
 import { AngleExpression, AngleExpressionError } from './angle_expression';
 import { Complex } from './complex';
 import type { CircuitData } from './circuit_file';
+import { parseCircuitOperationSlot, type ParsedCircuitOperation } from './circuit_operation';
 import { InitialStateError, initialStateQubitCount, resolveNumericInitialState } from './initial_state';
 
 export class SimulatorError extends Error {}
 
 export interface MeasurementResult {
+  readonly name?: string;
   readonly qubit: number;
   readonly value: 0 | 1;
 }
@@ -26,11 +28,15 @@ const CONTROL_SYMBOL = '•';
 const EMPTY_SLOT = 1;
 const H_SCALE = 1 / Math.sqrt(2);
 const MAX_IN_MEMORY_QUBITS = 30;
-const MEASURE_SYMBOL = 'Measure';
 const SWAP_SYMBOL = 'Swap';
 
 export function circuitContainsMeasurements(circuit: Pick<CircuitData, 'cols'>): boolean {
-  return circuit.cols.some((col) => col.includes(MEASURE_SYMBOL));
+  return circuit.cols.some((col) =>
+    col.some((slot) => {
+      const operation = parseCircuitOperationSlot(slot);
+      return operation?.kind === 'measurement' || operation?.classicalCondition !== undefined;
+    })
+  );
 }
 
 const FIXED_GATE_OPERATORS = new Map<string, GateOperator>([
@@ -65,14 +71,17 @@ export class Simulator {
   runMeasurements(random: () => number = Math.random): readonly MeasurementResult[] {
     try {
       ensureSupportedQubitCount(this.data.qubits);
+      const classicalBits = new Map<string, 0 | 1>();
       const results: MeasurementResult[] = [];
       let stateVector = this.startingStateVector();
 
-      for (const col of this.data.cols) {
+      for (const [step, col] of this.data.cols.entries()) {
         stateVector = new StepOperation(col, this.gateOperatorFor.bind(this)).applyWithMeasurements(
           stateVector,
           results,
-          random
+          classicalBits,
+          random,
+          step
         );
       }
 
@@ -365,16 +374,86 @@ class StepOperation {
   applyWithMeasurements(
     stateVector: StateVector,
     results: MeasurementResult[],
-    random: () => number
+    classicalBits: Map<string, 0 | 1>,
+    random: () => number,
+    step: number
   ): StateVector {
-    const unitaryStep = this.col.map((slot) => (slot === MEASURE_SYMBOL ? EMPTY_SLOT : slot));
+    const operations = this.parsedOperations();
+    this.validateMeasurementNames(operations, classicalBits, step);
+    const unitaryStep = this.unitaryStep(operations, classicalBits, step);
     const stateAfterUnitary = new StepOperation(unitaryStep, this.gateOperatorFor).apply(stateVector);
 
-    return this.slotIndices(MEASURE_SYMBOL).reduce<StateVector>((current, qubit) => {
+    return operations.reduce<StateVector>((current, operation, qubit) => {
+      if (operation?.kind !== 'measurement') {
+        return current;
+      }
+
       const measurement = current.measure(qubit, random);
-      results.push({ qubit, value: measurement.value });
+      if (operation.measurementName !== undefined) {
+        classicalBits.set(operation.measurementName, measurement.value);
+      }
+      results.push({
+        ...(operation.measurementName === undefined ? {} : { name: operation.measurementName }),
+        qubit,
+        value: measurement.value
+      });
       return measurement.stateVector;
     }, stateAfterUnitary);
+  }
+
+  private parsedOperations(): readonly (ParsedCircuitOperation | undefined)[] {
+    return this.col.map((slot) => parseCircuitOperationSlot(slot));
+  }
+
+  private unitaryStep(
+    operations: readonly (ParsedCircuitOperation | undefined)[],
+    classicalBits: ReadonlyMap<string, 0 | 1>,
+    step: number
+  ): readonly unknown[] {
+    const activeSlots = operations.map((operation) => {
+      if (!operation || operation.kind === 'measurement') {
+        return EMPTY_SLOT;
+      }
+
+      if (operation.classicalCondition === undefined) {
+        return operation.symbol;
+      }
+
+      const value = classicalBits.get(operation.classicalCondition);
+      if (value === undefined) {
+        throw new SimulatorError(
+          `undefined classical bit "${operation.classicalCondition}" referenced at step ${step}`
+        );
+      }
+
+      return value === 1 ? operation.symbol : EMPTY_SLOT;
+    });
+    const hasActiveOperation = activeSlots.some((slot) => slot !== EMPTY_SLOT);
+
+    return this.col.map((slot, qubit) =>
+      slot === CONTROL_SYMBOL && hasActiveOperation ? CONTROL_SYMBOL : activeSlots[qubit] ?? EMPTY_SLOT
+    );
+  }
+
+  private validateMeasurementNames(
+    operations: readonly (ParsedCircuitOperation | undefined)[],
+    classicalBits: ReadonlyMap<string, 0 | 1>,
+    step: number
+  ): void {
+    const namesInStep = new Set<string>();
+
+    for (const operation of operations) {
+      const name = operation?.measurementName;
+      if (name === undefined) {
+        continue;
+      }
+
+      if (classicalBits.has(name) || namesInStep.has(name)) {
+        throw new SimulatorError(`classical bit "${name}" is measured more than once at step ${step}`);
+      }
+
+      namesInStep.add(name);
+    }
   }
 
   private applySwap(stateVector: StateVector): StateVector {

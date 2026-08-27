@@ -1,8 +1,12 @@
 import type { CircuitData } from '../circuit_file';
+import {
+  parseCircuitOperation,
+  parseCircuitOperationSlot,
+  type ParsedCircuitOperation
+} from '../circuit_operation';
 
 const CONTROL_SYMBOL = '•';
 const EMPTY_SLOT = 1;
-const SWAP_SYMBOL = 'Swap';
 
 const DOCUMENT_HEADER_LINES = [
   '\\documentclass[border=24px]{standalone}',
@@ -22,8 +26,7 @@ const EMPTY_CIRCUIT_MIN_COLUMNS = 3;
 const DIRECT_SLOT_RENDERERS = new Map<unknown, string>([
   [null, '\\qw'],
   ['', '\\qw'],
-  [EMPTY_SLOT, '\\qw'],
-  ['Measure', '\\meter']
+  [EMPTY_SLOT, '\\qw']
 ]);
 
 const TARGET_SLOT_RENDERERS = new Map<unknown, string>([
@@ -240,7 +243,7 @@ class QCircuitColumn {
   }
 
   private get swapStep(): boolean {
-    return this.slots.includes(SWAP_SYMBOL);
+    return this.slots.some((slot) => operationKind(slot) === 'swap');
   }
 
   private controlledCells(): Map<number, string> {
@@ -259,7 +262,10 @@ class QCircuitColumn {
   private controlledTarget(): ControlledTarget {
     const targets = this.slots
       .map((slot, qubit) => ({ qubit, slot }))
-      .filter(({ slot }) => !emptySlot(slot) && slot !== CONTROL_SYMBOL && slot !== 'Measure');
+      .filter(
+        ({ slot }) =>
+          !emptySlot(slot) && slot !== CONTROL_SYMBOL && operationKind(slot) !== 'measurement'
+      );
 
     if (targets.length !== 1) {
       throw new Error(`unsupported controlled step: ${rubyInspect(this.slots)}`);
@@ -285,9 +291,10 @@ class QCircuitColumn {
     }
 
     const [topQubit, bottomQubit] = this.swapQubits.sort((a, b) => a - b);
+    const condition = this.swapConditionLabel;
     const cells = new Map<number, string>([
-      [topQubit, '\\qswap'],
-      [bottomQubit, `\\qswap \\qwx[${topQubit - bottomQubit}]`]
+      [topQubit, `\\qswap${condition}`],
+      [bottomQubit, `\\qswap \\qwx[${topQubit - bottomQubit}]${condition}`]
     ]);
 
     for (const controlQubit of this.controlQubits) {
@@ -302,29 +309,48 @@ class QCircuitColumn {
     return (
       this.swapQubits.length === 2 &&
       this.slots.every(
-        (slot) => emptySlot(slot) || slot === CONTROL_SYMBOL || slot === SWAP_SYMBOL || slot === 'Measure'
-      )
+        (slot) =>
+          emptySlot(slot) ||
+          slot === CONTROL_SYMBOL ||
+          operationKind(slot) === 'swap' ||
+          operationKind(slot) === 'measurement'
+      ) && this.consistentSwapConditions
     );
   }
 
   private get swapQubits(): number[] {
     return this.slots
       .map((slot, index) => ({ index, slot }))
-      .filter(({ slot }) => slot === SWAP_SYMBOL)
+      .filter(({ slot }) => operationKind(slot) === 'swap')
       .map(({ index }) => index);
   }
 
   private addMeasurementCells(cells: Map<number, string>): void {
     for (const qubit of this.measurementQubits) {
-      cells.set(qubit, '\\meter');
+      cells.set(qubit, renderedSlot(this.slots[qubit]));
     }
   }
 
   private get measurementQubits(): number[] {
     return this.slots
       .map((slot, index) => ({ index, slot }))
-      .filter(({ slot }) => slot === 'Measure')
+      .filter(({ slot }) => operationKind(slot) === 'measurement')
       .map(({ index }) => index);
+  }
+
+  private get consistentSwapConditions(): boolean {
+    return new Set(this.swapOperations.map((operation) => operation.classicalCondition)).size === 1;
+  }
+
+  private get swapConditionLabel(): string {
+    const condition = this.swapOperations[0]?.classicalCondition;
+    return condition === undefined ? '' : ` \\push{$<\\mathrm{${classicalNameLabel(condition)}}$}`;
+  }
+
+  private get swapOperations(): ParsedCircuitOperation[] {
+    return this.slots.flatMap((slot) =>
+      operationKind(slot) === 'swap' ? [parseCircuitOperation(slot)] : []
+    );
   }
 
   private controlledSwapTarget(controlQubit: number): number {
@@ -354,7 +380,20 @@ function emptySlot(slot: unknown): boolean {
 }
 
 function renderedSlot(slot: unknown): string {
-  return DIRECT_SLOT_RENDERERS.get(slot) ?? gateCell(slot);
+  const direct = DIRECT_SLOT_RENDERERS.get(slot);
+  if (direct !== undefined) {
+    return direct;
+  }
+
+  const operation = parseCircuitOperation(slot);
+  if (operation.kind === 'measurement') {
+    const name = operation.measurementName;
+    return name === undefined
+      ? '\\meter'
+      : `\\meter \\push{$>\\mathrm{${classicalNameLabel(name)}}$}`;
+  }
+
+  return gateCell(slot);
 }
 
 function gateCell(slot: unknown): string {
@@ -362,24 +401,30 @@ function gateCell(slot: unknown): string {
 }
 
 function gateLabel(slot: unknown): string {
-  const specialLabel = SPECIAL_GATE_LABELS.get(slot);
+  const operation = parseCircuitOperation(slot);
+  const specialLabel = SPECIAL_GATE_LABELS.get(operation.symbol);
+  const match = /^(?<name>[A-Za-z]+)\((?<angle>.+)\)$/u.exec(operation.symbol);
+  const baseLabel =
+    specialLabel ??
+    (match?.groups
+      ? `\\mathrm{${match.groups.name}}(${formattedAngle(match.groups.angle)})`
+      : `\\mathrm{${operation.symbol}}`);
 
-  if (specialLabel) {
-    return specialLabel;
-  }
+  return operation.classicalCondition === undefined
+    ? baseLabel
+    : `${baseLabel}<\\mathrm{${classicalNameLabel(operation.classicalCondition)}}`;
+}
 
-  const label = String(slot);
-  const match = /^(?<name>[A-Za-z]+)\((?<angle>.+)\)$/u.exec(label);
+function classicalNameLabel(name: string): string {
+  return name.replaceAll('_', '\\_');
+}
 
-  if (match?.groups) {
-    return `\\mathrm{${match.groups.name}}(${formattedAngle(match.groups.angle)})`;
-  }
-
-  return `\\mathrm{${label}}`;
+function operationKind(slot: unknown): 'gate' | 'measurement' | 'swap' | undefined {
+  return emptySlot(slot) ? undefined : parseCircuitOperationSlot(slot)?.kind;
 }
 
 function formattedAngle(angle: string): string {
-  return angle.replace(/π/gu, '\\pi').replace(/(?<![A-Za-z])pi(?![A-Za-z])/gu, '\\pi');
+  return angle.replace(/π|(?<![A-Za-z])pi(?![A-Za-z])/gu, '\\pi');
 }
 
 function rubyInspect(value: unknown): string {

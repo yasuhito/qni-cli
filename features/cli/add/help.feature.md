@@ -8,7 +8,7 @@ qni-cli の利用者として、add コマンドの使い方を確認するた�
 - When "qni add" を実行
 - Then コマンドは成功
 
-## Scenario: qni add は add コマンドの使い方を表示
+## Scenario: qni add は add コマンドの使い方を表示する
 
 - When "qni add" を実行
 - Then 標準出力:
@@ -21,6 +21,9 @@ qni-cli の利用者として、add コマンドの使い方を確認するた�
     qni add ANGLED_GATE --angle=ANGLE --control=CONTROL --qubit=N --step=N
     qni add SWAP --qubit=N,N --step=N
     qni add SWAP --control=CONTROL --qubit=N,N --step=N
+    qni add Measure --name=NAME --qubit=N --step=N
+
+    Add --if=NAME to any quantum gate to run it only when that named classical bit is 1.
 
   Overview:
     Add a gate to ./circuit.json.
@@ -38,6 +41,8 @@ qni-cli の利用者として、add コマンドの使い方を確認するた�
     --qubit=N            # 0-based qubit index
     [--control=CONTROL]  # comma-separated control qubit indices
     [--angle=ANGLE]      # angle for P, Rx, Ry, Rz, or GlobalPhase, such as π/3 or pi/3
+    [--name=NAME]        # save a Measure result as this classical bit
+    [--if=NAME]          # run a quantum gate only when this classical bit is 1
 
   Examples:
     qni add H --qubit 0 --step 0
@@ -52,10 +57,12 @@ qni-cli の利用者として、add コマンドの使い方を確認するた�
     qni add GlobalPhase --angle 2π --qubit 0 --step 4
     qni add SWAP --qubit 0,1 --step 0
     qni add SWAP --control 0 --qubit 1,2 --step 0
+    qni add X --if input --qubit 0 --step 2
 
   Measurement:
     qni add Measure --qubit 0 --step 0
-    Measure saves an unnamed computational-basis measurement as "Measure".
+    qni add Measure --name input --qubit 0 --step 1
+    Measure saves "Measure" or the Qni-compatible named form "Measure>input".
   ```
 
 ## Scenario: qni add --help は成功する
@@ -63,7 +70,7 @@ qni-cli の利用者として、add コマンドの使い方を確認するた�
 - When "qni add --help" を実行
 - Then コマンドは成功
 
-## Scenario: qni add --help は add コマンドの使い方を表示
+## Scenario: qni add --help は add コマンドの使い方を表示する
 
 - When "qni add --help" を実行
 - Then 標準出力:
@@ -76,6 +83,9 @@ qni-cli の利用者として、add コマンドの使い方を確認するた�
     qni add ANGLED_GATE --angle=ANGLE --control=CONTROL --qubit=N --step=N
     qni add SWAP --qubit=N,N --step=N
     qni add SWAP --control=CONTROL --qubit=N,N --step=N
+    qni add Measure --name=NAME --qubit=N --step=N
+
+    Add --if=NAME to any quantum gate to run it only when that named classical bit is 1.
 
   Overview:
     Add a gate to ./circuit.json.
@@ -93,6 +103,8 @@ qni-cli の利用者として、add コマンドの使い方を確認するた�
     --qubit=N            # 0-based qubit index
     [--control=CONTROL]  # comma-separated control qubit indices
     [--angle=ANGLE]      # angle for P, Rx, Ry, Rz, or GlobalPhase, such as π/3 or pi/3
+    [--name=NAME]        # save a Measure result as this classical bit
+    [--if=NAME]          # run a quantum gate only when this classical bit is 1
 
   Examples:
     qni add H --qubit 0 --step 0
@@ -107,8 +119,10 @@ qni-cli の利用者として、add コマンドの使い方を確認するた�
     qni add GlobalPhase --angle 2π --qubit 0 --step 4
     qni add SWAP --qubit 0,1 --step 0
     qni add SWAP --control 0 --qubit 1,2 --step 0
+    qni add X --if input --qubit 0 --step 2
 
   Measurement:
     qni add Measure --qubit 0 --step 0
-    Measure saves an unnamed computational-basis measurement as "Measure".
+    qni add Measure --name input --qubit 0 --step 1
+    Measure saves "Measure" or the Qni-compatible named form "Measure>input".
   ```
