@@ -264,6 +264,28 @@ describe('research compare builder', () => {
     });
   });
 
+  it('excludes trials whose recorded task selection differs from result task ids', async () => {
+    await withTempDir(async (dir) => {
+      await writeCompareTrial(dir, '2026-07-02T000001Z-inconsistent-selection', {
+        taskSelection: ['task-1'],
+        tasks: [{ taskId: 'task-2', title: 'Task 2', status: 'passed' }]
+      });
+
+      const compare = buildResearchCompare({
+        benchmark: 'benchmarks/quantum-katas',
+        cwd: dir,
+        taskSelection: ['task-1']
+      });
+
+      assert.deepStrictEqual(compare.exclusions, {
+        benchmarkMismatch: 0,
+        invalidTrial: 1,
+        missingOrInvalidResultDetails: 0
+      });
+      assert.deepStrictEqual(compare.trials, []);
+    });
+  });
+
   it('includes a new full-suite trial when task selection is omitted', async () => {
     await withTempDir(async (dir) => {
       await writeCompareTrial(dir, '2026-07-02T000001Z-full', {
@@ -274,6 +296,24 @@ describe('research compare builder', () => {
       const compare = buildResearchCompare({ benchmark: 'benchmarks/quantum-katas', cwd: dir });
 
       assert.deepStrictEqual(compare.trials.map((trial) => trial.id), ['2026-07-02T000001Z-full']);
+    });
+  });
+
+  it('compares only full-suite trials with the same result task ids', async () => {
+    await withTempDir(async (dir) => {
+      await writeCompareTrial(dir, '2026-07-02T000001Z-old-task-set', {
+        tasks: [{ taskId: 'task-1', title: 'Task 1', status: 'passed' }]
+      });
+      await writeCompareTrial(dir, '2026-07-02T000002Z-new-task-set', {
+        tasks: [{ taskId: 'task-2', title: 'Task 2', status: 'passed' }]
+      });
+
+      const compare = buildResearchCompare({ benchmark: 'benchmarks/quantum-katas', cwd: dir });
+
+      assert.deepStrictEqual(compare.trials.map((trial) => trial.id), [
+        '2026-07-02T000002Z-new-task-set'
+      ]);
+      assert.equal(compare.exclusions.benchmarkMismatch, 1);
     });
   });
 

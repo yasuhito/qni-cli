@@ -3,8 +3,10 @@ import path = require('node:path');
 
 import type { BenchmarkStatus, BenchmarkSuiteSummary } from './evaluation_runner';
 import {
+  matchesRecordedResearchTaskIds,
   matchesResearchTaskSelection,
   readStoredResearchTaskSelection,
+  ResearchTaskSetMatcher,
   type StoredResearchTaskSelection
 } from './research_task_selection';
 
@@ -123,6 +125,7 @@ export function buildResearchCompare(options: BuildResearchCompareOptions): Rese
   let benchmarkMismatch = 0;
   let missingOrInvalidResultDetails = 0;
   const included: IncludedTrial[] = [];
+  const taskSetMatcher = new ResearchTaskSetMatcher();
 
   for (const candidate of readResearchCompareCandidates(options.cwd)) {
     if (!candidate.metadata) {
@@ -138,6 +141,12 @@ export function buildResearchCompare(options: BuildResearchCompareOptions): Rese
 
     if (!candidate.result) {
       missingOrInvalidResultDetails += 1;
+      continue;
+    }
+
+    const resultTaskIds = candidate.result.results.map((item) => item.taskId);
+    if (!taskSetMatcher.matches(resultTaskIds)) {
+      benchmarkMismatch += 1;
       continue;
     }
 
@@ -275,11 +284,20 @@ function readResearchCompareCandidate(cwd: string, trialDir: string, id: string)
     };
   }
 
+  const result = readCompareResultDetails(path.join(trialDir, metadata.result), metadata.status);
+
+  if (result && !matchesRecordedResearchTaskIds(
+    metadata,
+    result.results.map((item) => item.taskId)
+  )) {
+    return { id, path: relativePath };
+  }
+
   return {
     id,
     metadata,
     path: relativePath,
-    result: readCompareResultDetails(path.join(trialDir, metadata.result), metadata.status)
+    result
   };
 }
 

@@ -191,7 +191,7 @@ Exit codes:
   1  report generated and one or more invalid research trials were found
   3  invalid arguments or research/runs/ could not be read`;
 const PLOT_HELP_TEXT = `Usage:
-  qni research plot --benchmark <dir> --output <file>
+  qni research plot --benchmark <dir> [--task <task-id> ...] --output <file>
 
 Overview:
   Write a self-contained HTML scatter plot for saved research trials under research/runs/.
@@ -215,7 +215,7 @@ Exit codes:
   0  plot generated
   3  invalid arguments or research/runs/ could not be read`;
 const COMPARE_HELP_TEXT = `Usage:
-  qni research compare --benchmark <dir> [--json]
+  qni research compare --benchmark <dir> [--task <task-id> ...] [--json]
 
 Overview:
   Compare saved research trials under research/runs/ for one benchmark.
@@ -516,35 +516,54 @@ function parseResearchPlotRequest(argv: readonly string[]): ResearchPlotRequest 
 
 function parseResearchCompareRequest(argv: readonly string[]): ResearchCompareRequest | undefined {
   if (argv[0] !== 'research' || argv[1] !== 'compare') return undefined;
-  const args = argv.slice(2);
-  const jsonCount = args.filter((value) => value === '--json').length;
-  if (jsonCount > 1) return undefined;
-  const parsed = parseRepeatableTaskOptions(args.filter((value) => value !== '--json'), new Set(['--benchmark']));
+  const parsed = parseRepeatableTaskOptions(
+    argv.slice(2),
+    new Set(['--benchmark']),
+    new Set(['--json'])
+  );
   if (!parsed) return undefined;
   const benchmark = parsed.values.get('--benchmark');
-  return benchmark ? { benchmark, json: jsonCount === 1, tasks: parsed.tasks } : undefined;
+  return benchmark ? { benchmark, json: parsed.flags.has('--json'), tasks: parsed.tasks } : undefined;
 }
 
 function parseRepeatableTaskOptions(
   args: readonly string[],
-  uniqueOptions: ReadonlySet<string>
-): { readonly tasks: readonly string[]; readonly values: ReadonlyMap<string, string> } | undefined {
-  if (args.length % 2 !== 0) return undefined;
+  uniqueOptions: ReadonlySet<string>,
+  standaloneOptions: ReadonlySet<string> = new Set()
+): {
+  readonly flags: ReadonlySet<string>;
+  readonly tasks: readonly string[];
+  readonly values: ReadonlyMap<string, string>;
+} | undefined {
+  const flags = new Set<string>();
   const values = new Map<string, string>();
   const tasks: string[] = [];
-  for (let index = 0; index < args.length; index += 2) {
+
+  for (let index = 0; index < args.length;) {
     const name = args[index];
+    if (!name) return undefined;
+
+    if (standaloneOptions.has(name)) {
+      if (flags.has(name)) return undefined;
+      flags.add(name);
+      index += 1;
+      continue;
+    }
+
     const value = args[index + 1];
-    if (!name || !value) return undefined;
+    if (!value || value.startsWith('--')) return undefined;
     if (name === '--task') {
       if (tasks.includes(value)) return undefined;
       tasks.push(value);
+      index += 2;
       continue;
     }
     if (!uniqueOptions.has(name) || values.has(name)) return undefined;
     values.set(name, value);
+    index += 2;
   }
-  return { tasks: [...tasks].sort(), values };
+
+  return { flags, tasks: [...tasks].sort(), values };
 }
 
 function isResearchThinking(value: string | undefined): value is ResearchSolveRequest['thinking'] {
