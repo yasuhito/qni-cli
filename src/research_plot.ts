@@ -2,11 +2,19 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSy
 import path = require('node:path');
 
 import type { BenchmarkStatus } from './evaluation_runner';
+import {
+  matchesRecordedResearchTaskIds,
+  matchesResearchTaskSelection,
+  readStoredResearchTaskSelection,
+  ResearchTaskSetMatcher,
+  type StoredResearchTaskSelection
+} from './research_task_selection';
 
 export interface WriteResearchPlotRequest {
   readonly benchmark: string;
   readonly cwd: string;
   readonly output: string;
+  readonly taskSelection?: readonly string[];
 }
 
 export interface WriteResearchPlotResult {
@@ -24,6 +32,7 @@ export interface ResearchPlotExclusions {
   readonly benchmarkMismatch: number;
   readonly invalidTrial: number;
   readonly missingOrInvalidMetrics: number;
+  readonly taskSetMismatch: number;
 }
 
 export interface ResearchPlotPoint {
@@ -56,9 +65,10 @@ export interface ResearchPlotCost {
 interface ResearchPlotTrialCandidate {
   readonly invalidReason: readonly string[];
   readonly metadata?: ResearchPlotMetadata;
+  readonly resultTaskIds?: readonly string[];
 }
 
-interface ResearchPlotMetadata {
+interface ResearchPlotMetadata extends StoredResearchTaskSelection {
   readonly benchmark: string;
   readonly collaborator: string;
   readonly cost?: unknown;
@@ -93,7 +103,8 @@ const Y_TICKS = [0, 25, 50, 75, 100] as const;
 export function writeResearchPlotHtml(request: WriteResearchPlotRequest): WriteResearchPlotResult {
   const plot = buildResearchPlot({
     benchmark: request.benchmark,
-    cwd: request.cwd
+    cwd: request.cwd,
+    taskSelection: request.taskSelection
   });
   const outputPath = path.resolve(request.cwd, request.output);
 
@@ -106,13 +117,15 @@ export function writeResearchPlotHtml(request: WriteResearchPlotRequest): WriteR
   };
 }
 
-export function buildResearchPlot(options: { readonly benchmark: string; readonly cwd: string }): ResearchPlot {
+export function buildResearchPlot(options: { readonly benchmark: string; readonly cwd: string; readonly taskSelection?: readonly string[] }): ResearchPlot {
   const exclusions = {
     invalidTrial: 0,
     benchmarkMismatch: 0,
-    missingOrInvalidMetrics: 0
+    missingOrInvalidMetrics: 0,
+    taskSetMismatch: 0
   };
   const points: ResearchPlotPoint[] = [];
+  const taskSetMatcher = new ResearchTaskSetMatcher();
 
   for (const candidate of readResearchPlotTrialCandidates(options.cwd)) {
     if (!candidate.metadata) {
@@ -124,11 +137,24 @@ export function buildResearchPlot(options: { readonly benchmark: string; readonl
       exclusions.benchmarkMismatch += 1;
       continue;
     }
+    if (!matchesResearchTaskSelection(candidate.metadata, options.taskSelection ?? [])) {
+      exclusions.taskSetMismatch += 1;
+      continue;
+    }
+
+    if (!candidate.resultTaskIds) {
+      exclusions.invalidTrial += 1;
+      continue;
+    }
 
     const point = researchPlotPoint(candidate.metadata);
 
     if (!point) {
       exclusions.missingOrInvalidMetrics += 1;
+      continue;
+    }
+    if (!taskSetMatcher.matches(candidate.resultTaskIds)) {
+      exclusions.taskSetMismatch += 1;
       continue;
     }
 
@@ -195,6 +221,7 @@ export function formatResearchPlotHtml(plot: ResearchPlot): string {
     '<ul>',
     `<li>invalid trial: ${plot.exclusions.invalidTrial}</li>`,
     `<li>benchmark mismatch: ${plot.exclusions.benchmarkMismatch}</li>`,
+    `<li>task set mismatch: ${plot.exclusions.taskSetMismatch}</li>`,
     `<li>missing or invalid metrics: ${plot.exclusions.missingOrInvalidMetrics}</li>`,
     '</ul>',
     '</section>',
@@ -269,10 +296,43 @@ function readResearchPlotTrial(trialDir: string, id: string): ResearchPlotTrialC
     return { invalidReason };
   }
 
+  const resultFile = readJsonObject(path.join(trialDir, metadata.result), 'result.json');
+  invalidReason.push(...resultFile.invalidReason);
+  const resultTaskIds = resultFile.value
+    ? researchPlotResultTaskIds(resultFile.value.results, invalidReason)
+    : undefined;
+
+  if (!resultTaskIds || !matchesRecordedResearchTaskIds(metadata, resultTaskIds)) {
+    invalidReason.push('metadata taskSelection does not match result task ids');
+  }
+
+  if (invalidReason.length > 0) {
+    return { invalidReason };
+  }
+
   return {
     invalidReason: [],
-    metadata
+    metadata,
+    resultTaskIds
   };
+}
+
+function researchPlotResultTaskIds(value: unknown, invalidReason: string[]): readonly string[] | undefined {
+  if (!Array.isArray(value)) {
+    invalidReason.push('result.json results must be an array');
+    return undefined;
+  }
+
+  const taskIds: string[] = [];
+  for (const item of value) {
+    if (!isRecord(item) || typeof item.taskId !== 'string' || item.taskId.length === 0 || taskIds.includes(item.taskId)) {
+      invalidReason.push('result.json results must contain unique task ids');
+      return undefined;
+    }
+    taskIds.push(item.taskId);
+  }
+
+  return taskIds.sort();
 }
 
 function readJsonObject(filePath: string, displayName: string): JsonObjectReadResult {
@@ -336,7 +396,8 @@ function researchPlotMetadata(
     score: value.score,
     cost: value.cost,
     tokens: value.tokens,
-    model: value.model
+    model: value.model,
+    ...readStoredResearchTaskSelection(value, invalidReason)
   };
 }
 

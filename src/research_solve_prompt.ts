@@ -3,11 +3,11 @@ import path = require('node:path');
 
 import type { CommandHandlerContext } from './dispatcher';
 import { loadBenchmarkTask } from './evaluation_runner/benchmark_task';
-import type { OpenAICompatibleMessage } from './openai_compatible_provider';
 import { BLIND_NEUTRAL_CIRCUIT_JSON_SUBMISSION_PROTOCOL } from './research_submission_protocol';
 
 export interface ResearchSolveTaskPrompt {
-  readonly messages: readonly OpenAICompatibleMessage[];
+  readonly systemPrompt: string;
+  readonly userPrompt: string;
   readonly availableGates: readonly string[];
   readonly promptText: string;
   readonly relativeCircuitJsonPath: string;
@@ -26,6 +26,7 @@ class ResearchSolvePromptError extends Error {}
 export function buildResearchSolveTaskPrompts(options: {
   readonly benchmarkDir: string;
   readonly context: CommandHandlerContext;
+  readonly taskIds?: readonly string[];
 }): ResearchSolveTaskPrompt[] {
   const benchmarkDirPath = resolveInputPath(options.benchmarkDir, options.context);
   const relativeTaskFiles = markdownFilesInDirectory(benchmarkDirPath);
@@ -34,22 +35,23 @@ export function buildResearchSolveTaskPrompts(options: {
     throw new ResearchSolvePromptError(`benchmark directory contains no task files: ${options.benchmarkDir}`);
   }
 
-  return relativeTaskFiles.map((relativeTaskFile) => {
+  const prompts = relativeTaskFiles.map((relativeTaskFile) => {
     const taskPath = path.join(benchmarkDirPath, relativeTaskFile);
     const task = loadBenchmarkTask(taskPath);
     const taskBody = benchmarkTaskBody(readFileSync(taskPath, 'utf8'));
     const relativeTaskFilePosix = toPosixPath(relativeTaskFile);
     const relativeSubmissionFile = relativeTaskFilePosix.replace(/\.md$/u, '.qni');
     const relativeCircuitJsonFile = relativeTaskFilePosix.replace(/\.md$/u, '.json');
-    const messages = promptMessages({
+    const prompt = promptMessages({
       availableGates: task.availableGates,
       taskBody
     });
 
     return {
       availableGates: task.availableGates,
-      messages,
-      promptText: savedPromptText(messages),
+      systemPrompt: prompt.systemPrompt,
+      userPrompt: prompt.userPrompt,
+      promptText: savedPromptText(prompt),
       relativeCircuitJsonPath: toPosixPath(path.join('circuit-json', relativeCircuitJsonFile)),
       relativePromptPath: toPosixPath(path.join('prompts', relativeTaskFilePosix)),
       relativeResponsePath: toPosixPath(path.join('responses', relativeTaskFilePosix)),
@@ -61,26 +63,35 @@ export function buildResearchSolveTaskPrompts(options: {
       title: task.title
     };
   });
+
+  if (!options.taskIds || options.taskIds.length === 0) {
+    return prompts;
+  }
+
+  const requested = [...new Set(options.taskIds)].sort();
+  const byId = new Map(prompts.map((prompt) => [prompt.taskId, prompt]));
+  const missing = requested.filter((taskId) => !byId.has(taskId));
+
+  if (missing.length > 0) {
+    throw new ResearchSolvePromptError(`Unknown --task id: ${missing[0]}`);
+  }
+
+  return requested.map((taskId) => byId.get(taskId) as ResearchSolveTaskPrompt);
 }
 
 function promptMessages(options: {
   readonly availableGates: readonly string[];
   readonly taskBody: string;
-}): readonly OpenAICompatibleMessage[] {
+}): { readonly systemPrompt: string; readonly userPrompt: string } {
   const responseRule = '有効な JSON だけを返す。Markdown で囲まない。説明を書かない。';
 
-  return [
-    {
-      role: 'system',
-      content: [
-        'あなたは量子回路課題に解答するAIです。',
-        `利用可能ゲート一覧と課題本文だけを根拠に、中立回路 JSON プロトコル ${BLIND_NEUTRAL_CIRCUIT_JSON_SUBMISSION_PROTOCOL} の提出を作成してください。`,
-        responseRule
-      ].join('\n')
-    },
-    {
-      role: 'user',
-      content: [
+  return {
+    systemPrompt: [
+      'あなたは量子回路課題に解答するAIです。',
+      `利用可能ゲート一覧と課題本文だけを根拠に、中立回路 JSON プロトコル ${BLIND_NEUTRAL_CIRCUIT_JSON_SUBMISSION_PROTOCOL} の提出を作成してください。`,
+      responseRule
+    ].join('\n'),
+    userPrompt: [
         '# neutral circuit task',
         '',
         '## available_gates',
@@ -99,21 +110,22 @@ function promptMessages(options: {
         '',
         '## neutral_task_body',
         '',
-        options.taskBody
-      ].join('\n')
-    }
-  ];
+      options.taskBody
+    ].join('\n')
+  };
 }
 
-function savedPromptText(messages: readonly OpenAICompatibleMessage[]): string {
-  return messages
-    .map((message) => [
-      `# ${message.role === 'system' ? 'System' : 'User'} message`,
-      '',
-      message.content,
-      ''
-    ].join('\n'))
-    .join('\n');
+function savedPromptText(prompt: { readonly systemPrompt: string; readonly userPrompt: string }): string {
+  return [
+    '# System message',
+    '',
+    prompt.systemPrompt,
+    '',
+    '# User message',
+    '',
+    prompt.userPrompt,
+    ''
+  ].join('\n');
 }
 
 function benchmarkTaskBody(markdown: string): string {

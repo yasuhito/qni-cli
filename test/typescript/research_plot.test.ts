@@ -25,8 +25,11 @@ interface PlotTrialOptions {
   readonly cost?: Record<string, unknown>;
   readonly model?: Record<string, unknown>;
   readonly resultContent?: string;
+  readonly resultTaskIds?: readonly string[];
   readonly score?: Record<string, unknown>;
   readonly status?: StoredResearchStatus;
+  readonly taskSelection?: readonly string[];
+  readonly taskSelectionMode?: 'full' | 'selected';
   readonly tokens?: Record<string, unknown>;
 }
 
@@ -124,6 +127,8 @@ async function writePlotTrial(dir: string, id: string, options: PlotTrialOptions
     response: 'response.md',
     result: 'result.json',
     status,
+    ...(options.taskSelection === undefined ? {} : { taskSelection: options.taskSelection }),
+    ...(options.taskSelectionMode === undefined ? {} : { taskSelectionMode: options.taskSelectionMode }),
     ...(options.score === undefined ? {
       score: {
         passed: status === 'passed' ? 22 : 21,
@@ -157,7 +162,10 @@ async function writePlotTrial(dir: string, id: string, options: PlotTrialOptions
   });
   await writeFile(
     path.join(trialDir, 'result.json'),
-    options.resultContent ?? `${JSON.stringify(storedResearchResult(status), null, 2)}\n`
+    options.resultContent ?? `${JSON.stringify(storedResearchResult(
+      status,
+      options.resultTaskIds ?? options.taskSelection ?? ['task-1']
+    ), null, 2)}\n`
   );
 }
 
@@ -178,18 +186,21 @@ async function writeJsonFile(filePath: string, value: unknown): Promise<void> {
   await writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`);
 }
 
-function storedResearchResult(status: StoredResearchStatus = 'passed'): Record<string, unknown> {
+function storedResearchResult(
+  status: StoredResearchStatus = 'passed',
+  taskIds: readonly string[] = ['task-1']
+): Record<string, unknown> {
   return {
     status,
     exitCode: researchStatusExitCode(status),
     summary: {
-      total: 22,
-      passed: status === 'passed' ? 22 : 21,
+      total: taskIds.length,
+      passed: status === 'passed' ? taskIds.length : Math.max(0, taskIds.length - 1),
       failed: status === 'failed' ? 1 : 0,
       disallowed: status === 'disallowed' ? 1 : 0,
       error: status === 'error' ? 1 : 0
     },
-    results: []
+    results: taskIds.map((taskId) => ({ taskId }))
   };
 }
 
@@ -310,7 +321,7 @@ describe('research plot command', () => {
     });
   });
 
-  it('plots from saved metadata without reading result.json', async () => {
+  it('excludes trials whose result task ids cannot be read', async () => {
     await withTempDir(async (dir) => {
       await writePlotTrial(dir, '2026-07-02T000001Z-metadata-only', {
         resultContent: '{\n'
@@ -327,7 +338,8 @@ describe('research plot command', () => {
       const html = await readFile(path.join(dir, 'plot.html'), 'utf8');
 
       assert.equal(result.exitStatus, 0);
-      assert.ok(html.includes('data-trial-id="2026-07-02T000001Z-metadata-only"'));
+      assert.ok(!html.includes('data-trial-id="2026-07-02T000001Z-metadata-only"'));
+      assert.match(html, /<li>invalid trial: 1<\/li>/u);
     });
   });
 
@@ -358,7 +370,82 @@ describe('research plot command', () => {
       assert.deepStrictEqual(after, before);
       assert.ok(html.includes('<li>invalid trial: 1</li>'));
       assert.ok(html.includes('<li>benchmark mismatch: 1</li>'));
+      assert.ok(html.includes('<li>task set mismatch: 0</li>'));
       assert.ok(html.includes('<li>missing or invalid metrics: 1</li>'));
+    });
+  });
+
+  it('plots only trials with the requested task selection', async () => {
+    await withTempDir(async (dir) => {
+      await writePlotTrial(dir, '2026-07-02T000001Z-full');
+      await writePlotTrial(dir, '2026-07-02T000002Z-subset', { taskSelection: ['task-1'] });
+
+      const result = captureDispatcherRun(dir, [
+        'research', 'plot', '--benchmark', 'benchmarks/quantum-katas',
+        '--task', 'task-1', '--output', 'plot.html'
+      ]);
+      const html = await readFile(path.join(dir, 'plot.html'), 'utf8');
+
+      assert.equal(result.exitStatus, 0);
+      assert.match(html, /2026-07-02T000002Z-subset/u);
+      assert.doesNotMatch(html, /2026-07-02T000001Z-full/u);
+    });
+  });
+
+  it('excludes trials whose recorded task selection differs from result task ids', async () => {
+    await withTempDir(async (dir) => {
+      await writePlotTrial(dir, '2026-07-02T000001Z-inconsistent-selection', {
+        resultTaskIds: ['task-2'],
+        taskSelection: ['task-1']
+      });
+
+      const result = captureDispatcherRun(dir, [
+        'research', 'plot', '--benchmark', 'benchmarks/quantum-katas',
+        '--task', 'task-1', '--output', 'plot.html'
+      ]);
+      const html = await readFile(path.join(dir, 'plot.html'), 'utf8');
+
+      assert.equal(result.exitStatus, 0);
+      assert.doesNotMatch(html, /data-trial-id="2026-07-02T000001Z-inconsistent-selection"/u);
+      assert.match(html, /<li>invalid trial: 1<\/li>/u);
+    });
+  });
+
+  it('plots a new full-suite trial when task selection is omitted', async () => {
+    await withTempDir(async (dir) => {
+      await writePlotTrial(dir, '2026-07-02T000001Z-full', {
+        taskSelection: ['task-1'],
+        taskSelectionMode: 'full'
+      });
+
+      const result = captureDispatcherRun(dir, [
+        'research', 'plot', '--benchmark', 'benchmarks/quantum-katas', '--output', 'plot.html'
+      ]);
+      const html = await readFile(path.join(dir, 'plot.html'), 'utf8');
+
+      assert.equal(result.exitStatus, 0);
+      assert.match(html, /2026-07-02T000001Z-full/u);
+    });
+  });
+
+  it('plots only full-suite trials with the same result task ids', async () => {
+    await withTempDir(async (dir) => {
+      await writePlotTrial(dir, '2026-07-02T000001Z-old-task-set', {
+        resultTaskIds: ['task-1']
+      });
+      await writePlotTrial(dir, '2026-07-02T000002Z-new-task-set', {
+        resultTaskIds: ['task-2']
+      });
+
+      const result = captureDispatcherRun(dir, [
+        'research', 'plot', '--benchmark', 'benchmarks/quantum-katas', '--output', 'plot.html'
+      ]);
+      const html = await readFile(path.join(dir, 'plot.html'), 'utf8');
+
+      assert.equal(result.exitStatus, 0);
+      assert.match(html, /data-trial-id="2026-07-02T000002Z-new-task-set"/u);
+      assert.doesNotMatch(html, /data-trial-id="2026-07-02T000001Z-old-task-set"/u);
+      assert.match(html, /<li>task set mismatch: 1<\/li>/u);
     });
   });
 
@@ -373,7 +460,7 @@ describe('research plot command', () => {
 
       assert.equal(result.exitStatus, 3);
       assert.equal(result.stdout, '');
-      assert.match(result.stderr, /Usage: qni research plot --benchmark <dir> --output <file>/u);
+      assert.match(result.stderr, /Usage: qni research plot --benchmark <dir> \[--task <task-id> \.\.\.\] --output <file>/u);
       assert.equal(await fileExists(path.join(dir, 'plot.html')), false);
     });
   });

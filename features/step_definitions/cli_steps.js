@@ -2,10 +2,9 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { execFileSync, spawn } = require('node:child_process');
-const http = require('node:http');
 const assert = require('node:assert/strict');
 
-const { After, Given, Then, When } = require('@cucumber/cucumber');
+const { Given, Then, When } = require('@cucumber/cucumber');
 const { parseDocument } = require('yaml');
 
 const PROJECT_ROOT = path.resolve(__dirname, '../..');
@@ -26,14 +25,6 @@ const TWO_QUBIT_INITIAL_STATE_COLS = new Map([
   ['|11>', [['X', 'X']]],
   ['0.6|00> + 0.8|01>', [[1, 'Ry(1.8545904360032246)']]]
 ]);
-
-After(async function () {
-  if (!this.fakeOpenAIProvider) {
-    return;
-  }
-
-  await new Promise((resolve) => this.fakeOpenAIProvider.server.close(resolve));
-});
 
 function splitCommand(command) {
   const words = [];
@@ -380,121 +371,6 @@ function writeSolveBenchmarkTask(options) {
   ].join('\n'));
 }
 
-function listen(server) {
-  return new Promise((resolve, reject) => {
-    server.once('error', reject);
-    server.listen(0, '127.0.0.1', () => {
-      server.off('error', reject);
-      resolve();
-    });
-  });
-}
-
-function readHttpRequestBody(request) {
-  return new Promise((resolve, reject) => {
-    const chunks = [];
-
-    request.on('data', (chunk) => chunks.push(chunk));
-    request.on('error', reject);
-    request.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
-  });
-}
-
-async function startFakeOpenAIProvider(world, content) {
-  const server = http.createServer(async (request, response) => {
-    try {
-      const body = await readHttpRequestBody(request);
-
-      world.fakeOpenAIRequests.push({
-        authorization: request.headers.authorization,
-        body: JSON.parse(body),
-        method: request.method,
-        url: request.url
-      });
-
-      if (world.fakeOpenAIProvider.deletePathAfterRequest) {
-        fs.rmSync(path.join(world.scenarioDir, world.fakeOpenAIProvider.deletePathAfterRequest), { force: true, recursive: true });
-        world.fakeOpenAIProvider.deletePathAfterRequest = null;
-      }
-
-      if (world.fakeOpenAIProvider.httpStatus !== 200) {
-        response.writeHead(world.fakeOpenAIProvider.httpStatus, { 'content-type': 'application/json' });
-        response.end(JSON.stringify({
-          error: 'fake provider error'
-        }));
-        return;
-      }
-
-      const payload = {
-        id: 'chatcmpl-qni-fake',
-        object: 'chat.completion',
-        choices: [
-          {
-            index: 0,
-            message: {
-              role: 'assistant',
-              content: world.fakeOpenAIProvider.content
-            },
-            finish_reason: 'stop'
-          }
-        ]
-      };
-
-      if (!world.fakeOpenAIProvider.omitUsage) {
-        payload.usage = {
-          prompt_tokens: 100,
-          completion_tokens: 20,
-          total_tokens: 120
-        };
-      }
-
-      response.writeHead(200, { 'content-type': 'application/json' });
-      response.end(JSON.stringify(payload));
-    } catch (error) {
-      response.writeHead(500, { 'content-type': 'application/json' });
-      response.end(JSON.stringify({
-        error: error instanceof Error ? error.message : String(error)
-      }));
-    }
-  });
-
-  world.fakeOpenAIRequests = [];
-  world.fakeOpenAIProvider = { content, deletePathAfterRequest: null, httpStatus: 200, omitUsage: false, server };
-  await listen(server);
-  const address = server.address();
-
-  if (!address || typeof address === 'string') {
-    throw new Error('fake OpenAI provider did not bind to a TCP port');
-  }
-
-  world.fakeOpenAIProvider.baseUrl = `http://127.0.0.1:${address.port}/v1`;
-}
-
-function writeFakeOpenAIModelRegistry(scenarioDir, modelId, baseUrl) {
-  const modelsPath = path.join(scenarioDir, 'research', 'models.yaml');
-
-  fs.mkdirSync(path.dirname(modelsPath), { recursive: true });
-  fs.writeFileSync(modelsPath, [
-    'models:',
-    `  ${modelId}:`,
-    '    provider: openai-compatible',
-    '    api_model: fake-qni-api',
-    `    base_url: ${baseUrl}`,
-    '    api_key_env: QNI_FAKE_OPENAI_API_KEY',
-    '    input_cost_per_million_tokens_usd: 1',
-    '    output_cost_per_million_tokens_usd: 1',
-    ''
-  ].join('\n'));
-}
-
-function resetFakeOpenAIProviderState(provider, overrides = {}) {
-  Object.assign(provider, {
-    deletePathAfterRequest: null,
-    httpStatus: 200,
-    omitUsage: false
-  }, overrides);
-}
-
 function assertJsonContains(actual, expected) {
   if (Array.isArray(expected)) {
     assert.ok(Array.isArray(actual), `expected JSON array, got ${JSON.stringify(actual)}`);
@@ -531,15 +407,6 @@ function filesUnder(dir) {
     }
     return [];
   });
-}
-
-function fakeOpenAIPromptText(world) {
-  assert.ok(world.fakeOpenAIRequests, 'expected fake OpenAI provider requests to be recorded');
-  assert.ok(world.fakeOpenAIRequests.length > 0, 'expected fake OpenAI provider to receive at least one request');
-  const messages = world.fakeOpenAIRequests[0].body.messages;
-
-  assert.ok(Array.isArray(messages), 'expected fake OpenAI request body to contain messages');
-  return messages.map((message) => message.content).join('\n');
 }
 
 function projectFilePath(filePath) {
@@ -1332,53 +1199,74 @@ Given('作業ディレクトリに solve 用の2課題ベンチマークスイ�
   writeTwoTaskSolveBenchmark(this.scenarioDir, benchmarkDir);
 });
 
-Given('偽 OpenAI互換 provider は応答本文 {string} を返す', async function (content) {
-  if (this.fakeOpenAIProvider) {
-    resetFakeOpenAIProviderState(this.fakeOpenAIProvider, { content });
-    return;
-  }
+function installFakePi(world, options = {}) {
+  const binDir = path.join(world.scenarioDir, 'fake-pi-bin');
+  const configPath = path.join(world.scenarioDir, 'fake-pi-config.json');
+  const logPath = path.join(world.scenarioDir, 'fake-pi-log.jsonl');
+  fs.mkdirSync(binDir, { recursive: true });
+  const existing = fs.existsSync(configPath) ? JSON.parse(fs.readFileSync(configPath, 'utf8')) : {};
+  const config = {
+    model: 'fake-qni',
+    available: true,
+    content: '{"operations":[{"gate":"H","targets":[0]}]}',
+    failFirst: false,
+    responseModel: null,
+    ...existing,
+    ...options
+  };
+  fs.writeFileSync(configPath, JSON.stringify(config));
+  const scriptPath = path.join(binDir, 'pi');
+  fs.writeFileSync(scriptPath, `#!/usr/bin/env node
+const fs=require('node:fs');
+const path=require('node:path');
+const config=JSON.parse(fs.readFileSync(${JSON.stringify(configPath)},'utf8'));
+const args=process.argv.slice(2);
+if(args[0]==='--version'){console.log('9.9.9');process.exit(0)}
+if(args[0]==='--list-models'){
+ console.log('provider model context max-out thinking images');
+ if(config.available) console.log('fake-provider '+config.model+' 1M 1K yes no');
+ process.exit(0);
+}
+if(args[0]==='auth'&&args[1]==='check'){
+ console.log(JSON.stringify({status:config.available?'ready':'missing',provider:'fake-provider'}));
+ process.exit(config.available?0:1);
+}
+let calls=0;
+if(fs.existsSync(${JSON.stringify(logPath)})) calls=fs.readFileSync(${JSON.stringify(logPath)},'utf8').trim().split(/\\n/u).filter(Boolean).length;
+fs.appendFileSync(${JSON.stringify(logPath)},JSON.stringify({args,cwd:process.cwd()})+'\\n');
+if(config.failFirst&&calls===0){console.error('fake Pi failure');process.exit(1)}
+const message={role:'assistant',content:[{type:'thinking',thinking:'not saved'},{type:'text',text:config.content}],provider:'fake-provider',model:config.responseModel||config.model,usage:{input:100,output:20,cacheRead:5,cacheWrite:0,totalTokens:125,cost:{input:0.00005,output:0.00007,cacheRead:0,cacheWrite:0,total:0.00012}},stopReason:'stop',timestamp:Date.now()};
+console.log(JSON.stringify({type:'session',version:3,id:'fake',timestamp:new Date().toISOString(),cwd:process.cwd()}));
+console.log(JSON.stringify({type:'message_end',message}));
+`);
+  fs.chmodSync(scriptPath, 0o755);
+  world.fakePiConfigPath = configPath;
+  world.fakePiLogPath = logPath;
+  world.commandEnv = { ...(world.commandEnv || {}), PATH: `${binDir}${path.delimiter}${process.env.PATH || ''}` };
+}
 
-  await startFakeOpenAIProvider(this, content);
+Given('偽 Pi はモデル {string} を利用可能として報告する', function (model) {
+  installFakePi(this, { model, available: true });
 });
 
-Given('偽 OpenAI互換 provider は次の応答本文を返す:', async function (docString) {
-  const content = docStringContent(docString);
-
-  if (this.fakeOpenAIProvider) {
-    resetFakeOpenAIProviderState(this.fakeOpenAIProvider, { content });
-    return;
-  }
-
-  await startFakeOpenAIProvider(this, content);
+Given('偽 Pi はモデル {string} を利用不可として報告する', function (model) {
+  installFakePi(this, { model, available: false });
 });
 
-Given('偽 OpenAI互換 provider は usage 欠落応答を返す', async function () {
-  if (!this.fakeOpenAIProvider) {
-    await startFakeOpenAIProvider(this, '{"operations":[{"gate":"H","targets":[0]}]}');
-  }
-
-  resetFakeOpenAIProviderState(this.fakeOpenAIProvider, { omitUsage: true });
+Given('偽 Pi は次の最終回答を返す:', function (docString) {
+  installFakePi(this, { content: docStringContent(docString) });
 });
 
-Given('偽 OpenAI互換 provider は HTTP 500 エラーを返す', async function () {
-  if (!this.fakeOpenAIProvider) {
-    await startFakeOpenAIProvider(this, '{"operations":[{"gate":"H","targets":[0]}]}');
-  }
-
-  resetFakeOpenAIProviderState(this.fakeOpenAIProvider, { httpStatus: 500 });
+Given('偽 Pi は最終回答 {string} を返す', function (content) {
+  installFakePi(this, { content });
 });
 
-Given('偽 OpenAI互換 provider は呼び出し時に {string} を削除する', async function (filePath) {
-  if (!this.fakeOpenAIProvider) {
-    await startFakeOpenAIProvider(this, '{"operations":[{"gate":"H","targets":[0]}]}');
-  }
-
-  resetFakeOpenAIProviderState(this.fakeOpenAIProvider, { deletePathAfterRequest: filePath });
+Given('偽 Pi は1回目の課題呼び出しだけ失敗する', function () {
+  installFakePi(this, { failFirst: true });
 });
 
-Given('偽 OpenAI互換 provider をモデル {string} として登録する', function (modelId) {
-  assert.ok(this.fakeOpenAIProvider, 'fake OpenAI provider must be started before registering the model');
-  writeFakeOpenAIModelRegistry(this.scenarioDir, modelId, this.fakeOpenAIProvider.baseUrl);
+Given('偽 Pi は応答モデル {string} を返す', function (model) {
+  installFakePi(this, { responseModel: model });
 });
 
 Given('作業ディレクトリに採点状態 {string} の Quantum Katas 提出物群 {string} を作る', function (status, submissionsDir) {
@@ -1801,21 +1689,15 @@ Then('研究試行ファイル {string} は次をすべて含む:', function (fi
   }
 });
 
-Then('偽 OpenAI互換 provider が受け取ったプロンプトは次をすべて含む:', function (docString) {
-  const actual = fakeOpenAIPromptText(this);
-  const expectedItems = docStringContent(docString).split(/\r?\n/u).filter((line) => line.length > 0);
-
-  for (const expected of expectedItems) {
-    assert.ok(
-      actual.includes(expected),
-      [
-        'expected fake OpenAI provider prompt to include text',
-        `expected: ${expected}`,
-        'actual:',
-        actual
-      ].join('\n')
-    );
+Then('偽 Pi の課題呼び出しは隔離オプションをすべて含む', function () {
+  const records = fs.readFileSync(this.fakePiLogPath, 'utf8').trim().split(/\r?\n/u).filter(Boolean).map(JSON.parse);
+  assert.equal(records.length, 1);
+  const args = records[0].args;
+  for (const option of ['--mode', 'json', '--model', 'fake-qni', '--thinking', 'max', '--no-session', '--no-tools', '--no-context-files', '--no-skills', '--no-extensions', '--no-prompt-templates', '--system-prompt']) {
+    assert.ok(args.includes(option), `missing Pi option: ${option}`);
   }
+  assert.notEqual(records[0].cwd, this.scenarioDir);
+  assert.equal(fs.existsSync(records[0].cwd), false);
 });
 
 Then('研究試行ファイル {string} は次をすべて含まない:', function (filePath, docString) {
@@ -1829,23 +1711,6 @@ Then('研究試行ファイル {string} は次をすべて含まない:', functi
       [
         'expected research trial file not to include text',
         `file: ${filePath}`,
-        `unexpected: ${unexpected}`,
-        'actual:',
-        actual
-      ].join('\n')
-    );
-  }
-});
-
-Then('偽 OpenAI互換 provider が受け取ったプロンプトは次をすべて含まない:', function (docString) {
-  const actual = fakeOpenAIPromptText(this);
-  const unexpectedItems = docStringContent(docString).split(/\r?\n/u).filter((line) => line.length > 0);
-
-  for (const unexpected of unexpectedItems) {
-    assert.ok(
-      !actual.includes(unexpected),
-      [
-        'expected fake OpenAI provider prompt not to include text',
         `unexpected: ${unexpected}`,
         'actual:',
         actual
@@ -1874,31 +1739,6 @@ Then('研究試行 JSON ファイル {string} は次の部分 JSON を含む:', 
   const expected = JSON.parse(docStringContent(docString));
 
   assertJsonContains(actual, expected);
-});
-
-Then('偽 OpenAI互換 provider への呼び出しは次の順で行われる:', function (docString) {
-  assert.equal(this.lastCommand.code, 0, commandFailureMessage(this.lastCommand));
-  const expectedMarkers = docStringContent(docString).split(/\r?\n/u).filter((line) => line.length > 0);
-
-  assert.ok(this.fakeOpenAIRequests, 'expected fake OpenAI provider requests to be recorded');
-  assert.equal(this.fakeOpenAIRequests.length, expectedMarkers.length);
-
-  expectedMarkers.forEach((marker, index) => {
-    const request = this.fakeOpenAIRequests[index];
-    const messages = request.body.messages;
-
-    assert.ok(Array.isArray(messages), 'expected fake OpenAI request body to contain messages');
-    assert.ok(
-      messages.map((message) => message.content).join('\n').includes(marker),
-      [
-        'expected fake OpenAI provider prompt to include marker',
-        `request index: ${index}`,
-        `expected: ${marker}`,
-        'actual:',
-        JSON.stringify(messages)
-      ].join('\n')
-    );
-  });
 });
 
 Then('研究試行の calls 件数は {int}', function (expectedTotal) {

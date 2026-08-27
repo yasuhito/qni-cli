@@ -18,7 +18,7 @@ CLI と共同研究者ハーネスの責務を混同しないために
 
 ## Scenario: 命名メモは未実装範囲を実装済みと書かない方針を示す
 
-- Then リポジトリファイル "docs/research/project-naming.md" は "`multi-agent pipeline` や `provider abstraction` を実装済みのように書かない。" を含む
+- Then リポジトリファイル "docs/research/project-naming.md" は "`multi-agent pipeline` や道具を使う自己修正を実装済みのように書かない。" を含む
 
 ## Scenario: ADR は存在する
 

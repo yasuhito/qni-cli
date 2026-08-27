@@ -100,7 +100,8 @@ qni research compare で同じベンチマークの研究試行を比較した�
     "exclusions": {
       "invalidTrial": 0,
       "benchmarkMismatch": 0,
-      "missingOrInvalidResultDetails": 0
+      "missingOrInvalidResultDetails": 0,
+      "taskSetMismatch": 0
     },
     "warnings": [],
     "trials": [
@@ -239,6 +240,7 @@ qni research compare で同じベンチマークの研究試行を比較した�
   Excluded trials:
     invalid trial: 1
     benchmark mismatch: 1
+    task set mismatch: 0
     missing or invalid result details: 1
   ```
 
@@ -304,5 +306,14 @@ qni research compare で同じベンチマークの研究試行を比較した�
 - Then 標準出力に次を含む:
 
   ```text
-  qni research compare --benchmark <dir> [--json]
+  qni research compare --benchmark <dir> [--task <task-id> ...] [--json]
+  ```
+
+## Scenario: benchmark の値に json フラグを指定した場合は拒否する
+
+- When "qni research compare --benchmark --json benchmarks/quantum-katas" を実行
+- Then 標準エラーに次を含む:
+
+  ```text
+  Usage: qni research compare --benchmark <dir> [--task <task-id> ...] [--json]
   ```

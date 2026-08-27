@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 2,
+  "submissionProtocol": "blind-neutral-circuit-json-v1",
+  "taskSelection": [
+    "basic-gates/state-flip",
+    "basic-gates/toffoli-gate",
+    "superposition/bell-state"
+  ],
+  "taskSelectionMode": "selected",
+  "calls": [
+    {
+      "taskId": "basic-gates/state-flip",
+      "task": "benchmarks/quantum-katas/basic-gates/state-flip.md",
+      "prompt": "prompts/basic-gates/state-flip.md",
+      "response": "responses/basic-gates/state-flip.md",
+      "circuitJson": "circuit-json/basic-gates/state-flip.json",
+      "submission": "submissions/basic-gates/state-flip.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openrouter",
+      "model": "z-ai/glm-5.3-flash",
+      "piVersion": "0.84.3",
+      "thinking": "max",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 290,
+        "outputTokens": 89,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 379
+      },
+      "cost": {
+        "totalUsd": 0.000044
+      }
+    },
+    {
+      "taskId": "basic-gates/toffoli-gate",
+      "task": "benchmarks/quantum-katas/basic-gates/toffoli-gate.md",
+      "prompt": "prompts/basic-gates/toffoli-gate.md",
+      "response": "responses/basic-gates/toffoli-gate.md",
+      "circuitJson": "circuit-json/basic-gates/toffoli-gate.json",
+      "submission": "submissions/basic-gates/toffoli-gate.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openrouter",
+      "model": "z-ai/glm-5.3-flash",
+      "piVersion": "0.84.3",
+      "thinking": "max",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 319,
+        "outputTokens": 21,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 340
+      },
+      "cost": {
+        "totalUsd": 0.000029174999999999998
+      }
+    },
+    {
+      "taskId": "superposition/bell-state",
+      "task": "benchmarks/quantum-katas/superposition/bell-state.md",
+      "prompt": "prompts/superposition/bell-state.md",
+      "response": "responses/superposition/bell-state.md",
+      "circuitJson": "circuit-json/superposition/bell-state.json",
+      "submission": "submissions/superposition/bell-state.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openrouter",
+      "model": "z-ai/glm-5.3-flash",
+      "piVersion": "0.84.3",
+      "thinking": "max",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 331,
+        "outputTokens": 164,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 495
+      },
+      "cost": {
+        "totalUsd": 0.000065825
+      }
+    }
+  ]
+}

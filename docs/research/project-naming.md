@@ -14,7 +14,7 @@ Qni CoResearcher は、自然言語の量子回路課題、`.qni` 提出物、qn
 
 公平比較用の主経路では、中立回路 JSON を `blind-neutral-circuit-json-v1` として記録し、既存の `.qni` 直接提出は `qni-command-output-v0` の legacy protocol として分けて扱います。
 
-通常の記録経路では、外部の AI または人間の共同研究者が作った成果物を `qni research record` で記録・採点し、再現可能に比較します。モデル別コストベンチマークでは、`qni research solve` が登録済みモデルを OpenAI互換 Chat Completions API で直接呼び出します。qni-cli は、共同研究者が使う決定論的な量子回路ツールを中心にした CLI であり、プロジェクト全体そのものではありません。
+通常の記録経路では、外部の AI または人間の共同研究者が作った成果物を `qni research record` で記録・採点し、再現可能に比較します。モデル別コストベンチマークでは、`qni research solve` がインストール済み Pi の指定モデルを道具なしで呼び出します。qni-cli は、共同研究者が使う決定論的な量子回路ツールを中心にした CLI であり、プロジェクト全体そのものではありません。
 
 短い説明にする場合は、次のように書く。
 
@@ -25,7 +25,7 @@ Qni CoResearcher は、自然言語の量子回路課題、`.qni` 提出物、qn
 | 呼称 | 指すもの | 指さないもの |
 | --- | --- | --- |
 | `Qni CoResearcher` | 量子回路課題、提出物、採点、研究試行ログ、モデル別コストベンチマークを束ねるプロジェクト全体 | qni-cli だけ、または複数エージェント処理を含む汎用 AI 研究基盤 |
-| `qni-cli` | `qni` コマンド、npm package、GitHub repository、決定論的な量子回路 CLI、研究試行ログ、単一モデルの OpenAI互換 API の直接実行 | 共同研究者ハーネス全体、複数エージェント処理、プロバイダー抽象 |
+| `qni-cli` | `qni` コマンド、npm package、GitHub repository、決定論的な量子回路 CLI、研究試行ログ、Pi 経由の道具なし単一モデル実行 | 共同研究者ハーネス全体、複数エージェント処理、道具を使う自己修正 |
 | `qni` | 利用者が実行するコマンド名 | 公開プロジェクト名の完全表記 |
 
 ## 変更しない名前
@@ -49,4 +49,4 @@ Qni CoResearcher は、自然言語の量子回路課題、`.qni` 提出物、qn
 
 PhysicsIntern は、研究問題を扱う複数役割のエージェント、毎回新しい文脈での呼び出し、構造化された研究状態、git snapshot による復元性を中心に説明している。Qni CoResearcher でも、研究状態を会話履歴ではなくリポジトリファイルとして残し、後から比較できる形にする考え方は参考にする。
 
-ただし、現時点の Qni CoResearcher は qni-cli の研究試行ログ、評価ランナー、単一モデルの OpenAI互換 API の直接実行を中心にした段階である。PhysicsIntern のような `multi-agent pipeline` や `provider abstraction` を実装済みのように書かない。複数エージェント処理、作業場所の自動準備、プロバイダー抽象は、将来の上位ハーネスまたは別課題として扱う。
+ただし、現時点の Qni CoResearcher は qni-cli の研究試行ログ、評価ランナー、Pi 経由の道具なし単一モデル実行を中心にした段階である。PhysicsIntern のような `multi-agent pipeline` や道具を使う自己修正を実装済みのように書かない。複数エージェント処理と共同研究者評価は、将来の上位ハーネスまたは別課題として扱う。

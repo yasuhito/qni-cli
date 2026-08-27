@@ -1,7 +1,7 @@
 # Feature: モデル別コストベンチマークの利用手順
 
 qni-cli の利用者として
-実 API を呼び出す前に設定、実行方法、指標、制限事項を確認するために
+実モデルを呼び出す前に Pi の準備、実行方法、指標、制限事項を確認するために
 モデル別コストベンチマークの文書を読みたい。
 
 ## Scenario: 利用手順ドキュメントは存在する
@@ -12,34 +12,34 @@ qni-cli の利用者として
 
 - Then リポジトリファイル "README.md" は "[モデル別コストベンチマーク利用手順](docs/model-cost-benchmark.md)" を含む
 
-## Scenario: ドキュメントはモデル登録ファイルの最小スキーマを示す
+## Scenario: ドキュメントは Pi のモデル認証確認を示す
 
-- Then リポジトリファイル "docs/model-cost-benchmark.md" は "gpt-4-1-mini:" を含む
+- Then リポジトリファイル "docs/model-cost-benchmark.md" は "pi auth check --model z-ai/glm-5.3-flash --json" を含む
 
-## Scenario: ドキュメントは APIキー環境変数の扱いを示す
+## Scenario: ドキュメントはモデルと思考量を必須指定する
 
-- Then リポジトリファイル "docs/model-cost-benchmark.md" は "APIキーの値はリポジトリに保存しません。モデル登録ファイルには、APIキーを読む環境変数名だけを書きます。" を含む
+- Then リポジトリファイル "docs/model-cost-benchmark.md" は "`--model` と `--thinking` は両方必須です。" を含む
 
-## Scenario: ドキュメントは solve の単一モデル・単一試行・逐次実行を示す
+## Scenario: ドキュメントは課題選択を示す
 
-- Then リポジトリファイル "docs/model-cost-benchmark.md" は "この実行は、単一モデル・単一試行・逐次実行です。" を含む
+- Then リポジトリファイル "docs/model-cost-benchmark.md" は "--task basic-gates/state-flip" を含む
 
-## Scenario: ドキュメントは plot の HTML 出力の読み方を示す
+## Scenario: ドキュメントは score の計算式を示す
 
-- Then リポジトリファイル "docs/model-cost-benchmark.md" は "横軸は `cost per problem` です。単位は USD で、線形スケールです。" を含む
+- Then リポジトリファイル "docs/model-cost-benchmark.md" は "score.percent = passed / total * 100" を含む
 
-## Scenario: ドキュメントは score と cost per problem の計算式を示す
+## Scenario: ドキュメントは cost per problem の計算式を示す
 
-- Then リポジトリファイル "docs/model-cost-benchmark.md" は "cost.perProblemUsd = totalUsd / score.total" を含む
+- Then リポジトリファイル "docs/model-cost-benchmark.md" は "cost.perProblemUsd = totalUsd / total" を含む
 
-## Scenario: ドキュメントは record と solve の AI 呼び出し範囲を示す
+## Scenario: ドキュメントは solve の AI 呼び出し範囲を示す
 
-- Then リポジトリファイル "docs/model-cost-benchmark.md" は "`qni research record` は AI を呼びません。" を含む
+- Then リポジトリファイル "docs/model-cost-benchmark.md" は "`solve` は道具なしのモデル筆記試験です。" を含む
 
-## Scenario: ドキュメントは初期スコープ外の項目を示す
+## Scenario: ドキュメントは初期範囲外の項目を示す
 
-- Then リポジトリファイル "docs/model-cost-benchmark.md" は "複数モデルの一括実行。" を含む
+- Then リポジトリファイル "docs/model-cost-benchmark.md" は "複数モデルの一括実行" を含む
 
-## Scenario: ドキュメントは実 API 手動確認が check の必須条件でないことを示す
+## Scenario: ドキュメントは自動チェックが実 API を呼ばないことを示す
 
-- Then リポジトリファイル "docs/model-cost-benchmark.md" は "実 API での確認は任意です。`npm run check` の必須条件ではありません。" を含む
+- Then リポジトリファイル "docs/model-cost-benchmark.md" は "自動テストは偽 Pi を使い、実モデルを呼びません。" を含む

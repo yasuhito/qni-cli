@@ -2,10 +2,18 @@ import { readFileSync, readdirSync, statSync, type Dirent } from 'node:fs';
 import path = require('node:path');
 
 import type { BenchmarkStatus, BenchmarkSuiteSummary } from './evaluation_runner';
+import {
+  matchesRecordedResearchTaskIds,
+  matchesResearchTaskSelection,
+  readStoredResearchTaskSelection,
+  ResearchTaskSetMatcher,
+  type StoredResearchTaskSelection
+} from './research_task_selection';
 
 export interface BuildResearchCompareOptions {
   readonly benchmark: string;
   readonly cwd: string;
+  readonly taskSelection?: readonly string[];
 }
 
 export interface ResearchCompare {
@@ -22,6 +30,7 @@ export interface ResearchCompareExclusions {
   readonly benchmarkMismatch: number;
   readonly invalidTrial: number;
   readonly missingOrInvalidResultDetails: number;
+  readonly taskSetMismatch: number;
 }
 
 export interface ResearchCompareTrial {
@@ -67,7 +76,7 @@ export interface ResearchCompareWarning {
   readonly type: 'mixed-submission-protocols';
 }
 
-interface ResearchCompareMetadata {
+interface ResearchCompareMetadata extends StoredResearchTaskSelection {
   readonly benchmark: string;
   readonly collaborator: string;
   readonly createdAt: string;
@@ -116,7 +125,9 @@ export function buildResearchCompare(options: BuildResearchCompareOptions): Rese
   let invalidTrial = 0;
   let benchmarkMismatch = 0;
   let missingOrInvalidResultDetails = 0;
+  let taskSetMismatch = 0;
   const included: IncludedTrial[] = [];
+  const taskSetMatcher = new ResearchTaskSetMatcher();
 
   for (const candidate of readResearchCompareCandidates(options.cwd)) {
     if (!candidate.metadata) {
@@ -128,9 +139,19 @@ export function buildResearchCompare(options: BuildResearchCompareOptions): Rese
       benchmarkMismatch += 1;
       continue;
     }
+    if (!matchesResearchTaskSelection(candidate.metadata, options.taskSelection ?? [])) {
+      taskSetMismatch += 1;
+      continue;
+    }
 
     if (!candidate.result) {
       missingOrInvalidResultDetails += 1;
+      continue;
+    }
+
+    const resultTaskIds = candidate.result.results.map((item) => item.taskId);
+    if (!taskSetMatcher.matches(resultTaskIds)) {
+      taskSetMismatch += 1;
       continue;
     }
 
@@ -148,7 +169,8 @@ export function buildResearchCompare(options: BuildResearchCompareOptions): Rese
     exclusions: {
       invalidTrial,
       benchmarkMismatch,
-      missingOrInvalidResultDetails
+      missingOrInvalidResultDetails,
+      taskSetMismatch
     },
     warnings: researchCompareWarnings(included.map((item) => item.trial)),
     trials: included.map((item) => item.trial),
@@ -206,6 +228,7 @@ export function formatResearchCompareHumanOutput(compare: ResearchCompare): stri
     'Excluded trials:',
     `  invalid trial: ${compare.exclusions.invalidTrial}`,
     `  benchmark mismatch: ${compare.exclusions.benchmarkMismatch}`,
+    `  task set mismatch: ${compare.exclusions.taskSetMismatch}`,
     `  missing or invalid result details: ${compare.exclusions.missingOrInvalidResultDetails}`
   );
 
@@ -268,11 +291,20 @@ function readResearchCompareCandidate(cwd: string, trialDir: string, id: string)
     };
   }
 
+  const result = readCompareResultDetails(path.join(trialDir, metadata.result), metadata.status);
+
+  if (result && !matchesRecordedResearchTaskIds(
+    metadata,
+    result.results.map((item) => item.taskId)
+  )) {
+    return { id, path: relativePath };
+  }
+
   return {
     id,
     metadata,
     path: relativePath,
-    result: readCompareResultDetails(path.join(trialDir, metadata.result), metadata.status)
+    result
   };
 }
 
@@ -303,7 +335,8 @@ function researchCompareMetadata(
     benchmark,
     result,
     status,
-    submissionProtocol: submissionProtocol(value)
+    submissionProtocol: submissionProtocol(value),
+    ...readStoredResearchTaskSelection(value, invalidReason)
   };
 }
 

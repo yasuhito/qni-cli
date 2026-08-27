@@ -37,6 +37,8 @@ async function writeCompareTrial(
     readonly resultOverride?: Record<string, unknown>;
     readonly status?: StoredResearchStatus;
     readonly submissionProtocol?: string;
+    readonly taskSelection?: readonly string[];
+    readonly taskSelectionMode?: string;
     readonly tasks?: readonly CompareTaskFixture[];
   } = {}
 ): Promise<void> {
@@ -52,7 +54,9 @@ async function writeCompareTrial(
       collaborator: options.collaborator,
       status
     }),
-    ...(options.submissionProtocol === undefined ? {} : { submissionProtocol: options.submissionProtocol })
+    ...(options.submissionProtocol === undefined ? {} : { submissionProtocol: options.submissionProtocol }),
+    ...(options.taskSelection === undefined ? {} : { taskSelection: options.taskSelection }),
+    ...(options.taskSelectionMode === undefined ? {} : { taskSelectionMode: options.taskSelectionMode })
   });
   await writeJsonFile(path.join(trialDir, 'result.json'), options.resultOverride ?? {
     status,
@@ -130,7 +134,8 @@ describe('research compare builder', () => {
       assert.deepStrictEqual(compare.exclusions, {
         benchmarkMismatch: 0,
         invalidTrial: 0,
-        missingOrInvalidResultDetails: 0
+        missingOrInvalidResultDetails: 0,
+        taskSetMismatch: 0
       });
       assert.deepStrictEqual(compare.trials.map((trial) => ({ id: trial.id, score: trial.score })), [
         {
@@ -187,7 +192,8 @@ describe('research compare builder', () => {
       assert.deepStrictEqual(compare.exclusions, {
         benchmarkMismatch: 1,
         invalidTrial: 1,
-        missingOrInvalidResultDetails: 1
+        missingOrInvalidResultDetails: 1,
+        taskSetMismatch: 0
       });
       assert.deepStrictEqual(compare.warnings, [
         {
@@ -237,10 +243,95 @@ describe('research compare builder', () => {
       assert.deepStrictEqual(compare.exclusions, {
         benchmarkMismatch: 0,
         invalidTrial: 0,
-        missingOrInvalidResultDetails: 1
+        missingOrInvalidResultDetails: 1,
+        taskSetMismatch: 0
       });
       assert.deepStrictEqual(compare.trials, []);
       assert.deepStrictEqual(compare.tasks, []);
+    });
+  });
+
+  it('includes only trials with the requested task selection', async () => {
+    await withTempDir(async (dir) => {
+      await writeCompareTrial(dir, '2026-07-02T000001Z-full');
+      await writeCompareTrial(dir, '2026-07-02T000002Z-subset', { taskSelection: ['task-1'] });
+
+      const compare = buildResearchCompare({
+        benchmark: 'benchmarks/quantum-katas',
+        cwd: dir,
+        taskSelection: ['task-1']
+      });
+
+      assert.deepStrictEqual(compare.trials.map((trial) => trial.id), ['2026-07-02T000002Z-subset']);
+      assert.equal(compare.exclusions.taskSetMismatch, 1);
+    });
+  });
+
+  it('excludes trials whose recorded task selection differs from result task ids', async () => {
+    await withTempDir(async (dir) => {
+      await writeCompareTrial(dir, '2026-07-02T000001Z-inconsistent-selection', {
+        taskSelection: ['task-1'],
+        tasks: [{ taskId: 'task-2', title: 'Task 2', status: 'passed' }]
+      });
+
+      const compare = buildResearchCompare({
+        benchmark: 'benchmarks/quantum-katas',
+        cwd: dir,
+        taskSelection: ['task-1']
+      });
+
+      assert.deepStrictEqual(compare.exclusions, {
+        benchmarkMismatch: 0,
+        invalidTrial: 1,
+        missingOrInvalidResultDetails: 0,
+        taskSetMismatch: 0
+      });
+      assert.deepStrictEqual(compare.trials, []);
+    });
+  });
+
+  it('excludes trials with an invalid recorded task selection mode', async () => {
+    await withTempDir(async (dir) => {
+      await writeCompareTrial(dir, '2026-07-02T000001Z-invalid-mode', {
+        taskSelection: ['task-1'],
+        taskSelectionMode: 'everything'
+      });
+
+      const compare = buildResearchCompare({ benchmark: 'benchmarks/quantum-katas', cwd: dir });
+
+      assert.equal(compare.exclusions.invalidTrial, 1);
+      assert.deepStrictEqual(compare.trials, []);
+    });
+  });
+
+  it('includes a new full-suite trial when task selection is omitted', async () => {
+    await withTempDir(async (dir) => {
+      await writeCompareTrial(dir, '2026-07-02T000001Z-full', {
+        taskSelection: ['task-1'],
+        taskSelectionMode: 'full'
+      });
+
+      const compare = buildResearchCompare({ benchmark: 'benchmarks/quantum-katas', cwd: dir });
+
+      assert.deepStrictEqual(compare.trials.map((trial) => trial.id), ['2026-07-02T000001Z-full']);
+    });
+  });
+
+  it('compares only full-suite trials with the same result task ids', async () => {
+    await withTempDir(async (dir) => {
+      await writeCompareTrial(dir, '2026-07-02T000001Z-old-task-set', {
+        tasks: [{ taskId: 'task-1', title: 'Task 1', status: 'passed' }]
+      });
+      await writeCompareTrial(dir, '2026-07-02T000002Z-new-task-set', {
+        tasks: [{ taskId: 'task-2', title: 'Task 2', status: 'passed' }]
+      });
+
+      const compare = buildResearchCompare({ benchmark: 'benchmarks/quantum-katas', cwd: dir });
+
+      assert.deepStrictEqual(compare.trials.map((trial) => trial.id), [
+        '2026-07-02T000002Z-new-task-set'
+      ]);
+      assert.equal(compare.exclusions.taskSetMismatch, 1);
     });
   });
 
