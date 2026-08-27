@@ -370,6 +370,7 @@ describe('research plot command', () => {
       assert.deepStrictEqual(after, before);
       assert.ok(html.includes('<li>invalid trial: 1</li>'));
       assert.ok(html.includes('<li>benchmark mismatch: 1</li>'));
+      assert.ok(html.includes('<li>task set mismatch: 0</li>'));
       assert.ok(html.includes('<li>missing or invalid metrics: 1</li>'));
     });
   });
@@ -444,7 +445,7 @@ describe('research plot command', () => {
       assert.equal(result.exitStatus, 0);
       assert.match(html, /data-trial-id="2026-07-02T000002Z-new-task-set"/u);
       assert.doesNotMatch(html, /data-trial-id="2026-07-02T000001Z-old-task-set"/u);
-      assert.match(html, /<li>benchmark mismatch: 1<\/li>/u);
+      assert.match(html, /<li>task set mismatch: 1<\/li>/u);
     });
   });
 

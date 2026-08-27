@@ -32,6 +32,7 @@ export interface ResearchPlotExclusions {
   readonly benchmarkMismatch: number;
   readonly invalidTrial: number;
   readonly missingOrInvalidMetrics: number;
+  readonly taskSetMismatch: number;
 }
 
 export interface ResearchPlotPoint {
@@ -120,7 +121,8 @@ export function buildResearchPlot(options: { readonly benchmark: string; readonl
   const exclusions = {
     invalidTrial: 0,
     benchmarkMismatch: 0,
-    missingOrInvalidMetrics: 0
+    missingOrInvalidMetrics: 0,
+    taskSetMismatch: 0
   };
   const points: ResearchPlotPoint[] = [];
   const taskSetMatcher = new ResearchTaskSetMatcher();
@@ -131,9 +133,12 @@ export function buildResearchPlot(options: { readonly benchmark: string; readonl
       continue;
     }
 
-    if (candidate.metadata.benchmark !== options.benchmark ||
-      !matchesResearchTaskSelection(candidate.metadata, options.taskSelection ?? [])) {
+    if (candidate.metadata.benchmark !== options.benchmark) {
       exclusions.benchmarkMismatch += 1;
+      continue;
+    }
+    if (!matchesResearchTaskSelection(candidate.metadata, options.taskSelection ?? [])) {
+      exclusions.taskSetMismatch += 1;
       continue;
     }
 
@@ -149,7 +154,7 @@ export function buildResearchPlot(options: { readonly benchmark: string; readonl
       continue;
     }
     if (!taskSetMatcher.matches(candidate.resultTaskIds)) {
-      exclusions.benchmarkMismatch += 1;
+      exclusions.taskSetMismatch += 1;
       continue;
     }
 
@@ -216,6 +221,7 @@ export function formatResearchPlotHtml(plot: ResearchPlot): string {
     '<ul>',
     `<li>invalid trial: ${plot.exclusions.invalidTrial}</li>`,
     `<li>benchmark mismatch: ${plot.exclusions.benchmarkMismatch}</li>`,
+    `<li>task set mismatch: ${plot.exclusions.taskSetMismatch}</li>`,
     `<li>missing or invalid metrics: ${plot.exclusions.missingOrInvalidMetrics}</li>`,
     '</ul>',
     '</section>',

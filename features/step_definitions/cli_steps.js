@@ -1693,7 +1693,7 @@ Then('偽 Pi の課題呼び出しは隔離オプションをすべて含む', f
   const records = fs.readFileSync(this.fakePiLogPath, 'utf8').trim().split(/\r?\n/u).filter(Boolean).map(JSON.parse);
   assert.equal(records.length, 1);
   const args = records[0].args;
-  for (const option of ['--mode', 'json', '--no-session', '--no-tools', '--no-context-files', '--no-skills', '--no-extensions', '--no-prompt-templates', '--system-prompt']) {
+  for (const option of ['--mode', 'json', '--model', 'fake-qni', '--thinking', 'max', '--no-session', '--no-tools', '--no-context-files', '--no-skills', '--no-extensions', '--no-prompt-templates', '--system-prompt']) {
     assert.ok(args.includes(option), `missing Pi option: ${option}`);
   }
   assert.notEqual(records[0].cwd, this.scenarioDir);

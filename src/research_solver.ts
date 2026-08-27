@@ -18,7 +18,8 @@ import {
   type ResearchTrialPlan
 } from './research_trial_writer';
 
-export type ResearchThinking = 'off' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh' | 'max';
+export const RESEARCH_THINKING_LEVELS = ['off', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'] as const;
+export type ResearchThinking = (typeof RESEARCH_THINKING_LEVELS)[number];
 
 export interface ResearchSolveRequest {
   readonly benchmark: string;
@@ -280,8 +281,11 @@ function callPi(options: { readonly context: CommandHandlerContext; readonly mod
     ], { cwd, encoding: 'utf8', env: options.context.env, maxBuffer: 20 * 1024 * 1024, timeout: PI_TIMEOUT_MS });
     return parsePiCompletion(output);
   } catch (error) {
-    const timeout = isExecTimeout(error) ? 'Pi task timed out after 5 minutes' : `Pi task failed: ${errorMessage(error)}`;
-    throw new ResearchSolveError(timeout);
+    const timeoutMinutes = PI_TIMEOUT_MS / 60_000;
+    const message = isExecTimeout(error)
+      ? `Pi task timed out after ${timeoutMinutes} minutes`
+      : 'Pi task failed';
+    throw new ResearchSolveError(message);
   } finally {
     rmSync(cwd, { force: true, recursive: true });
   }
@@ -427,5 +431,8 @@ function requiredString(value: unknown, message: string): string { if (typeof va
 function requiredNonnegativeInteger(value: unknown, message: string): number { if (typeof value !== 'number' || !Number.isInteger(value) || value < 0) throw new ResearchSolveError(message); return value; }
 function requiredNonnegativeNumber(value: unknown, message: string): number { if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) throw new ResearchSolveError(message); return value; }
 function isRecord(value: unknown): value is Record<string, unknown> { return typeof value === 'object' && value !== null && !Array.isArray(value); }
-function isExecTimeout(error: unknown): boolean { return error instanceof Error && 'signal' in error && (error as { signal?: string }).signal === 'SIGTERM'; }
+function isExecTimeout(error: unknown): boolean {
+  if (!isRecord(error)) return false;
+  return error.signal === 'SIGTERM' || error.code === 'ETIMEDOUT' || error.errno === 'ETIMEDOUT';
+}
 function errorMessage(error: unknown): string { return (error instanceof Error ? error.message : String(error)).trimEnd(); }

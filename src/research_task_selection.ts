@@ -12,7 +12,7 @@ export function readStoredResearchTaskSelection(
 
   return {
     taskSelection: selection,
-    taskSelectionMode: parseTaskSelectionMode(value.taskSelectionMode, value.taskSelection),
+    taskSelectionMode: parseTaskSelectionMode(value.taskSelectionMode, value.taskSelection, invalidReason),
     taskSelectionRecorded: value.taskSelection !== undefined
   };
 }
@@ -77,9 +77,16 @@ function parseTaskSelection(value: unknown, invalidReason: string[]): readonly s
   return [...new Set(value as string[])].sort();
 }
 
-function parseTaskSelectionMode(mode: unknown, selection: unknown): 'full' | 'selected' {
+function parseTaskSelectionMode(
+  mode: unknown,
+  selection: unknown,
+  invalidReason: string[]
+): 'full' | 'selected' {
   if (mode === 'full' || mode === 'selected') {
     return mode;
+  }
+  if (mode !== undefined) {
+    invalidReason.push('metadata.json taskSelectionMode must be full or selected');
   }
 
   return selection === undefined ? 'full' : 'selected';

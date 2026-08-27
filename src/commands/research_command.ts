@@ -13,7 +13,12 @@ import {
   readResearchTrialsForReport,
   type ResearchReport
 } from '../research_report';
-import { solveResearchTrial, type ResearchSolveRequest } from '../research_solver';
+import {
+  RESEARCH_THINKING_LEVELS,
+  solveResearchTrial,
+  type ResearchSolveRequest,
+  type ResearchThinking
+} from '../research_solver';
 import {
   planResearchTrialDirectory,
   validateResearchTrialSlug,
@@ -209,7 +214,7 @@ Output:
   self-contained HTML with inline SVG
   cost per problem on the x axis
   score percent on the y axis
-  exclusion counts for invalid trials, benchmark mismatches, and missing metrics
+  exclusion counts for invalid trials, benchmark mismatches, task set mismatches, and missing metrics
 
 Exit codes:
   0  plot generated
@@ -233,7 +238,7 @@ Output:
   task-by-trial status matrix
   tasks whose status differs between trials
   warnings for mixed submission protocols
-  exclusion counts for invalid trials, benchmark mismatches, and missing result details
+  exclusion counts for invalid trials, benchmark mismatches, task set mismatches, and missing result details
 
 Exit codes:
   0  comparison generated and no invalid research trials were found
@@ -566,8 +571,8 @@ function parseRepeatableTaskOptions(
   return { flags, tasks: [...tasks].sort(), values };
 }
 
-function isResearchThinking(value: string | undefined): value is ResearchSolveRequest['thinking'] {
-  return value === 'off' || value === 'minimal' || value === 'low' || value === 'medium' || value === 'high' || value === 'xhigh' || value === 'max';
+function isResearchThinking(value: string | undefined): value is ResearchThinking {
+  return RESEARCH_THINKING_LEVELS.some((level) => level === value);
 }
 
 function parseOptionValues<OptionName extends string>(

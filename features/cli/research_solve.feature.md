@@ -76,6 +76,12 @@ qni-cli の利用者として
 - When "qni research solve --model fake-qni --thinking max --benchmark benchmarks/smoke --task smoke/state-flip --slug fake-pi" を実行
 - Then 終了コードは 3
 
+## Scenario: モデルが利用できない場合は研究試行ディレクトリを作らない
+
+- Given 偽 Pi はモデル "fake-qni" を利用不可として報告する
+- When "qni research solve --model fake-qni --thinking max --benchmark benchmarks/smoke --task smoke/state-flip --slug fake-pi" を実行
+- Then 研究試行ディレクトリは作られない
+
 ## Scenario: thinking を省略すると入力エラーになる
 
 - When "qni research solve --model fake-qni --benchmark benchmarks/smoke --task smoke/state-flip --slug fake-pi" を実行

@@ -37,7 +37,7 @@ qni research solve \
   --slug glm-5-3-flash-max-smoke
 ```
 
-`--model` には Pi の正確なモデル ID を指定します。`--thinking` は `off`、`minimal`、`low`、`medium`、`high`、`xhigh`、`max` のいずれかで、実験条件として必須です。`--task` は繰り返し指定できます。省略するとベンチマーク内の全課題を実行します。
+`--model` には Pi の正確なモデル ID を指定します。`--model` と `--thinking` は両方必須です。`--thinking` は `off`、`minimal`、`low`、`medium`、`high`、`xhigh`、`max` のいずれかです。`--task` は繰り返し指定できます。省略するとベンチマーク内の全課題を実行します。
 
 実行前に qni-cli は Pi の版、モデルの存在、認証、課題 ID を確認します。準備不足なら終了コード `3` で停止し、研究試行を作りません。
 
@@ -59,15 +59,7 @@ research/runs/<timestamp>-<slug>/
 └── result.json
 ```
 
-`responses/` には最終回答だけを保存し、モデルの思考途中の本文は保存しません。`metadata.json` と `calls.json` には次を保存します。
-
-- 選択した課題 ID
-- Pi の版
-- モデル ID とプロバイダー
-- 指定した思考量
-- input / output / cache read / cache write / total tokens
-- Pi が報告した推定料金
-- score と採点結果
+`responses/` には最終回答だけを保存し、モデルの思考途中の本文は保存しません。`metadata.json` には課題集合、Pi の版、モデル、プロバイダー、思考量、試行全体のトークン数・料金・score を保存します。`calls.json` にはスキーマ版、提出プロトコル、課題集合と、課題ごとの応答・トークン数・料金・検証結果を保存します。採点結果は `result.json` に保存します。
 
 ## score と cost
 

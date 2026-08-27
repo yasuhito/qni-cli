@@ -100,7 +100,8 @@ qni research compare で同じベンチマークの研究試行を比較した�
     "exclusions": {
       "invalidTrial": 0,
       "benchmarkMismatch": 0,
-      "missingOrInvalidResultDetails": 0
+      "missingOrInvalidResultDetails": 0,
+      "taskSetMismatch": 0
     },
     "warnings": [],
     "trials": [
@@ -239,6 +240,7 @@ qni research compare で同じベンチマークの研究試行を比較した�
   Excluded trials:
     invalid trial: 1
     benchmark mismatch: 1
+    task set mismatch: 0
     missing or invalid result details: 1
   ```
 

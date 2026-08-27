@@ -60,13 +60,13 @@ node dist/bin/qni.js benchmark run \
   benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni
 ```
 
-研究試行の記録では、外部で作ったプロンプト、回答、提出物ディレクトリをファイルパスで渡します。モデル別コストベンチマークでは、モデル登録ファイルを用意して `qni research solve` と `qni research plot` を実行します。詳しい手順は [ベンチマークと研究試行](docs/benchmark.md) と [モデル別コストベンチマーク利用手順](docs/model-cost-benchmark.md) を参照してください。
+研究試行の記録では、外部で作ったプロンプト、回答、提出物ディレクトリをファイルパスで渡します。モデル別コストベンチマークでは、インストール済み Pi のモデル認証を準備し、`qni research solve --model <model-id> --thinking <level> ...` と `qni research plot` を実行します。詳しい手順は [ベンチマークと研究試行](docs/benchmark.md) と [モデル別コストベンチマーク利用手順](docs/model-cost-benchmark.md) を参照してください。
 
 ## ドキュメント
 
 - [CLI コマンドリファレンス](docs/cli.md): 汎用の `qni` コマンド、画像出力、Bloch sphere、状態ベクトル操作の例
 - [ベンチマークと研究試行](docs/benchmark.md): `.qni` 提出物の採点、スモークセット、研究試行ログ、研究試行比較の手順
-- [モデル別コストベンチマーク利用手順](docs/model-cost-benchmark.md): モデル登録、`qni research solve`、`qni research plot`、score と cost、初期スコープ外の説明
+- [モデル別コストベンチマーク利用手順](docs/model-cost-benchmark.md): Pi のモデル認証、`qni research solve`、`qni research plot`、score と cost、初期スコープ外の説明
 - [開発者向け手順](docs/development.md): セットアップ、ビルド、通常チェック、npm パッケージのスモーク検証
 - [仕様](SPEC.md): `qni-cli` の詳細仕様
 

@@ -160,6 +160,7 @@ qni research plot で自己完結 HTML の散布図を作成したい。
   ```html
   <li>invalid trial: 1</li>
   <li>benchmark mismatch: 1</li>
+  <li>task set mismatch: 0</li>
   <li>missing or invalid metrics: 1</li>
   ```
 

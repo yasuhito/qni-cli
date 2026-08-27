@@ -18,17 +18,21 @@ qni-cli の利用者として
 
 ## Scenario: ドキュメントはモデルと思考量を必須指定する
 
-- Then リポジトリファイル "docs/model-cost-benchmark.md" は "--thinking max" を含む
+- Then リポジトリファイル "docs/model-cost-benchmark.md" は "`--model` と `--thinking` は両方必須です。" を含む
 
 ## Scenario: ドキュメントは課題選択を示す
 
 - Then リポジトリファイル "docs/model-cost-benchmark.md" は "--task basic-gates/state-flip" を含む
 
-## Scenario: ドキュメントは score と cost per problem の計算式を示す
+## Scenario: ドキュメントは score の計算式を示す
+
+- Then リポジトリファイル "docs/model-cost-benchmark.md" は "score.percent = passed / total * 100" を含む
+
+## Scenario: ドキュメントは cost per problem の計算式を示す
 
 - Then リポジトリファイル "docs/model-cost-benchmark.md" は "cost.perProblemUsd = totalUsd / total" を含む
 
-## Scenario: ドキュメントは record と solve の AI 呼び出し範囲を示す
+## Scenario: ドキュメントは solve の AI 呼び出し範囲を示す
 
 - Then リポジトリファイル "docs/model-cost-benchmark.md" は "`solve` は道具なしのモデル筆記試験です。" を含む
 

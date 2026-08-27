@@ -30,6 +30,7 @@ export interface ResearchCompareExclusions {
   readonly benchmarkMismatch: number;
   readonly invalidTrial: number;
   readonly missingOrInvalidResultDetails: number;
+  readonly taskSetMismatch: number;
 }
 
 export interface ResearchCompareTrial {
@@ -124,6 +125,7 @@ export function buildResearchCompare(options: BuildResearchCompareOptions): Rese
   let invalidTrial = 0;
   let benchmarkMismatch = 0;
   let missingOrInvalidResultDetails = 0;
+  let taskSetMismatch = 0;
   const included: IncludedTrial[] = [];
   const taskSetMatcher = new ResearchTaskSetMatcher();
 
@@ -133,9 +135,12 @@ export function buildResearchCompare(options: BuildResearchCompareOptions): Rese
       continue;
     }
 
-    if (candidate.metadata.benchmark !== options.benchmark ||
-      !matchesResearchTaskSelection(candidate.metadata, options.taskSelection ?? [])) {
+    if (candidate.metadata.benchmark !== options.benchmark) {
       benchmarkMismatch += 1;
+      continue;
+    }
+    if (!matchesResearchTaskSelection(candidate.metadata, options.taskSelection ?? [])) {
+      taskSetMismatch += 1;
       continue;
     }
 
@@ -146,7 +151,7 @@ export function buildResearchCompare(options: BuildResearchCompareOptions): Rese
 
     const resultTaskIds = candidate.result.results.map((item) => item.taskId);
     if (!taskSetMatcher.matches(resultTaskIds)) {
-      benchmarkMismatch += 1;
+      taskSetMismatch += 1;
       continue;
     }
 
@@ -164,7 +169,8 @@ export function buildResearchCompare(options: BuildResearchCompareOptions): Rese
     exclusions: {
       invalidTrial,
       benchmarkMismatch,
-      missingOrInvalidResultDetails
+      missingOrInvalidResultDetails,
+      taskSetMismatch
     },
     warnings: researchCompareWarnings(included.map((item) => item.trial)),
     trials: included.map((item) => item.trial),
@@ -222,6 +228,7 @@ export function formatResearchCompareHumanOutput(compare: ResearchCompare): stri
     'Excluded trials:',
     `  invalid trial: ${compare.exclusions.invalidTrial}`,
     `  benchmark mismatch: ${compare.exclusions.benchmarkMismatch}`,
+    `  task set mismatch: ${compare.exclusions.taskSetMismatch}`,
     `  missing or invalid result details: ${compare.exclusions.missingOrInvalidResultDetails}`
   );
 

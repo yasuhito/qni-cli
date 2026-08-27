@@ -38,7 +38,7 @@ async function writeCompareTrial(
     readonly status?: StoredResearchStatus;
     readonly submissionProtocol?: string;
     readonly taskSelection?: readonly string[];
-    readonly taskSelectionMode?: 'full' | 'selected';
+    readonly taskSelectionMode?: string;
     readonly tasks?: readonly CompareTaskFixture[];
   } = {}
 ): Promise<void> {
@@ -134,7 +134,8 @@ describe('research compare builder', () => {
       assert.deepStrictEqual(compare.exclusions, {
         benchmarkMismatch: 0,
         invalidTrial: 0,
-        missingOrInvalidResultDetails: 0
+        missingOrInvalidResultDetails: 0,
+        taskSetMismatch: 0
       });
       assert.deepStrictEqual(compare.trials.map((trial) => ({ id: trial.id, score: trial.score })), [
         {
@@ -191,7 +192,8 @@ describe('research compare builder', () => {
       assert.deepStrictEqual(compare.exclusions, {
         benchmarkMismatch: 1,
         invalidTrial: 1,
-        missingOrInvalidResultDetails: 1
+        missingOrInvalidResultDetails: 1,
+        taskSetMismatch: 0
       });
       assert.deepStrictEqual(compare.warnings, [
         {
@@ -241,7 +243,8 @@ describe('research compare builder', () => {
       assert.deepStrictEqual(compare.exclusions, {
         benchmarkMismatch: 0,
         invalidTrial: 0,
-        missingOrInvalidResultDetails: 1
+        missingOrInvalidResultDetails: 1,
+        taskSetMismatch: 0
       });
       assert.deepStrictEqual(compare.trials, []);
       assert.deepStrictEqual(compare.tasks, []);
@@ -260,7 +263,7 @@ describe('research compare builder', () => {
       });
 
       assert.deepStrictEqual(compare.trials.map((trial) => trial.id), ['2026-07-02T000002Z-subset']);
-      assert.equal(compare.exclusions.benchmarkMismatch, 1);
+      assert.equal(compare.exclusions.taskSetMismatch, 1);
     });
   });
 
@@ -280,8 +283,23 @@ describe('research compare builder', () => {
       assert.deepStrictEqual(compare.exclusions, {
         benchmarkMismatch: 0,
         invalidTrial: 1,
-        missingOrInvalidResultDetails: 0
+        missingOrInvalidResultDetails: 0,
+        taskSetMismatch: 0
       });
+      assert.deepStrictEqual(compare.trials, []);
+    });
+  });
+
+  it('excludes trials with an invalid recorded task selection mode', async () => {
+    await withTempDir(async (dir) => {
+      await writeCompareTrial(dir, '2026-07-02T000001Z-invalid-mode', {
+        taskSelection: ['task-1'],
+        taskSelectionMode: 'everything'
+      });
+
+      const compare = buildResearchCompare({ benchmark: 'benchmarks/quantum-katas', cwd: dir });
+
+      assert.equal(compare.exclusions.invalidTrial, 1);
       assert.deepStrictEqual(compare.trials, []);
     });
   });
@@ -313,7 +331,7 @@ describe('research compare builder', () => {
       assert.deepStrictEqual(compare.trials.map((trial) => trial.id), [
         '2026-07-02T000002Z-new-task-set'
       ]);
-      assert.equal(compare.exclusions.benchmarkMismatch, 1);
+      assert.equal(compare.exclusions.taskSetMismatch, 1);
     });
   });
 
