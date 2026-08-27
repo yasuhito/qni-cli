@@ -1,6 +1,6 @@
 import { currentCircuitFile } from '../circuit_file';
 import type { CommandHandlerContext } from '../dispatcher';
-import { Simulator } from '../simulator';
+import { circuitContainsMeasurements, Simulator } from '../simulator';
 import { renderSymbolicStateVector } from '../symbolic_state_renderer';
 import { thorArgumentsError } from './thor_compatibility';
 
@@ -10,6 +10,8 @@ const HELP_TEXT = `Usage:
 Overview:
   Simulate ./circuit.json and print the resulting state vector.
   Without --symbolic, output is numeric amplitudes in the computational basis.
+  A circuit containing Measure is run once and prints qN=0 or qN=1 for each measured qubit.
+  Measurement follows computational-basis probabilities and collapses the state before later operations.
   --symbolic prints a symbolic ket expression for supported small circuits.
   --basis currently works only with --symbolic and supports x or y for 1-qubit output, and bell for 2-qubit output.
 
@@ -42,14 +44,25 @@ export function runRunCommand(argv: string[], context: CommandHandlerContext): n
       throw new Error('--basis requires --symbolic');
     }
 
-    const output = options.symbolic
-      ? renderSymbolicStateVector({
-          basis: options.basis,
-          circuit,
-          env: context.env,
-          projectRoot: context.projectRoot
-        })
-      : new Simulator(circuit).renderStateVector();
+    const containsMeasurements = circuitContainsMeasurements(circuit);
+
+    if (containsMeasurements && options.symbolic) {
+      throw new Error('--symbolic cannot be used with a circuit containing measurements');
+    }
+
+    const output = containsMeasurements
+      ? new Simulator(circuit)
+          .runMeasurements()
+          .map(({ qubit, value }) => `q${qubit}=${value}`)
+          .join('\n')
+      : options.symbolic
+        ? renderSymbolicStateVector({
+            basis: options.basis,
+            circuit,
+            env: context.env,
+            projectRoot: context.projectRoot
+          })
+        : new Simulator(circuit).renderStateVector();
 
     process.stdout.write(`${output}\n`);
     return 0;

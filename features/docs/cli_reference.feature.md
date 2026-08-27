@@ -16,6 +16,14 @@ CLI コマンドの詳細を専用ドキュメントで確認したい。
 
 - Then リポジトリファイル "docs/cli.md" は "qni add H --qubit 0 --step 0" を含む
 
+## Scenario: CLI リファレンスは名前なし測定の追加例を示す
+
+- Then リポジトリファイル "docs/cli.md" は "qni add Measure --qubit 0 --step 4" を含む
+
+## Scenario: CLI リファレンスは測定回路の1回実行を説明する
+
+- Then リポジトリファイル "docs/cli.md" は "`qni run` は回路を1回実行し" を含む
+
 ## Scenario: CLI リファレンスは gate コマンドの読み取り例を示す
 
 - Then リポジトリファイル "docs/cli.md" は "qni gate --qubit 0 --step 0" を含む

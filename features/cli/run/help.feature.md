@@ -21,6 +21,8 @@ qni run のヘルプで利用できるオプションを確認したい。
   Overview:
     Simulate ./circuit.json and print the resulting state vector.
     Without --symbolic, output is numeric amplitudes in the computational basis.
+    A circuit containing Measure is run once and prints qN=0 or qN=1 for each measured qubit.
+    Measurement follows computational-basis probabilities and collapses the state before later operations.
     --symbolic prints a symbolic ket expression for supported small circuits.
     --basis currently works only with --symbolic and supports x or y for 1-qubit output, and bell for 2-qubit output.
 

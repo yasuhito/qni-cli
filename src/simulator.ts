@@ -5,6 +5,11 @@ import { InitialStateError, initialStateQubitCount, resolveNumericInitialState }
 
 export class SimulatorError extends Error {}
 
+export interface MeasurementResult {
+  readonly qubit: number;
+  readonly value: 0 | 1;
+}
+
 export interface StateVectorExportPayload {
   readonly amplitudes: readonly StateVectorExportedAmplitude[];
   readonly qubits: number;
@@ -21,7 +26,12 @@ const CONTROL_SYMBOL = '•';
 const EMPTY_SLOT = 1;
 const H_SCALE = 1 / Math.sqrt(2);
 const MAX_IN_MEMORY_QUBITS = 30;
+const MEASURE_SYMBOL = 'Measure';
 const SWAP_SYMBOL = 'Swap';
+
+export function circuitContainsMeasurements(circuit: Pick<CircuitData, 'cols'>): boolean {
+  return circuit.cols.some((col) => col.includes(MEASURE_SYMBOL));
+}
 
 const FIXED_GATE_OPERATORS = new Map<string, GateOperator>([
   ['H', (zero, one) => [zero.add(one).multiply(H_SCALE), zero.subtract(one).multiply(H_SCALE)]],
@@ -50,6 +60,30 @@ export class Simulator {
 
   renderStateVector(): string {
     return this.stateVector().toCsv();
+  }
+
+  runMeasurements(random: () => number = Math.random): readonly MeasurementResult[] {
+    try {
+      ensureSupportedQubitCount(this.data.qubits);
+      const results: MeasurementResult[] = [];
+      let stateVector = this.startingStateVector();
+
+      for (const col of this.data.cols) {
+        stateVector = new StepOperation(col, this.gateOperatorFor.bind(this)).applyWithMeasurements(
+          stateVector,
+          results,
+          random
+        );
+      }
+
+      return results;
+    } catch (error) {
+      if (error instanceof AngleExpressionError || error instanceof InitialStateError) {
+        throw new SimulatorError(error.message);
+      }
+
+      throw error;
+    }
   }
 
   renderExpectationValues(pauliStrings: readonly string[]): string {
@@ -166,6 +200,30 @@ class StateVector {
     gateOperator: GateOperator
   ): StateVector {
     return this.applyGateLayout(new ControlledSingleQubitGateLayout(this.qubits, qubit, controls, gateOperator));
+  }
+
+  measure(qubit: number, random: () => number): { stateVector: StateVector; value: 0 | 1 } {
+    const mask = bitMask(this.qubits, qubit);
+    const zeroProbability = this.amplitudes.reduce(
+      (sum, amplitude, index) => sum + (bitSet(index, mask) ? 0 : amplitude.absSquared()),
+      0
+    );
+    const value: 0 | 1 = random() < zeroProbability ? 0 : 1;
+    const probability = value === 0 ? zeroProbability : 1 - zeroProbability;
+
+    if (probability <= 0) {
+      throw new SimulatorError(`measurement selected an impossible outcome for q${qubit}`);
+    }
+
+    const scale = 1 / Math.sqrt(probability);
+    const amplitudes = this.amplitudes.map((amplitude, index) =>
+      bitSet(index, mask) === (value === 1) ? amplitude.multiply(scale) : new Complex(0)
+    );
+
+    return {
+      stateVector: new StateVector(this.qubits, amplitudes, false),
+      value
+    };
   }
 
   applySwap(firstQubit: number, secondQubit: number): StateVector {
@@ -302,6 +360,21 @@ class StepOperation {
     }
 
     return this.applyUncontrolled(stateVector);
+  }
+
+  applyWithMeasurements(
+    stateVector: StateVector,
+    results: MeasurementResult[],
+    random: () => number
+  ): StateVector {
+    const unitaryStep = this.col.map((slot) => (slot === MEASURE_SYMBOL ? EMPTY_SLOT : slot));
+    const stateAfterUnitary = new StepOperation(unitaryStep, this.gateOperatorFor).apply(stateVector);
+
+    return this.slotIndices(MEASURE_SYMBOL).reduce<StateVector>((current, qubit) => {
+      const measurement = current.measure(qubit, random);
+      results.push({ qubit, value: measurement.value });
+      return measurement.stateVector;
+    }, stateAfterUnitary);
   }
 
   private applySwap(stateVector: StateVector): StateVector {

@@ -15,7 +15,7 @@ Overview:
   Add a gate to ./circuit.json.
   If ./circuit.json does not exist, qni creates the smallest circuit that can hold the gate.
   step and qubit are 0-based indices.
-  Supported gates: H, X, Y, Z, S, S†, T, T†, √X, P, Rx, Ry, Rz, GlobalPhase, SWAP.
+  Supported gates: H, X, Y, Z, S, S†, T, T†, √X, P, Rx, Ry, Rz, GlobalPhase, SWAP, Measure.
   With --control, GATE is placed on --qubit and "•" is placed on each control qubit.
   CNOT is written as qni add X --control 0 --qubit 1 --step 0.
   ANGLED_GATE can be P, Rx, Ry, Rz, or GlobalPhase and is saved as GATE(angle).
@@ -40,10 +40,15 @@ Examples:
   qni add Rz --angle pi/4 --control 0 --qubit 1 --step 3
   qni add GlobalPhase --angle 2π --qubit 0 --step 4
   qni add SWAP --qubit 0,1 --step 0
-  qni add SWAP --control 0 --qubit 1,2 --step 0`;
+  qni add SWAP --control 0 --qubit 1,2 --step 0
+
+Measurement:
+  qni add Measure --qubit 0 --step 0
+  Measure saves an unnamed computational-basis measurement as "Measure".`;
 
 const FIXED_GATES = new Map<string, string>([
   ['H', 'H'],
+  ['MEASURE', 'Measure'],
   ['S', 'S'],
   ['S†', 'S†'],
   ['T', 'T'],
@@ -83,6 +88,7 @@ export function runAddCommand(argv: string[], context: CommandHandlerContext): n
     const gate = normalizedSupportedGate(gateArgument);
     const options = parseAddOptions(gateArgument, argv.slice(2));
     validateAngleUsage(gate, options);
+    validateMeasurementUsage(gate, options);
     const circuitFile = currentCircuitFile(context.cwd);
 
     if (gate === SWAP_GATE) {
@@ -189,6 +195,12 @@ function serializedGate(gate: string, options: AddOptions): string {
 function validateAngleUsage(gate: string, options: AddOptions): void {
   if (options.angle && !angledGate(gate)) {
     throw new CircuitFileError('angle is only supported for P, Rx, Ry, Rz, and GlobalPhase');
+  }
+}
+
+function validateMeasurementUsage(gate: string, options: AddOptions): void {
+  if (gate === 'Measure' && controlled(options)) {
+    throw new CircuitFileError('control is not supported for Measure');
   }
 }
 

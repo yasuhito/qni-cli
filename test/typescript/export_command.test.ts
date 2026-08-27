@@ -170,6 +170,23 @@ describe('export command TypeScript route', () => {
     });
   });
 
+  it('renders measurement alongside controlled and SWAP operations in the same step', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        qubits: 3,
+        cols: [['•', 'X', 'Measure'], ['Swap', 'Swap', 'Measure']]
+      });
+
+      const result = captureDispatcherRun(dir, ['export', '--latex-source'], { PATH: '' });
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stderr, '');
+      assert.match(result.stdout, /\\meter/u);
+      assert.match(result.stdout, /\\ctrl\{1\}/u);
+      assert.match(result.stdout, /\\qswap/u);
+    });
+  });
+
   it('renders captioned light-theme LaTeX source', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {

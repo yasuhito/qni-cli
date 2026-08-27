@@ -26,7 +26,7 @@ qni-cli の利用者として、add コマンドの使い方を確認するた�
     Add a gate to ./circuit.json.
     If ./circuit.json does not exist, qni creates the smallest circuit that can hold the gate.
     step and qubit are 0-based indices.
-    Supported gates: H, X, Y, Z, S, S†, T, T†, √X, P, Rx, Ry, Rz, GlobalPhase, SWAP.
+    Supported gates: H, X, Y, Z, S, S†, T, T†, √X, P, Rx, Ry, Rz, GlobalPhase, SWAP, Measure.
     With --control, GATE is placed on --qubit and "•" is placed on each control qubit.
     CNOT is written as qni add X --control 0 --qubit 1 --step 0.
     ANGLED_GATE can be P, Rx, Ry, Rz, or GlobalPhase and is saved as GATE(angle).
@@ -52,6 +52,10 @@ qni-cli の利用者として、add コマンドの使い方を確認するた�
     qni add GlobalPhase --angle 2π --qubit 0 --step 4
     qni add SWAP --qubit 0,1 --step 0
     qni add SWAP --control 0 --qubit 1,2 --step 0
+
+  Measurement:
+    qni add Measure --qubit 0 --step 0
+    Measure saves an unnamed computational-basis measurement as "Measure".
   ```
 
 ## Scenario: qni add --help は成功する
@@ -77,7 +81,7 @@ qni-cli の利用者として、add コマンドの使い方を確認するた�
     Add a gate to ./circuit.json.
     If ./circuit.json does not exist, qni creates the smallest circuit that can hold the gate.
     step and qubit are 0-based indices.
-    Supported gates: H, X, Y, Z, S, S†, T, T†, √X, P, Rx, Ry, Rz, GlobalPhase, SWAP.
+    Supported gates: H, X, Y, Z, S, S†, T, T†, √X, P, Rx, Ry, Rz, GlobalPhase, SWAP, Measure.
     With --control, GATE is placed on --qubit and "•" is placed on each control qubit.
     CNOT is written as qni add X --control 0 --qubit 1 --step 0.
     ANGLED_GATE can be P, Rx, Ry, Rz, or GlobalPhase and is saved as GATE(angle).
@@ -103,4 +107,8 @@ qni-cli の利用者として、add コマンドの使い方を確認するた�
     qni add GlobalPhase --angle 2π --qubit 0 --step 4
     qni add SWAP --qubit 0,1 --step 0
     qni add SWAP --control 0 --qubit 1,2 --step 0
+
+  Measurement:
+    qni add Measure --qubit 0 --step 0
+    Measure saves an unnamed computational-basis measurement as "Measure".
   ```

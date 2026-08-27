@@ -102,7 +102,8 @@ describe('add command TypeScript route', () => {
       ['S†', 'S†'],
       ['T', 'T'],
       ['T†', 'T†'],
-      ['√X', 'X^½']
+      ['√X', 'X^½'],
+      ['Measure', 'Measure']
     ];
 
     for (const [gate, storedGate] of examples) {

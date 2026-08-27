@@ -106,6 +106,54 @@ describe('TypeScript numeric simulator compatibility', () => {
     );
   });
 
+  it('measures by probability, collapses the state, and uses it in later operations', () => {
+    const circuit: CircuitData = {
+      cols: [['H'], ['Measure'], ['X'], ['Measure']],
+      qubits: 1
+    };
+
+    assert.deepEqual(new Simulator(circuit).runMeasurements(() => 0.25), [
+      { qubit: 0, value: 0 },
+      { qubit: 0, value: 1 }
+    ]);
+    assert.deepEqual(new Simulator(circuit).runMeasurements(() => 0.75), [
+      { qubit: 0, value: 1 },
+      { qubit: 0, value: 0 }
+    ]);
+  });
+
+  it('runs an independent controlled gate and measurement in the same step', () => {
+    const circuit: CircuitData = {
+      cols: [['•', 'X', 'Measure'], [1, 'Measure', 1]],
+      initial_state: {
+        format: 'ket_sum_v1',
+        terms: [{ basis: '100', coefficient: '1' }]
+      },
+      qubits: 3
+    };
+
+    assert.deepEqual(new Simulator(circuit).runMeasurements(() => 0.5), [
+      { qubit: 2, value: 0 },
+      { qubit: 1, value: 1 }
+    ]);
+  });
+
+  it('runs an independent SWAP and measurement in the same step', () => {
+    const circuit: CircuitData = {
+      cols: [['Swap', 'Swap', 'Measure'], [1, 'Measure', 1]],
+      initial_state: {
+        format: 'ket_sum_v1',
+        terms: [{ basis: '100', coefficient: '1' }]
+      },
+      qubits: 3
+    };
+
+    assert.deepEqual(new Simulator(circuit).runMeasurements(() => 0.5), [
+      { qubit: 2, value: 0 },
+      { qubit: 1, value: 1 }
+    ]);
+  });
+
   it('rejects qubit counts that would overflow JavaScript bitwise state indexing', () => {
     const circuit: CircuitData = {
       cols: [],

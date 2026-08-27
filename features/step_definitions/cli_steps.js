@@ -1433,6 +1433,17 @@ Then('標準出力は空', function () {
   assert.equal(this.lastCommand.stdout, '');
 });
 
+Then('量子ビット {int} の2回の測定値は異なる', function (qubit) {
+  const values = this.lastCommand.stdout
+    .trim()
+    .split('\n')
+    .map((line) => new RegExp(`^q${qubit}=([01])$`, 'u').exec(line)?.[1])
+    .filter((value) => value !== undefined);
+
+  assert.equal(values.length, 2, `expected exactly two q${qubit} measurement values`);
+  assert.notEqual(values[0], values[1], `expected q${qubit} measurement values to differ`);
+});
+
 Then('状態ベクトルは:', async function (docString) {
   const result = await runQniCommand(this.scenarioDir, 'qni run --symbolic');
 

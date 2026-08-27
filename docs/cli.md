@@ -13,7 +13,10 @@ qni add H --qubit 0 --step 0
 qni add X --control 0 --qubit 1 --step 1
 qni add Rx --angle π/2 --qubit 0 --step 2
 qni add SWAP --qubit 0,1 --step 3
+qni add Measure --qubit 0 --step 4
 ```
+
+`Measure` は量子ビットを計算基底で測定します。名前なし測定は Qni と互換性のある `Measure` として回路へ保存されます。
 
 `step` と `qubit` は 0 始まりです。主なゲートは `H`、`X`、`Y`、`Z`、`S`、`S†`、`T`、`T†`、`√X`、`P`、`Rx`、`Ry`、`Rz`、`SWAP` です。
 
@@ -61,7 +64,9 @@ qni run --symbolic --basis bell
 qni expect ZZ XX
 ```
 
-`qni run` は状態ベクトルを表示します。`--symbolic` を付けると、小さな回路を ket 表記で読みやすく表示できます。`qni expect` は Pauli 文字列の期待値を計算します。
+`qni run` は、測定のない回路では状態ベクトルを表示します。`--symbolic` を付けると、小さな回路を ket 表記で読みやすく表示できます。`qni expect` は Pauli 文字列の期待値を計算します。
+
+`Measure` を含む回路では、`qni run` は回路を1回実行し、測定した各量子ビットを `q0=0` や `q1=1` の形式で表示します。測定は確率に従って状態を収縮させ、後続の操作は収縮後の状態を使います。測定回路では状態ベクトルを一意に表示できないため、`--symbolic` と `--basis` は使えません。
 
 ## 角度変数を使う
 

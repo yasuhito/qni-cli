@@ -135,6 +135,29 @@ describe('view command TypeScript route', () => {
     });
   });
 
+  it('renders measurement with stable ASCII art', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        qubits: 1,
+        cols: [['Measure']]
+      });
+
+      const result = captureDispatcherRun(dir, ['view']);
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stderr, '');
+      assert.equal(
+        result.stdout,
+        [
+          '    ┌─────────┐',
+          'q0: ┤ Measure ├',
+          '    └─────────┘',
+          ''
+        ].join('\n')
+      );
+    });
+  });
+
   it('renders controlled and angled gates with stable ASCII art', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {

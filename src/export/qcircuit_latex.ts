@@ -22,7 +22,8 @@ const EMPTY_CIRCUIT_MIN_COLUMNS = 3;
 const DIRECT_SLOT_RENDERERS = new Map<unknown, string>([
   [null, '\\qw'],
   ['', '\\qw'],
-  [EMPTY_SLOT, '\\qw']
+  [EMPTY_SLOT, '\\qw'],
+  ['Measure', '\\meter']
 ]);
 
 const TARGET_SLOT_RENDERERS = new Map<unknown, string>([
@@ -251,13 +252,14 @@ class QCircuitColumn {
     }
 
     cells.set(target.qubit, target.renderedCell);
+    this.addMeasurementCells(cells);
     return cells;
   }
 
   private controlledTarget(): ControlledTarget {
     const targets = this.slots
       .map((slot, qubit) => ({ qubit, slot }))
-      .filter(({ slot }) => !emptySlot(slot) && slot !== CONTROL_SYMBOL);
+      .filter(({ slot }) => !emptySlot(slot) && slot !== CONTROL_SYMBOL && slot !== 'Measure');
 
     if (targets.length !== 1) {
       throw new Error(`unsupported controlled step: ${rubyInspect(this.slots)}`);
@@ -292,13 +294,16 @@ class QCircuitColumn {
       cells.set(controlQubit, `\\ctrl{${this.controlledSwapTarget(controlQubit) - controlQubit}}`);
     }
 
+    this.addMeasurementCells(cells);
     return cells;
   }
 
   private get validSwapStep(): boolean {
     return (
       this.swapQubits.length === 2 &&
-      this.slots.every((slot) => emptySlot(slot) || slot === CONTROL_SYMBOL || slot === SWAP_SYMBOL)
+      this.slots.every(
+        (slot) => emptySlot(slot) || slot === CONTROL_SYMBOL || slot === SWAP_SYMBOL || slot === 'Measure'
+      )
     );
   }
 
@@ -306,6 +311,19 @@ class QCircuitColumn {
     return this.slots
       .map((slot, index) => ({ index, slot }))
       .filter(({ slot }) => slot === SWAP_SYMBOL)
+      .map(({ index }) => index);
+  }
+
+  private addMeasurementCells(cells: Map<number, string>): void {
+    for (const qubit of this.measurementQubits) {
+      cells.set(qubit, '\\meter');
+    }
+  }
+
+  private get measurementQubits(): number[] {
+    return this.slots
+      .map((slot, index) => ({ index, slot }))
+      .filter(({ slot }) => slot === 'Measure')
       .map(({ index }) => index);
   }
 
@@ -332,7 +350,7 @@ class ControlledTarget {
 }
 
 function emptySlot(slot: unknown): boolean {
-  return DIRECT_SLOT_RENDERERS.has(slot);
+  return slot === null || slot === '' || slot === EMPTY_SLOT;
 }
 
 function renderedSlot(slot: unknown): string {
