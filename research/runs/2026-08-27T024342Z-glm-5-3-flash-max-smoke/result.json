@@ -1,0 +1,123 @@
+{
+  "status": "passed",
+  "exitCode": 0,
+  "summary": {
+    "total": 3,
+    "passed": 3,
+    "failed": 0,
+    "disallowed": 0,
+    "error": 0
+  },
+  "results": [
+    {
+      "taskId": "basic-gates/state-flip",
+      "title": "StateFlip",
+      "submission": "submissions/basic-gates/state-flip.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/basic-gates/state-flip.md"
+    },
+    {
+      "taskId": "basic-gates/toffoli-gate",
+      "title": "ToffoliGate",
+      "submission": "submissions/basic-gates/toffoli-gate.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "gradingCases": [
+        {
+          "caseId": "zero-zero-zero-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "one-one-zero-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "one-one-one-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "one-zero-one-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "superposition-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/basic-gates/toffoli-gate.md"
+    },
+    {
+      "taskId": "superposition/bell-state",
+      "title": "BellState",
+      "submission": "submissions/superposition/bell-state.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "checks": [
+        {
+          "type": "expect",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/superposition/bell-state.md"
+    }
+  ]
+}

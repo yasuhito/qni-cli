@@ -1,0 +1,58 @@
+{
+  "submissionProtocol": "blind-neutral-circuit-json-v1",
+  "taskSelection": [
+    "basic-gates/state-flip",
+    "basic-gates/toffoli-gate",
+    "superposition/bell-state"
+  ],
+  "taskSelectionMode": "selected",
+  "model": {
+    "id": "z-ai/glm-5.3-flash",
+    "provider": "openrouter"
+  },
+  "generation": {
+    "thinking": "max"
+  },
+  "pi": {
+    "version": "0.84.3"
+  },
+  "harness": {
+    "name": "qni-cli",
+    "command": "qni research solve",
+    "runner": "pi",
+    "benchmarkRunner": "qni benchmark run-all",
+    "promptView": "neutral-benchmark-task",
+    "submissionExtraction": "strict-neutral-circuit-json-conversion",
+    "submissionProtocol": "blind-neutral-circuit-json-v1"
+  },
+  "tokens": {
+    "inputTokens": 940,
+    "outputTokens": 274,
+    "cacheReadTokens": 0,
+    "cacheWriteTokens": 0,
+    "totalTokens": 1214,
+    "source": "pi_usage"
+  },
+  "cost": {
+    "totalUsd": 0.00013900000000000002,
+    "perProblemUsd": 0.00004633333333333334,
+    "source": "pi_usage"
+  },
+  "calls": "calls.json",
+  "schemaVersion": 1,
+  "id": "2026-08-27T024342Z-glm-5-3-flash-max-smoke",
+  "createdAt": "2026-08-27T02:43:42.000Z",
+  "collaborator": "z-ai/glm-5.3-flash",
+  "benchmark": "benchmarks/quantum-katas",
+  "submissions": "submissions",
+  "prompt": "prompt.md",
+  "response": "response.md",
+  "result": "result.json",
+  "status": "passed",
+  "score": {
+    "passed": 3,
+    "total": 3,
+    "percent": 100,
+    "source": "result.json"
+  }
+}
