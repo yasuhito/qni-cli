@@ -62,7 +62,7 @@ pi list
 確認項目:
 
 1. Pi が `qni-math` 拡張と `qni-cli` スキルを読み込む。
-2. `/math status` が `qni-math` の版と `path: text (fixed)` を表示する。
+2. `/math status` が `qni-math` の版と `path: image (fixed)` を表示し、本文の `$...$`、`$$...$$`、`\\(...\\)`、`\\[...\\]` を Ghostty / Kitty の画像で描く。コードと thinking ブロックの数式は変換しない。
 3. スキル同梱の `scripts/qni` が使われ、Ruby、Bundler、リポジトリの絶対パスが使われない。
 4. `circuit.json`、回路表示、16ショットの結果が作業ディレクトリに対して生成される。
 5. 4種類の入力すべてで、入力2ビットと復号結果が一致する。

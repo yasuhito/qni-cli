@@ -82,5 +82,5 @@ xvfb-run -a -s "-screen 0 1200x700x24 +extension GLX +render" bash -c '
 
 test -s "$output"
 grep -F "qni-math $QNI_MATH_VERSION" "$QNI_MATH_PANE_TEXT" >/dev/null
-grep -F "path: text (fixed)" "$QNI_MATH_PANE_TEXT" >/dev/null
+grep -F "path: image (fixed)" "$QNI_MATH_PANE_TEXT" >/dev/null
 echo "$output"
