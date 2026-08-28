@@ -76,6 +76,36 @@ qni-cli を Pi に導入した利用者として
 - When `\ket{\Phi^+}=\frac{\ket{00}+\ket{11}}{\sqrt 2}` を画像経路で変換する
 - Then Bell 状態は設定なしで画像配置になる
 
+## Scenario: 環境変数の利用者マクロを画像経路で組版する
+
+- Given `\op` を `\hat{#1}` に展開する環境変数で数式描画拡張を起動する
+- When `$\op{H}$` を含む本文を画像経路で変換する
+- Then 利用者マクロは画像配置になる
+
+## Scenario: 設定ファイルの利用者マクロをテキスト経路で展開する
+
+- Given `\op` を `\hat{#1}` に展開する設定ファイルでテキスト経路を起動する
+- When `$\op{H}$` を含む本文を変換する
+- Then 変換後の Markdown は `$\hat{H}$` を含む
+
+## Scenario: 環境変数の利用者マクロを設定ファイルより優先する
+
+- Given `\op` の定義が異なる環境変数と設定ファイルでテキスト経路を起動する
+- When `$\op{H}$` を含む本文を変換する
+- Then 変換後の Markdown は `$\widetilde{H}$` を含む
+
+## Scenario: 壊れた利用者マクロでも既定マクロを使う
+
+- Given 壊れた JSON の利用者マクロで数式描画拡張を起動する
+- When `\ket{\Phi^+}=\frac{\ket{00}+\ket{11}}{\sqrt 2}` を画像経路で変換する
+- Then Bell 状態は設定なしで画像配置になる
+
+## Scenario: 壊れた利用者マクロの理由を確認する
+
+- Given 壊れた JSON の利用者マクロで数式描画拡張を起動する
+- When `/math status` を実行する
+- Then Pi の状態表示に利用者マクロのエラーがある
+
 ## Scenario: ストリーミング中の未完成な数式を原文のまま残す
 
 - Given 偽の Pi ExtensionAPI に数式描画拡張を登録する

@@ -1,5 +1,6 @@
 const assert = require('node:assert/strict');
 const { execFile } = require('node:child_process');
+const { mkdirSync, writeFileSync } = require('node:fs');
 const path = require('node:path');
 
 const PROJECT_ROOT = path.resolve(__dirname, '../..');
@@ -18,10 +19,19 @@ async function registerMathExtension(world, options = {}) {
   const previousConfigHome = process.env.XDG_CONFIG_HOME;
   const previousTmux = process.env.TMUX;
   const previousTerm = process.env.TERM;
+  const previousMacros = process.env.QNI_MATH_MACROS;
   const configHome = path.join(world.scenarioDir, 'qni-math-config');
+  const configPath = path.join(configHome, 'qni-cli', 'qni-math.json');
 
   process.env.HOME = world.scenarioDir;
   process.env.XDG_CONFIG_HOME = configHome;
+  if (options.envMacros !== undefined) process.env.QNI_MATH_MACROS = options.envMacros;
+  else delete process.env.QNI_MATH_MACROS;
+  if (options.configMacros !== undefined || options.configRaw !== undefined) {
+    mkdirSync(path.dirname(configPath), { recursive: true });
+    const config = options.configRaw ?? JSON.stringify({ macros: options.configMacros });
+    writeFileSync(configPath, config);
+  }
   if (options.tmux) process.env.TMUX = '/tmp/tmux-test/default,1,0';
   else delete process.env.TMUX;
   if (options.term) process.env.TERM = options.term;
@@ -114,6 +124,8 @@ async function registerMathExtension(world, options = {}) {
     else process.env.TMUX = previousTmux;
     if (previousTerm === undefined) delete process.env.TERM;
     else process.env.TERM = previousTerm;
+    if (previousMacros === undefined) delete process.env.QNI_MATH_MACROS;
+    else process.env.QNI_MATH_MACROS = previousMacros;
   }
 
   world.qniMathCommands = commands;

@@ -34,6 +34,29 @@ Given('`TERM=screen` が設定された偽の端末で数式描画拡張を起�
   await registerMathExtension(this, { term: 'screen' });
 });
 
+Given(/^`\\op` を `\\hat\{#1\}` に展開する環境変数で数式描画拡張を起動する$/, async function () {
+  await registerMathExtension(this, {
+    envMacros: JSON.stringify({ op: ['\\hat{#1}', 1] })
+  });
+});
+
+Given(/^`\\op` を `\\hat\{#1\}` に展開する設定ファイルでテキスト経路を起動する$/, async function () {
+  await registerMathExtension(this, { configMacros: { op: ['\\hat{#1}', 1] } });
+  await mathCommand(this).handler('text', { ui: { notify() {} } });
+});
+
+Given(/^`\\op` の定義が異なる環境変数と設定ファイルでテキスト経路を起動する$/, async function () {
+  await registerMathExtension(this, {
+    configMacros: { op: ['\\hat{#1}', 1] },
+    envMacros: JSON.stringify({ op: ['\\widetilde{#1}', 1] })
+  });
+  await mathCommand(this).handler('text', { ui: { notify() {} } });
+});
+
+Given('壊れた JSON の利用者マクロで数式描画拡張を起動する', async function () {
+  await registerMathExtension(this, { envMacros: '{broken' });
+});
+
 function transform(world, markdown, options = {}) {
   world.qniMathSource = markdown;
   world.qniMathMarkdown = world.qniMathTransformer(markdown, {
@@ -64,6 +87,14 @@ async function captureMathStatus(world) {
 
 When(/^`\$\\ket\{0\}\$` を含む本文を画像経路で変換する$/, function () {
   transform(this, '状態は $\\ket{0}$ です。');
+});
+
+When(/^`\$\\op\{H\}\$` を含む本文を画像経路で変換する$/, function () {
+  transform(this, '$\\op{H}$');
+});
+
+When(/^`\$\\op\{H\}\$` を含む本文を変換する$/, function () {
+  transform(this, '$\\op{H}$');
 });
 
 When('表示数式とインライン数式を含む本文を画像経路で変換する', function () {
@@ -265,6 +296,23 @@ Then('thinking ブロックの本文は変更されない', function () {
 
 Then('Bell 状態は設定なしで画像配置になる', function () {
   assert.ok(this.qniMathMarkdown.includes(PLACEHOLDER));
+});
+
+Then('利用者マクロは画像配置になる', function () {
+  assert.ok(this.qniMathMarkdown.includes(PLACEHOLDER));
+});
+
+Then(/^変換後の Markdown は `\$\\hat\{H\}\$` を含む$/, function () {
+  assert.ok(this.qniMathMarkdown.includes('$\\hat{H}$'));
+});
+
+Then(/^変換後の Markdown は `\$\\widetilde\{H\}\$` を含む$/, function () {
+  assert.ok(this.qniMathMarkdown.includes('$\\widetilde{H}$'));
+});
+
+Then('Pi の状態表示に利用者マクロのエラーがある', function () {
+  const lines = this.qniMathWidgets.flatMap((widget) => widget.lines);
+  assert.ok(lines.some((line) => line.startsWith('macro error: ') && line !== 'macro error: none'));
 });
 
 Then('未完成な数式は原文のまま返る', function () {
