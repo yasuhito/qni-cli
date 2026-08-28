@@ -106,6 +106,12 @@ qni-cli を Pi に導入した利用者として
 - When `/math status` を実行する
 - Then Pi の状態表示に利用者マクロのエラーがある
 
+## Scenario: 引数の数を超える参照を利用者マクロのエラーにする
+
+- Given 1 引数なのに `#2` を参照する利用者マクロで数式描画拡張を起動する
+- When `/math status` を実行する
+- Then Pi の状態表示に利用者マクロのエラーがある
+
 ## Scenario: ストリーミング中の未完成な数式を原文のまま残す
 
 - Given 偽の Pi ExtensionAPI に数式描画拡張を登録する

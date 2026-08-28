@@ -57,6 +57,12 @@ Given('壊れた JSON の利用者マクロで数式描画拡張を起動する'
   await registerMathExtension(this, { envMacros: '{broken' });
 });
 
+Given('1 引数なのに `#2` を参照する利用者マクロで数式描画拡張を起動する', async function () {
+  await registerMathExtension(this, {
+    envMacros: JSON.stringify({ op: ['\\hat{#2}', 1] })
+  });
+});
+
 function transform(world, markdown, options = {}) {
   world.qniMathSource = markdown;
   world.qniMathMarkdown = world.qniMathTransformer(markdown, {
