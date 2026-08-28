@@ -3,76 +3,38 @@ const { execFile } = require('node:child_process');
 const path = require('node:path');
 
 const { Given, Then, When } = require('@cucumber/cucumber');
+const { PROJECT_ROOT, registerMathExtension } = require('../support/qni_math_extension');
 
-const PROJECT_ROOT = path.resolve(__dirname, '../..');
 const APC = '\x1b_G';
 const PLACEHOLDER = String.fromCodePoint(0x10eeee);
 
-function registerMathExtension(world, pathSetting) {
-  const extensionModule = require(path.join(PROJECT_ROOT, 'dist', 'qni-math', 'index.js'));
-  const commands = new Map();
-  const tools = new Map();
-  let sessionStart;
-  let transformer;
-  const previousPath = process.env.QNI_MATH_PATH;
-
-  if (pathSetting === undefined) delete process.env.QNI_MATH_PATH;
-  else process.env.QNI_MATH_PATH = pathSetting;
-  try {
-    extensionModule.default({
-      on(event, handler) {
-        if (event === 'session_start') sessionStart = handler;
-      },
-      registerCommand(name, options) {
-        commands.set(name, options);
-      },
-      registerMarkdownTransformer(registered) {
-        transformer = registered;
-      },
-      registerTool(tool) {
-        tools.set(tool.name, tool);
-      },
-      exec(command, args, options = {}) {
-        return new Promise((resolve) => {
-          execFile(command, args, {
-            cwd: options.cwd,
-            signal: options.signal,
-            encoding: 'utf8'
-          }, (error, stdout, stderr) => {
-            resolve({
-              stdout,
-              stderr,
-              code: typeof error?.code === 'number' ? error.code : 0,
-              killed: error?.killed ?? false
-            });
-          });
-        });
-      }
-    });
-  } finally {
-    if (previousPath === undefined) delete process.env.QNI_MATH_PATH;
-    else process.env.QNI_MATH_PATH = previousPath;
-  }
-
-  assert.ok(transformer, 'expected qni-math to register a Markdown transformer');
-  assert.ok(sessionStart, 'expected qni-math to observe session startup');
-  sessionStart({}, {
-    ui: {
-      theme: { getFgAnsi: () => '\x1b[38;2;212;212;212m' },
-      setStatus() {}
-    }
-  });
-  world.qniMathCommands = commands;
-  world.qniMathTools = tools;
-  world.qniMathTransformer = transformer;
-}
-
-Given('偽の Pi ExtensionAPI に数式描画拡張を登録する', function () {
-  registerMathExtension(this);
+Given('偽の Pi ExtensionAPI に数式描画拡張を登録する', async function () {
+  await registerMathExtension(this);
 });
 
-Given('テキスト経路で偽の Pi ExtensionAPI に数式描画拡張を登録する', function () {
-  registerMathExtension(this, 'text');
+Given('テキスト経路で偽の Pi ExtensionAPI に数式描画拡張を登録する', async function () {
+  await registerMathExtension(this);
+  await mathCommand(this).handler('text', { ui: { notify() {} } });
+});
+
+Given('PNG 問い合わせに `OK` を返す偽の端末で数式描画拡張を起動する', async function () {
+  await registerMathExtension(this, { response: 'OK' });
+});
+
+Given('PNG 問い合わせに `EINVAL: unsupported format` を返す偽の端末で数式描画拡張を起動する', async function () {
+  await registerMathExtension(this, { response: 'EINVAL: unsupported format' });
+});
+
+Given('PNG 問い合わせに応答しない偽の端末で数式描画拡張を起動する', async function () {
+  await registerMathExtension(this, { response: null });
+});
+
+Given('`TMUX` が設定された偽の端末で数式描画拡張を起動する', async function () {
+  await registerMathExtension(this, { tmux: true });
+});
+
+Given('`TERM=screen` が設定された偽の端末で数式描画拡張を起動する', async function () {
+  await registerMathExtension(this, { term: 'screen' });
 });
 
 function transform(world, markdown, options = {}) {
@@ -226,6 +188,45 @@ When(/^`\\ket\{\\Phi\^\+\}=\\frac\{\\ket\{00\}\+\\ket\{11\}\}\{\\sqrt 2\}` を�
 });
 
 When('`\\/math status` を実行する', async function () {
+  await captureMathStatus(this);
+});
+
+When('`\\/math text` を実行して同じセッションを再開し `\\/math status` を実行する', async function () {
+  await mathCommand(this).handler('text', { ui: { notify() {} } });
+  await registerMathExtension(this);
+  await captureMathStatus(this);
+});
+
+When('`\\/math text` のあと `\\/math auto` と `\\/math status` を実行する', async function () {
+  await mathCommand(this).handler('text', { ui: { notify() {} } });
+  await mathCommand(this).handler('auto', { ui: { notify() {} } });
+  await captureMathStatus(this);
+});
+
+When('`\\/math text --default` を実行して新しいセッションで `\\/math status` を実行する', async function () {
+  await mathCommand(this).handler('text --default', { ui: { notify() {} } });
+  await registerMathExtension(this, { newSession: true });
+  await captureMathStatus(this);
+});
+
+When('`\\/math text --default` のあと新しいセッションで `\\/math auto --default` と `\\/math status` を実行する', async function () {
+  await mathCommand(this).handler('text --default', { ui: { notify() {} } });
+  await registerMathExtension(this, { newSession: true });
+  await mathCommand(this).handler('auto --default', { ui: { notify() {} } });
+  await captureMathStatus(this);
+});
+
+When('Pi の画像判定を確認する', function () {
+  const { getCapabilities } = require('@earendil-works/pi-tui');
+  this.qniMathCapabilities = getCapabilities();
+});
+
+When('端末へ送った問い合わせを確認する', function () {
+  this.qniMathQuery = this.qniMathTerminalWrites[0];
+});
+
+When('`\\/math image` と `\\/math status` を実行する', async function () {
+  await mathCommand(this).handler('image', { ui: { notify() {} } });
   await captureMathStatus(this);
 });
 
@@ -402,15 +403,62 @@ Then('Pi の状態表示にキャッシュ件数 0 がある', function () {
   assert.ok(lines.includes('cache: 0 entries, 0 bytes'));
 });
 
-Then('Pi の状態表示にパッケージの版と固定の画像経路がある', function () {
-  const manifest = require(path.join(PROJECT_ROOT, 'package.json'));
-  assert.equal(this.qniMathWidgets.length, 1);
-  assert.equal(this.qniMathWidgets[0].key, 'qni-math-status');
-  assert.deepEqual(this.qniMathWidgets[0].lines.slice(0, 2), [
-    `qni-math ${manifest.version}`,
-    'path: image (fixed)'
-  ]);
-  assert.deepEqual(this.qniMathWidgets[0].options, { placement: 'belowEditor' });
+Then('Pi の状態表示に画像経路と問い合わせ成功がある', function () {
+  const lines = this.qniMathWidgets.flatMap((widget) => widget.lines);
+  assert.ok(lines.includes('path: image'));
+  assert.ok(lines.includes('reason: 問い合わせ応答 OK'));
+});
+
+Then('Pi の状態表示にテキスト経路と問い合わせ拒否がある', function () {
+  const lines = this.qniMathWidgets.flatMap((widget) => widget.lines);
+  assert.ok(lines.includes('path: text'));
+  assert.ok(lines.includes('reason: 問い合わせ応答 EINVAL: unsupported format'));
+});
+
+Then('Pi の状態表示にテキスト経路と無応答がある', function () {
+  const lines = this.qniMathWidgets.flatMap((widget) => widget.lines);
+  assert.ok(lines.includes('path: text'));
+  assert.ok(lines.includes('reason: 問い合わせ無応答'));
+});
+
+Then('Pi の状態表示にテキスト経路と `TMUX` があり端末問い合わせはない', function () {
+  const lines = this.qniMathWidgets.flatMap((widget) => widget.lines);
+  assert.ok(lines.includes('path: text'));
+  assert.ok(lines.includes('reason: 環境変数 TMUX'));
+  assert.equal(this.qniMathTerminalWrites.length, 0);
+});
+
+Then('Pi の状態表示にテキスト経路と `TERM=screen` があり端末問い合わせはない', function () {
+  const lines = this.qniMathWidgets.flatMap((widget) => widget.lines);
+  assert.ok(lines.includes('path: text'));
+  assert.ok(lines.includes('reason: 環境変数 TERM=screen'));
+  assert.equal(this.qniMathTerminalWrites.length, 0);
+});
+
+Then('問い合わせは `a=q` と PNG の `f=100` を使う', function () {
+  assert.match(this.qniMathQuery, /^\x1b_G(?=[^;]*a=q)(?=[^;]*f=100)/u);
+});
+
+Then('Pi の状態表示にテキスト経路と手動指定がある', function () {
+  const lines = this.qniMathWidgets.flatMap((widget) => widget.lines);
+  assert.ok(lines.includes('path: text'));
+  assert.ok(lines.includes('reason: 手動指定'));
+});
+
+Then('Pi の状態表示に画像経路と手動指定がある', function () {
+  const lines = this.qniMathWidgets.flatMap((widget) => widget.lines);
+  assert.ok(lines.includes('path: image'));
+  assert.ok(lines.includes('reason: 手動指定'));
+});
+
+Then('Pi の状態表示にテキスト経路と全体既定がある', function () {
+  const lines = this.qniMathWidgets.flatMap((widget) => widget.lines);
+  assert.ok(lines.includes('path: text'));
+  assert.ok(lines.includes('reason: 全体既定'));
+});
+
+Then('Pi 全体の画像判定は画像可である', function () {
+  assert.equal(this.qniMathCapabilities.images, 'kitty');
 });
 
 Then(/^変換後の Markdown は `\$\|\\psi\\rangle\$` を含む$/, function () {
@@ -447,5 +495,6 @@ Then('変換後の Markdown に画像プレースホルダーはない', functio
 
 Then('Pi の状態表示に固定のテキスト経路がある', function () {
   const lines = this.qniMathWidgets.flatMap((widget) => widget.lines);
-  assert.ok(lines.includes('path: text (fixed)'));
+  assert.ok(lines.includes('path: text'));
+  assert.ok(lines.includes('reason: 手動指定'));
 });

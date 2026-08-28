@@ -41,18 +41,26 @@ scripts/dev/headless_qni_math_status.sh ghostty /tmp/qni-math-ghostty.png
 scripts/dev/headless_qni_math_status.sh kitty /tmp/qni-math-kitty.png
 ```
 
-脚本は `npm run check` には含めない。出力された PNG を読み、起動画面の拡張一覧に `qni-math` があることと、入力欄の下に版と `path: image (fixed)` が出ることを確認する。
+脚本は `npm run check` には含めない。tmux 内では端末問い合わせを行わないため、出力された PNG を読み、起動画面の拡張一覧に `qni-math` があることと、入力欄の下に版、`path: text`、`reason: 環境変数 TMUX` が出ることを確認する。
 
 本文の画像経路は、暗い・明るいテーマを Ghostty と Kitty で撮影する。
 
 ```bash
-scripts/dev/headless_qni_math_images.sh ghostty dark /tmp/qni-math-ghostty-dark.png
-scripts/dev/headless_qni_math_images.sh ghostty light /tmp/qni-math-ghostty-light.png
-scripts/dev/headless_qni_math_images.sh kitty dark /tmp/qni-math-kitty-dark.png
-scripts/dev/headless_qni_math_images.sh kitty light /tmp/qni-math-kitty-light.png
+scripts/dev/headless_qni_math_images.sh ghostty dark /tmp/qni-math-ghostty-dark.png auto
+scripts/dev/headless_qni_math_images.sh ghostty light /tmp/qni-math-ghostty-light.png auto
+scripts/dev/headless_qni_math_images.sh kitty dark /tmp/qni-math-kitty-dark.png auto
+scripts/dev/headless_qni_math_images.sh kitty light /tmp/qni-math-kitty-light.png auto
 ```
 
-各 PNG で、インライン数式が本文の 1 行に収まり、Bell 状態の表示数式が独立した行に描かれていることを確認する。古い本文の残像と色の帯がないことも確認する。固定セッションは `scripts/dev/qni_math_session.jsonl` に置く。
+各 PNG で、端末への PNG 問い合わせから画像経路が自動選択され、インライン数式が本文の 1 行に収まり、Bell 状態の表示数式が独立した行に描かれていることを確認する。古い本文の残像と色の帯がないことも確認する。固定セッションは `scripts/dev/qni_math_session.jsonl` に置く。
+
+Ghostty で `/math text` に切り替えたテキスト経路も撮る。
+
+```bash
+scripts/dev/headless_qni_math_images.sh ghostty dark /tmp/qni-math-ghostty-text.png text
+```
+
+この PNG では画像が消え、同じ数式を Unicode で読めることを確認する。
 
 ストリーミング中と完了後は、固定応答プロバイダを使って 2 枚続けて撮る。
 

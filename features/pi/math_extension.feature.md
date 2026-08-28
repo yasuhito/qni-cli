@@ -118,11 +118,89 @@ qni-cli を Pi に導入した利用者として
 - When 数式を変換して `/math clear` のあと `/math status` を実行する
 - Then Pi の状態表示にキャッシュ件数 0 がある
 
-## Scenario: 画像経路で起動した拡張の状態を確認する
+## Scenario: PNG 問い合わせに成功した端末では画像経路を選ぶ
 
-- Given 偽の Pi ExtensionAPI に数式描画拡張を登録する
+- Given PNG 問い合わせに `OK` を返す偽の端末で数式描画拡張を起動する
 - When `/math status` を実行する
-- Then Pi の状態表示にパッケージの版と固定の画像経路がある
+- Then Pi の状態表示に画像経路と問い合わせ成功がある
+
+## Scenario: 実際に使う PNG 形式で端末へ問い合わせる
+
+- Given PNG 問い合わせに `OK` を返す偽の端末で数式描画拡張を起動する
+- When 端末へ送った問い合わせを確認する
+- Then 問い合わせは `a=q` と PNG の `f=100` を使う
+
+## Scenario: 分割された端末応答を読む
+
+- Given PNG 問い合わせの `OK` を分割して返す偽の端末で数式描画拡張を起動する
+- When `/math status` を実行する
+- Then Pi の状態表示に画像経路と問い合わせ成功がある
+
+## Scenario: 端末応答と同時に届いた入力を残す
+
+- Given 通常入力と PNG 問い合わせの `OK` をまとめて返す偽の端末で数式描画拡張を起動する
+- When 端末応答の前後にあった入力を確認する
+- Then 通常入力だけが Pi へ残る
+
+## Scenario: PNG 問い合わせを拒否した端末ではテキスト経路を選ぶ
+
+- Given PNG 問い合わせに `EINVAL: unsupported format` を返す偽の端末で数式描画拡張を起動する
+- When `/math status` を実行する
+- Then Pi の状態表示にテキスト経路と問い合わせ拒否がある
+
+## Scenario: PNG 問い合わせに応答しない端末ではテキスト経路を選ぶ
+
+- Given PNG 問い合わせに応答しない偽の端末で数式描画拡張を起動する
+- When `/math status` を実行する
+- Then Pi の状態表示にテキスト経路と無応答がある
+
+## Scenario: tmux では端末へ問い合わせない
+
+- Given `TMUX` が設定された偽の端末で数式描画拡張を起動する
+- When `/math status` を実行する
+- Then Pi の状態表示にテキスト経路と `TMUX` があり端末問い合わせはない
+
+## Scenario: screen では端末へ問い合わせない
+
+- Given `TERM=screen` が設定された偽の端末で数式描画拡張を起動する
+- When `/math status` を実行する
+- Then Pi の状態表示にテキスト経路と `TERM=screen` があり端末問い合わせはない
+
+## Scenario: 手動指定を同じセッションの再開後も使う
+
+- Given PNG 問い合わせに `OK` を返す偽の端末で数式描画拡張を起動する
+- When `/math text` を実行して同じセッションを再開し `/math status` を実行する
+- Then Pi の状態表示にテキスト経路と手動指定がある
+
+## Scenario: 問い合わせ失敗後に画像経路を手動指定する
+
+- Given PNG 問い合わせに `EINVAL: unsupported format` を返す偽の端末で数式描画拡張を起動する
+- When `/math image` と `/math status` を実行する
+- Then Pi の状態表示に画像経路と手動指定がある
+
+## Scenario: 自動判定へ戻す
+
+- Given PNG 問い合わせに `OK` を返す偽の端末で数式描画拡張を起動する
+- When `/math text` のあと `/math auto` と `/math status` を実行する
+- Then Pi の状態表示に画像経路と問い合わせ成功がある
+
+## Scenario: 全体既定を新しいセッションで使う
+
+- Given PNG 問い合わせに `OK` を返す偽の端末で数式描画拡張を起動する
+- When `/math text --default` を実行して新しいセッションで `/math status` を実行する
+- Then Pi の状態表示にテキスト経路と全体既定がある
+
+## Scenario: 全体既定を消して自動判定へ戻す
+
+- Given PNG 問い合わせに `OK` を返す偽の端末で数式描画拡張を起動する
+- When `/math text --default` のあと新しいセッションで `/math auto --default` と `/math status` を実行する
+- Then Pi の状態表示に画像経路と問い合わせ成功がある
+
+## Scenario: 画像経路を Pi 全体の画像判定へ反映する
+
+- Given PNG 問い合わせに `OK` を返す偽の端末で数式描画拡張を起動する
+- When Pi の画像判定を確認する
+- Then Pi 全体の画像判定は画像可である
 
 ## Scenario: テキスト経路で ket を素の LaTeX に展開する
 

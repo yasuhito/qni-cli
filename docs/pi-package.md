@@ -62,13 +62,14 @@ pi list
 確認項目:
 
 1. Pi が `qni-math` 拡張と `qni-cli` スキルを読み込む。
-2. `/math status` が `qni-math` の版と `path: image (fixed)` を表示し、本文の `$...$`、`$$...$$`、`\\(...\\)`、`\\[...\\]` を Ghostty / Kitty の画像で描く。コードと thinking ブロックの数式は変換しない。
-3. `QNI_MATH_PATH=text pi` で起動すると `/math status` が `path: text (fixed)` を表示し、`\\ket`、`\\bra`、`\\braket` を Pi が整形できる LaTeX に展開する。`QNI_MATH_PATH` は端末の自動判定を実装するまでの仮設定である。
-4. スキル同梱の `scripts/qni` が使われ、Ruby、Bundler、リポジトリの絶対パスが使われない。
-5. 専用 `qni` ツールに `{"args":["--help"]}` を渡すと qni-cli の使い方が返り、`bash` ツールは従来どおり残る。
-6. `circuit.json`、回路表示、16ショットの結果が作業ディレクトリに対して生成される。
-7. 4種類の入力すべてで、入力2ビットと復号結果が一致する。
-8. 説明が入力生成、Bell 対、符号化、復号、測定の順になっている。
+2. `/math status` が `qni-math` の版、`path: image`、`reason: 問い合わせ応答 OK` を表示し、本文の `$...$`、`$$...$$`、`\\(...\\)`、`\\[...\\]` を Ghostty / Kitty の画像で描く。コードと thinking ブロックの数式は変換しない。
+3. `/math text` の後は `/math status` が `path: text` と `reason: 手動指定` を表示し、`\\ket`、`\\bra`、`\\braket` を Pi が整形できる LaTeX に展開する。`/math auto` で端末問い合わせによる自動判定へ戻る。
+4. `/math image|text|auto` は現在のセッションに残る。`--default` を付けると `~/.config/qni-cli/qni-math.json`（`XDG_CONFIG_HOME` があればその配下）へ全体既定を保存する。`/math auto --default` は保存した既定を消す。
+5. スキル同梱の `scripts/qni` が使われ、Ruby、Bundler、リポジトリの絶対パスが使われない。
+6. 専用 `qni` ツールに `{"args":["--help"]}` を渡すと qni-cli の使い方が返り、`bash` ツールは従来どおり残る。
+7. `circuit.json`、回路表示、16ショットの結果が作業ディレクトリに対して生成される。
+8. 4種類の入力すべてで、入力2ビットと復号結果が一致する。
+9. 説明が入力生成、Bell 対、符号化、復号、測定の順になっている。
 
 確認後は、表示されたパッケージ元と同じ値を指定して削除する。
 
