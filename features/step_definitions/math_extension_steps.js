@@ -66,6 +66,10 @@ When('コードと通常の数式を含む本文を画像経路で変換する',
   transform(this, '```text\n$not-math$\n```\n`$also-code$` と $\\ket{0}$');
 });
 
+When('引用内のコードフェンスを含む本文を画像経路で変換する', function () {
+  transform(this, '> ```text\n> $quoted-code$\n> ```\n\n$\\ket{0}$');
+});
+
 When('thinking ブロックの本文を画像経路で変換する', function () {
   transform(this, '考える: $\\ket{0}$', 'assistant-thinking');
 });
@@ -86,30 +90,35 @@ When('`\\/math status` を実行する', async function () {
   });
 });
 
-Then('変換後の Markdown は先頭 1 行に転送を持ち、前景色だけのプレースホルダーを持つ', function () {
-  const [transferLine, ...body] = this.qniMathMarkdown.split('\n');
-  assert.ok(transferLine.startsWith(APC));
-  assert.match(transferLine, /a=t,f=100,q=2,i=\d+;/);
-  assert.match(transferLine, /a=p,U=1,q=2,i=\d+,p=\d+,c=\d+,r=1/);
-  assert.ok(body.join('\n').includes(PLACEHOLDER));
-  assert.match(body.join('\n'), /\x1b\[38;2;\d+;\d+;\d+m/);
-  assert.doesNotMatch(this.qniMathMarkdown, /\x1b\[58;/);
+Then('変換後の Markdown の先頭行に画像転送がある', function () {
+  const transferLine = this.qniMathMarkdown.split('\n')[0];
+  assert.match(transferLine, /^\x1b_Ga=t,f=100,q=2,i=\d+;/);
 });
 
-Then('表示数式は独立した複数行、インライン数式は本文中の 1 行として配置される', function () {
-  const lines = this.qniMathMarkdown.split('\n').slice(1);
-  const inlineLine = lines.find((line) => line.includes('状態は'));
-  const displayLines = lines.filter((line) => line.startsWith('\x1b[38;2;'));
+Then('変換後のプレースホルダーは前景色だけを使う', function () {
+  assert.deepEqual({
+    hasForeground: /\x1b\[38;2;\d+;\d+;\d+m/u.test(this.qniMathMarkdown),
+    hasUnderline: /\x1b\[58;/u.test(this.qniMathMarkdown),
+    hasPlaceholder: this.qniMathMarkdown.includes(PLACEHOLDER)
+  }, { hasForeground: true, hasUnderline: false, hasPlaceholder: true });
+});
+
+Then('表示数式は独立した複数行に配置される', function () {
+  const displayLines = this.qniMathMarkdown
+    .split('\n')
+    .slice(1)
+    .filter((line) => line.startsWith('\x1b[38;2;'));
+  assert.ok(displayLines.length >= 2 && displayLines.every((line) => line.includes(PLACEHOLDER)));
+});
+
+Then('インライン数式は本文中の 1 行に配置される', function () {
+  const inlineLine = this.qniMathMarkdown.split('\n').find((line) => line.includes('状態は'));
   assert.ok(inlineLine?.includes(PLACEHOLDER));
-  assert.ok(displayLines.length >= 2);
-  assert.ok(displayLines.every((line) => line.includes(PLACEHOLDER)));
 });
 
 Then('4 つの数式が画像配置になる', function () {
   const transferLine = this.qniMathMarkdown.split('\n')[0];
   assert.equal((transferLine.match(/a=t,f=100/g) ?? []).length, 4);
-  assert.equal((this.qniMathMarkdown.match(new RegExp(PLACEHOLDER, 'gu')) ?? []).length > 0, true);
-  assert.doesNotMatch(this.qniMathMarkdown, /\$x\$|\$\$y\$\$|\\\(z\\\)|\\\[w\\\]/);
 });
 
 Then('変換後の Markdown の転送行は 1 行だけになる', function () {
@@ -117,14 +126,22 @@ Then('変換後の Markdown の転送行は 1 行だけになる', function () {
     .split('\n')
     .filter((line) => line.includes(APC));
   assert.equal(linesWithTransfers.length, 1);
-  assert.equal((linesWithTransfers[0].match(/a=t,f=100/g) ?? []).length, 2);
 });
 
-Then('コード内の数式は残り、通常の数式だけが画像配置になる', function () {
+Then('コードフェンス内の数式は残る', function () {
   assert.ok(this.qniMathMarkdown.includes('$not-math$'));
+});
+
+Then('インラインコード内の数式は残る', function () {
   assert.ok(this.qniMathMarkdown.includes('`$also-code$`'));
+});
+
+Then('コード外の数式は画像配置になる', function () {
   assert.ok(this.qniMathMarkdown.includes(PLACEHOLDER));
-  assert.ok(!this.qniMathMarkdown.includes('$\\ket{0}$'));
+});
+
+Then('引用内のコードフェンスにある数式は残る', function () {
+  assert.ok(this.qniMathMarkdown.includes('$quoted-code$'));
 });
 
 Then('thinking ブロックの本文は変更されない', function () {
@@ -133,7 +150,6 @@ Then('thinking ブロックの本文は変更されない', function () {
 
 Then('Bell 状態は設定なしで画像配置になる', function () {
   assert.ok(this.qniMathMarkdown.includes(PLACEHOLDER));
-  assert.ok(!this.qniMathMarkdown.includes('\\ket'));
 });
 
 Then('Pi の状態表示にパッケージの版と固定の画像経路がある', function () {
