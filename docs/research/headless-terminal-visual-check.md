@@ -1,0 +1,38 @@
+# ヘッドレス端末での数式描画の目視確認
+
+数式描画（画像経路）の確認は、人間の目ではなく AI エージェント自身が実端末の描画結果を画像として読む形で行う。この手順は 2026-08-28 に本機（Arch Linux、Hyprland、Ghostty 1.3.1、Kitty 0.48.2）で成立を確認した。
+
+## 仕組み
+
+1. `xvfb-run` で仮想 X ディスプレイを作る（利用者の画面には何も出ない）。
+2. その中で本物の Ghostty または Kitty を X11 バックエンドで起動する。Wayland を掴まないよう `WAYLAND_DISPLAY` を外し、`GDK_BACKEND=x11`（Ghostty）、`-o linux_display_server=x11`（Kitty）、`LIBGL_ALWAYS_SOFTWARE=1` を指定する。
+3. 端末の中で確認したいコマンド（Kitty グラフィックスの描画、Pi の再開など）を実行する。
+4. ImageMagick の `import -window root` で画面を PNG に保存する。
+5. エージェントがその PNG を読んで判断する。
+
+## 確認済みの最小例
+
+```bash
+xvfb-run -a -s "-screen 0 1000x400x24 +extension GLX +render" bash -c '
+  export LIBGL_ALWAYS_SOFTWARE=1 GDK_BACKEND=x11; unset WAYLAND_DISPLAY
+  ghostty --gtk-single-instance=false --confirm-close-surface=false \
+    -e bash -c "python3 scripts/dev/kitty_probe_image.py; sleep 10" &
+  sleep 6
+  import -display "$DISPLAY" -window root /tmp/ghostty.png
+  kill %1
+'
+```
+
+Kitty の場合は `ghostty ...` を `kitty -o linux_display_server=x11 --detach=no -e bash -c "..."` に置き換える。`scripts/dev/kitty_probe_image.py` は Kitty グラフィックスプロトコルで赤い長方形を描く最小スクリプトで、描画されていれば画面取得の PNG に赤い領域が現れる。
+
+## 注意
+
+- `WAYLAND_DISPLAY` を外さないと、端末は Xvfb ではなく利用者の Wayland 画面に開いてしまう。
+- 起動直後は窓がまだ無いので、画面取得の前に数秒待つ。
+- `xwininfo` は本機に無いので、窓単位ではなく root 全体を取得する。
+- Pi の描画を確認するときは、LLM を呼ばずに済むよう、数式を含むセッションファイルを `pi -s` で再開して描画させる。ストリーミング中の挙動を見るには別途、決まった応答を流す仕組みが要る。
+
+## 参照元
+
+- 本機での実行結果（2026-08-28）: Ghostty と Kitty の両方で赤い長方形を含む PNG を取得。
+- Kitty グラフィックスプロトコル: https://sw.kovidgoyal.net/kitty/graphics-protocol/
