@@ -68,6 +68,10 @@ export class Simulator {
     return this.stateVector().toCsv();
   }
 
+  renderStateVectorLatex(): string {
+    return this.stateVector().toLatex();
+  }
+
   runMeasurements(random: () => number = Math.random): readonly MeasurementResult[] {
     try {
       ensureSupportedQubitCount(this.data.qubits);
@@ -268,6 +272,38 @@ class StateVector {
 
   toCsv(): string {
     return this.amplitudes.map((amplitude) => StateVector.formatAmplitude(amplitude)).join(',');
+  }
+
+  toLatex(): string {
+    const terms = this.amplitudes.flatMap((amplitude, index) => {
+      const formatted = StateVector.formatAmplitude(amplitude);
+      if (formatted === '0.0') {
+        return [];
+      }
+
+      const negative = formatted.startsWith('-');
+      const coefficient = negative ? formatted.slice(1) : formatted;
+      const wrappedCoefficient = coefficient.slice(1).includes('+') || coefficient.slice(1).includes('-')
+        ? `(${coefficient})`
+        : coefficient;
+      const basis = index.toString(2).padStart(this.qubits, '0');
+      const term = `${coefficient === '1.0' ? '' : wrappedCoefficient}\\ket{${basis}}`;
+
+      return [{ negative, term }];
+    });
+
+    if (terms.length === 0) {
+      return '0';
+    }
+
+    return terms
+      .map(({ negative, term }, index) => {
+        if (index === 0) {
+          return negative ? `-${term}` : term;
+        }
+        return `${negative ? '-' : '+'} ${term}`;
+      })
+      .join(' ');
   }
 
   exportPayload(): StateVectorExportPayload {

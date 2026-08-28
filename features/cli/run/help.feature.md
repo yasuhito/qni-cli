@@ -16,7 +16,7 @@ qni run のヘルプで利用できるオプションを確認したい。
 
   ```text
   Usage:
-    qni run [--symbolic] [--basis=BASIS]
+    qni run [--symbolic] [--basis=BASIS] [--latex]
     qni run [--shots N] [--seed N] [--json]
 
   Overview:
@@ -29,17 +29,21 @@ qni run のヘルプで利用できるオプションを確認したい。
     Measurement follows computational-basis probabilities and collapses the state before later operations.
     --symbolic prints a symbolic ket expression for supported small circuits.
     --basis currently works only with --symbolic and supports x or y for 1-qubit output, and bell for 2-qubit output.
+    --latex prints a state vector using LaTeX ket notation.
 
   Options:
     [--symbolic]       # Show a 1-qubit symbolic state expression
     [--basis=BASIS]    # Show a symbolic state in a named basis such as x, y, or bell
+    [--latex]          # Print the state vector as LaTeX
     [--shots N]        # Run a measurement circuit N independent times
     [--seed N]         # Use an unsigned 32-bit seed for reproducible measurement
     [--json]           # Print a machine-readable measurement distribution
 
   Examples:
     qni run
+    qni run --latex
     qni run --symbolic
+    qni run --symbolic --latex
     qni run --symbolic --basis x
     qni run --symbolic --basis y
     qni run --symbolic --basis bell

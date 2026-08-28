@@ -143,22 +143,34 @@ describe('TypeScript symbolic state renderer boundary', () => {
         format: 'latex',
         projectRoot: process.cwd()
       }),
-      '\\frac{\\sqrt{2}}{2} \\lvert 0 \\rangle + \\frac{\\sqrt{2}}{2} \\lvert 1 \\rangle'
+      '\\frac{\\sqrt{2}}{2}\\ket{0} + \\frac{\\sqrt{2}}{2}\\ket{1}'
     );
   });
 
-  it('passes named basis options to the helper', () => {
+  it('passes named basis and LaTeX options to the helper', () => {
+    const circuit = {
+      cols: [['H']],
+      qubits: 1
+    };
+
     assert.equal(
       renderSymbolicStateVector({
         basis: 'x',
-        circuit: {
-          cols: [['H']],
-          qubits: 1
-        },
+        circuit,
         env: { PATH: '' },
         projectRoot: process.cwd()
       }),
       '|+>'
+    );
+    assert.equal(
+      renderSymbolicStateVector({
+        basis: 'x',
+        circuit,
+        env: { PATH: '' },
+        format: 'latex',
+        projectRoot: process.cwd()
+      }),
+      '\\ket{+}'
     );
   });
 

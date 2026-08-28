@@ -68,6 +68,14 @@ CLI コマンドの詳細を専用ドキュメントで確認したい。
 
 - Then リポジトリファイル "docs/cli.md" は "qni expect ZZ XX" を含む
 
+## Scenario: CLI リファレンスは状態ベクトルの LaTeX 出力例を示す
+
+- Then リポジトリファイル "docs/cli.md" は "qni run --symbolic --latex" を含む
+
+## Scenario: CLI リファレンスは期待値の LaTeX 出力例を示す
+
+- Then リポジトリファイル "docs/cli.md" は "qni expect ZZ XX --latex" を含む
+
 ## Scenario: CLI リファレンスは画像出力例を示す
 
 - Then リポジトリファイル "docs/cli.md" は "qni export --state-vector --png --light --output state.png" を含む

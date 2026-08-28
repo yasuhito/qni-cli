@@ -323,6 +323,51 @@ def render_symbolic_state_y_basis(state):
     return join_terms(terms)
 
 
+def render_named_basis_latex_term(amplitude, label):
+    simplified = simplify(amplitude)
+    if simplified == 0:
+        return None
+
+    sign = "-" if simplified.could_extract_minus_sign() else "+"
+    magnitude = -simplified if sign == "-" else simplified
+    ket = rf"\ket{{{label}}}"
+    return sign, ket if magnitude == 1 else rf"{latex(magnitude)} {ket}"
+
+
+def render_symbolic_state_x_basis_latex(state):
+    zero = simplify(state[0])
+    one = simplify(state[1])
+    terms = [
+        render_named_basis_latex_term((zero + one) / sqrt(2), "+"),
+        render_named_basis_latex_term((zero - one) / sqrt(2), "-"),
+    ]
+    return join_latex_terms([term for term in terms if term])
+
+
+def render_symbolic_state_y_basis_latex(state):
+    zero = simplify(state[0])
+    one = simplify(state[1])
+    terms = [
+        render_named_basis_latex_term((zero - I * one) / sqrt(2), "+i"),
+        render_named_basis_latex_term((zero + I * one) / sqrt(2), "-i"),
+    ]
+    return join_latex_terms([term for term in terms if term])
+
+
+def render_symbolic_state_bell_basis_latex(state):
+    zero_zero = simplify(state[0])
+    zero_one = simplify(state[1])
+    one_zero = simplify(state[2])
+    one_one = simplify(state[3])
+    terms = [
+        render_named_basis_latex_term((zero_zero + one_one) / sqrt(2), "\\Phi+"),
+        render_named_basis_latex_term((zero_zero - one_one) / sqrt(2), "\\Phi-"),
+        render_named_basis_latex_term((zero_one + one_zero) / sqrt(2), "\\Psi+"),
+        render_named_basis_latex_term((zero_one - one_zero) / sqrt(2), "\\Psi-"),
+    ]
+    return join_latex_terms([term for term in terms if term])
+
+
 def render_symbolic_state_bell_basis(state):
     zero_zero = simplify(state[0])
     zero_one = simplify(state[1])
@@ -567,28 +612,28 @@ def run(circuit, output_format="text", basis=None):
     if basis == "x":
         if qubits != 1:
             raise ValueError("symbolic x-basis run currently supports only 1-qubit circuits")
-        if output_format != "text":
-            raise ValueError("symbolic basis display currently supports only text output")
 
         symbolic_state = symbolic_state_for_qubits(circuit, qubits, variables)
+        if output_format == "latex":
+            return render_symbolic_state_x_basis_latex(symbolic_state)
         return render_symbolic_state_x_basis(symbolic_state)
 
     if basis == "y":
         if qubits != 1:
             raise ValueError("symbolic y-basis run currently supports only 1-qubit circuits")
-        if output_format != "text":
-            raise ValueError("symbolic basis display currently supports only text output")
 
         symbolic_state = symbolic_state_for_qubits(circuit, qubits, variables)
+        if output_format == "latex":
+            return render_symbolic_state_y_basis_latex(symbolic_state)
         return render_symbolic_state_y_basis(symbolic_state)
 
     if basis == "bell":
         if qubits != 2:
             raise ValueError("symbolic bell-basis run currently supports only 2-qubit circuits")
-        if output_format != "text":
-            raise ValueError("symbolic basis display currently supports only text output")
 
         symbolic_state = symbolic_state_for_qubits(circuit, qubits, variables)
+        if output_format == "latex":
+            return render_symbolic_state_bell_basis_latex(symbolic_state)
         return render_symbolic_state_bell_basis(symbolic_state)
 
     if basis is not None:

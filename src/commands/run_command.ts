@@ -11,7 +11,7 @@ import { thorArgumentsError } from './thor_compatibility';
 const MAX_SEED = 0xffffffff;
 
 const HELP_TEXT = `Usage:
-  qni run [--symbolic] [--basis=BASIS]
+  qni run [--symbolic] [--basis=BASIS] [--latex]
   qni run [--shots N] [--seed N] [--json]
 
 Overview:
@@ -24,17 +24,21 @@ Overview:
   Measurement follows computational-basis probabilities and collapses the state before later operations.
   --symbolic prints a symbolic ket expression for supported small circuits.
   --basis currently works only with --symbolic and supports x or y for 1-qubit output, and bell for 2-qubit output.
+  --latex prints a state vector using LaTeX ket notation.
 
 Options:
   [--symbolic]       # Show a 1-qubit symbolic state expression
   [--basis=BASIS]    # Show a symbolic state in a named basis such as x, y, or bell
+  [--latex]          # Print the state vector as LaTeX
   [--shots N]        # Run a measurement circuit N independent times
   [--seed N]         # Use an unsigned 32-bit seed for reproducible measurement
   [--json]           # Print a machine-readable measurement distribution
 
 Examples:
   qni run
+  qni run --latex
   qni run --symbolic
+  qni run --symbolic --latex
   qni run --symbolic --basis x
   qni run --symbolic --basis y
   qni run --symbolic --basis bell
@@ -45,6 +49,7 @@ Examples:
 interface RunOptions {
   basis?: string;
   json: boolean;
+  latex: boolean;
   seed?: number;
   shots: number;
   shotsSpecified: boolean;
@@ -67,6 +72,12 @@ export function runRunCommand(argv: string[], context: CommandHandlerContext): n
     const containsMeasurements = circuitContainsMeasurements(circuit);
     const distributionRequested = options.shotsSpecified || options.seed !== undefined || options.json;
 
+    if (options.latex && distributionRequested) {
+      throw new Error('--latex cannot be used with --shots, --seed, or --json');
+    }
+    if (containsMeasurements && options.latex) {
+      throw new Error('--latex cannot be used with a circuit containing measurements');
+    }
     if (containsMeasurements && options.symbolic) {
       throw new Error('--symbolic cannot be used with a circuit containing measurements');
     }
@@ -86,9 +97,12 @@ export function runRunCommand(argv: string[], context: CommandHandlerContext): n
             basis: options.basis,
             circuit,
             env: context.env,
+            format: options.latex ? 'latex' : 'text',
             projectRoot: context.projectRoot
           })
-        : new Simulator(circuit).renderStateVector();
+        : options.latex
+          ? new Simulator(circuit).renderStateVectorLatex()
+          : new Simulator(circuit).renderStateVector();
 
     process.stdout.write(`${output}\n`);
     return 0;
@@ -104,7 +118,7 @@ function renderDistribution(circuit: Parameters<typeof sampleMeasurementDistribu
 }
 
 function parseRunOptions(argv: readonly string[]): RunOptions {
-  const options: RunOptions = { json: false, shots: 1, shotsSpecified: false, symbolic: false };
+  const options: RunOptions = { json: false, latex: false, shots: 1, shotsSpecified: false, symbolic: false };
   let index = 1;
 
   while (index < argv.length) {
@@ -117,6 +131,11 @@ function parseRunOptions(argv: readonly string[]): RunOptions {
     }
     if (argument === '--json') {
       options.json = true;
+      index += 1;
+      continue;
+    }
+    if (argument === '--latex') {
+      options.latex = true;
       index += 1;
       continue;
     }

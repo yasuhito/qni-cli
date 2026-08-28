@@ -53,7 +53,7 @@ function renderWithHelpers(options: ResolvedSymbolicStateRenderOptions): string 
     const output = renderWithHelper(command, options);
 
     if (output !== undefined) {
-      return output;
+      return options.format === 'latex' ? normalizeKetLatex(output) : output;
     }
   }
 
@@ -135,6 +135,12 @@ function renderWithHelper(command: HelperCommand, options: ResolvedSymbolicState
   }
 
   throw new SymbolicStateRendererError(renderErrorMessage(result.stderr, result.status));
+}
+
+function normalizeKetLatex(output: string): string {
+  return output
+    .replace(/\\lvert\s*([^}]*?)\s*\\rangle/gu, (_match, basis: string) => `\\ket{${basis.trim()}}`)
+    .replace(/\s+(?=\\ket\{)/gu, '');
 }
 
 function retryableWithNextCommand(command: string, stderr: string): boolean {

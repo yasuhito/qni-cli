@@ -15,7 +15,7 @@ qni-cli の利用者として、Pauli 文字列の期待値計算方法を確認
 
   ```text
   Usage:
-    qni expect PAULI_STRING [PAULI_STRING...]
+    qni expect PAULI_STRING [PAULI_STRING...] [--latex]
 
   Overview:
     Calculate expectation values from ./circuit.json.
@@ -23,10 +23,15 @@ qni-cli の利用者として、Pauli 文字列の期待値計算方法を確認
     Each PAULI_STRING must use only I, X, Y, and Z.
     The length of each PAULI_STRING must match the circuit qubit count.
     Output is one line per observable in the form PAULI_STRING=value.
+    --latex prints each observable in LaTeX expectation-value notation.
+
+  Options:
+    [--latex]  # Print expectation values as LaTeX
 
   Examples:
     qni expect Z
     qni expect ZZ XX
+    qni expect ZZ XX --latex
     qni expect ZZI IZZ XXX
   ```
 
@@ -42,7 +47,7 @@ qni-cli の利用者として、Pauli 文字列の期待値計算方法を確認
 
   ```text
   Usage:
-    qni expect PAULI_STRING [PAULI_STRING...]
+    qni expect PAULI_STRING [PAULI_STRING...] [--latex]
 
   Overview:
     Calculate expectation values from ./circuit.json.
@@ -50,9 +55,14 @@ qni-cli の利用者として、Pauli 文字列の期待値計算方法を確認
     Each PAULI_STRING must use only I, X, Y, and Z.
     The length of each PAULI_STRING must match the circuit qubit count.
     Output is one line per observable in the form PAULI_STRING=value.
+    --latex prints each observable in LaTeX expectation-value notation.
+
+  Options:
+    [--latex]  # Print expectation values as LaTeX
 
   Examples:
     qni expect Z
     qni expect ZZ XX
+    qni expect ZZ XX --latex
     qni expect ZZI IZZ XXX
   ```

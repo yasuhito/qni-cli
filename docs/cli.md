@@ -62,13 +62,18 @@ qni state clear
 
 ```bash
 qni run
+qni run --latex
 qni run --symbolic
-qni run --symbolic --basis x
+qni run --symbolic --latex
+qni run --symbolic --basis x --latex
 qni run --symbolic --basis bell
 qni expect ZZ XX
+qni expect ZZ XX --latex
 ```
 
-`qni run` は、測定のない回路では状態ベクトルを表示します。`--symbolic` を付けると、小さな回路を ket 表記で読みやすく表示できます。`qni expect` は Pauli 文字列の期待値を計算します。
+`qni run` は、測定のない回路では状態ベクトルを表示します。`--symbolic` を付けると、小さな回路を ket 表記で読みやすく表示できます。`--latex` を付けると、数値または記号の状態ベクトルを `\\ket{}` 記法の LaTeX で表示します。数値の LaTeX 出力には Python は不要です。`qni expect` は Pauli 文字列の期待値を計算し、`--latex` を付けると `\\langle ZZ \\rangle = 1.0` の形式で表示します。
+
+`--latex` は測定回路や `--shots`、`--seed`、`--json` とは併用できません。
 
 `Measure` を含む回路では、`qni run` は回路を1回実行します。名前付き測定は `input=0`、名前なし測定は `q0=0` の形式で表示します。測定は確率に従って状態を収縮させ、古典ビットの保存と条件付きゲートを含む後続の操作は回路のステップ順に評価します。測定回路では状態ベクトルを一意に表示できないため、`--symbolic` と `--basis` は使えません。
 

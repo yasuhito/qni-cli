@@ -6,6 +6,7 @@ const HEADER_LINES = [
   '\\usepackage{amsmath}',
   '\\usepackage{amssymb}',
   '\\usepackage{xcolor}',
+  '\\newcommand{\\ket}[1]{\\left|#1\\right\\rangle}',
   '',
   '\\begin{document}'
 ] as const;
