@@ -24,9 +24,9 @@ qni-cli の利用者として
 
 - Then リポジトリファイル "docs/benchmark.md" は "`submissionProtocol` は `blind-neutral-circuit-json-v1` または `qni-command-output-v0` を保存します。" を含む
 
-## Scenario: README は評価ランナーと研究プロトコルの違いを追える
+## Scenario: README は提出経路と研究プロトコルの詳細を専門文書へ案内する
 
-- Then リポジトリファイル "README.md" は "評価ランナーと研究プロトコルの違いは [ベンチマークと研究試行](docs/benchmark.md) で確認できます。" を含む
+- Then リポジトリファイル "README.md" は "[ベンチマークと研究試行](docs/benchmark.md): 提出経路、採点、研究プロトコル、研究試行の詳細" を含む
 
 ## Scenario: .qni 生成用プロンプトは legacy protocol 用であることを示す
 

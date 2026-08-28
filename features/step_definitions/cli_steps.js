@@ -1916,6 +1916,14 @@ Then('リポジトリファイル {string} は {string} を含む', function (fi
   );
 });
 
+Then('リポジトリファイル {string} の最初の行は {string} である', function (filePath, text) {
+  const actualPath = projectFilePath(filePath);
+  assert.ok(fs.existsSync(actualPath), `expected repository file to exist: ${filePath}`);
+
+  const [firstLine] = fs.readFileSync(actualPath, 'utf8').split(/\r?\n/u);
+  assert.equal(firstLine, text);
+});
+
 Then('標準出力に淡色修飾付きラベル {string} を含む', function (label) {
   const chars = [...label];
 

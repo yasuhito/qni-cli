@@ -1,88 +1,110 @@
-# Qni CoResearcher / qni-cli
+# Qni CoResearcher
 
-Qni CoResearcher は、自然言語の量子回路課題、`.qni` 提出物、qni-cli の決定論的な採点、研究試行ログをリポジトリファイルとして束ねる量子回路AI共同研究者ハーネスです。
+Qni CoResearcher は、研究者が AI共同研究者と量子回路を設計し、実行結果を検証し、図と文章で説明し、その過程を後から確認できる形で残すためのプロジェクトです。研究者は CLI の操作ではなく、調べたい量子回路や確かめたい性質を自然言語で伝えるところから始められます。
 
-`qni-cli` は、共同研究者や外部エージェントホストが使う決定論的な量子回路 CLI です。外部の AI または人間の共同研究者が量子回路の提出物を作る経路では、qni-cli が回路の作成、実行、採点、研究試行の記録とレポートを担います。
+`qni-cli` は、その共同研究を支えるエージェント向けの決定論的な量子回路 CLI です。Qni CoResearcher が共同研究の進め方と記録を含むプロジェクト全体を指すのに対し、qni-cli は回路の作成、実行、表示、検証を同じ入力から再現できる道具です。人が直接使うこともできます。
 
-`qni benchmark` と `qni research record` は AI を呼びません。モデル別コストベンチマークで使う `qni research solve` だけは、インストール済みの Pi を課題ごとに道具・セッション・リポジトリ文脈なしで起動し、指定モデルへ回答を求めます。複数エージェント処理や道具を使った自己修正は、現時点では qni-cli にありません。
+## Pi で試す
 
-評価ランナーと研究プロトコルの違いは [ベンチマークと研究試行](docs/benchmark.md) で確認できます。`qni benchmark` は `.qni` 提出物を採点する評価ランナーで、`qni research solve` と `qni research record --circuit-json-dir` は中立回路 JSON を受け取る `blind-neutral-circuit-json-v1` の研究プロトコルです。既存の `.qni` 直接提出は `qni-command-output-v0` の legacy protocol として残し、公平比較用の結果とは分けて扱います。
-
-## 研究の流れ
-
-Qni CoResearcher には、評価ランナー（`.qni`）と研究プロトコル（`blind-neutral-circuit-json-v1` / `qni-command-output-v0`）の 2 つの提出経路があります。
-ベンチマーク課題は `.qni` で採点し、研究試行では中立回路 JSON と legacy `.qni` を `submissionProtocol` で区別します。
-
-1. ベンチマーク課題は、自然言語の課題文と採点用の検証条件を Markdown と frontmatter で持ちます。
-2. 公平比較用の主経路では、共同研究者やモデルは qni-cli 固有語彙を見ずに中立回路 JSON を作ります。既存の `.qni` 直接提出経路では、1行に1つの完全な `qni ...` コマンドを書く `.qni` 提出物を作ります。
-3. `qni benchmark run` または `qni benchmark run-all` が、`.qni` 提出物を一時的な作業場所で実行し、状態ベクトルや期待値などの検証条件に照らして採点します。中立回路 JSON は研究コマンド内で `.qni` に変換してから同じ評価ランナーに渡します。
-4. 外部で作った成果物は `qni research record` が、登録済みモデルを直接実行する場合は `qni research solve` が、プロンプト、回答、提出物、採点結果を `research/runs/<timestamp>-<slug>/` に保存します。研究試行の `submissionProtocol` で `blind-neutral-circuit-json-v1` と `qni-command-output-v0` を区別します。
-5. `qni research report` が保存済みの研究試行を読み、`qni research plot` がモデル別コストベンチマークの散布図を生成します。
-
-研究ログでは、リポジトリファイルを永続的な状態として扱い、会話セッションは一時的な作業文脈として扱います。共同研究者とのやり取りが終わっても、課題、提出物、プロンプト、回答、採点結果がファイルとして残るため、後から比較、レビュー、再利用できます。
-
-## qni-cli が提供するもの
-
-- `qni add`、`qni gate`、`qni rm`、`qni view` による `./circuit.json` の量子回路編集と確認
-- `qni state`、`qni run`、`qni expect` による初期状態、状態ベクトル、期待値の確認
-- `qni export`、`qni bloch` による回路図、状態ベクトル、Bloch sphere 画像の出力
-- `qni benchmark` による `.qni` 提出物の決定論的な採点
-- `qni research` による外部共同研究者の研究試行ログ保存、Pi 経由の単一モデル実行、レポート、研究試行比較、コスト散布図の生成
-
-`qni` は常に現在の作業ディレクトリの `./circuit.json` を読み書きします。インストール済みパッケージから使う場合は `qni ...`、リポジトリ内で開発中の実装を使う場合は `node dist/bin/qni.js ...` を実行します。
-
-## PhysicsIntern との関係
-
-PhysicsIntern は、数学・理論物理の研究問題を、複数役割のエージェント、新しい文脈での呼び出し、構造化された `ResearchState`、git snapshot、プロバイダー抽象を中心に扱う研究支援システムです。
-
-Qni CoResearcher も、研究状態を会話履歴だけに閉じ込めず、後から読めるファイルとして残す考え方を参考にしています。PhysicsIntern の `ResearchState` や `multi-agent pipeline` に近い構想はありますが、Qni の現時点の実装済み範囲は qni-cli による決定論的な回路操作、ベンチマーク採点、研究試行の記録、Pi 経由の道具なし単一モデル実行、コスト散布図、レポートです。
-
-## 最短利用例
-
-リポジトリ内で開発中の実装を試す場合は、依存関係を入れて TypeScript をビルドしてから `node dist/bin/qni.js` を実行します。記号計算と一部の画像出力を使う前には Python 環境を準備します。
+[Pi](https://github.com/badlogic/pi-mono) に qni-cli と同梱スキルを導入します。
 
 ```bash
-npm install
-npm run build
-scripts/setup_symbolic_python.sh
-
-node dist/bin/qni.js add H --qubit 0 --step 0
-node dist/bin/qni.js add X --control 0 --qubit 1 --step 1
-node dist/bin/qni.js view
-node dist/bin/qni.js run --symbolic --basis bell
+pi install npm:qni-cli
 ```
 
-ベンチマーク採点の最小例:
+空の作業ディレクトリで Pi を起動し、次のように依頼します。
+
+> 超密度符号化回路を qni-cli で作り、ランダムに生成した入力2ビットと復号した出力2ビットが各ショットで一致することを確認してください。16ショットを seed 42 で実行し、通常出力と JSON 出力を示してください。回路図を PNG で保存し、もつれの準備、符号化、復号、測定の役割を説明してください。
+
+同じ回路を再現するコマンド列は [`examples/superdense-coding/circuit.qni`](examples/superdense-coding/circuit.qni) にあります。次の回路図と測定結果は、そのコマンド列を実行した後の qni-cli 自身の出力です。
+
+### 回路図
+
+`qni view` の出力:
+
+```text
+    ┌───┐┌────────────────────┐
+q0: ┤ H ├┤ Measure>input_high ├──────────────────────────────────────────────────────────────────────────
+    ├───┤├───────────────────┬┘
+q1: ┤ H ├┤ Measure>input_low ├───────────────────────────────────────────────────────────────────────────
+    └───┘└───────────────────┘ ┌───┐     ┌──────────────┐┌─────────────┐     ┌───┐┌─────────────────────┐
+q2: ───────────────────────────┤ H ├──■──┤ Z<input_high ├┤ X<input_low ├──■──┤ H ├┤ Measure>output_high ├
+                               └───┘┌─┴─┐└──────────────┘└─────────────┘┌─┴─┐└───┘├────────────────────┬┘
+q3: ────────────────────────────────┤ X ├───────────────────────────────┤ X ├─────┤ Measure>output_low ├─
+                                    └───┘                               └───┘     └────────────────────┘
+```
+
+q0 と q1 の測定で2ビットをランダムに作ります。q2 と q3 に Bell 対を準備し、入力に応じて q2 へ Z と X を適用します。逆 Bell 回路で復号すると、q2 と q3 の測定値が入力と一致します。
+
+### 測定結果
+
+`qni run --shots 16 --seed 42` の出力:
+
+```text
+input_high | input_low | output_high | output_low | count
+0          | 0         | 0           | 0          | 4
+0          | 1         | 0           | 1          | 3
+1          | 0         | 1           | 0          | 6
+1          | 1         | 1           | 1          | 3
+```
+
+すべての行で入力と出力が一致します。作成手順、JSON 出力、PNG 出力は[超密度符号化の端から端の例](examples/superdense-coding/README.md)にあります。
+
+## 現在地とロードマップ
+
+| 状態 | 研究者ができること |
+| --- | --- |
+| 利用可能 | Pi に目的を伝え、qni-cli で量子回路を作成・実行・表示・検証する |
+| 利用可能 | 回路図を PNG・LaTeX で、1量子ビット状態を Bloch sphere で可視化する |
+| 利用可能 | ベンチマークを採点し、研究試行を記録・比較する |
+| 整備中 | Pi 上で回路図や数式を自然にインライン表示する |
+| 構想 | Jupyter・marimo の編集とノートブック内での対話 |
+| 構想 | 複数エージェント・複数スキルによる研究分担 |
+
+「利用可能」は現在の公開コマンドで再現できる範囲です。「整備中」と「構想」は未提供の機能であり、現在使えるものとしては扱いません。
+
+## 現在使えること
+
+- 回路を作成・編集し、状態ベクトル、測定値、複数ショットの分布を実行結果として得る
+- 測定結果に名前を付け、その古典ビットを条件に後続のゲートを実行する
+- 乱数 seed を固定し、通常表示または JSON で再現可能な結果を得る
+- 端末の回路図、PNG、LaTeX、状態ベクトル画像、Bloch sphere を生成する
+- 状態ベクトルや期待値を使って回路の性質を検証する
+- ベンチマーク提出物を検証・採点し、研究試行を記録・比較する
+- Pi 経由のモデル筆記試験を実行し、モデルごとの正答率とコストを比較する
+
+コマンドと引数の一覧は [CLI コマンドリファレンス](docs/cli.md)を参照してください。
+
+## CLI を直接使う
+
+人が qni-cli を直接使う場合は npm からグローバルに導入します。インストール後のコマンド名は `qni` です。
 
 ```bash
-node dist/bin/qni.js benchmark run \
-  benchmarks/quantum-katas/basic-gates/state-flip.md \
-  benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni
+npm install --global qni-cli
+qni --help
 ```
 
-研究試行の記録では、外部で作ったプロンプト、回答、提出物ディレクトリをファイルパスで渡します。モデル別コストベンチマークでは、インストール済み Pi のモデル認証を準備し、`qni research solve --model <model-id> --thinking <level> ...` と `qni research plot` を実行します。詳しい手順は [ベンチマークと研究試行](docs/benchmark.md) と [モデル別コストベンチマーク利用手順](docs/model-cost-benchmark.md) を参照してください。
-
-## ドキュメント
-
-- [CLI コマンドリファレンス](docs/cli.md): 汎用の `qni` コマンド、画像出力、Bloch sphere、状態ベクトル操作の例
-- [公開前の npm / Pi パッケージ確認](docs/pi-package.md): tarball、インストール済み CLI、同梱スキルの確認手順
-- [超密度符号化の端から端の例](examples/superdense-coding/README.md): ランダム入力、Bell 対、古典条件付き符号化、復号、測定、画像出力
-- [ベンチマークと研究試行](docs/benchmark.md): `.qni` 提出物の採点、スモークセット、研究試行ログ、研究試行比較の手順
-- [モデル別コストベンチマーク利用手順](docs/model-cost-benchmark.md): Pi のモデル認証、`qni research solve`、`qni research plot`、score と cost、初期スコープ外の説明
-- [開発者向け手順](docs/development.md): セットアップ、ビルド、通常チェック、npm パッケージのスモーク検証
-- [仕様](SPEC.md): `qni-cli` の詳細仕様
-
-## 制限事項と次の段階
-
-`qni research solve` は、単一モデル・単一試行・逐次実行の Pi 呼び出しだけを扱います。各課題は空の一時作業場所にある新しい道具なし Pi で実行します。複数モデルの一括実行、複数試行、再試行、自己修正、道具を使う外部エージェント自動実行、既存試行の移行はまだ qni-cli にありません。`qni research record` は AI を呼ばず、研究試行ディレクトリを作りますが、git commit は作りません。`qni research compare` は保存済み研究試行を読むだけで、再採点や公平比較用の順位付けは行いません。構造化された `ResearchState` も現時点では実装済みの API ではなく、研究ログのファイル構造を将来深める方向の構想です。
-
-次の段階では、外部エージェントホストとの接続、研究試行の比較、より豊かな研究状態の表現、ベンチマーク課題の拡充を検討します。これらを追加する場合も、qni-cli の決定論的な採点とリポジトリファイルによる研究ログを中心に保ちます。
-
-## 開発者向け
-
-通常の検証は次のコマンドで実行します。記号計算と画像出力を含む検証の前には、Python 環境と外部ツールの準備が必要です。詳しくは [開発者向け手順](docs/development.md) を参照してください。
+`qni` は現在の作業ディレクトリにある `circuit.json` を読み書きします。たとえば Bell 対は次のように作成して確認できます。
 
 ```bash
-scripts/setup_symbolic_python.sh
-npm run check
+qni add H --qubit 0 --step 0
+qni add X --control 0 --qubit 1 --step 1
+qni view
+qni run
 ```
+
+## 関連文書
+
+- [超密度符号化の端から端の例](examples/superdense-coding/README.md): README の回路を作成、実行、画像出力する手順
+- [CLI コマンドリファレンス](docs/cli.md): 回路操作、実行、表示、画像出力の詳細
+- [ベンチマークと研究試行](docs/benchmark.md): 提出経路、採点、研究プロトコル、研究試行の詳細
+- [モデル別コストベンチマーク利用手順](docs/model-cost-benchmark.md): Pi を使うモデル筆記試験と結果の読み方
+- [PhysicsIntern 実装確認メモ](docs/research/physics-intern-implementation-notes.md): 参考にした研究支援システムと、採用した考え方
+- [プロジェクト命名メモ](docs/research/project-naming.md): Qni CoResearcher という公開名と qni-cli の責務を分けた判断
+- [開発者向け手順](docs/development.md): 開発環境、ビルド、テスト、全体チェック
+
+## 開発への参加
+
+Issue と Pull Request を歓迎します。新機能は、実装前に `features/` 以下の機能仕様で利用者から見える振る舞いを定義してください。開発環境の準備と `npm run check` を含む検証手順は[開発者向け手順](docs/development.md)にあります。
+
+Qni CoResearcher / qni-cli は [MIT License](LICENSE) で公開しています。
