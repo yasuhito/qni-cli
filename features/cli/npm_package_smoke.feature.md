@@ -24,6 +24,14 @@ npm パッケージとしての通常経路を確認できるように
 
 - Then リポジトリファイル "package.json" は "\"./skills/qni-cli\"" を含む
 
+## Scenario: 数式描画拡張を公開資源として宣言する
+
+- Then リポジトリファイル "package.json" は "\"./dist/qni-math/index.js\"" を含む
+
+## Scenario: Pi 本体は同梱しない
+
+- Then リポジトリファイル "package.json" は "\"@earendil-works/pi-coding-agent\": \"*\"" を含む
+
 ## Scenario: パッケージのスモーク検証スクリプトは `npm pack` で作った成果物を使う
 
 - Then リポジトリファイル "scripts/smoke_npm_package.js" は "npm pack" を含む

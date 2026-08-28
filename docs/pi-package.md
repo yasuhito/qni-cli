@@ -17,7 +17,7 @@ tarball=$(node -e 'const fs = require("node:fs"); const data = JSON.parse(fs.rea
 tar -tzf "$tarball"
 ```
 
-一覧に `dist/`、`libexec/`、`benchmarks/`、`examples/superdense-coding/`、`skills/qni-cli/`、`LICENSE` があることを確認する。
+一覧に `dist/`、`dist/qni-math/index.js`、`libexec/`、`benchmarks/`、`examples/superdense-coding/`、`skills/qni-cli/`、`LICENSE` があることを確認する。
 
 ## CLI をリポジトリ外から確認する
 
@@ -61,11 +61,12 @@ pi list
 
 確認項目:
 
-1. Pi が `qni-cli` スキルを読み込む。
-2. スキル同梱の `scripts/qni` が使われ、Ruby、Bundler、リポジトリの絶対パスが使われない。
-3. `circuit.json`、回路表示、16ショットの結果が作業ディレクトリに対して生成される。
-4. 4種類の入力すべてで、入力2ビットと復号結果が一致する。
-5. 説明が入力生成、Bell 対、符号化、復号、測定の順になっている。
+1. Pi が `qni-math` 拡張と `qni-cli` スキルを読み込む。
+2. `/math status` が `qni-math` の版と `path: text (fixed)` を表示する。
+3. スキル同梱の `scripts/qni` が使われ、Ruby、Bundler、リポジトリの絶対パスが使われない。
+4. `circuit.json`、回路表示、16ショットの結果が作業ディレクトリに対して生成される。
+5. 4種類の入力すべてで、入力2ビットと復号結果が一致する。
+6. 説明が入力生成、Bell 対、符号化、復号、測定の順になっている。
 
 確認後は、表示されたパッケージ元と同じ値を指定して削除する。
 

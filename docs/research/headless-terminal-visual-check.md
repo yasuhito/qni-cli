@@ -25,6 +25,17 @@ xvfb-run -a -s "-screen 0 1000x400x24 +extension GLX +render" bash -c '
 
 Kitty の場合は `ghostty ...` を `kitty -o linux_display_server=x11 --detach=no -e bash -c "..."` に置き換える。`scripts/dev/kitty_probe_image.py` は Kitty グラフィックスプロトコルで赤い長方形を描く最小スクリプトで、描画されていれば画面取得の PNG に赤い領域が現れる。
 
+## 数式描画拡張の状態を撮影する脚本
+
+`qni-math` を含む現在の npm パッケージを一時環境へ導入し、Pi で `/math status` を実行した画面を撮影する。
+
+```bash
+scripts/dev/headless_qni_math_status.sh ghostty /tmp/qni-math-ghostty.png
+scripts/dev/headless_qni_math_status.sh kitty /tmp/qni-math-kitty.png
+```
+
+脚本は `npm run check` には含めない。出力された PNG を読み、起動画面の拡張一覧に `qni-math` があることと、入力欄の下に版と `path: text (fixed)` が出ることを確認する。
+
 ## 注意
 
 - `WAYLAND_DISPLAY` を外さないと、端末は Xvfb ではなく利用者の Wayland 画面に開いてしまう。

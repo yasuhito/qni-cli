@@ -4,6 +4,7 @@ const { spawnSync } = require('node:child_process');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
+const ts = require('typescript');
 
 const projectRoot = path.resolve(__dirname, '..');
 const keepTemp = process.env.QNI_KEEP_PACKAGE_SMOKE === '1';
@@ -12,6 +13,7 @@ function main() {
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'qni-cli-package-smoke-'));
 
   try {
+    assertExtensionSourceBoundary();
     const packed = packProject(tempRoot);
     assertPackedFiles(packed.files);
 
@@ -117,6 +119,66 @@ function main() {
   }
 }
 
+function assertExtensionSourceBoundary() {
+  const extensionRoot = path.join(projectRoot, 'src', 'qni-math');
+  const sourceFiles = sourceFilesUnder(extensionRoot);
+
+  for (const sourceFile of sourceFiles) {
+    const source = ts.createSourceFile(
+      sourceFile,
+      fs.readFileSync(sourceFile, 'utf8'),
+      ts.ScriptTarget.Latest,
+      true
+    );
+
+    function checkModuleSpecifier(specifier) {
+      if (!specifier.startsWith('.')) {
+        return;
+      }
+
+      const importedPath = path.resolve(path.dirname(sourceFile), specifier);
+      if (importedPath !== extensionRoot && !importedPath.startsWith(`${extensionRoot}${path.sep}`)) {
+        throw new Error(`qni-math source imports another qni-cli module: ${specifier}`);
+      }
+    }
+
+    function visit(node) {
+      if ((ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) && node.moduleSpecifier) {
+        checkModuleSpecifier(node.moduleSpecifier.text);
+      } else if (
+        ts.isImportEqualsDeclaration(node)
+        && ts.isExternalModuleReference(node.moduleReference)
+        && node.moduleReference.expression
+      ) {
+        checkModuleSpecifier(node.moduleReference.expression.text);
+      } else if (
+        ts.isCallExpression(node)
+        && node.arguments.length > 0
+        && ts.isStringLiteral(node.arguments[0])
+        && (node.expression.kind === ts.SyntaxKind.ImportKeyword
+          || (ts.isIdentifier(node.expression) && node.expression.text === 'require'))
+      ) {
+        checkModuleSpecifier(node.arguments[0].text);
+      }
+
+      ts.forEachChild(node, visit);
+    }
+
+    visit(source);
+  }
+}
+
+function sourceFilesUnder(directory) {
+  return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const entryPath = path.join(directory, entry.name);
+
+    if (entry.isDirectory()) {
+      return sourceFilesUnder(entryPath);
+    }
+    return entry.isFile() && entry.name.endsWith('.ts') ? [entryPath] : [];
+  });
+}
+
 function packProject(tempRoot) {
   const result = run('npm pack', 'npm', ['pack', '--json', '--pack-destination', tempRoot], { cwd: projectRoot });
   const packEntry = JSON.parse(result.stdout)[0];
@@ -137,6 +199,7 @@ function assertPackedFiles(files) {
     'LICENSE',
     'benchmarks/quantum-katas/basic-gates/state-flip.md',
     'dist/bin/qni.js',
+    'dist/qni-math/index.js',
     'examples/superdense-coding/circuit.qni',
     'libexec/qni_symbolic_run.py',
     'scripts/setup_symbolic_python.sh',
@@ -162,6 +225,17 @@ function assertPackageMetadata(packageRoot) {
   }
   if (!manifest.keywords?.includes('pi-package') || !manifest.pi?.skills?.includes('./skills/qni-cli')) {
     throw new Error('packed qni-cli does not declare its Pi skill');
+  }
+  if (!manifest.pi?.extensions?.includes('./dist/qni-math/index.js')) {
+    throw new Error('packed qni-cli does not declare its qni-math extension');
+  }
+  if (manifest.peerDependencies?.['@earendil-works/pi-coding-agent'] !== '*') {
+    throw new Error('packed qni-cli must use Pi from peerDependencies');
+  }
+
+  const extensionSource = fs.readFileSync(path.join(packageRoot, 'dist', 'qni-math', 'index.js'), 'utf8');
+  if (/require\(["']\.\.[/\\]/u.test(extensionSource)) {
+    throw new Error('qni-math extension imports another qni-cli module');
   }
 }
 
@@ -189,9 +263,9 @@ function assertPiSkillDetection({ packageRoot, tempRoot }) {
   const env = { ...process.env, HOME: homeDir, PI_CODING_AGENT_DIR: agentDir, PI_OFFLINE: '1' };
 
   run('pi install packed qni-cli', 'pi', ['install', packageRoot], { cwd: tempRoot, env });
-  const rpc = run('pi package skill discovery', 'pi', [
+  const rpc = run('pi package resource discovery', 'pi', [
     '--mode', 'rpc', '--offline', '--no-session', '--no-tools', '--no-context-files',
-    '--no-extensions', '--no-prompt-templates', '--no-themes'
+    '--no-prompt-templates', '--no-themes'
   ], {
     cwd: tempRoot,
     env,
@@ -204,9 +278,13 @@ function assertPiSkillDetection({ packageRoot, tempRoot }) {
     .find((entry) => entry.id === 'package-smoke');
   const commands = response?.data?.commands ?? [];
   const qniSkill = commands.find((command) => command.name === 'skill:qni-cli');
+  const mathCommand = commands.find((command) => command.name === 'math');
 
   if (!qniSkill || qniSkill.sourceInfo?.origin !== 'package') {
     throw new Error(`Pi did not detect the packed qni-cli skill:\n${rpc.stdout}`);
+  }
+  if (!mathCommand || mathCommand.sourceInfo?.origin !== 'package') {
+    throw new Error(`Pi did not load the packed qni-math extension:\n${rpc.stdout}`);
   }
 }
 
