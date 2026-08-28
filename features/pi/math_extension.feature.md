@@ -123,3 +123,57 @@ qni-cli を Pi に導入した利用者として
 - Given 偽の Pi ExtensionAPI に数式描画拡張を登録する
 - When `/math status` を実行する
 - Then Pi の状態表示にパッケージの版と固定の画像経路がある
+
+## Scenario: テキスト経路で ket を素の LaTeX に展開する
+
+- Given テキスト経路で偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When `$\ket{\psi}$` を含む本文を変換する
+- Then 変換後の Markdown は `$|\psi\rangle$` を含む
+
+## Scenario: テキスト経路で bra を素の LaTeX に展開する
+
+- Given テキスト経路で偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When `$\bra{0}$` を含む本文を変換する
+- Then 変換後の Markdown は `$\langle 0|$` を含む
+
+## Scenario: テキスト経路で braket を素の LaTeX に展開する
+
+- Given テキスト経路で偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When `$\braket{0}{1}$` を含む本文を変換する
+- Then 変換後の Markdown は `$\langle 0|1\rangle$` を含む
+
+## Scenario: テキスト経路で改行後のマクロ引数を展開する
+
+- Given テキスト経路で偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When 引数の前に改行がある `\ket` を含む表示数式を変換する
+- Then 変換後の Markdown は `|0\rangle` を含む
+
+## Scenario: テキスト経路の Markdown を Unicode で描く
+
+- Given テキスト経路で偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When `$\ket{\psi} \otimes \ket{0}$` を含む本文を変換して Pi の Markdown 部品で描く
+- Then 描画された行は `|ψ⟩ ⊗ |0⟩` を含む
+
+## Scenario: テキスト経路の描画に量子系マクロの原文を残さない
+
+- Given テキスト経路で偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When `$\ket{\psi} \otimes \ket{0}$` を含む本文を変換して Pi の Markdown 部品で描く
+- Then 描画された行に `\ket` はない
+
+## Scenario: テキスト経路では画像を転送しない
+
+- Given テキスト経路で偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When `$\ket{\psi}$` を含む本文を変換する
+- Then 変換後の Markdown に画像転送はない
+
+## Scenario: テキスト経路では画像のプレースホルダーを置かない
+
+- Given テキスト経路で偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When `$\ket{\psi}$` を含む本文を変換する
+- Then 変換後の Markdown に画像プレースホルダーはない
+
+## Scenario: テキスト経路で起動した拡張の状態を確認する
+
+- Given テキスト経路で偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When `/math status` を実行する
+- Then Pi の状態表示に固定のテキスト経路がある

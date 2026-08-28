@@ -7,23 +7,31 @@ const PROJECT_ROOT = path.resolve(__dirname, '../..');
 const APC = '\x1b_G';
 const PLACEHOLDER = String.fromCodePoint(0x10eeee);
 
-Given('偽の Pi ExtensionAPI に数式描画拡張を登録する', function () {
+function registerMathExtension(world, pathSetting) {
   const extensionModule = require(path.join(PROJECT_ROOT, 'dist', 'qni-math', 'index.js'));
   const commands = new Map();
   let sessionStart;
   let transformer;
+  const previousPath = process.env.QNI_MATH_PATH;
 
-  extensionModule.default({
-    on(event, handler) {
-      if (event === 'session_start') sessionStart = handler;
-    },
-    registerCommand(name, options) {
-      commands.set(name, options);
-    },
-    registerMarkdownTransformer(registered) {
-      transformer = registered;
-    }
-  });
+  if (pathSetting === undefined) delete process.env.QNI_MATH_PATH;
+  else process.env.QNI_MATH_PATH = pathSetting;
+  try {
+    extensionModule.default({
+      on(event, handler) {
+        if (event === 'session_start') sessionStart = handler;
+      },
+      registerCommand(name, options) {
+        commands.set(name, options);
+      },
+      registerMarkdownTransformer(registered) {
+        transformer = registered;
+      }
+    });
+  } finally {
+    if (previousPath === undefined) delete process.env.QNI_MATH_PATH;
+    else process.env.QNI_MATH_PATH = previousPath;
+  }
 
   assert.ok(transformer, 'expected qni-math to register a Markdown transformer');
   assert.ok(sessionStart, 'expected qni-math to observe session startup');
@@ -33,8 +41,16 @@ Given('偽の Pi ExtensionAPI に数式描画拡張を登録する', function ()
       setStatus() {}
     }
   });
-  this.qniMathCommands = commands;
-  this.qniMathTransformer = transformer;
+  world.qniMathCommands = commands;
+  world.qniMathTransformer = transformer;
+}
+
+Given('偽の Pi ExtensionAPI に数式描画拡張を登録する', function () {
+  registerMathExtension(this);
+});
+
+Given('テキスト経路で偽の Pi ExtensionAPI に数式描画拡張を登録する', function () {
+  registerMathExtension(this, 'text');
 });
 
 function transform(world, markdown, options = {}) {
@@ -128,6 +144,45 @@ When(/^`\\ket\{\\Phi\^\+\}=\\frac\{\\ket\{00\}\+\\ket\{11\}\}\{\\sqrt 2\}` を�
 
 When('`\\/math status` を実行する', async function () {
   await captureMathStatus(this);
+});
+
+When(/^`\$\\ket\{\\psi\}\$` を含む本文を変換する$/, function () {
+  transform(this, '状態は $\\ket{\\psi}$ です。');
+});
+
+When(/^`\$\\bra\{0\}\$` を含む本文を変換する$/, function () {
+  transform(this, '状態は $\\bra{0}$ です。');
+});
+
+When(/^`\$\\braket\{0\}\{1\}\$` を含む本文を変換する$/, function () {
+  transform(this, '内積は $\\braket{0}{1}$ です。');
+});
+
+When(/^引数の前に改行がある `\\ket` を含む表示数式を変換する$/, function () {
+  transform(this, '$$\\ket\n{0}$$');
+});
+
+When(/^`\$\\ket\{\\psi\} \\otimes \\ket\{0\}\$` を含む本文を変換して Pi の Markdown 部品で描く$/, function () {
+  transform(this, '$\\ket{\\psi} \\otimes \\ket{0}$');
+  const { Markdown } = require('@earendil-works/pi-tui');
+  const identity = (text) => text;
+  const theme = {
+    heading: identity,
+    link: identity,
+    linkUrl: identity,
+    code: identity,
+    codeBlock: identity,
+    codeBlockBorder: identity,
+    quote: identity,
+    quoteBorder: identity,
+    hr: identity,
+    listBullet: identity,
+    bold: identity,
+    italic: identity,
+    strikethrough: identity,
+    underline: identity
+  };
+  this.qniMathRenderedLines = new Markdown(this.qniMathMarkdown, 0, 0, theme).render(80);
 });
 
 Then('変換後の Markdown の先頭行に画像転送がある', function () {
@@ -230,4 +285,41 @@ Then('Pi の状態表示にパッケージの版と固定の画像経路があ�
     'path: image (fixed)'
   ]);
   assert.deepEqual(this.qniMathWidgets[0].options, { placement: 'belowEditor' });
+});
+
+Then(/^変換後の Markdown は `\$\|\\psi\\rangle\$` を含む$/, function () {
+  assert.ok(this.qniMathMarkdown.includes('$|\\psi\\rangle$'));
+});
+
+Then(/^変換後の Markdown は `\$\\langle 0\|\$` を含む$/, function () {
+  assert.ok(this.qniMathMarkdown.includes('$\\langle 0|$'));
+});
+
+Then(/^変換後の Markdown は `\$\\langle 0\|1\\rangle\$` を含む$/, function () {
+  assert.ok(this.qniMathMarkdown.includes('$\\langle 0|1\\rangle$'));
+});
+
+Then(/^変換後の Markdown は `\|0\\rangle` を含む$/, function () {
+  assert.ok(this.qniMathMarkdown.includes('|0\\rangle'));
+});
+
+Then(/^描画された行は `\|ψ⟩ ⊗ \|0⟩` を含む$/, function () {
+  assert.ok(this.qniMathRenderedLines.some((line) => line.includes('|ψ⟩ ⊗ |0⟩')));
+});
+
+Then(/^描画された行に `\\ket` はない$/, function () {
+  assert.ok(this.qniMathRenderedLines.every((line) => !line.includes('\\ket')));
+});
+
+Then('変換後の Markdown に画像転送はない', function () {
+  assert.ok(!this.qniMathMarkdown.includes(APC));
+});
+
+Then('変換後の Markdown に画像プレースホルダーはない', function () {
+  assert.ok(!this.qniMathMarkdown.includes(PLACEHOLDER));
+});
+
+Then('Pi の状態表示に固定のテキスト経路がある', function () {
+  const lines = this.qniMathWidgets.flatMap((widget) => widget.lines);
+  assert.ok(lines.includes('path: text (fixed)'));
 });
