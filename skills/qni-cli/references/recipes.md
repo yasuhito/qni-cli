@@ -1,91 +1,57 @@
 # qni CLI recipes
 
-## Minimal state flip
+In these examples, `<qni>` means the absolute path to `scripts/qni` beside the skill's `SKILL.md`. Run it from the directory where `circuit.json` should live.
+
+## Create, display, run, and verify a Bell state
 
 ```bash
-bundle exec bin/qni clear
-bundle exec bin/qni add X --qubit 0 --step 0
-bundle exec bin/qni view
-bundle exec bin/qni run --symbolic
-bundle exec bin/qni bloch --png --trajectory --light --output bloch.png
+<qni> clear
+<qni> add H --qubit 0 --step 0
+<qni> add X --control 0 --qubit 1 --step 1
+<qni> view
+<qni> run --symbolic --basis bell
+<qni> expect ZZ XX
 ```
 
-## Start from an explicit 1-qubit state
+## Measure a circuit
 
 ```bash
-bundle exec bin/qni clear
-bundle exec bin/qni state set '0.6|0> + 0.8|1>'
-bundle exec bin/qni add X --qubit 0 --step 0
-bundle exec bin/qni run --symbolic
-bundle exec bin/qni bloch --png --trajectory --light --output bloch.png
+<qni> clear
+<qni> add H --qubit 0 --step 0
+<qni> add Measure --name result --qubit 0 --step 1
+<qni> run --shots 100 --seed 42
+<qni> run --shots 100 --seed 42 --json
 ```
 
-For a bare basis state, use an explicit coefficient:
+Use a measurement name when a later gate needs `--if NAME`, or when the output needs a domain-specific label. A name can be written only once.
+
+## Start from an explicit state
 
 ```bash
-bundle exec bin/qni state set '1|1>'
+<qni> clear
+<qni> state set '0.6|0> + 0.8|1>'
+<qni> add X --qubit 0 --step 0
+<qni> run --symbolic
 ```
 
-## Symbolic angle workflow
+For a bare basis state, use an explicit coefficient such as `1|1>`.
+
+## Use a symbolic angle
 
 ```bash
-bundle exec bin/qni clear
-bundle exec bin/qni add Ry --angle theta --qubit 0 --step 0
-bundle exec bin/qni variable set theta π/4
-bundle exec bin/qni view
-bundle exec bin/qni run
-bundle exec bin/qni run --symbolic
-bundle exec bin/qni bloch --png --light --output ry.png
+<qni> clear
+<qni> add Ry --angle theta --qubit 0 --step 0
+<qni> variable set theta π/4
+<qni> view
+<qni> run --symbolic
 ```
 
-## Bloch-sphere visual explanation
-
-Use a static PNG with a trail when you want one figure that explains the motion:
+## Render a circuit or state
 
 ```bash
-bundle exec bin/qni bloch --png --trajectory --light --output bloch.png
+<qni> export --png --light --output circuit.png
+<qni> export --state-vector --png --light --output state.png
+<qni> bloch --png --trajectory --light --output bloch.png
 ```
 
-Use APNG when the animation itself matters:
-
-```bash
-bundle exec bin/qni bloch --apng --light --output bloch.png
-```
-
-Use inline output when the terminal supports Kitty graphics:
-
-```bash
-bundle exec bin/qni bloch --inline
-bundle exec bin/qni bloch --inline --animate
-```
-
-## Circuit and state-vector figures
-
-```bash
-bundle exec bin/qni export --png --light --output circuit.png
-bundle exec bin/qni export --state-vector --png --light --output state.png
-```
-
-## Bell-state style check
-
-```bash
-bundle exec bin/qni clear
-bundle exec bin/qni add H --qubit 0 --step 0
-bundle exec bin/qni add X --control 0 --qubit 1 --step 1
-bundle exec bin/qni run --symbolic --basis bell
-bundle exec bin/qni export --state-vector --png --light --output bell-state.png
-```
-
-## Scratch directory pattern
-
-```bash
-tmpdir=$(mktemp -d)
-cd "$tmpdir"
-export BUNDLE_GEMFILE=/home/yasuhito/Work/qni-cli/Gemfile
-bundle exec /home/yasuhito/Work/qni-cli/bin/qni clear
-bundle exec /home/yasuhito/Work/qni-cli/bin/qni state set '1|1>'
-bundle exec /home/yasuhito/Work/qni-cli/bin/qni add X --qubit 0 --step 0
-bundle exec /home/yasuhito/Work/qni-cli/bin/qni bloch --png --trajectory --light --output bloch.png
-```
-
-This keeps ad hoc `circuit.json` files and generated images out of the repo root.
+Use `export --latex-source` when PNG dependencies are unavailable or the drawing source must be inspected. Use `bloch` only for a fully resolved numeric one-qubit circuit.

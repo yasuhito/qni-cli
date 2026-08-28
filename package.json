@@ -1,7 +1,24 @@
 {
   "name": "qni-cli",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
+  "description": "Deterministic quantum circuit CLI and Pi skill for Qni CoResearcher",
+  "private": false,
+  "license": "MIT",
+  "author": "Yasuhito Takamiya <yasuhito@hey.com> (https://github.com/yasuhito)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yasuhito/qni-cli.git"
+  },
+  "homepage": "https://github.com/yasuhito/qni-cli#readme",
+  "bugs": {
+    "url": "https://github.com/yasuhito/qni-cli/issues"
+  },
+  "keywords": [
+    "pi-package",
+    "agent-skills",
+    "quantum-computing",
+    "quantum-circuit"
+  ],
   "type": "commonjs",
   "bin": {
     "qni": "./dist/bin/qni.js"
@@ -9,11 +26,23 @@
   "files": [
     "benchmarks/",
     "dist/",
+    "examples/superdense-coding/",
     "libexec/*.py",
-    "scripts/setup_symbolic_python.sh"
+    "scripts/setup_symbolic_python.sh",
+    "skills/",
+    "LICENSE"
   ],
+  "pi": {
+    "skills": [
+      "./skills/qni-cli"
+    ]
+  },
+  "engines": {
+    "node": ">=22.19.0"
+  },
   "scripts": {
     "build": "tsc",
+    "prepack": "npm run build",
     "build:ts": "npm run build",
     "check": "npm run test:ts && npm run cucumber && npm run smoke:package",
     "smoke:package": "npm run build && node scripts/smoke_npm_package.js",
@@ -22,6 +51,7 @@
   },
   "devDependencies": {
     "@cucumber/cucumber": "^12.2.0",
+    "@earendil-works/pi-coding-agent": "^0.84.3",
     "@types/node": "^25.6.0",
     "typescript": "^6.0.3"
   },

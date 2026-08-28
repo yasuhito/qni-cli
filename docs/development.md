@@ -51,4 +51,6 @@ npm run cucumber
 npm run smoke:package
 ```
 
-`npm run smoke:package` は npm パッケージのスモーク検証を実行します。具体的には、プロジェクトをビルドして `npm pack` で tarball を作り、一時プロジェクトへインストールして、インストール済みの `qni` から代表コマンドを確認します。
+`npm run smoke:package` は npm パッケージのスモーク検証を実行します。プロジェクトをビルドして `npm pack` で tarball を作り、一時プロジェクトへインストールします。その後、インストール済みの `qni`、超密度符号化、同梱 CLI を使うスキル、Pi によるスキル検出を確認します。
+
+公開前に人が確認する手順は [公開前の npm / Pi パッケージ確認](pi-package.md) を参照してください。
