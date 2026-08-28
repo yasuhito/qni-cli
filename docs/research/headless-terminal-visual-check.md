@@ -62,6 +62,14 @@ scripts/dev/headless_qni_math_images.sh ghostty dark /tmp/qni-math-ghostty-text.
 
 この PNG では画像が消え、同じ数式を Unicode で読めることを確認する。
 
+専用 `qni` ツールの結果ブロックは、折りたたみ時と展開時を続けて撮る。
+
+```bash
+scripts/dev/headless_qni_tool_result.sh ghostty /tmp/qni-tool-result-ghostty
+```
+
+出力は `/tmp/qni-tool-result-ghostty-collapsed.png` と `/tmp/qni-tool-result-ghostty-expanded.png`。両方で状態ベクトルの画像全体が結果ブロックの枠内に収まることを確認する。脚本は制御用の疑似端末から `Ctrl+O` を送り、Ghostty の画像プロトコルを tmux で遮らずに展開状態を切り替える。固定セッションは `scripts/dev/qni_tool_result_session.jsonl` に置く。
+
 ストリーミング中と完了後は、固定応答プロバイダを使って 2 枚続けて撮る。
 
 ```bash

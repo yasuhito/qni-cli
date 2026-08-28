@@ -7,24 +7,24 @@ compatibility: Requires Node.js 22 or later. PNG export also requires pdflatex a
 
 # qni CLI
 
-Use `scripts/qni`, resolved from this skill directory, for every command. Invoke it by absolute path while keeping the command's working directory in the user's workspace. The wrapper runs the TypeScript CLI bundled in the same package, so do not search for a repository checkout or depend on a globally installed `qni`.
+qni-cli を実行するときは、専用の `qni` ツールを優先する。`args` に引数の文字列配列を渡す。たとえば `qni run --latex` は `{"args":["run","--latex"]}` として呼ぶ。専用ツールがない環境では、このスキルの `scripts/qni` を絶対パスで実行する。ラッパーは同じパッケージの TypeScript CLI を使うため、リポジトリを探したり、全体にインストールされた `qni` に依存したりしない。
 
-`qni` reads and writes `./circuit.json` in the command's working directory. Use a temporary directory for experiments unless the user chose a workspace.
+`qni` は作業ディレクトリの `./circuit.json` を読み書きする。利用者が作業場所を選んでいなければ、一時ディレクトリを使う。
 
-## Preferred loop
+## 基本手順
 
-1. Create the circuit with `scripts/qni add ...`. Set an initial state first with `scripts/qni state set "..."` only when needed.
-2. Inspect the circuit with `scripts/qni view`.
-3. Execute it with `scripts/qni run`. Use `--symbolic` for an explanatory ket state or `--shots N --seed N --json` for reproducible measurement data.
-4. Verify the result with measured values, `scripts/qni expect ...`, or both. Fix and rerun the circuit when the evidence disagrees with the requested behavior.
-5. Render a circuit with `scripts/qni export --png ...` or a one-qubit trajectory with `scripts/qni bloch --png --trajectory ...` when a visual helps.
-6. Explain the gate sequence and cite the execution or verification result. Distinguish observed results from theoretical expectations.
+1. `qni add ...` で回路を作る。初期状態が必要な場合だけ、先に `qni state set "..."` を実行する。
+2. `qni view` で回路を確認する。
+3. `qni run` で実行する。説明用の ket 状態には `--symbolic`、再現可能な測定データには `--shots N --seed N --json` を使う。
+4. 測定値、`qni expect ...`、またはその両方で結果を検証する。根拠と要求が一致しなければ、回路を直して再実行する。
+5. 図が役立つ場合は、`qni export --png ...` で回路を描くか、`qni bloch --png --trajectory ...` で 1 量子ビットの軌跡を描く。
+6. ゲート列を説明し、実行結果または検証結果を引用する。観測結果と理論上の期待を区別する。状態ベクトルや期待値を説明するときは、対応するコマンドへ `--latex` を付け、`--latex` の出力を `$$...$$` でそのまま引用する。数式は `$...$` または `$$...$$` で囲み、量子状態は `\\ket{}` で書く。
 
-Use `scripts/qni --help` and `scripts/qni COMMAND --help` as the live command reference.
+最新のコマンド仕様は `qni --help` と `qni COMMAND --help` で確認する。専用ツールでは `["--help"]` または `["COMMAND", "--help"]` を `args` に渡す。
 
-## References
+## 参考資料
 
-Open only the branch needed:
+必要なものだけを開く。
 
-- Measurement, verification, visualization, and state-vector recipes: [references/recipes.md](references/recipes.md)
-- End-to-end superdense coding: [references/superdense-coding.md](references/superdense-coding.md)
+- 測定、検証、可視化、状態ベクトル: [references/recipes.md](references/recipes.md)
+- 超密度符号化の一連の例: [references/superdense-coding.md](references/superdense-coding.md)

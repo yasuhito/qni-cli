@@ -82,6 +82,16 @@ function qniToolText(result) {
   return result.content[0].text;
 }
 
+function renderQniToolResult(world) {
+  const theme = { fg: (_color, text) => text };
+  return qniTool(world).renderResult(
+    world.qniToolResult,
+    { expanded: false, isPartial: false },
+    theme,
+    { args: {}, showImages: true }
+  );
+}
+
 function executeBundledQni(args, cwd) {
   return new Promise((resolve, reject) => {
     execFile(process.execPath, [path.join(PROJECT_ROOT, 'dist', 'bin', 'qni.js'), ...args], {
@@ -107,6 +117,17 @@ When(/^qni ツールで `alpha\|0> \+ beta\|1>` を初期状態に設定して�
 
 When(/^qni ツールに `\["--help"\]` を渡す$/, async function () {
   this.qniToolResult = await executeQniTool(this, ['--help']);
+});
+
+When(/^qni ツールに `\["run", "--latex"\]` を渡す$/, async function () {
+  await executeQniTool(this, ['add', 'H', '--qubit', '0', '--step', '0']);
+  this.qniToolResult = await executeQniTool(this, ['run', '--latex']);
+});
+
+When(/^qni ツールに `\["expect", "ZZ", "--latex"\]` を渡す$/, async function () {
+  await executeQniTool(this, ['add', 'H', '--qubit', '0', '--step', '0']);
+  await executeQniTool(this, ['add', 'X', '--control', '0', '--qubit', '1', '--step', '1']);
+  this.qniToolResult = await executeQniTool(this, ['expect', 'ZZ', '--latex']);
 });
 
 When('qni ツールに存在しないサブコマンドを渡す', async function () {
@@ -271,6 +292,24 @@ When(/^`\$\\ket\{\\psi\} \\otimes \\ket\{0\}\$` を含む本文を変換して P
 
 Then('qni ツールの結果本文は qni-cli の標準出力と一致する', function () {
   assert.equal(qniToolText(this.qniToolResult), this.directQniResult.stdout);
+});
+
+Then('qni ツールの結果本文と結果詳細は同じ LaTeX である', function () {
+  assert.match(qniToolText(this.qniToolResult), /\\ket\{/u);
+  assert.equal(this.qniToolResult.details.latex, qniToolText(this.qniToolResult));
+});
+
+Then('qni ツールの結果描画は Image 部品である', function () {
+  const { Image } = require('@earendil-works/pi-tui');
+  assert.ok(renderQniToolResult(this) instanceof Image);
+});
+
+Then('qni ツールの結果描画は文字列である', function () {
+  const component = renderQniToolResult(this);
+  assert.deepEqual(
+    component.render(80).map((line) => line.trimEnd()),
+    qniToolText(this.qniToolResult).trimEnd().split('\n')
+  );
 });
 
 Then(/^qni ツールの結果本文は `alpha\|0> \+ beta\|1>` である$/, function () {

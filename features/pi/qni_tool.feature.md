@@ -10,6 +10,36 @@
 - When qni ツールで H ゲートを追加して回路を実行する
 - Then qni ツールの結果本文は qni-cli の標準出力と一致する
 
+## Scenario: LaTeX の状態ベクトルを結果の詳細に保持する
+
+- Given 偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When qni ツールに `["run", "--latex"]` を渡す
+- Then qni ツールの結果本文と結果詳細は同じ LaTeX である
+
+## Scenario: LaTeX の状態ベクトルを画像経路で描く
+
+- Given 偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When qni ツールに `["run", "--latex"]` を渡す
+- Then qni ツールの結果描画は Image 部品である
+
+## Scenario: LaTeX の期待値を画像経路で描く
+
+- Given 偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When qni ツールに `["expect", "ZZ", "--latex"]` を渡す
+- Then qni ツールの結果描画は Image 部品である
+
+## Scenario: LaTeX 以外の結果を文字列で描く
+
+- Given 偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When qni ツールで H ゲートを追加して回路を実行する
+- Then qni ツールの結果描画は文字列である
+
+## Scenario: テキスト経路では LaTeX の結果を文字列で描く
+
+- Given テキスト経路で偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When qni ツールに `["run", "--latex"]` を渡す
+- Then qni ツールの結果描画は文字列である
+
 ## Scenario: 空白とパイプ記号を含む初期状態をそのまま渡す
 
 - Given 偽の Pi ExtensionAPI に数式描画拡張を登録する
