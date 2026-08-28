@@ -293,34 +293,22 @@ def render_named_basis_term(amplitude, label):
     return f"{simplified}{label}"
 
 
-def render_symbolic_state_x_basis(state):
-    zero = simplify(state[0])
-    one = simplify(state[1])
-    plus = simplify((zero + one) / sqrt(2))
-    minus = simplify((zero - one) / sqrt(2))
+def named_basis_components(state, basis):
+    if basis == "x":
+        zero, one = map(simplify, state)
+        return (((zero + one) / sqrt(2), "+"), ((zero - one) / sqrt(2), "-"))
 
-    terms = []
-    for amplitude, label in ((plus, "|+>"), (minus, "|->")):
-        term = render_named_basis_term(amplitude, label)
-        if term:
-            terms.append(term)
+    if basis == "y":
+        zero, one = map(simplify, state)
+        return (((zero - I * one) / sqrt(2), "+i"), ((zero + I * one) / sqrt(2), "-i"))
 
-    return join_terms(terms)
-
-
-def render_symbolic_state_y_basis(state):
-    zero = simplify(state[0])
-    one = simplify(state[1])
-    plus_i = simplify((zero - I * one) / sqrt(2))
-    minus_i = simplify((zero + I * one) / sqrt(2))
-
-    terms = []
-    for amplitude, label in ((plus_i, "|+i>"), (minus_i, "|-i>")):
-        term = render_named_basis_term(amplitude, label)
-        if term:
-            terms.append(term)
-
-    return join_terms(terms)
+    zero_zero, zero_one, one_zero, one_one = map(simplify, state)
+    return (
+        ((zero_zero + one_one) / sqrt(2), "Φ+"),
+        ((zero_zero - one_one) / sqrt(2), "Φ-"),
+        ((zero_one + one_zero) / sqrt(2), "Ψ+"),
+        ((zero_one - one_zero) / sqrt(2), "Ψ-"),
+    )
 
 
 def render_named_basis_latex_term(amplitude, label):
@@ -330,67 +318,19 @@ def render_named_basis_latex_term(amplitude, label):
 
     sign = "-" if simplified.could_extract_minus_sign() else "+"
     magnitude = -simplified if sign == "-" else simplified
-    ket = rf"\ket{{{label}}}"
+    latex_label = label.replace("Φ", r"\Phi").replace("Ψ", r"\Psi")
+    ket = rf"\ket{{{latex_label}}}"
     return sign, ket if magnitude == 1 else rf"{latex(magnitude)} {ket}"
 
 
-def render_symbolic_state_x_basis_latex(state):
-    zero = simplify(state[0])
-    one = simplify(state[1])
-    terms = [
-        render_named_basis_latex_term((zero + one) / sqrt(2), "+"),
-        render_named_basis_latex_term((zero - one) / sqrt(2), "-"),
-    ]
-    return join_latex_terms([term for term in terms if term])
+def render_symbolic_named_basis(state, basis, output_format):
+    components = named_basis_components(state, basis)
+    if output_format == "latex":
+        terms = [render_named_basis_latex_term(amplitude, label) for amplitude, label in components]
+        return join_latex_terms([term for term in terms if term])
 
-
-def render_symbolic_state_y_basis_latex(state):
-    zero = simplify(state[0])
-    one = simplify(state[1])
-    terms = [
-        render_named_basis_latex_term((zero - I * one) / sqrt(2), "+i"),
-        render_named_basis_latex_term((zero + I * one) / sqrt(2), "-i"),
-    ]
-    return join_latex_terms([term for term in terms if term])
-
-
-def render_symbolic_state_bell_basis_latex(state):
-    zero_zero = simplify(state[0])
-    zero_one = simplify(state[1])
-    one_zero = simplify(state[2])
-    one_one = simplify(state[3])
-    terms = [
-        render_named_basis_latex_term((zero_zero + one_one) / sqrt(2), "\\Phi+"),
-        render_named_basis_latex_term((zero_zero - one_one) / sqrt(2), "\\Phi-"),
-        render_named_basis_latex_term((zero_one + one_zero) / sqrt(2), "\\Psi+"),
-        render_named_basis_latex_term((zero_one - one_zero) / sqrt(2), "\\Psi-"),
-    ]
-    return join_latex_terms([term for term in terms if term])
-
-
-def render_symbolic_state_bell_basis(state):
-    zero_zero = simplify(state[0])
-    zero_one = simplify(state[1])
-    one_zero = simplify(state[2])
-    one_one = simplify(state[3])
-
-    phi_plus = simplify((zero_zero + one_one) / sqrt(2))
-    phi_minus = simplify((zero_zero - one_one) / sqrt(2))
-    psi_plus = simplify((zero_one + one_zero) / sqrt(2))
-    psi_minus = simplify((zero_one - one_zero) / sqrt(2))
-
-    terms = []
-    for amplitude, label in (
-        (phi_plus, "|Φ+>"),
-        (phi_minus, "|Φ->"),
-        (psi_plus, "|Ψ+>"),
-        (psi_minus, "|Ψ->"),
-    ):
-        term = render_named_basis_term(amplitude, label)
-        if term:
-            terms.append(term)
-
-    return join_terms(terms)
+    terms = [render_named_basis_term(amplitude, f"|{label}>") for amplitude, label in components]
+    return join_terms([term for term in terms if term])
 
 
 def join_terms(terms):
@@ -614,27 +554,21 @@ def run(circuit, output_format="text", basis=None):
             raise ValueError("symbolic x-basis run currently supports only 1-qubit circuits")
 
         symbolic_state = symbolic_state_for_qubits(circuit, qubits, variables)
-        if output_format == "latex":
-            return render_symbolic_state_x_basis_latex(symbolic_state)
-        return render_symbolic_state_x_basis(symbolic_state)
+        return render_symbolic_named_basis(symbolic_state, basis, output_format)
 
     if basis == "y":
         if qubits != 1:
             raise ValueError("symbolic y-basis run currently supports only 1-qubit circuits")
 
         symbolic_state = symbolic_state_for_qubits(circuit, qubits, variables)
-        if output_format == "latex":
-            return render_symbolic_state_y_basis_latex(symbolic_state)
-        return render_symbolic_state_y_basis(symbolic_state)
+        return render_symbolic_named_basis(symbolic_state, basis, output_format)
 
     if basis == "bell":
         if qubits != 2:
             raise ValueError("symbolic bell-basis run currently supports only 2-qubit circuits")
 
         symbolic_state = symbolic_state_for_qubits(circuit, qubits, variables)
-        if output_format == "latex":
-            return render_symbolic_state_bell_basis_latex(symbolic_state)
-        return render_symbolic_state_bell_basis(symbolic_state)
+        return render_symbolic_named_basis(symbolic_state, basis, output_format)
 
     if basis is not None:
         raise ValueError(f"unsupported symbolic basis: {basis}")

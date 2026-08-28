@@ -34,21 +34,14 @@ export function runExpectCommand(argv: string[], context: CommandHandlerContext)
       .slice(1)
       .filter((argument) => argument !== '--latex')
       .map((pauliString) => pauliString.toUpperCase());
-    const output = new Simulator(currentCircuitFile(context.cwd).load()).renderExpectationValues(pauliStrings);
-    process.stdout.write(`${latex ? renderLatexExpectationValues(output) : output}\n`);
+    const simulator = new Simulator(currentCircuitFile(context.cwd).load());
+    const output = latex
+      ? simulator.renderExpectationValuesLatex(pauliStrings)
+      : simulator.renderExpectationValues(pauliStrings);
+    process.stdout.write(`${output}\n`);
     return 0;
   } catch (error) {
     process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
     return 1;
   }
-}
-
-function renderLatexExpectationValues(output: string): string {
-  return output
-    .split('\n')
-    .map((line) => {
-      const separator = line.indexOf('=');
-      return `\\langle ${line.slice(0, separator)} \\rangle = ${line.slice(separator + 1)}`;
-    })
-    .join('\n');
 }

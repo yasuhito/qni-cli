@@ -100,11 +100,23 @@ export class Simulator {
   }
 
   renderExpectationValues(pauliStrings: readonly string[]): string {
-    const stateVector = this.stateVector();
-
-    return pauliStrings
-      .map((pauliString) => `${pauliString}=${StateVector.formatAmplitude(stateVector.expectation(pauliString))}`)
+    return this.expectationValues(pauliStrings)
+      .map(({ pauliString, value }) => `${pauliString}=${value}`)
       .join('\n');
+  }
+
+  renderExpectationValuesLatex(pauliStrings: readonly string[]): string {
+    return this.expectationValues(pauliStrings)
+      .map(({ pauliString, value }) => `\\langle ${pauliString} \\rangle = ${value}`)
+      .join('\n');
+  }
+
+  private expectationValues(pauliStrings: readonly string[]): readonly { pauliString: string; value: string }[] {
+    const stateVector = this.stateVector();
+    return pauliStrings.map((pauliString) => ({
+      pauliString,
+      value: StateVector.formatAmplitude(stateVector.expectation(pauliString))
+    }));
   }
 
   exportPayload(): StateVectorExportPayload {
@@ -281,11 +293,10 @@ class StateVector {
         return [];
       }
 
-      const negative = formatted.startsWith('-');
+      const mixedComplex = normalizedScalar(amplitude.real) !== 0 && normalizedScalar(amplitude.imaginary) !== 0;
+      const negative = !mixedComplex && formatted.startsWith('-');
       const coefficient = negative ? formatted.slice(1) : formatted;
-      const wrappedCoefficient = coefficient.slice(1).includes('+') || coefficient.slice(1).includes('-')
-        ? `(${coefficient})`
-        : coefficient;
+      const wrappedCoefficient = mixedComplex ? `(${coefficient})` : coefficient;
       const basis = index.toString(2).padStart(this.qubits, '0');
       const term = `${coefficient === '1.0' ? '' : wrappedCoefficient}\\ket{${basis}}`;
 

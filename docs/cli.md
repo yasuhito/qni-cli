@@ -71,7 +71,7 @@ qni expect ZZ XX
 qni expect ZZ XX --latex
 ```
 
-`qni run` は、測定のない回路では状態ベクトルを表示します。`--symbolic` を付けると、小さな回路を ket 表記で読みやすく表示できます。`--latex` を付けると、数値または記号の状態ベクトルを `\\ket{}` 記法の LaTeX で表示します。数値の LaTeX 出力には Python は不要です。`qni expect` は Pauli 文字列の期待値を計算し、`--latex` を付けると `\\langle ZZ \\rangle = 1.0` の形式で表示します。
+`qni run` は、測定のない回路では状態ベクトルを表示します。`--symbolic` を付けると、小さな回路を ket 表記で読みやすく表示できます。`--latex` を付けると、数値または記号の状態ベクトルを `\ket{}` 記法の LaTeX で表示します。数値の LaTeX 出力には Python は不要です。`qni expect` は Pauli 文字列の期待値を計算し、`--latex` を付けると `\langle ZZ \rangle = 1.0` の形式で表示します。
 
 `--latex` は測定回路や `--shots`、`--seed`、`--json` とは併用できません。
 
