@@ -76,6 +76,48 @@ qni-cli を Pi に導入した利用者として
 - When `\ket{\Phi^+}=\frac{\ket{00}+\ket{11}}{\sqrt 2}` を画像経路で変換する
 - Then Bell 状態は設定なしで画像配置になる
 
+## Scenario: ストリーミング中の未完成な数式を原文のまま残す
+
+- Given 偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When ストリーミング中に `状態 $\frac{1}{\sqrt 2}` まで届いた本文を変換する
+- Then 未完成な数式は原文のまま返る
+
+## Scenario: 同じ数式の画像 ID を再利用する
+
+- Given 偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When 同じ数式を 2 回変換する
+- Then 2 回の変換で同じ画像 ID が使われる
+
+## Scenario: 利用可能幅に合わせて表示数式の列数を変える
+
+- Given 偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When 長い表示数式を異なる利用可能幅で変換する
+- Then 表示数式の列数が変わる
+
+## Scenario: 利用可能幅の変更後に表示数式を再転送する
+
+- Given 偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When 長い表示数式を異なる利用可能幅で変換する
+- Then 転送画像 ID が変わる
+
+## Scenario: 不正な数式を原文のまま残す
+
+- Given 偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When 不正な数式と正しい数式を含む本文を変換する
+- Then 不正な数式は原文のまま残る
+
+## Scenario: 不正な数式があっても正しい数式を画像にする
+
+- Given 偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When 不正な数式と正しい数式を含む本文を変換する
+- Then 正しい数式は画像になる
+
+## Scenario: 数式描画のキャッシュを消去する
+
+- Given 偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When 数式を変換して `/math clear` のあと `/math status` を実行する
+- Then Pi の状態表示にキャッシュ件数 0 がある
+
 ## Scenario: 画像経路で起動した拡張の状態を確認する
 
 - Given 偽の Pi ExtensionAPI に数式描画拡張を登録する

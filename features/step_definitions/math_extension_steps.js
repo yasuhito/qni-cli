@@ -37,12 +37,31 @@ Given('偽の Pi ExtensionAPI に数式描画拡張を登録する', function ()
   this.qniMathTransformer = transformer;
 });
 
-function transform(world, markdown, messageType = 'assistant') {
+function transform(world, markdown, options = {}) {
   world.qniMathSource = markdown;
   world.qniMathMarkdown = world.qniMathTransformer(markdown, {
-    messageType,
-    isStreaming: false,
-    availableWidth: 80
+    messageType: options.messageType ?? 'assistant',
+    isStreaming: options.isStreaming ?? false,
+    availableWidth: options.availableWidth ?? 80
+  });
+}
+
+function imagePlacement(markdown) {
+  const placement = markdown.match(/a=p,U=1,q=2,i=(\d+),p=\d+,c=(\d+),r=(\d+)/u);
+  assert.ok(placement, 'expected an image placement');
+  return { id: Number(placement[1]), columns: Number(placement[2]), rows: Number(placement[3]) };
+}
+
+function mathCommand(world) {
+  const command = world.qniMathCommands.get('math');
+  assert.ok(command, 'expected qni-math to register /math');
+  return command;
+}
+
+async function captureMathStatus(world) {
+  world.qniMathWidgets = [];
+  await mathCommand(world).handler('status', {
+    ui: { setWidget: (key, lines, options) => world.qniMathWidgets.push({ key, lines, options }) }
   });
 }
 
@@ -71,7 +90,36 @@ When('引用内のコードフェンスを含む本文を画像経路で変換�
 });
 
 When('thinking ブロックの本文を画像経路で変換する', function () {
-  transform(this, '考える: $\\ket{0}$', 'assistant-thinking');
+  transform(this, '考える: $\\ket{0}$', { messageType: 'assistant-thinking' });
+});
+
+When(/^ストリーミング中に `状態 \$\\frac\{1\}\{\\sqrt 2\}` まで届いた本文を変換する$/, function () {
+  transform(this, '状態 $\\frac{1}{\\sqrt 2}', { isStreaming: true });
+});
+
+When('同じ数式を 2 回変換する', function () {
+  transform(this, '状態は $\\ket{0}$ です。');
+  this.qniMathFirstPlacement = imagePlacement(this.qniMathMarkdown);
+  transform(this, '状態は $\\ket{0}$ です。');
+  this.qniMathSecondPlacement = imagePlacement(this.qniMathMarkdown);
+});
+
+When('長い表示数式を異なる利用可能幅で変換する', function () {
+  const markdown = '$$\\frac{1}{\\sqrt 2}(\\ket{00000000}+\\ket{11111111})$$';
+  transform(this, markdown, { availableWidth: 80 });
+  this.qniMathWidePlacement = imagePlacement(this.qniMathMarkdown);
+  transform(this, markdown, { availableWidth: 8 });
+  this.qniMathNarrowPlacement = imagePlacement(this.qniMathMarkdown);
+});
+
+When('不正な数式と正しい数式を含む本文を変換する', function () {
+  transform(this, '$\\frac{$ と $\\ket{0}$');
+});
+
+When('数式を変換して `\\/math clear` のあと `\\/math status` を実行する', async function () {
+  transform(this, '$\\ket{0}$');
+  await mathCommand(this).handler('clear', { ui: { notify() {} } });
+  await captureMathStatus(this);
 });
 
 When(/^`\\ket\{\\Phi\^\+\}=\\frac\{\\ket\{00\}\+\\ket\{11\}\}\{\\sqrt 2\}` を画像経路で変換する$/, function () {
@@ -79,15 +127,7 @@ When(/^`\\ket\{\\Phi\^\+\}=\\frac\{\\ket\{00\}\+\\ket\{11\}\}\{\\sqrt 2\}` を�
 });
 
 When('`\\/math status` を実行する', async function () {
-  const command = this.qniMathCommands.get('math');
-  assert.ok(command, 'expected qni-math to register /math');
-
-  this.qniMathWidgets = [];
-  await command.handler('status', {
-    ui: {
-      setWidget: (key, lines, options) => this.qniMathWidgets.push({ key, lines, options })
-    }
-  });
+  await captureMathStatus(this);
 });
 
 Then('変換後の Markdown の先頭行に画像転送がある', function () {
@@ -152,14 +192,42 @@ Then('Bell 状態は設定なしで画像配置になる', function () {
   assert.ok(this.qniMathMarkdown.includes(PLACEHOLDER));
 });
 
+Then('未完成な数式は原文のまま返る', function () {
+  assert.equal(this.qniMathMarkdown, '状態 $\\frac{1}{\\sqrt 2}');
+});
+
+Then('2 回の変換で同じ画像 ID が使われる', function () {
+  assert.equal(this.qniMathFirstPlacement.id, this.qniMathSecondPlacement.id);
+});
+
+Then('表示数式の列数が変わる', function () {
+  assert.notEqual(this.qniMathWidePlacement.columns, this.qniMathNarrowPlacement.columns);
+});
+
+Then('転送画像 ID が変わる', function () {
+  assert.notEqual(this.qniMathWidePlacement.id, this.qniMathNarrowPlacement.id);
+});
+
+Then('不正な数式は原文のまま残る', function () {
+  assert.ok(this.qniMathMarkdown.includes('$\\frac{$'));
+});
+
+Then('正しい数式は画像になる', function () {
+  assert.equal((this.qniMathMarkdown.match(/a=t,f=100/g) ?? []).length, 1);
+});
+
+Then('Pi の状態表示にキャッシュ件数 0 がある', function () {
+  const lines = this.qniMathWidgets.flatMap((widget) => widget.lines);
+  assert.ok(lines.includes('cache: 0 entries, 0 bytes'));
+});
+
 Then('Pi の状態表示にパッケージの版と固定の画像経路がある', function () {
   const manifest = require(path.join(PROJECT_ROOT, 'package.json'));
-
-  assert.deepEqual(this.qniMathWidgets, [
-    {
-      key: 'qni-math-status',
-      lines: [`qni-math ${manifest.version}`, 'path: image (fixed)'],
-      options: { placement: 'belowEditor' }
-    }
+  assert.equal(this.qniMathWidgets.length, 1);
+  assert.equal(this.qniMathWidgets[0].key, 'qni-math-status');
+  assert.deepEqual(this.qniMathWidgets[0].lines.slice(0, 2), [
+    `qni-math ${manifest.version}`,
+    'path: image (fixed)'
   ]);
+  assert.deepEqual(this.qniMathWidgets[0].options, { placement: 'belowEditor' });
 });

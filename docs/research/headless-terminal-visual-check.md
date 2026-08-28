@@ -54,12 +54,20 @@ scripts/dev/headless_qni_math_images.sh kitty light /tmp/qni-math-kitty-light.pn
 
 各 PNG で、インライン数式が本文の 1 行に収まり、Bell 状態の表示数式が独立した行に描かれていることを確認する。古い本文の残像と色の帯がないことも確認する。固定セッションは `scripts/dev/qni_math_session.jsonl` に置く。
 
+ストリーミング中と完了後は、固定応答プロバイダを使って 2 枚続けて撮る。
+
+```bash
+scripts/dev/headless_qni_math_streaming.sh ghostty /tmp/qni-math-ghostty-streaming
+```
+
+出力は `/tmp/qni-math-ghostty-streaming-closed.png` と `/tmp/qni-math-ghostty-streaming-complete.png`。前者では区切りが閉じた数式が画像になっていること、後者では同じ数式を読めて `Working...` や古い行の残像がないことを確認する。`scripts/dev/qni_math_fixed_provider.ts` は応答を 3 区切りで流し、撮影脚本は数式を閉じた時点と応答完了時点を合図ファイルで待つ。
+
 ## 注意
 
 - `WAYLAND_DISPLAY` を外さないと、端末は Xvfb ではなく利用者の Wayland 画面に開いてしまう。
 - 起動直後は窓がまだ無いので、画面取得の前に数秒待つ。
 - `xwininfo` は本機に無いので、窓単位ではなく root 全体を取得する。
-- Pi の描画を確認するときは、LLM を呼ばずに済むよう、数式を含むセッションファイルを `pi -s` で再開して描画させる。ストリーミング中の挙動を見るには別途、決まった応答を流す仕組みが要る。
+- 静止した Pi の描画は、LLM を呼ばずに済むよう、数式を含むセッションファイルを再開して描画させる。ストリーミングの描画は固定応答プロバイダを使い、外部 API を呼ばない。
 
 ## 参照元
 
