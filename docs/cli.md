@@ -52,11 +52,15 @@ qni view
 
 ```bash
 qni state set "alpha|0> + beta|1>"
+qni state set "|+>"
+qni state set "|100>"
+qni state set "|Φ+>"
+qni state set "alpha|Φ+> + beta|Ψ->"
 qni state show
 qni state clear
 ```
 
-`qni state set` は、回路の初期状態を明示します。状態を戻したい場合は `qni state clear` を使います。
+`qni state set` は、1量子ビットの短縮表記、多量子ビットの計算基底状態、Bell 状態、計算基底または Bell 基底上の線形結合を初期状態として設定します。状態を戻したい場合は `qni state clear` を使います。
 
 ## 状態ベクトルと期待値を確認する
 
@@ -71,7 +75,7 @@ qni expect ZZ XX
 qni expect ZZ XX --latex
 ```
 
-`qni run` は、測定のない回路では状態ベクトルを表示します。`--symbolic` を付けると、小さな回路を ket 表記で読みやすく表示できます。`--latex` を付けると、数値または記号の状態ベクトルを `\ket{}` 記法の LaTeX で表示します。数値の LaTeX 出力には Python は不要です。`qni expect` は Pauli 文字列の期待値を計算し、`--latex` を付けると `\langle ZZ \rangle = 1.0` の形式で表示します。
+`qni run` は、測定のない回路では状態ベクトルを表示します。`--symbolic` を付けると、小さな回路を ket 表記で読みやすく表示できます。`--latex` を付けると、数値または記号の状態ベクトルを `\ket{}` 記法の LaTeX で表示します。数値の LaTeX 出力には Python は不要です。`qni expect` は Pauli 文字列の期待値を計算し、`--latex` を付けると `\langle ZZ \rangle = 1.0` の形式で表示します。Pauli 文字列は左端から `q0`、`q1`、… に対応します。たとえば `XI` は `q0` に `X`、`q1` に `I` を適用します。
 
 `--latex` は測定回路や `--shots`、`--seed`、`--json` とは併用できません。
 

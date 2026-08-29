@@ -9,6 +9,8 @@ Overview:
   Calculate expectation values from ./circuit.json.
   qni simulates the whole circuit and evaluates each Pauli string on the resulting state.
   Each PAULI_STRING must use only I, X, Y, and Z.
+  Characters map left to right to q0, q1, and so on.
+  For example, XI applies X to q0 and I to q1.
   The length of each PAULI_STRING must match the circuit qubit count.
   Output is one line per observable in the form PAULI_STRING=value.
   --latex prints each observable in LaTeX expectation-value notation.

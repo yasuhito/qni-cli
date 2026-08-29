@@ -22,12 +22,16 @@ qni state のヘルプを見たい
 
   Overview:
     Manage the initial state vector in ./circuit.json.
-    The first release supports 1-qubit ket sums such as alpha|0> + beta|1>.
+    Initial states support 1-qubit shorthand, multi-qubit computational basis kets,
+    Bell states, and linear combinations of computational or Bell basis states.
     Coefficients can be numeric literals or ASCII identifiers such as alpha.
     qni state clear removes the explicit initial state and falls back to |0>.
 
   Examples:
-    qni state set "alpha|0> + beta|1>"
+    qni state set "|+>"
+    qni state set "|100>"
+    qni state set "|Φ+>"
+    qni state set "alpha|Φ+> + beta|Ψ->"
     qni state show
     qni state clear
   ```
@@ -50,12 +54,16 @@ qni state のヘルプを見たい
 
   Overview:
     Manage the initial state vector in ./circuit.json.
-    The first release supports 1-qubit ket sums such as alpha|0> + beta|1>.
+    Initial states support 1-qubit shorthand, multi-qubit computational basis kets,
+    Bell states, and linear combinations of computational or Bell basis states.
     Coefficients can be numeric literals or ASCII identifiers such as alpha.
     qni state clear removes the explicit initial state and falls back to |0>.
 
   Examples:
-    qni state set "alpha|0> + beta|1>"
+    qni state set "|+>"
+    qni state set "|100>"
+    qni state set "|Φ+>"
+    qni state set "alpha|Φ+> + beta|Ψ->"
     qni state show
     qni state clear
   ```

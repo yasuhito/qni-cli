@@ -60,6 +60,18 @@ CLI コマンドの詳細を専用ドキュメントで確認したい。
 
 - Then リポジトリファイル "docs/cli.md" は "qni state set \"alpha|0> + beta|1>\"" を含む
 
+## Scenario: CLI リファレンスは対応する初期状態表記を説明する
+
+- Then リポジトリファイル "docs/cli.md" は "1量子ビットの短縮表記、多量子ビットの計算基底状態、Bell 状態、計算基底または Bell 基底上の線形結合" を含む
+
+## Scenario: CLI リファレンスは Pauli 文字列の量子ビット順序を説明する
+
+- Then リポジトリファイル "docs/cli.md" は "Pauli 文字列は左端から `q0`、`q1`、… に対応します。" を含む
+
+## Scenario: CLI リファレンスは Pauli 文字列の量子ビット順序例を示す
+
+- Then リポジトリファイル "docs/cli.md" は "`XI` は `q0` に `X`、`q1` に `I` を適用します。" を含む
+
 ## Scenario: CLI リファレンスは状態ベクトル確認例を示す
 
 - Then リポジトリファイル "docs/cli.md" は "qni run --symbolic --basis x" を含む
