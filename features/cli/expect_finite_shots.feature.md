@@ -37,10 +37,20 @@ qni-cli の利用者として、有限回の測定で Pauli 期待値を推定�
   unstable
   ```
 
-## Scenario: 固定 seed は有限ショット出力を再現
+## Scenario: 固定 seed の有限ショット実行は2回とも成功してから比較する
 
-- When "qni expect ZX --shots 1000 --seed 42" を2回実行
+- When "qni expect ZX --shots 1000 --seed 42" を2回正常に実行
 - Then 2回の標準出力は一致する
+
+## Scenario: seed を省略すると再現用の seed を表示する
+
+- When "qni expect ZX --shots 100" を実行
+- Then expect の標準出力の seed は符号なし32ビット整数
+
+## Scenario: 省略時に生成された seed で有限ショット出力全体を再現する
+
+- When "qni expect ZX --shots 100" を実行
+- Then 生成された seed で expect の標準出力全体を再現できる
 
 ## Scenario: threshold は既定の標準誤差判定を置き換える
 
@@ -92,38 +102,68 @@ qni-cli の利用者として、有限回の測定で Pauli 期待値を推定�
   }
   ```
 
-## Scenario: seed だけの指定は失敗
+## Scenario Outline: 不正な有限ショットオプションは終了コード1で失敗する
 
-- When "qni expect ZZ --seed 42" を実行
-- Then 標準エラー:
+- When "<command>" を実行
+- Then 終了コードは 1
+
+### Examples:
+
+  | command                          |
+  | qni expect ZZ --seed 42          |
+  | qni expect ZZ --shots 0          |
+  | qni expect ZZ --threshold 1.1    |
+  | qni expect ZZ --latex --shots 10 |
+
+## Scenario Outline: 不正な有限ショットオプションは標準出力を出さない
+
+- When "<command>" を実行
+- Then 標準出力は空
+
+### Examples:
+
+  | command                          |
+  | qni expect ZZ --seed 42          |
+  | qni expect ZZ --shots 0          |
+  | qni expect ZZ --threshold 1.1    |
+  | qni expect ZZ --latex --shots 10 |
+
+## Scenario Outline: 不正な有限ショットオプションは標準エラー1行だけを出す
+
+- When "<command>" を実行
+- Then 標準エラーは "<error>" の1行だけ
+
+### Examples:
+
+  | command                          | error                                                               |
+  | qni expect ZZ --seed 42          | --seed requires --shots                                              |
+  | qni expect ZZ --shots 0          | --shots must be a positive integer                                  |
+  | qni expect ZZ --threshold 1.1    | --threshold must be a number between 0 and 1                         |
+  | qni expect ZZ --latex --shots 10 | --latex cannot be used with --shots, --seed, --threshold, or --json |
+
+## Scenario: measure ゲートを含む回路の有限ショット期待値は失敗する
+
+- Given "qni add Measure --qubit 0 --step 2" を実行
+- When "qni expect ZZ --shots 10 --seed 42" を実行
+- Then 終了コードは 1
+
+## Scenario: measure ゲート拒否時は標準出力を出さない
+
+- Given "qni add Measure --qubit 0 --step 2" を実行
+- When "qni expect ZZ --shots 10 --seed 42" を実行
+- Then 標準出力は空
+
+## Scenario: measure ゲート拒否時は標準エラー1行だけを出す
+
+- Given "qni add Measure --qubit 0 --step 2" を実行
+- When "qni expect ZZ --shots 10 --seed 42" を実行
+- Then 標準エラーは次の1行だけ:
 
   ```text
-  --seed requires --shots
+  unsupported gate for run: "Measure"
   ```
 
-## Scenario: shots は正の整数を要求
+## Scenario: qni expect --help は成功する
 
-- When "qni expect ZZ --shots 0" を実行
-- Then 標準エラー:
-
-  ```text
-  --shots must be a positive integer
-  ```
-
-## Scenario: threshold は 0 以上 1 以下を要求
-
-- When "qni expect ZZ --threshold 1.1" を実行
-- Then 標準エラー:
-
-  ```text
-  --threshold must be a number between 0 and 1
-  ```
-
-## Scenario: latex と有限ショット指定は併用できない
-
-- When "qni expect ZZ --latex --shots 10" を実行
-- Then 標準エラー:
-
-  ```text
-  --latex cannot be used with --shots, --seed, --threshold, or --json
-  ```
+- When "qni expect --help" を実行
+- Then コマンドは成功

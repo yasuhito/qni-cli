@@ -8,13 +8,10 @@ import { withTempDir } from './helpers/command';
 
 const cucumberBin = path.join(process.cwd(), 'node_modules', '@cucumber', 'cucumber', 'bin', 'cucumber.js');
 
-async function malformedSummaryFailure(thenStep: string): Promise<string> {
+async function cucumberFailure(feature: string): Promise<string> {
   return withTempDir(async (dir) => {
-    const featurePath = path.join(dir, 'malformed-measurement-summary.feature');
-    await writeFile(
-      featurePath,
-      `Feature: malformed measurement summary\n\nScenario: report the malformed summary\n  Given 標準出力を "malformed" として受け取った\n  Then ${thenStep}\n`
-    );
+    const featurePath = path.join(dir, 'step-failure.feature');
+    await writeFile(featurePath, feature);
 
     const result = spawnSync(
       process.execPath,
@@ -36,6 +33,12 @@ async function malformedSummaryFailure(thenStep: string): Promise<string> {
   });
 }
 
+async function malformedSummaryFailure(thenStep: string): Promise<string> {
+  return cucumberFailure(
+    `Feature: malformed measurement summary\n\nScenario: report the malformed summary\n  Given 標準出力を "malformed" として受け取った\n  Then ${thenStep}\n`
+  );
+}
+
 describe('measurement distribution Cucumber steps', () => {
   const cases: readonly [string, RegExp][] = [
     ['標準出力の shots は 3', /unexpected measurement summary: malformed/u],
@@ -45,7 +48,15 @@ describe('measurement distribution Cucumber steps', () => {
       '生成したシード値を指定すると通常の標準出力が一致する',
       /unexpected measurement summary: malformed/u
     ],
-    ['2回の標準出力は一致する', /expected exactly two repeated command results/u]
+    ['2回の標準出力は一致する', /expected exactly two repeated command results/u],
+    [
+      'expect の標準出力の seed は符号なし32ビット整数',
+      /unexpected expect summary: malformed/u
+    ],
+    [
+      '生成された seed で expect の標準出力全体を再現できる',
+      /unexpected expect summary: malformed/u
+    ]
   ];
 
   for (const [thenStep, expectedFailure] of cases) {
@@ -53,4 +64,14 @@ describe('measurement distribution Cucumber steps', () => {
       assert.match(await malformedSummaryFailure(thenStep), expectedFailure);
     });
   }
+
+  it('fails repeated execution before comparing stdout when a command fails', async () => {
+    const failure = await cucumberFailure(
+      'Feature: repeated command failure\n\nScenario: stop before comparison\n' +
+      '  When "qni expect Z --seed 42" を2回正常に実行\n' +
+      '  Then 2回の標準出力は一致する\n'
+    );
+
+    assert.match(failure, /expected repeated command #1 to succeed/u);
+  });
 });
