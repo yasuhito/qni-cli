@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, it } from 'node:test';
 
+import { Complex } from '../../src/complex';
 import { createDispatcher } from '../../src/dispatcher';
 
 interface CapturedRun {
@@ -72,8 +73,11 @@ function captureDispatcherRun(
   }
 }
 
-async function writeCircuit(dir: string): Promise<void> {
-  await writeFile(path.join(dir, 'circuit.json'), '{"qubits":1,"cols":[[1]]}\n');
+async function writeCircuit(
+  dir: string,
+  circuit: unknown = { qubits: 1, cols: [[1]] }
+): Promise<void> {
+  await writeFile(path.join(dir, 'circuit.json'), `${JSON.stringify(circuit, null, 2)}\n`);
 }
 
 describe('expect command TypeScript route', () => {
@@ -96,6 +100,110 @@ describe('expect command TypeScript route', () => {
       assert.equal(result.exitStatus, 1);
       assert.equal(result.stdout, '');
       assert.equal(result.stderr, 'Pauli string length must match qubit count: --BAD\n');
+    });
+  });
+
+  it('prints normalized expectation values and signs as newline-terminated JSON', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, { qubits: 2, cols: [['H', 1], ['•', 'X']] });
+
+      const result = captureDispatcherRun(dir, ['expect', 'zz', 'YY', 'zi', 'zz', '--json']);
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stderr, '');
+      assert.ok(result.stdout.endsWith('\n'));
+      assert.deepEqual(JSON.parse(result.stdout), {
+        expectations: [
+          { pauli: 'ZZ', value: 1, sign: 1 },
+          { pauli: 'YY', value: -1, sign: -1 },
+          { pauli: 'ZI', value: 0, sign: 0 },
+          { pauli: 'ZZ', value: 1, sign: 1 }
+        ]
+      });
+    });
+  });
+
+  it('uses the standard Pauli Y expectation contraction', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, { qubits: 1, cols: [['H'], ['S']] });
+
+      const result = captureDispatcherRun(dir, ['expect', 'Y', '--json']);
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stderr, '');
+      assert.deepEqual(JSON.parse(result.stdout), {
+        expectations: [{ pauli: 'Y', value: 1, sign: 1 }]
+      });
+    });
+  });
+
+  it('accepts accumulated imaginary rounding error in a real expectation', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        qubits: 6,
+        cols: [['Ry(1.23456789)', 'Rx(0.123456789)', 1, 'X^½', 'X^½', 'H']]
+      });
+
+      const result = captureDispatcherRun(dir, ['expect', 'YIIIII', '--json']);
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stderr, '');
+      assert.deepEqual(JSON.parse(result.stdout), {
+        expectations: [{ pauli: 'YIIIII', value: 0, sign: 0 }]
+      });
+    });
+  });
+
+  it('rejects --json with --latex before loading the circuit', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, ['expect', 'Z', '--json', '--latex']);
+
+      assert.equal(result.exitStatus, 1);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, '--json cannot be used with --latex\n');
+    });
+  });
+
+  it('rejects --json without a Pauli string before loading the circuit', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, ['expect', '--json']);
+
+      assert.equal(result.exitStatus, 1);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, 'at least one Pauli string is required with --json\n');
+    });
+  });
+
+  it('does not print partial JSON when a later Pauli string is invalid', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir);
+
+      const result = captureDispatcherRun(dir, ['expect', 'Z', 'BAD', '--json']);
+
+      assert.equal(result.exitStatus, 1);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, 'Pauli string length must match qubit count: BAD\n');
+    });
+  });
+
+  it('rejects a non-real expectation without printing JSON', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir);
+      const originalConjugate = Complex.prototype.conjugate;
+      Complex.prototype.conjugate = function conjugateWithError(): Complex {
+        const conjugated = originalConjugate.call(this);
+        return new Complex(conjugated.real, conjugated.imaginary + 0.5);
+      };
+
+      try {
+        const result = captureDispatcherRun(dir, ['expect', 'Z', '--json']);
+
+        assert.equal(result.exitStatus, 1);
+        assert.equal(result.stdout, '');
+        assert.equal(result.stderr, 'expectation value is not real: Z\n');
+      } finally {
+        Complex.prototype.conjugate = originalConjugate;
+      }
     });
   });
 });

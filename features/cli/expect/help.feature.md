@@ -15,7 +15,7 @@ qni-cli の利用者として、Pauli 文字列の期待値計算方法を確認
 
   ```text
   Usage:
-    qni expect PAULI_STRING [PAULI_STRING...] [--latex]
+    qni expect PAULI_STRING [PAULI_STRING...] [--json | --latex]
 
   Overview:
     Calculate expectation values from ./circuit.json.
@@ -24,15 +24,19 @@ qni-cli の利用者として、Pauli 文字列の期待値計算方法を確認
     Characters map left to right to q0, q1, and so on.
     For example, XI applies X to q0 and I to q1.
     The length of each PAULI_STRING must match the circuit qubit count.
-    Output is one line per observable in the form PAULI_STRING=value.
+    By default, output is one line per observable in the form PAULI_STRING=value.
+    --json prints numeric expectation values and signs as JSON.
     --latex prints each observable in LaTeX expectation-value notation.
+    --json and --latex cannot be used together.
 
   Options:
+    [--json]   # Print expectation values and signs as JSON
     [--latex]  # Print expectation values as LaTeX
 
   Examples:
     qni expect Z
     qni expect ZZ XX
+    qni expect ZZ XX --json
     qni expect ZZ XX --latex
     qni expect ZZI IZZ XXX
   ```
@@ -49,7 +53,7 @@ qni-cli の利用者として、Pauli 文字列の期待値計算方法を確認
 
   ```text
   Usage:
-    qni expect PAULI_STRING [PAULI_STRING...] [--latex]
+    qni expect PAULI_STRING [PAULI_STRING...] [--json | --latex]
 
   Overview:
     Calculate expectation values from ./circuit.json.
@@ -58,15 +62,19 @@ qni-cli の利用者として、Pauli 文字列の期待値計算方法を確認
     Characters map left to right to q0, q1, and so on.
     For example, XI applies X to q0 and I to q1.
     The length of each PAULI_STRING must match the circuit qubit count.
-    Output is one line per observable in the form PAULI_STRING=value.
+    By default, output is one line per observable in the form PAULI_STRING=value.
+    --json prints numeric expectation values and signs as JSON.
     --latex prints each observable in LaTeX expectation-value notation.
+    --json and --latex cannot be used together.
 
   Options:
+    [--json]   # Print expectation values and signs as JSON
     [--latex]  # Print expectation values as LaTeX
 
   Examples:
     qni expect Z
     qni expect ZZ XX
+    qni expect ZZ XX --json
     qni expect ZZ XX --latex
     qni expect ZZI IZZ XXX
   ```

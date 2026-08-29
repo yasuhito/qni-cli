@@ -6,6 +6,11 @@ import { InitialStateError, initialStateQubitCount, resolveNumericInitialState }
 
 export class SimulatorError extends Error {}
 
+export interface ExpectationValue {
+  readonly pauliString: string;
+  readonly value: number;
+}
+
 export interface MeasurementResult {
   readonly name?: string;
   readonly qubit: number;
@@ -101,22 +106,35 @@ export class Simulator {
 
   renderExpectationValues(pauliStrings: readonly string[]): string {
     return this.expectationValues(pauliStrings)
-      .map(({ pauliString, value }) => `${pauliString}=${value}`)
+      .map(({ pauliString, value }) => `${pauliString}=${formatRubyFloat(value)}`)
       .join('\n');
   }
 
   renderExpectationValuesLatex(pauliStrings: readonly string[]): string {
     return this.expectationValues(pauliStrings)
-      .map(({ pauliString, value }) => `\\langle ${pauliString} \\rangle = ${value}`)
+      .map(({ pauliString, value }) => `\\langle ${pauliString} \\rangle = ${formatRubyFloat(value)}`)
       .join('\n');
   }
 
-  private expectationValues(pauliStrings: readonly string[]): readonly { pauliString: string; value: string }[] {
+  expectationValues(pauliStrings: readonly string[]): readonly ExpectationValue[] {
     const stateVector = this.stateVector();
-    return pauliStrings.map((pauliString) => ({
-      pauliString,
-      value: StateVector.formatAmplitude(stateVector.expectation(pauliString))
-    }));
+    return pauliStrings.map((pauliString) => {
+      const expectation = stateVector.expectation(pauliString);
+      const value = normalizedScalar(expectation.real);
+
+      if (
+        !Number.isFinite(expectation.imaginary) ||
+        Math.abs(expectation.imaginary) > stateVector.expectationRoundingTolerance()
+      ) {
+        throw new SimulatorError(`expectation value is not real: ${pauliString}`);
+      }
+
+      if (!Number.isFinite(value)) {
+        throw new SimulatorError(`expectation value is not finite: ${pauliString}`);
+      }
+
+      return { pauliString, value };
+    });
   }
 
   exportPayload(): StateVectorExportPayload {
@@ -278,8 +296,14 @@ class StateVector {
 
     return this.amplitudes.reduce((sum, amplitude, index) => {
       const mapped = observable.mappedState(index);
-      return sum.add(amplitude.conjugate().multiply(mapped.phase).multiply(this.amplitudes[mapped.index]));
+      return sum.add(
+        this.amplitudes[mapped.index].conjugate().multiply(mapped.phase).multiply(amplitude)
+      );
     }, new Complex(0));
+  }
+
+  expectationRoundingTolerance(): number {
+    return Number.EPSILON * this.amplitudes.length;
   }
 
   toCsv(): string {

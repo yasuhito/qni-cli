@@ -84,6 +84,14 @@ CLI コマンドの詳細を専用ドキュメントで確認したい。
 
 - Then リポジトリファイル "docs/cli.md" は "qni run --symbolic --latex" を含む
 
+## Scenario: CLI リファレンスは期待値の JSON 出力例を示す
+
+- Then リポジトリファイル "docs/cli.md" は "qni expect ZZ XX --json" を含む
+
+## Scenario: CLI リファレンスは期待値の JSON 契約を説明する
+
+- Then リポジトリファイル "docs/cli.md" は "入力順と重複を保った `expectations` 配列" を含む
+
 ## Scenario: CLI リファレンスは期待値の LaTeX 出力例を示す
 
 - Then リポジトリファイル "docs/cli.md" は "qni expect ZZ XX --latex" を含む
