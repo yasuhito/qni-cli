@@ -137,6 +137,23 @@ describe('expect command TypeScript route', () => {
     });
   });
 
+  it('accepts accumulated imaginary rounding error in a real expectation', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        qubits: 6,
+        cols: [['Ry(1.23456789)', 'Rx(0.123456789)', 1, 'X^½', 'X^½', 'H']]
+      });
+
+      const result = captureDispatcherRun(dir, ['expect', 'YIIIII', '--json']);
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stderr, '');
+      assert.deepEqual(JSON.parse(result.stdout), {
+        expectations: [{ pauli: 'YIIIII', value: 0, sign: 0 }]
+      });
+    });
+  });
+
   it('rejects --json with --latex before loading the circuit', async () => {
     await withTempDir(async (dir) => {
       const result = captureDispatcherRun(dir, ['expect', 'Z', '--json', '--latex']);

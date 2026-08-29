@@ -121,9 +121,11 @@ export class Simulator {
     return pauliStrings.map((pauliString) => {
       const expectation = stateVector.expectation(pauliString);
       const value = normalizedScalar(expectation.real);
-      const imaginary = normalizedScalar(expectation.imaginary);
 
-      if (imaginary !== 0) {
+      if (
+        !Number.isFinite(expectation.imaginary) ||
+        Math.abs(expectation.imaginary) > stateVector.expectationRoundingTolerance()
+      ) {
         throw new SimulatorError(`expectation value is not real: ${pauliString}`);
       }
 
@@ -298,6 +300,10 @@ class StateVector {
         this.amplitudes[mapped.index].conjugate().multiply(mapped.phase).multiply(amplitude)
       );
     }, new Complex(0));
+  }
+
+  expectationRoundingTolerance(): number {
+    return Number.EPSILON * this.amplitudes.length;
   }
 
   toCsv(): string {
