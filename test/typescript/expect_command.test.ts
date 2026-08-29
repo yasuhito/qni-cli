@@ -75,9 +75,9 @@ function captureDispatcherRun(
 
 async function writeCircuit(
   dir: string,
-  circuit: object = { qubits: 1, cols: [[1]] }
+  circuit: unknown = { qubits: 1, cols: [[1]] }
 ): Promise<void> {
-  await writeFile(path.join(dir, 'circuit.json'), `${JSON.stringify(circuit)}\n`);
+  await writeFile(path.join(dir, 'circuit.json'), `${JSON.stringify(circuit, null, 2)}\n`);
 }
 
 describe('expect command TypeScript route', () => {
@@ -119,6 +119,20 @@ describe('expect command TypeScript route', () => {
           { pauli: 'ZI', value: 0, sign: 0 },
           { pauli: 'ZZ', value: 1, sign: 1 }
         ]
+      });
+    });
+  });
+
+  it('uses the standard Pauli Y expectation contraction', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, { qubits: 1, cols: [['H'], ['S']] });
+
+      const result = captureDispatcherRun(dir, ['expect', 'Y', '--json']);
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stderr, '');
+      assert.deepEqual(JSON.parse(result.stdout), {
+        expectations: [{ pauli: 'Y', value: 1, sign: 1 }]
       });
     });
   });

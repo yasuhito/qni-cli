@@ -294,7 +294,9 @@ class StateVector {
 
     return this.amplitudes.reduce((sum, amplitude, index) => {
       const mapped = observable.mappedState(index);
-      return sum.add(amplitude.conjugate().multiply(mapped.phase).multiply(this.amplitudes[mapped.index]));
+      return sum.add(
+        this.amplitudes[mapped.index].conjugate().multiply(mapped.phase).multiply(amplitude)
+      );
     }, new Complex(0));
   }
 

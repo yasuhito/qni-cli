@@ -49,6 +49,21 @@ qni-cli の利用者として
   }
   ```
 
+## Scenario: JSON は Y 固有状態の正しい期待値を表示
+
+- Given "qni add H --qubit 0 --step 0" を実行
+- And "qni add S --qubit 0 --step 1" を実行
+- When "qni expect Y --json" を実行
+- Then 標準出力は次の JSON と一致する:
+
+  ```json
+  {
+    "expectations": [
+      { "pauli": "Y", "value": 1, "sign": 1 }
+    ]
+  }
+  ```
+
 ## Scenario: JSON は非整数の期待値を数値で表示
 
 - Given "qni add Ry --angle π/3 --qubit 0 --step 0" を実行
@@ -63,9 +78,13 @@ qni-cli の利用者として
   }
   ```
 
-## Scenario: --json と --latex の併用は失敗
+## Scenario: --json と --latex の併用は終了コード1で失敗
 
-- Given "qni add H --qubit 0 --step 0" を実行
+- When "qni expect Z --json --latex" を実行
+- Then 終了コードは 1
+
+## Scenario: --json と --latex の併用エラーを表示
+
 - When "qni expect Z --json --latex" を実行
 - Then 標準エラー:
 
@@ -73,7 +92,12 @@ qni-cli の利用者として
   --json cannot be used with --latex
   ```
 
-## Scenario: Pauli 文字列のない --json は失敗
+## Scenario: Pauli 文字列のない --json は終了コード1で失敗
+
+- When "qni expect --json" を実行
+- Then 終了コードは 1
+
+## Scenario: Pauli 文字列のない --json のエラーを表示
 
 - When "qni expect --json" を実行
 - Then 標準エラー:
@@ -81,6 +105,12 @@ qni-cli の利用者として
   ```text
   at least one Pauli string is required with --json
   ```
+
+## Scenario: 無効な Pauli 文字列は終了コード1で失敗
+
+- Given "qni add H --qubit 0 --step 0" を実行
+- When "qni expect Z BAD --json" を実行
+- Then 終了コードは 1
 
 ## Scenario: 無効な Pauli 文字列では JSON を出力しない
 
