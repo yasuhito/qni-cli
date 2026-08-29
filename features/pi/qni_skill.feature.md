@@ -16,6 +16,18 @@
 
 - Then リポジトリファイル "skills/qni-cli/SKILL.md" は "利用者が作業場所を選んだ場合だけ `workdir`" を含む
 
+## Scenario: 依存するコマンド列を一括実行する
+
+- Then リポジトリファイル "skills/qni-cli/SKILL.md" は "依存するコマンド列は `commands`" を含む
+
+## Scenario: 一括実行の失敗後は残りだけを呼び直す
+
+- Then リポジトリファイル "skills/qni-cli/SKILL.md" は "失敗したら修正して残りだけを呼び直す" を含む
+
+## Scenario: 一括実行の成功分は作業場所に残る
+
+- Then リポジトリファイル "skills/qni-cli/SKILL.md" は "成功分の変更は作業場所に残っている" を含む
+
 ## Scenario: 状態ベクトルと期待値を LaTeX で引用する
 
 - Then リポジトリファイル "skills/qni-cli/SKILL.md" は "`--latex` の出力を `$$...$$` でそのまま引用する" を含む
