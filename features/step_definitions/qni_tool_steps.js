@@ -475,13 +475,20 @@ Then('qni ツールは qni-cli を実行せず入力を拒否する', function (
   assert.match(String(this.qniToolError), /args|commands/u);
 });
 
-Then('一括実行の失敗は成功分と停止位置を示して変更を残す', function () {
+Then('一括実行の失敗メッセージは成功分と停止位置を示す', function () {
   const message = String(this.qniToolError);
   assert.match(message, /\$ qni add X --qubit=0 --step=0/u);
   assert.match(message, /\$ qni does-not-exist/u);
   assert.match(message, /qni exited with status 1/u);
   assert.match(message, /Stopped at command 2 of 3\. Commands 1 succeeded and their changes remain in the workdir\. Command 3 was not run\./u);
-  assert.doesNotMatch(message, /\$ qni add H/u);
+});
+
+Then('一括実行は失敗後のコマンドを実行しない', function () {
+  const circuit = JSON.parse(fs.readFileSync(path.join(this.scenarioDir, 'circuit.json'), 'utf8'));
+  assert.equal(circuit.cols.flat().includes('H'), false);
+});
+
+Then('一括実行は成功したコマンドの変更を残す', function () {
   const circuit = JSON.parse(fs.readFileSync(path.join(this.scenarioDir, 'circuit.json'), 'utf8'));
   assert.equal(circuit.cols.flat().includes('X'), true);
 });
