@@ -72,8 +72,11 @@ function captureDispatcherRun(
   }
 }
 
-async function writeCircuit(dir: string): Promise<void> {
-  await writeFile(path.join(dir, 'circuit.json'), '{"qubits":1,"cols":[[1]]}\n');
+async function writeCircuit(
+  dir: string,
+  circuit: object = { qubits: 1, cols: [[1]] }
+): Promise<void> {
+  await writeFile(path.join(dir, 'circuit.json'), `${JSON.stringify(circuit)}\n`);
 }
 
 describe('expect command TypeScript route', () => {
@@ -96,6 +99,58 @@ describe('expect command TypeScript route', () => {
       assert.equal(result.exitStatus, 1);
       assert.equal(result.stdout, '');
       assert.equal(result.stderr, 'Pauli string length must match qubit count: --BAD\n');
+    });
+  });
+
+  it('prints normalized expectation values and signs as newline-terminated JSON', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, { qubits: 2, cols: [['H', 1], ['•', 'X']] });
+
+      const result = captureDispatcherRun(dir, ['expect', 'zz', 'YY', 'zi', 'zz', '--json']);
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stderr, '');
+      assert.ok(result.stdout.endsWith('\n'));
+      assert.deepEqual(JSON.parse(result.stdout), {
+        expectations: [
+          { pauli: 'ZZ', value: 1, sign: 1 },
+          { pauli: 'YY', value: -1, sign: -1 },
+          { pauli: 'ZI', value: 0, sign: 0 },
+          { pauli: 'ZZ', value: 1, sign: 1 }
+        ]
+      });
+    });
+  });
+
+  it('rejects --json with --latex before loading the circuit', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, ['expect', 'Z', '--json', '--latex']);
+
+      assert.equal(result.exitStatus, 1);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, '--json cannot be used with --latex\n');
+    });
+  });
+
+  it('rejects --json without a Pauli string before loading the circuit', async () => {
+    await withTempDir(async (dir) => {
+      const result = captureDispatcherRun(dir, ['expect', '--json']);
+
+      assert.equal(result.exitStatus, 1);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, 'at least one Pauli string is required with --json\n');
+    });
+  });
+
+  it('does not print partial JSON when a later Pauli string is invalid', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir);
+
+      const result = captureDispatcherRun(dir, ['expect', 'Z', 'BAD', '--json']);
+
+      assert.equal(result.exitStatus, 1);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, 'Pauli string length must match qubit count: BAD\n');
     });
   });
 });

@@ -3,7 +3,7 @@ import type { CommandHandlerContext } from '../dispatcher';
 import { Simulator } from '../simulator';
 
 const HELP_TEXT = `Usage:
-  qni expect PAULI_STRING [PAULI_STRING...] [--latex]
+  qni expect PAULI_STRING [PAULI_STRING...] [--json | --latex]
 
 Overview:
   Calculate expectation values from ./circuit.json.
@@ -13,14 +13,18 @@ Overview:
   For example, XI applies X to q0 and I to q1.
   The length of each PAULI_STRING must match the circuit qubit count.
   Output is one line per observable in the form PAULI_STRING=value.
+  --json prints numeric expectation values and signs as JSON.
   --latex prints each observable in LaTeX expectation-value notation.
+  --json and --latex cannot be used together.
 
 Options:
+  [--json]   # Print expectation values and signs as JSON
   [--latex]  # Print expectation values as LaTeX
 
 Examples:
   qni expect Z
   qni expect ZZ XX
+  qni expect ZZ XX --json
   qni expect ZZ XX --latex
   qni expect ZZI IZZ XXX`;
 
@@ -31,19 +35,42 @@ export function runExpectCommand(argv: string[], context: CommandHandlerContext)
   }
 
   try {
+    const json = argv.includes('--json');
     const latex = argv.includes('--latex');
+
+    if (json && latex) {
+      throw new Error('--json cannot be used with --latex');
+    }
+
     const pauliStrings = argv
       .slice(1)
-      .filter((argument) => argument !== '--latex')
+      .filter((argument) => argument !== '--json' && argument !== '--latex')
       .map((pauliString) => pauliString.toUpperCase());
+
+    if (json && pauliStrings.length === 0) {
+      throw new Error('at least one Pauli string is required with --json');
+    }
+
     const simulator = new Simulator(currentCircuitFile(context.cwd).load());
-    const output = latex
-      ? simulator.renderExpectationValuesLatex(pauliStrings)
-      : simulator.renderExpectationValues(pauliStrings);
+    const output = json
+      ? renderExpectationValuesJson(simulator, pauliStrings)
+      : latex
+        ? simulator.renderExpectationValuesLatex(pauliStrings)
+        : simulator.renderExpectationValues(pauliStrings);
     process.stdout.write(`${output}\n`);
     return 0;
   } catch (error) {
     process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
     return 1;
   }
+}
+
+function renderExpectationValuesJson(simulator: Simulator, pauliStrings: readonly string[]): string {
+  const expectations = simulator.expectationValues(pauliStrings).map(({ pauliString, value }) => ({
+    pauli: pauliString,
+    value,
+    sign: value === 0 ? 0 : value < 0 ? -1 : 1
+  }));
+
+  return JSON.stringify({ expectations }, null, 2);
 }

@@ -6,6 +6,11 @@ import { InitialStateError, initialStateQubitCount, resolveNumericInitialState }
 
 export class SimulatorError extends Error {}
 
+export interface ExpectationValue {
+  readonly pauliString: string;
+  readonly value: number;
+}
+
 export interface MeasurementResult {
   readonly name?: string;
   readonly qubit: number;
@@ -101,22 +106,27 @@ export class Simulator {
 
   renderExpectationValues(pauliStrings: readonly string[]): string {
     return this.expectationValues(pauliStrings)
-      .map(({ pauliString, value }) => `${pauliString}=${value}`)
+      .map(({ pauliString, value }) => `${pauliString}=${formatRubyFloat(value)}`)
       .join('\n');
   }
 
   renderExpectationValuesLatex(pauliStrings: readonly string[]): string {
     return this.expectationValues(pauliStrings)
-      .map(({ pauliString, value }) => `\\langle ${pauliString} \\rangle = ${value}`)
+      .map(({ pauliString, value }) => `\\langle ${pauliString} \\rangle = ${formatRubyFloat(value)}`)
       .join('\n');
   }
 
-  private expectationValues(pauliStrings: readonly string[]): readonly { pauliString: string; value: string }[] {
+  expectationValues(pauliStrings: readonly string[]): readonly ExpectationValue[] {
     const stateVector = this.stateVector();
-    return pauliStrings.map((pauliString) => ({
-      pauliString,
-      value: StateVector.formatAmplitude(stateVector.expectation(pauliString))
-    }));
+    return pauliStrings.map((pauliString) => {
+      const value = normalizedScalar(stateVector.expectation(pauliString).real);
+
+      if (!Number.isFinite(value)) {
+        throw new SimulatorError(`expectation value is not finite: ${pauliString}`);
+      }
+
+      return { pauliString, value };
+    });
   }
 
   exportPayload(): StateVectorExportPayload {
