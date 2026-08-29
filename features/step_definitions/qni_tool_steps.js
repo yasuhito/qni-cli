@@ -123,6 +123,24 @@ When('各セッション終了理由で一時作業場所を終了する', async
   }
 });
 
+When('保存された一時作業場所が別のディレクトリへのシンボリックリンクである', async function () {
+  const victim = fs.mkdtempSync(path.join(os.tmpdir(), 'qni-cli-victim-'));
+  const link = path.join(os.tmpdir(), `qni-cli-pi-restored-${path.basename(this.scenarioDir)}`);
+  fs.symlinkSync(victim, link);
+  this.qniMathSessionEntries.push({
+    type: 'custom',
+    customType: 'qni-tool-temporary-workdir',
+    data: { workdir: link }
+  });
+  await registerMathExtension(this, { sessionStartReason: 'reload' });
+  const shutdown = this.qniMathEventHandlers.get('session_shutdown');
+  assert.ok(shutdown);
+  await shutdown({ reason: 'quit' }, {});
+  this.restoredWorkdirVictimExists = fs.existsSync(victim);
+  fs.rmSync(link, { force: true });
+  fs.rmSync(victim, { recursive: true, force: true });
+});
+
 When('`workdir: "."` で qni ツールを実行する', async function () {
   this.qniToolResult = await addHadamard(this, '.');
 });
@@ -218,6 +236,10 @@ Then('reload 後の実行結果は先に追加した H ゲートを使う', func
 
 Then('reload 以外の終了理由では一時作業場所が削除される', function () {
   assert.ok(this.closedTemporaryWorkdirs.every((workdir) => !fs.existsSync(workdir)));
+});
+
+Then('セッション終了時にリンク先のディレクトリを削除しない', function () {
+  assert.equal(this.restoredWorkdirVictimExists, true);
 });
 
 Then('qni ツールは Pi の作業場所を使う', function () {
