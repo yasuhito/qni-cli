@@ -210,6 +210,60 @@ describe('expect command TypeScript route', () => {
     });
   });
 
+  it('lists same-axis correlations after explicit Pauli strings', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, { qubits: 3, cols: [[1, 1, 'X']] });
+
+      const result = captureDispatcherRun(dir, [
+        'expect', 'ZZZ', '--same-axis-correlations', '1'
+      ]);
+
+      assert.deepEqual(result, {
+        exitStatus: 0,
+        stderr: '',
+        stdout: [
+          'ZZZ=-1.0',
+          'XII=0.0', 'IXI=0.0', 'IIX=0.0',
+          'YII=0.0', 'IYI=0.0', 'IIY=0.0',
+          'ZII=1.0', 'IZI=1.0', 'IIZ=-1.0',
+          ''
+        ].join('\n')
+      });
+    });
+  });
+
+  it('keeps repeated same-axis correlation groups in option order in JSON', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, { qubits: 2, cols: [] });
+
+      const result = captureDispatcherRun(dir, [
+        'expect', '--same-axis-correlations=1', '--same-axis-correlations', '2', '--json'
+      ]);
+
+      assert.equal(result.exitStatus, 0);
+      assert.deepEqual(
+        JSON.parse(result.stdout).expectations.map(({ pauli }: { pauli: string }) => pauli),
+        ['XI', 'IX', 'YI', 'IY', 'ZI', 'IZ', 'XX', 'YY', 'ZZ']
+      );
+    });
+  });
+
+  it('rejects invalid same-axis body counts without producing stdout', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, { qubits: 2, cols: [] });
+      const cases: readonly [readonly string[], string][] = [
+        [['expect', '--same-axis-correlations', '0'], '--same-axis-correlations must be a positive integer\n'],
+        [['expect', '--same-axis-correlations=1.5'], '--same-axis-correlations must be a positive integer\n'],
+        [['expect', '--same-axis-correlations', '3'], '--same-axis-correlations must not exceed the circuit qubit count\n'],
+        [['expect', '--same-axis-correlations'], '--same-axis-correlations requires a value\n']
+      ];
+
+      for (const [argv, stderr] of cases) {
+        assert.deepEqual(captureDispatcherRun(dir, [...argv]), { exitStatus: 1, stdout: '', stderr });
+      }
+    });
+  });
+
   it('prints finite-shot estimates with settings and reproducibility metadata', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, { qubits: 2, cols: [['H', 1], ['•', 'X']] });
