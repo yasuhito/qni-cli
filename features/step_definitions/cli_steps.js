@@ -1320,6 +1320,10 @@ When('{string} を実行', async function (command) {
   this.lastCommand = await runQniCommand(this.scenarioDir, command, this.commandEnv);
 });
 
+Given('標準出力を {string} として受け取った', function (stdout) {
+  this.lastCommand = { code: 0, signal: null, stderr: '', stdout };
+});
+
 When('Node dispatcher で {string} を実行', async function (command) {
   this.lastCommand = await runNodeDispatcherCommand(this.scenarioDir, command, this.commandEnv);
 });
@@ -1596,19 +1600,25 @@ Then('標準出力:', function (docString) {
 });
 
 Then('標準出力の shots は {int}', function (expectedShots) {
-  const shots = Number(/^shots=(\d+) /mu.exec(this.lastCommand.stdout)?.[1]);
+  const match = /^shots=(\d+) /mu.exec(this.lastCommand.stdout);
+  assert.notEqual(match, null, `unexpected measurement summary: ${this.lastCommand.stdout}`);
+  const shots = Number(match[1]);
 
   assert.equal(shots, expectedShots);
 });
 
 Then('標準出力の seed は {int}', function (expectedSeed) {
-  const seed = Number(/ seed=(\d+)$/mu.exec(this.lastCommand.stdout)?.[1]);
+  const match = / seed=(\d+)$/mu.exec(this.lastCommand.stdout);
+  assert.notEqual(match, null, `unexpected measurement summary: ${this.lastCommand.stdout}`);
+  const seed = Number(match[1]);
 
   assert.equal(seed, expectedSeed);
 });
 
 Then('標準出力の seed は符号なし32ビット整数', function () {
-  const seed = Number(/ seed=(\d+)$/mu.exec(this.lastCommand.stdout)?.[1]);
+  const match = / seed=(\d+)$/mu.exec(this.lastCommand.stdout);
+  assert.notEqual(match, null, `unexpected measurement summary: ${this.lastCommand.stdout}`);
+  const seed = Number(match[1]);
 
   assert.ok(Number.isInteger(seed) && seed >= 0 && seed <= 0xffffffff);
 });
@@ -1622,9 +1632,10 @@ Then('標準出力の表:', function (docString) {
 Then('生成したシード値を指定すると通常の標準出力が一致する', async function () {
   const originalStdout = this.lastCommand.stdout;
   const match = /^shots=(\d+) seed=(\d+)$/mu.exec(originalStdout);
+  assert.notEqual(match, null, `unexpected measurement summary: ${originalStdout}`);
   const replay = await runQniCommand(
     this.scenarioDir,
-    `qni run --shots ${match?.[1]} --seed ${match?.[2]}`,
+    `qni run --shots ${match[1]} --seed ${match[2]}`,
     this.commandEnv
   );
 
