@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, it } from 'node:test';
 
+import { Complex } from '../../src/complex';
 import { createDispatcher } from '../../src/dispatcher';
 
 interface CapturedRun {
@@ -151,6 +152,27 @@ describe('expect command TypeScript route', () => {
       assert.equal(result.exitStatus, 1);
       assert.equal(result.stdout, '');
       assert.equal(result.stderr, 'Pauli string length must match qubit count: BAD\n');
+    });
+  });
+
+  it('rejects a non-real expectation without printing JSON', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir);
+      const originalConjugate = Complex.prototype.conjugate;
+      Complex.prototype.conjugate = function conjugateWithError(): Complex {
+        const conjugated = originalConjugate.call(this);
+        return new Complex(conjugated.real, conjugated.imaginary + 0.5);
+      };
+
+      try {
+        const result = captureDispatcherRun(dir, ['expect', 'Z', '--json']);
+
+        assert.equal(result.exitStatus, 1);
+        assert.equal(result.stdout, '');
+        assert.equal(result.stderr, 'expectation value is not real: Z\n');
+      } finally {
+        Complex.prototype.conjugate = originalConjugate;
+      }
     });
   });
 });

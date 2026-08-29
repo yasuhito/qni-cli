@@ -119,7 +119,13 @@ export class Simulator {
   expectationValues(pauliStrings: readonly string[]): readonly ExpectationValue[] {
     const stateVector = this.stateVector();
     return pauliStrings.map((pauliString) => {
-      const value = normalizedScalar(stateVector.expectation(pauliString).real);
+      const expectation = stateVector.expectation(pauliString);
+      const value = normalizedScalar(expectation.real);
+      const imaginary = normalizedScalar(expectation.imaginary);
+
+      if (imaginary !== 0) {
+        throw new SimulatorError(`expectation value is not real: ${pauliString}`);
+      }
 
       if (!Number.isFinite(value)) {
         throw new SimulatorError(`expectation value is not finite: ${pauliString}`);
