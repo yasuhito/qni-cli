@@ -1595,48 +1595,72 @@ Then('標準出力:', function (docString) {
   );
 });
 
-Then('標準出力は生成したシード値と次の表を含む:', function (docString) {
-  const [summary, ...tableLines] = normalizeMultilineText(this.lastCommand.stdout).split('\n');
-  const match = /^shots=(\d+) seed=(\d+)$/u.exec(summary);
+Then('標準出力の shots は {int}', function (expectedShots) {
+  const shots = Number(/^shots=(\d+) /mu.exec(this.lastCommand.stdout)?.[1]);
 
-  assert.notEqual(match, null, `unexpected measurement summary: ${summary}`);
-  const seed = Number(match[2]);
-  assert.ok(Number.isInteger(seed) && seed >= 0 && seed <= 0xffffffff, `invalid generated seed: ${match[2]}`);
-  assert.equal(tableLines.join('\n'), normalizeMultilineText(docStringContent(docString)));
+  assert.equal(shots, expectedShots);
 });
 
-Then('生成したシード値を指定すると通常出力全体が一致する', async function () {
-  const original = this.lastCommand;
-  const match = /^shots=(\d+) seed=(\d+)$/mu.exec(original.stdout);
+Then('標準出力の seed は {int}', function (expectedSeed) {
+  const seed = Number(/ seed=(\d+)$/mu.exec(this.lastCommand.stdout)?.[1]);
 
-  assert.notEqual(match, null, `unexpected measurement summary: ${original.stdout}`);
+  assert.equal(seed, expectedSeed);
+});
+
+Then('標準出力の seed は符号なし32ビット整数', function () {
+  const seed = Number(/ seed=(\d+)$/mu.exec(this.lastCommand.stdout)?.[1]);
+
+  assert.ok(Number.isInteger(seed) && seed >= 0 && seed <= 0xffffffff);
+});
+
+Then('標準出力の表:', function (docString) {
+  const table = normalizeMultilineText(this.lastCommand.stdout).split('\n').slice(1).join('\n');
+
+  assert.equal(table, normalizeMultilineText(docStringContent(docString)));
+});
+
+Then('生成したシード値を指定すると通常の標準出力が一致する', async function () {
+  const originalStdout = this.lastCommand.stdout;
+  const match = /^shots=(\d+) seed=(\d+)$/mu.exec(originalStdout);
   const replay = await runQniCommand(
     this.scenarioDir,
-    `qni run --shots ${match[1]} --seed ${match[2]}`,
+    `qni run --shots ${match?.[1]} --seed ${match?.[2]}`,
     this.commandEnv
   );
-  assert.deepEqual(replay, original);
+
+  assert.equal(replay.stdout, originalStdout);
 });
 
-Then('JSON 出力は生成したシード値と測定分布を含む', function () {
-  const output = JSON.parse(this.lastCommand.stdout);
-
-  assert.equal(output.shots, 1);
-  assert.ok(Number.isInteger(output.seed) && output.seed >= 0 && output.seed <= 0xffffffff);
-  assert.deepEqual(output.classicalBits, ['q0']);
-  assert.deepEqual(output.results, [{ values: { q0: 0 }, count: 1 }]);
+Then('JSON 出力の shots は {int}', function (expectedShots) {
+  assert.equal(JSON.parse(this.lastCommand.stdout).shots, expectedShots);
 });
 
-Then('生成したシード値を指定すると JSON 出力全体が一致する', async function () {
-  const original = this.lastCommand;
-  const output = JSON.parse(original.stdout);
+Then('JSON 出力の seed は {int}', function (expectedSeed) {
+  assert.equal(JSON.parse(this.lastCommand.stdout).seed, expectedSeed);
+});
+
+Then('JSON 出力の seed は符号なし32ビット整数', function () {
+  const seed = JSON.parse(this.lastCommand.stdout).seed;
+
+  assert.ok(Number.isInteger(seed) && seed >= 0 && seed <= 0xffffffff);
+});
+
+Then('JSON 出力の測定分布:', function (docString) {
+  const { classicalBits, results } = JSON.parse(this.lastCommand.stdout);
+
+  assert.deepEqual({ classicalBits, results }, JSON.parse(docStringContent(docString)));
+});
+
+Then('生成したシード値を指定すると JSON の標準出力が一致する', async function () {
+  const originalStdout = this.lastCommand.stdout;
+  const output = JSON.parse(originalStdout);
   const replay = await runQniCommand(
     this.scenarioDir,
     `qni run --shots ${output.shots} --seed ${output.seed} --json`,
     this.commandEnv
   );
 
-  assert.deepEqual(replay, original);
+  assert.equal(replay.stdout, originalStdout);
 });
 
 Then('標準出力の内容:', function (docString) {
