@@ -36,6 +36,31 @@ test("truncates each qni stdout with Pi's default line limit", async () => {
   assert.doesNotMatch(output.text, /line-2001/u);
 });
 
+test("does not claim the workdir is unchanged when the first command fails", () => {
+  const message = formatBatchFailure(
+    [],
+    ["export", "--png", "output/circuit.png"],
+    { stdout: "", stderr: "pdflatex not found\n", code: 1, killed: false },
+    0,
+    3
+  );
+
+  assert.match(message, /Stopped at command 1 of 3\. No commands succeeded\./u);
+  assert.doesNotMatch(message, /no changes were made/u);
+});
+
+test("reports the complete range of commands not run after a failure", () => {
+  const message = formatBatchFailure(
+    ["$ qni add X"],
+    ["does-not-exist"],
+    { stdout: "", stderr: "unknown command\n", code: 1, killed: false },
+    1,
+    5
+  );
+
+  assert.match(message, /Commands 3-5 were not run\./u);
+});
+
 test("formats a batch failure with completed output and the stop position", () => {
   assert.equal(
     formatBatchFailure(
