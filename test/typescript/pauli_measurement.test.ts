@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { groupPauliMeasurementSettings } from '../../src/pauli_measurement';
+import {
+  groupPauliMeasurementSettings,
+  samplePauliExpectationValues
+} from '../../src/pauli_measurement';
 import { seededRandom } from '../../src/random_seed';
 import { Simulator } from '../../src/simulator';
 
@@ -65,5 +68,21 @@ describe('finite-shot Pauli expectation estimates', () => {
       { pauliString: 'IZ', value: 0.06, stderr: Math.sqrt((1 - 0.06 ** 2) / 100) },
       { pauliString: 'ZZ', value: 1, stderr: 0 }
     ]);
+  });
+
+  it('reads each basis probability once before sampling many shots', () => {
+    let probabilityReads = 0;
+    const probabilities = new Proxy([0.25, 0.25, 0.25, 0.25], {
+      get(target, property, receiver) {
+        if (typeof property === 'string' && /^\d+$/u.test(property)) {
+          probabilityReads += 1;
+        }
+        return Reflect.get(target, property, receiver);
+      }
+    });
+
+    samplePauliExpectationValues(['ZI'], 1000, seededRandom(1), () => probabilities);
+
+    assert.equal(probabilityReads, probabilities.length);
   });
 });

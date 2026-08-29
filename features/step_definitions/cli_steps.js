@@ -1607,6 +1607,9 @@ Then('標準出力:', function (docString) {
 });
 
 Then('2回の標準出力は一致する', function () {
+  if (!Array.isArray(this.repeatedCommandResults) || this.repeatedCommandResults.length !== 2) {
+    throw new Error('expected exactly two repeated command results');
+  }
   assert.equal(this.repeatedCommandResults[1].stdout, this.repeatedCommandResults[0].stdout);
 });
 

@@ -48,11 +48,11 @@ export function samplePauliExpectationValues(
   const sums = new Map<string, number[]>();
 
   for (const setting of settings) {
-    const probabilities = probabilitiesForAxes(setting.axes);
+    const cumulativeProbabilities = cumulativeDistribution(probabilitiesForAxes(setting.axes));
     const settingSums = setting.pauliStrings.map(() => 0);
 
     for (let shot = 0; shot < shots; shot += 1) {
-      const basisIndex = sampleBasisIndex(probabilities, random());
+      const basisIndex = sampleBasisIndex(cumulativeProbabilities, random());
       setting.pauliStrings.forEach((pauliString, index) => {
         settingSums[index] = (settingSums[index] ?? 0) + parityEigenvalue(pauliString, basisIndex);
       });
@@ -102,15 +102,28 @@ function ensureValidPauliSymbols(pauliString: string): void {
   }
 }
 
-function sampleBasisIndex(probabilities: readonly number[], randomValue: number): number {
+function cumulativeDistribution(probabilities: readonly number[]): readonly number[] {
   let cumulative = 0;
-  for (let index = 0; index < probabilities.length; index += 1) {
-    cumulative += probabilities[index] ?? 0;
-    if (randomValue < cumulative) {
-      return index;
+  return probabilities.map((probability) => {
+    cumulative += probability;
+    return cumulative;
+  });
+}
+
+function sampleBasisIndex(cumulativeProbabilities: readonly number[], randomValue: number): number {
+  let lower = 0;
+  let upper = cumulativeProbabilities.length;
+
+  while (lower < upper) {
+    const middle = lower + Math.floor((upper - lower) / 2);
+    if (randomValue < (cumulativeProbabilities[middle] ?? 0)) {
+      upper = middle;
+    } else {
+      lower = middle + 1;
     }
   }
-  return Math.max(0, probabilities.length - 1);
+
+  return Math.min(lower, Math.max(0, cumulativeProbabilities.length - 1));
 }
 
 function parityEigenvalue(pauliString: string, basisIndex: number): 1 | -1 {

@@ -37,14 +37,20 @@ async function malformedSummaryFailure(thenStep: string): Promise<string> {
 }
 
 describe('measurement distribution Cucumber steps', () => {
-  for (const thenStep of [
-    '標準出力の shots は 3',
-    '標準出力の seed は 42',
-    '標準出力の seed は符号なし32ビット整数',
-    '生成したシード値を指定すると通常の標準出力が一致する'
-  ]) {
-    it(`reports a malformed summary before evaluating: ${thenStep}`, async () => {
-      assert.match(await malformedSummaryFailure(thenStep), /unexpected measurement summary: malformed/u);
+  const cases: readonly [string, RegExp][] = [
+    ['標準出力の shots は 3', /unexpected measurement summary: malformed/u],
+    ['標準出力の seed は 42', /unexpected measurement summary: malformed/u],
+    ['標準出力の seed は符号なし32ビット整数', /unexpected measurement summary: malformed/u],
+    [
+      '生成したシード値を指定すると通常の標準出力が一致する',
+      /unexpected measurement summary: malformed/u
+    ],
+    ['2回の標準出力は一致する', /expected exactly two repeated command results/u]
+  ];
+
+  for (const [thenStep, expectedFailure] of cases) {
+    it(`reports missing prerequisites before evaluating: ${thenStep}`, async () => {
+      assert.match(await malformedSummaryFailure(thenStep), expectedFailure);
     });
   }
 });
