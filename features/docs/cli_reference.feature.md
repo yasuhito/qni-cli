@@ -84,6 +84,14 @@ CLI コマンドの詳細を専用ドキュメントで確認したい。
 
 - Then リポジトリファイル "docs/cli.md" は "qni run --symbolic --latex" を含む
 
+## Scenario: CLI リファレンスは期待値の有限ショット例を示す
+
+- Then リポジトリファイル "docs/cli.md" は "qni expect ZZ XX --shots 1000 --seed 42" を含む
+
+## Scenario: CLI リファレンスは期待値の有限ショット JSON 例を示す
+
+- Then リポジトリファイル "docs/cli.md" は "qni expect ZZ XX --shots 1000 --seed 42 --json" を含む
+
 ## Scenario: CLI リファレンスは期待値の JSON 出力例を示す
 
 - Then リポジトリファイル "docs/cli.md" は "qni expect ZZ XX --json" を含む

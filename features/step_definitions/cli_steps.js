@@ -1320,6 +1320,13 @@ When('{string} を実行', async function (command) {
   this.lastCommand = await runQniCommand(this.scenarioDir, command, this.commandEnv);
 });
 
+When('{string} を2回実行', async function (command) {
+  this.repeatedCommandResults = [
+    await runQniCommand(this.scenarioDir, command, this.commandEnv),
+    await runQniCommand(this.scenarioDir, command, this.commandEnv)
+  ];
+});
+
 Given('標準出力を {string} として受け取った', function (stdout) {
   this.lastCommand = { code: 0, signal: null, stderr: '', stdout };
 });
@@ -1597,6 +1604,10 @@ Then('標準出力:', function (docString) {
     normalizeMultilineText(this.lastCommand.stdout),
     normalizeMultilineText(docStringContent(docString))
   );
+});
+
+Then('2回の標準出力は一致する', function () {
+  assert.equal(this.repeatedCommandResults[1].stdout, this.repeatedCommandResults[0].stdout);
 });
 
 Then('標準出力の shots は {int}', function (expectedShots) {

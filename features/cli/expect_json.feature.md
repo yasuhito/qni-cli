@@ -89,7 +89,7 @@ qni-cli の利用者として
 - Then 標準エラー:
 
   ```text
-  --json cannot be used with --latex
+  --latex cannot be used with --shots, --seed, --threshold, or --json
   ```
 
 ## Scenario: Pauli 文字列のない --json は終了コード1で失敗

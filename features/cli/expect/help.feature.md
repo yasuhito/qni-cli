@@ -8,73 +8,47 @@ qni-cli の利用者として、Pauli 文字列の期待値計算方法を確認
 - When "qni expect" を実行
 - Then コマンドは成功
 
-## Scenario: qni expect は expect コマンドの使い方を表示
+## Scenario: qni expect は有限ショット数のオプションを表示
 
-- When "qni expect" を実行
-- Then 標準出力:
+- When "qni expect --help" を実行
+- Then 標準出力に次を含む:
 
   ```text
-  Usage:
-    qni expect PAULI_STRING [PAULI_STRING...] [--json | --latex]
-
-  Overview:
-    Calculate expectation values from ./circuit.json.
-    qni simulates the whole circuit and evaluates each Pauli string on the resulting state.
-    Each PAULI_STRING must use only I, X, Y, and Z.
-    Characters map left to right to q0, q1, and so on.
-    For example, XI applies X to q0 and I to q1.
-    The length of each PAULI_STRING must match the circuit qubit count.
-    By default, output is one line per observable in the form PAULI_STRING=value.
-    --json prints numeric expectation values and signs as JSON.
-    --latex prints each observable in LaTeX expectation-value notation.
-    --json and --latex cannot be used together.
-
-  Options:
-    [--json]   # Print expectation values and signs as JSON
-    [--latex]  # Print expectation values as LaTeX
-
-  Examples:
-    qni expect Z
-    qni expect ZZ XX
-    qni expect ZZ XX --json
-    qni expect ZZ XX --latex
-    qni expect ZZI IZZ XXX
+  [--shots N]      # Estimate from N measurements per setting
   ```
 
-## Scenario: qni expect --help は成功する
+## Scenario: qni expect は再現用 seed のオプションを表示
 
 - When "qni expect --help" を実行
-- Then コマンドは成功
-
-## Scenario: qni expect --help は expect コマンドの使い方を表示
-
-- When "qni expect --help" を実行
-- Then 標準出力:
+- Then 標準出力に次を含む:
 
   ```text
-  Usage:
-    qni expect PAULI_STRING [PAULI_STRING...] [--json | --latex]
+  [--seed N]       # Use an unsigned 32-bit seed for reproducible estimates
+  ```
 
-  Overview:
-    Calculate expectation values from ./circuit.json.
-    qni simulates the whole circuit and evaluates each Pauli string on the resulting state.
-    Each PAULI_STRING must use only I, X, Y, and Z.
-    Characters map left to right to q0, q1, and so on.
-    For example, XI applies X to q0 and I to q1.
-    The length of each PAULI_STRING must match the circuit qubit count.
-    By default, output is one line per observable in the form PAULI_STRING=value.
-    --json prints numeric expectation values and signs as JSON.
-    --latex prints each observable in LaTeX expectation-value notation.
-    --json and --latex cannot be used together.
+## Scenario: qni expect は不安定判定のオプションを表示
 
-  Options:
-    [--json]   # Print expectation values and signs as JSON
-    [--latex]  # Print expectation values as LaTeX
+- When "qni expect --help" を実行
+- Then 標準出力に次を含む:
 
-  Examples:
-    qni expect Z
-    qni expect ZZ XX
-    qni expect ZZ XX --json
-    qni expect ZZ XX --latex
-    qni expect ZZI IZZ XXX
+  ```text
+  [--threshold N]  # Mark an absolute value at or below N as unstable (0 to 1)
+  ```
+
+## Scenario: qni expect は有限ショットの例を表示
+
+- When "qni expect --help" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  qni expect ZZ XX --shots 1000 --seed 42
+  ```
+
+## Scenario: qni expect は LaTeX の併用制限を表示
+
+- When "qni expect --help" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  --latex cannot be used with --shots, --seed, --threshold, or --json.
   ```
