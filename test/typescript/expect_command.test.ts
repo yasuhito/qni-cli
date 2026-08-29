@@ -160,7 +160,10 @@ describe('expect command TypeScript route', () => {
 
       assert.equal(result.exitStatus, 1);
       assert.equal(result.stdout, '');
-      assert.equal(result.stderr, '--json cannot be used with --latex\n');
+      assert.equal(
+        result.stderr,
+        '--latex cannot be used with --shots, --seed, --threshold, or --json\n'
+      );
     });
   });
 
@@ -204,6 +207,111 @@ describe('expect command TypeScript route', () => {
       } finally {
         Complex.prototype.conjugate = originalConjugate;
       }
+    });
+  });
+
+  it('prints finite-shot estimates with settings and reproducibility metadata', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, { qubits: 2, cols: [['H', 1], ['•', 'X']] });
+
+      assert.deepEqual(captureDispatcherRun(dir, [
+        'expect', 'ZZ', 'XX', '--shots=1000', '--seed=42'
+      ]), {
+        exitStatus: 0,
+        stderr: '',
+        stdout: [
+          'shots=1000 seed=42 settings=2 criterion=2*stderr',
+          'ZZ=1.0 estimate=1.0 stderr=0.0',
+          'XX=1.0 estimate=1.0 stderr=0.0',
+          ''
+        ].join('\n')
+      });
+    });
+  });
+
+  it('returns structured finite-shot estimates without changing exact values', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, { qubits: 2, cols: [['H', 1], ['•', 'X']] });
+      const result = captureDispatcherRun(dir, [
+        'expect', 'ZZ', 'XX', '--shots', '1000', '--seed', '42', '--json'
+      ]);
+
+      assert.equal(result.exitStatus, 0);
+      assert.deepEqual(JSON.parse(result.stdout), {
+        shots: 1000,
+        seed: 42,
+        criterion: { kind: 'stderr', multiplier: 2 },
+        settings: [
+          { axes: 'ZZ', paulis: ['ZZ'] },
+          { axes: 'XX', paulis: ['XX'] }
+        ],
+        expectations: [
+          {
+            pauli: 'ZZ', value: 1, sign: 1,
+            estimate: { value: 1, sign: 1, stderr: 0, unstable: false }
+          },
+          {
+            pauli: 'XX', value: 1, sign: 1,
+            estimate: { value: 1, sign: 1, stderr: 0, unstable: false }
+          }
+        ]
+      });
+    });
+  });
+
+  it('reports a generated seed that reproduces finite-shot output', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, { qubits: 1, cols: [['H']] });
+      const first = captureDispatcherRun(dir, ['expect', 'Z', '--shots', '20']);
+      const seed = /^shots=20 seed=(\d+) /u.exec(first.stdout)?.[1];
+      assert.notEqual(seed, undefined);
+
+      const replay = captureDispatcherRun(dir, ['expect', 'Z', '--shots', '20', '--seed', seed as string]);
+      assert.deepEqual(replay, first);
+    });
+  });
+
+  it('applies an explicit threshold to exact and estimated values', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, { qubits: 1, cols: [['H']] });
+
+      assert.equal(
+        captureDispatcherRun(dir, ['expect', 'Z', '--threshold', '0.5']).stdout,
+        'criterion=threshold=0.5\nZ=0.0 unstable\n'
+      );
+      assert.match(
+        captureDispatcherRun(dir, ['expect', 'Z', '--shots', '20', '--seed', '42', '--threshold', '0.5']).stdout,
+        /^shots=20 seed=42 settings=1 criterion=threshold=0\.5$/mu
+      );
+    });
+  });
+
+  it('rejects invalid finite-shot options before producing output', async () => {
+    await withTempDir(async (dir) => {
+      const cases: readonly [readonly string[], string][] = [
+        [['expect', 'Z', '--seed', '42'], '--seed requires --shots\n'],
+        [['expect', 'Z', '--shots', '0'], '--shots must be a positive integer\n'],
+        [['expect', 'Z', '--threshold', '1.1'], '--threshold must be a number between 0 and 1\n'],
+        [
+          ['expect', 'Z', '--latex', '--shots', '10'],
+          '--latex cannot be used with --shots, --seed, --threshold, or --json\n'
+        ]
+      ];
+
+      for (const [argv, stderr] of cases) {
+        assert.deepEqual(captureDispatcherRun(dir, [...argv]), { exitStatus: 1, stdout: '', stderr });
+      }
+    });
+  });
+
+  it('keeps measurement circuits unsupported for finite-shot expectations', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, { qubits: 1, cols: [['Measure']] });
+      const result = captureDispatcherRun(dir, ['expect', 'Z', '--shots', '10', '--seed', '42']);
+
+      assert.equal(result.exitStatus, 1);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, 'unsupported gate for run: "Measure"\n');
     });
   });
 });

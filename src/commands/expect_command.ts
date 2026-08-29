@@ -1,9 +1,11 @@
 import { currentCircuitFile } from '../circuit_file';
 import type { CommandHandlerContext } from '../dispatcher';
+import { generateSeed, seededRandom, validateSeed } from '../random_seed';
 import { Simulator } from '../simulator';
 
 const HELP_TEXT = `Usage:
-  qni expect PAULI_STRING [PAULI_STRING...] [--json | --latex]
+  qni expect PAULI_STRING [PAULI_STRING...] [--shots N] [--seed N] [--threshold N] [--json]
+  qni expect PAULI_STRING [PAULI_STRING...] --latex
 
 Overview:
   Calculate expectation values from ./circuit.json.
@@ -13,20 +15,43 @@ Overview:
   For example, XI applies X to q0 and I to q1.
   The length of each PAULI_STRING must match the circuit qubit count.
   By default, output is one line per observable in the form PAULI_STRING=value.
-  --json prints numeric expectation values and signs as JSON.
+  --shots estimates expectation values from N measurements per setting.
+  --seed reproduces the same finite-shot estimates. Without it, qni generates and reports a seed.
+  --threshold marks values with an absolute value at or below N as unstable.
+  Without --threshold, finite-shot estimates at or below two standard errors are unstable.
+  --json prints numeric expectation values, signs, and finite-shot details as JSON.
   --latex prints each observable in LaTeX expectation-value notation.
-  --json and --latex cannot be used together.
+  --latex cannot be used with --shots, --seed, --threshold, or --json.
 
 Options:
-  [--json]   # Print expectation values and signs as JSON
-  [--latex]  # Print expectation values as LaTeX
+  [--shots N]      # Estimate from N measurements per setting
+  [--seed N]       # Use an unsigned 32-bit seed for reproducible estimates
+  [--threshold N]  # Mark an absolute value at or below N as unstable (0 to 1)
+  [--json]         # Print expectation values and signs as JSON
+  [--latex]        # Print expectation values as LaTeX
 
 Examples:
   qni expect Z
   qni expect ZZ XX
+  qni expect ZZ XX --shots 1000 --seed 42
+  qni expect ZX --shots 1000 --threshold 0.05
+  qni expect ZZ XX --shots 1000 --seed 42 --json
   qni expect ZZ XX --json
   qni expect ZZ XX --latex
   qni expect ZZI IZZ XXX`;
+
+interface ExpectOptions {
+  readonly json: boolean;
+  readonly latex: boolean;
+  readonly pauliStrings: readonly string[];
+  readonly seed?: number;
+  readonly shots?: number;
+  readonly threshold?: number;
+}
+
+type Criterion =
+  | { readonly kind: 'stderr'; readonly multiplier: 2 }
+  | { readonly kind: 'threshold'; readonly value: number };
 
 export function runExpectCommand(argv: string[], context: CommandHandlerContext): number {
   if (argv.length === 1 || (argv.length === 2 && (argv[1] === '--help' || argv[1] === '-h'))) {
@@ -35,28 +60,10 @@ export function runExpectCommand(argv: string[], context: CommandHandlerContext)
   }
 
   try {
-    const json = argv.includes('--json');
-    const latex = argv.includes('--latex');
-
-    if (json && latex) {
-      throw new Error('--json cannot be used with --latex');
-    }
-
-    const pauliStrings = argv
-      .slice(1)
-      .filter((argument) => argument !== '--json' && argument !== '--latex')
-      .map((pauliString) => pauliString.toUpperCase());
-
-    if (json && pauliStrings.length === 0) {
-      throw new Error('at least one Pauli string is required with --json');
-    }
-
+    const options = parseExpectOptions(argv);
+    validateOptionCombinations(options);
     const simulator = new Simulator(currentCircuitFile(context.cwd).load());
-    const output = json
-      ? renderExpectationValuesJson(simulator, pauliStrings)
-      : latex
-        ? simulator.renderExpectationValuesLatex(pauliStrings)
-        : simulator.renderExpectationValues(pauliStrings);
+    const output = renderExpectOutput(simulator, options);
     process.stdout.write(`${output}\n`);
     return 0;
   } catch (error) {
@@ -65,12 +72,161 @@ export function runExpectCommand(argv: string[], context: CommandHandlerContext)
   }
 }
 
-function renderExpectationValuesJson(simulator: Simulator, pauliStrings: readonly string[]): string {
-  const expectations = simulator.expectationValues(pauliStrings).map(({ pauliString, value }) => ({
-    pauli: pauliString,
-    value,
-    sign: value === 0 ? 0 : value < 0 ? -1 : 1
-  }));
+function renderExpectOutput(simulator: Simulator, options: ExpectOptions): string {
+  const expectations = simulator.expectationValues(options.pauliStrings);
+  if (options.shots !== undefined) {
+    const seed = options.seed ?? generateSeed();
+    const estimation = simulator.estimateExpectationValues(
+      options.pauliStrings,
+      options.shots,
+      seededRandom(seed)
+    );
+    const criterion: Criterion = options.threshold === undefined
+      ? { kind: 'stderr', multiplier: 2 }
+      : { kind: 'threshold', value: options.threshold };
+    const results = expectations.map((expectation, index) => {
+      const estimate = estimation.estimates[index];
+      if (!estimate) {
+        throw new Error(`missing finite-shot estimate: ${expectation.pauliString}`);
+      }
+      return {
+        ...expectation,
+        estimate: {
+          value: estimate.value,
+          sign: sign(estimate.value),
+          stderr: estimate.stderr,
+          unstable: isUnstable(estimate.value, estimate.stderr, criterion)
+        }
+      };
+    });
 
-  return JSON.stringify({ expectations }, null, 2);
+    if (options.json) {
+      return JSON.stringify({
+        shots: options.shots,
+        seed,
+        criterion,
+        settings: estimation.settings.map(({ axes, pauliStrings }) => ({ axes, paulis: pauliStrings })),
+        expectations: results.map(({ pauliString, value, estimate }) => ({
+          pauli: pauliString,
+          value,
+          sign: sign(value),
+          estimate
+        }))
+      }, null, 2);
+    }
+
+    const summary = `shots=${options.shots} seed=${seed} settings=${estimation.settings.length} criterion=${formatCriterion(criterion)}`;
+    const lines = results.map(({ pauliString, value, estimate }) =>
+      `${pauliString}=${formatNumber(value)} estimate=${formatNumber(estimate.value)} stderr=${formatNumber(estimate.stderr)}${estimate.unstable ? ' unstable' : ''}`
+    );
+    return [summary, ...lines].join('\n');
+  }
+
+  if (options.threshold !== undefined) {
+    const criterion: Criterion = { kind: 'threshold', value: options.threshold };
+    if (options.json) {
+      return JSON.stringify({
+        criterion,
+        expectations: expectations.map(({ pauliString, value }) => ({
+          pauli: pauliString,
+          value,
+          sign: sign(value),
+          unstable: isUnstable(value, 0, criterion)
+        }))
+      }, null, 2);
+    }
+    return [
+      `criterion=${formatCriterion(criterion)}`,
+      ...expectations.map(({ pauliString, value }) =>
+        `${pauliString}=${formatNumber(value)}${isUnstable(value, 0, criterion) ? ' unstable' : ''}`
+      )
+    ].join('\n');
+  }
+
+  if (options.json) {
+    return JSON.stringify({
+      expectations: expectations.map(({ pauliString, value }) => ({
+        pauli: pauliString,
+        value,
+        sign: sign(value)
+      }))
+    }, null, 2);
+  }
+  return options.latex
+    ? simulator.renderExpectationValuesLatex(options.pauliStrings)
+    : simulator.renderExpectationValues(options.pauliStrings);
+}
+
+function parseExpectOptions(argv: readonly string[]): ExpectOptions {
+  let json = false;
+  let latex = false;
+  let seed: number | undefined;
+  let shots: number | undefined;
+  let threshold: number | undefined;
+  const pauliStrings: string[] = [];
+
+  for (let index = 1; index < argv.length; index += 1) {
+    const argument = argv[index] as string;
+    if (argument === '--json' || argument === '--latex') {
+      json ||= argument === '--json';
+      latex ||= argument === '--latex';
+      continue;
+    }
+    const matched = /^(--shots|--seed|--threshold)(?:=(.*))?$/u.exec(argument);
+    if (matched) {
+      const option = matched[1] as '--shots' | '--seed' | '--threshold';
+      const inlineValue = matched[2];
+      const rawValue = inlineValue === undefined ? argv[++index] : inlineValue;
+      const value = rawValue === undefined || rawValue.trim() === '' ? Number.NaN : Number(rawValue);
+      if (option === '--shots') {
+        if (!Number.isSafeInteger(value) || value <= 0) {
+          throw new Error('--shots must be a positive integer');
+        }
+        shots = value;
+      } else if (option === '--seed') {
+        seed = validateSeed(value);
+      } else {
+        if (!Number.isFinite(value) || value < 0 || value > 1) {
+          throw new Error('--threshold must be a number between 0 and 1');
+        }
+        threshold = value;
+      }
+      continue;
+    }
+    pauliStrings.push(argument.toUpperCase());
+  }
+
+  return { json, latex, pauliStrings, seed, shots, threshold };
+}
+
+function validateOptionCombinations(options: ExpectOptions): void {
+  if (options.latex && (
+    options.json || options.shots !== undefined || options.seed !== undefined || options.threshold !== undefined
+  )) {
+    throw new Error('--latex cannot be used with --shots, --seed, --threshold, or --json');
+  }
+  if (options.seed !== undefined && options.shots === undefined) {
+    throw new Error('--seed requires --shots');
+  }
+  if (options.pauliStrings.length === 0) {
+    throw new Error(options.json
+      ? 'at least one Pauli string is required with --json'
+      : 'at least one Pauli string is required');
+  }
+}
+
+function isUnstable(value: number, stderr: number, criterion: Criterion): boolean {
+  return Math.abs(value) <= (criterion.kind === 'stderr' ? criterion.multiplier * stderr : criterion.value);
+}
+
+function formatCriterion(criterion: Criterion): string {
+  return criterion.kind === 'stderr' ? '2*stderr' : `threshold=${formatNumber(criterion.value)}`;
+}
+
+function sign(value: number): -1 | 0 | 1 {
+  return value === 0 ? 0 : value < 0 ? -1 : 1;
+}
+
+function formatNumber(value: number): string {
+  return Number.isInteger(value) ? `${value}.0` : String(value);
 }

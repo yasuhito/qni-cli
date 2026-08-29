@@ -72,13 +72,20 @@ qni run --symbolic --latex
 qni run --symbolic --basis x --latex
 qni run --symbolic --basis bell
 qni expect ZZ XX
+qni expect ZZ XX --shots 1000 --seed 42
+qni expect ZX --shots 1000 --threshold 0.05
+qni expect ZZ XX --shots 1000 --seed 42 --json
 qni expect ZZ XX --json
 qni expect ZZ XX --latex
 ```
 
 `qni run` は、測定のない回路では状態ベクトルを表示します。`--symbolic` を付けると、小さな回路を ket 表記で読みやすく表示できます。`--latex` を付けると、数値または記号の状態ベクトルを `\ket{}` 記法の LaTeX で表示します。数値の LaTeX 出力には Python は不要です。`qni expect` は Pauli 文字列の期待値を計算し、`--latex` を付けると `\langle ZZ \rangle = 1.0` の形式で表示します。Pauli 文字列は左端から `q0`、`q1`、… に対応します。たとえば `XI` は `q0` に `X`、`q1` に `I` を適用します。
 
-`qni expect --json` は、入力した各 Pauli 文字列を大文字に正規化し、入力順と重複を保った `expectations` 配列を返します。各要素の `value` は数値の期待値、`sign` はその符号を表す `-1`、`0`、`1` のいずれかです。
+`qni expect --shots N` は、測定のない回路の終状態から Pauli 期待値を有限ショットで推定します。量子ビットごとに同じ軸または `I` を持つ Pauli 文字列は同じ測定設定にまとめ、設定ごとに N 回測定します。通常出力には厳密な期待値、推定値、標準誤差 `sqrt((1 − m²) / N)`、測定設定数、seed を表示します。`--seed` を省略すると 0 以上 4294967295 以下の整数を生成して表示します。表示された seed を同じ回路、Pauli 文字列、ショット数で指定すると出力全体を再現できます。
+
+有限ショットでは、既定で推定値の絶対値が標準誤差の2倍以下なら `unstable` と表示します。`--threshold 0.05` を指定すると、推定値の絶対値が指定値以下かどうかで判定します。`--shots` なしでも `--threshold` を指定でき、その場合は厳密な期待値を判定します。ショット数は正の整数、しきい値は 0 以上 1 以下です。`--seed` は `--shots` と一緒に指定します。
+
+`qni expect --json` は、入力した各 Pauli 文字列を大文字に正規化し、入力順と重複を保った `expectations` 配列を返します。各要素の `value` は数値の期待値、`sign` はその符号を表す `-1`、`0`、`1` のいずれかです。`--shots` と併用すると、`shots`、`seed`、判定条件を示す `criterion`、測定設定を示す `settings`、各期待値の `estimate` を追加します。
 
 ```json
 {
@@ -97,7 +104,7 @@ qni expect ZZ XX --latex
 }
 ```
 
-`qni expect` の `--json` と `--latex` は併用できません。`qni run` の `--latex` は測定回路や `--shots`、`--seed`、`--json` とは併用できません。
+`qni expect` の `--latex` は `--shots`、`--seed`、`--threshold`、`--json` と併用できません。`qni run` の `--latex` は測定回路や `--shots`、`--seed`、`--json` とは併用できません。
 
 `Measure` を含む回路では、`qni run` は回路を1回実行します。名前付き測定は `input=0`、名前なし測定は `q0=0` の形式で表示します。測定は確率に従って状態を収縮させ、古典ビットの保存と条件付きゲートを含む後続の操作は回路のステップ順に評価します。測定回路では状態ベクトルを一意に表示できないため、`--symbolic` と `--basis` は使えません。
 

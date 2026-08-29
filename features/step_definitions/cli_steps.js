@@ -1317,7 +1317,22 @@ Given('リポジトリの qni コマンド列 {string} を実行', async functio
 });
 
 When('{string} を実行', async function (command) {
+  this.lastCommandText = command;
   this.lastCommand = await runQniCommand(this.scenarioDir, command, this.commandEnv);
+});
+
+When('{string} を2回正常に実行', async function (command) {
+  this.repeatedCommandResults = [
+    await runQniCommand(this.scenarioDir, command, this.commandEnv),
+    await runQniCommand(this.scenarioDir, command, this.commandEnv)
+  ];
+  this.repeatedCommandResults.forEach((result, index) => {
+    if (result.code !== 0) {
+      throw new Error(
+        `expected repeated command #${index + 1} to succeed\n${commandFailureMessage(result)}`
+      );
+    }
+  });
 });
 
 Given('標準出力を {string} として受け取った', function (stdout) {
@@ -1599,6 +1614,37 @@ Then('標準出力:', function (docString) {
   );
 });
 
+Then('2回の標準出力は一致する', function () {
+  if (!Array.isArray(this.repeatedCommandResults) || this.repeatedCommandResults.length !== 2) {
+    throw new Error('expected exactly two repeated command results');
+  }
+  assert.equal(this.repeatedCommandResults[1].stdout, this.repeatedCommandResults[0].stdout);
+});
+
+Then('expect の標準出力の seed は符号なし32ビット整数', function () {
+  const match = /^shots=\d+ seed=(\d+) settings=/mu.exec(this.lastCommand.stdout);
+  assert.notEqual(match, null, `unexpected expect summary: ${this.lastCommand.stdout}`);
+  const seed = Number(match[1]);
+
+  assert.ok(Number.isInteger(seed) && seed >= 0 && seed <= 0xffffffff);
+});
+
+Then('生成された seed で expect の標準出力全体を再現できる', async function () {
+  assert.equal(this.lastCommand.code, 0, commandFailureMessage(this.lastCommand));
+  const originalStdout = this.lastCommand.stdout;
+  const match = /^shots=\d+ seed=(\d+) settings=/mu.exec(originalStdout);
+  assert.notEqual(match, null, `unexpected expect summary: ${originalStdout}`);
+  assert.equal(typeof this.lastCommandText, 'string', 'expected the original expect command');
+
+  const replay = await runQniCommand(
+    this.scenarioDir,
+    `${this.lastCommandText} --seed ${match[1]}`,
+    this.commandEnv
+  );
+  assert.equal(replay.code, 0, commandFailureMessage(replay));
+  assert.equal(replay.stdout, originalStdout);
+});
+
 Then('標準出力の shots は {int}', function (expectedShots) {
   const match = /^shots=(\d+) /mu.exec(this.lastCommand.stdout);
   assert.notEqual(match, null, `unexpected measurement summary: ${this.lastCommand.stdout}`);
@@ -1693,6 +1739,14 @@ Then('標準エラー:', function (docString) {
     normalizeMultilineText(this.lastCommand.stderr),
     normalizeMultilineText(docStringContent(docString))
   );
+});
+
+Then('標準エラーは {string} の1行だけ', function (expected) {
+  assert.equal(this.lastCommand.stderr, `${expected}\n`);
+});
+
+Then('標準エラーは次の1行だけ:', function (docString) {
+  assert.equal(this.lastCommand.stderr, `${docStringContent(docString)}\n`);
 });
 
 Then('読み込みは成功', function () {

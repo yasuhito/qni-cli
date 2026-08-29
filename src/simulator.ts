@@ -3,6 +3,10 @@ import { Complex } from './complex';
 import type { CircuitData } from './circuit_file';
 import { parseCircuitOperationSlot, type ParsedCircuitOperation } from './circuit_operation';
 import { InitialStateError, initialStateQubitCount, resolveNumericInitialState } from './initial_state';
+import {
+  samplePauliExpectationValues,
+  type PauliExpectationEstimation
+} from './pauli_measurement';
 
 export class SimulatorError extends Error {}
 
@@ -114,6 +118,21 @@ export class Simulator {
     return this.expectationValues(pauliStrings)
       .map(({ pauliString, value }) => `\\langle ${pauliString} \\rangle = ${formatRubyFloat(value)}`)
       .join('\n');
+  }
+
+  estimateExpectationValues(
+    pauliStrings: readonly string[],
+    shots: number,
+    random: () => number
+  ): PauliExpectationEstimation {
+    const stateVector = this.stateVector();
+    stateVector.validatePauliStrings(pauliStrings);
+    return samplePauliExpectationValues(
+      pauliStrings,
+      shots,
+      random,
+      (axes) => stateVector.measurementProbabilities(axes)
+    );
   }
 
   expectationValues(pauliStrings: readonly string[]): readonly ExpectationValue[] {
@@ -304,6 +323,24 @@ class StateVector {
 
   expectationRoundingTolerance(): number {
     return Number.EPSILON * this.amplitudes.length;
+  }
+
+  validatePauliStrings(pauliStrings: readonly string[]): void {
+    pauliStrings.forEach((pauliString) => new PauliString(pauliString, this.qubits));
+  }
+
+  measurementProbabilities(axes: string): readonly number[] {
+    let rotated: StateVector = this;
+    for (const [qubit, axis] of [...axes].entries()) {
+      if (axis === 'X') {
+        rotated = rotated.applySingleQubitGate(qubit, requiredFixedGate('H'));
+      } else if (axis === 'Y') {
+        rotated = rotated
+          .applySingleQubitGate(qubit, requiredFixedGate('S†'))
+          .applySingleQubitGate(qubit, requiredFixedGate('H'));
+      }
+    }
+    return rotated.amplitudes.map((amplitude) => amplitude.absSquared());
   }
 
   toCsv(): string {
@@ -718,6 +755,14 @@ function rzGate(angle: number): GateOperator {
   const positivePhase = new Complex(Math.cos(halfAngle), Math.sin(halfAngle));
 
   return (zero, one) => [negativePhase.multiply(zero), positivePhase.multiply(one)];
+}
+
+function requiredFixedGate(name: string): GateOperator {
+  const gate = FIXED_GATE_OPERATORS.get(name);
+  if (!gate) {
+    throw new SimulatorError(`missing fixed gate operator: ${name}`);
+  }
+  return gate;
 }
 
 function requiredAmplitude(amplitudes: readonly Complex[], index: number): Complex {
