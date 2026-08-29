@@ -8,6 +8,14 @@
 
 - Then リポジトリファイル "skills/qni-cli/SKILL.md" は "専用の `qni` ツールを優先する" を含む
 
+## Scenario: 作業場所を選んでいない場合は一時作業場所を使う
+
+- Then リポジトリファイル "skills/qni-cli/SKILL.md" は "`workdir` を省略する" を含む
+
+## Scenario: 利用者が選んだ作業場所だけを指定する
+
+- Then リポジトリファイル "skills/qni-cli/SKILL.md" は "利用者が作業場所を選んだ場合だけ `workdir`" を含む
+
 ## Scenario: 状態ベクトルと期待値を LaTeX で引用する
 
 - Then リポジトリファイル "skills/qni-cli/SKILL.md" は "`--latex` の出力を `$$...$$` でそのまま引用する" を含む

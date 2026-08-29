@@ -12,6 +12,7 @@ async function registerMathExtension(world, options = {}) {
   const tools = new Map();
   const terminalWrites = [];
   const sessionEntries = options.newSession ? [] : (world.qniMathSessionEntries ?? []);
+  const eventHandlers = new Map();
   let sessionStart;
   let transformer;
   let inputListener;
@@ -40,6 +41,7 @@ async function registerMathExtension(world, options = {}) {
   try {
     extensionModule.default({
       on(event, handler) {
+        eventHandlers.set(event, handler);
         if (event === 'session_start') sessionStart = handler;
       },
       appendEntry(customType, data) {
@@ -55,6 +57,7 @@ async function registerMathExtension(world, options = {}) {
         tools.set(tool.name, tool);
       },
       exec(command, args, execOptions = {}) {
+        if (options.exec) return options.exec(command, args, execOptions);
         return new Promise((resolve) => {
           execFile(command, args, {
             cwd: execOptions.cwd,
@@ -74,7 +77,7 @@ async function registerMathExtension(world, options = {}) {
 
     assert.ok(transformer, 'expected qni-math to register a Markdown transformer');
     assert.ok(sessionStart, 'expected qni-math to observe session startup');
-    await sessionStart({}, {
+    await sessionStart({ reason: options.sessionStartReason ?? 'startup' }, {
       mode: 'tui',
       sessionManager: { getBranch: () => sessionEntries },
       ui: {
@@ -129,6 +132,7 @@ async function registerMathExtension(world, options = {}) {
   }
 
   world.qniMathCommands = commands;
+  world.qniMathEventHandlers = eventHandlers;
   world.qniMathTools = tools;
   world.qniMathTransformer = transformer;
   world.qniMathSessionEntries = sessionEntries;
