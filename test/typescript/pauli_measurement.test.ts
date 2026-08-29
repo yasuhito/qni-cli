@@ -21,6 +21,18 @@ describe('Pauli measurement settings', () => {
       { axes: 'ZXZ', pauliStrings: ['IXI'] }
     ]);
   });
+
+  it('rejects Pauli strings that represent different qubit counts', () => {
+    assert.throws(() => groupPauliMeasurementSettings(['X', 'ZZ']), {
+      message: 'Pauli strings must all have the same length'
+    });
+  });
+
+  it('allows empty Pauli strings for a zero-qubit system', () => {
+    assert.deepEqual(groupPauliMeasurementSettings(['', '']), [
+      { axes: '', pauliStrings: ['', ''] }
+    ]);
+  });
 });
 
 describe('finite-shot Pauli expectation estimates', () => {

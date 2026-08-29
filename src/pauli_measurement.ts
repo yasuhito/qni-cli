@@ -17,11 +17,16 @@ export interface PauliExpectationEstimation {
 export function groupPauliMeasurementSettings(
   pauliStrings: readonly string[]
 ): readonly PauliMeasurementSetting[] {
+  const normalizedPauliStrings = pauliStrings.map((pauliString) => pauliString.toUpperCase());
+  normalizedPauliStrings.forEach(ensureValidPauliSymbols);
+  const pauliStringLength = normalizedPauliStrings[0]?.length;
+  if (normalizedPauliStrings.some((pauliString) => pauliString.length !== pauliStringLength)) {
+    throw new Error('Pauli strings must all have the same length');
+  }
+
   const settings: { axes: string; pauliStrings: string[] }[] = [];
 
-  for (const rawPauliString of pauliStrings) {
-    const pauliString = rawPauliString.toUpperCase();
-    ensureValidPauliSymbols(pauliString);
+  for (const pauliString of normalizedPauliStrings) {
     const setting = settings.find((candidate) => axesAreCompatible(candidate.axes, pauliString));
 
     if (setting) {
