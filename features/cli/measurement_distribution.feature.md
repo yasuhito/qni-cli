@@ -3,25 +3,55 @@
 qni-cli の利用者として、測定回路を独立に複数回実行し、
 すべての古典ビットの共同分布を再現可能な表または JSON で確認したい。
 
-## Scenario: 測定ショット数を指定すると名前付き測定と名前なし測定の共同分布を表で表示する
+## Scenario: シード値を省略した通常出力コマンドは成功する
+
+- Given "qni add Measure --qubit 0 --step 0" を実行
+- When "qni run --shots 3" を実行
+- Then コマンドは成功
+
+## Scenario: 通常出力は指定した測定ショット数を報告する
+
+- Given "qni add Measure --qubit 0 --step 0" を実行
+- When "qni run --shots 3" を実行
+- Then 標準出力の shots は 3
+
+## Scenario: 通常出力は生成したシード値を報告する
+
+- Given "qni add Measure --qubit 0 --step 0" を実行
+- When "qni run --shots 3" を実行
+- Then 標準出力の seed は符号なし32ビット整数
+
+## Scenario: 通常出力は共同分布を表で表示する
 
 - Given "qni add X --qubit 0 --step 0" を実行
 - Given "qni add Measure --name prepared --qubit 0 --step 1" を実行
 - Given "qni add Measure --qubit 1 --step 2" を実行
 - When "qni run --shots 3" を実行
-- Then 標準出力:
+- Then 標準出力の表:
 
   ```text
   prepared | q1 | count
   1        | 0  | 3
   ```
 
-## Scenario: シード値を指定すると同じ共同分布を再現する
+## Scenario: 通常出力はシード値とともに指定した測定ショット数を報告する
+
+- Given "qni add Measure --qubit 0 --step 0" を実行
+- When "qni run --shots 8 --seed 42" を実行
+- Then 標準出力の shots は 8
+
+## Scenario: 通常出力は指定したシード値を報告する
+
+- Given "qni add Measure --qubit 0 --step 0" を実行
+- When "qni run --shots 8 --seed 42" を実行
+- Then 標準出力の seed は 42
+
+## Scenario: 指定したシード値の共同分布を表で表示する
 
 - Given "qni add H --qubit 0 --step 0" を実行
 - Given "qni add Measure --name result --qubit 0 --step 1" を実行
 - When "qni run --shots 8 --seed 42" を実行
-- Then 標準出力:
+- Then 標準出力の表:
 
   ```text
   result | count
@@ -29,18 +59,47 @@ qni-cli の利用者として、測定回路を独立に複数回実行し、
   1      | 5
   ```
 
+## Scenario: 生成したシード値を指定すると通常出力全体を再現する
+
+- Given "qni add H --qubit 0 --step 0" を実行
+- Given "qni add Measure --name result --qubit 0 --step 1" を実行
+- When "qni run --shots 8" を実行
+- Then 生成したシード値を指定すると通常の標準出力が一致する
+
+## Scenario: シード値を省略した JSON 出力コマンドは成功する
+
+- Given "qni add Measure --qubit 0 --step 0" を実行
+- When "qni run --json" を実行
+- Then コマンドは成功
+
+## Scenario: JSON 出力は測定ショット数を報告する
+
+- Given "qni add Measure --qubit 0 --step 0" を実行
+- When "qni run --json" を実行
+- Then JSON 出力の shots は 1
+
+## Scenario: JSON 出力は生成したシード値を報告する
+
+- Given "qni add Measure --qubit 0 --step 0" を実行
+- When "qni run --json" を実行
+- Then JSON 出力の seed は符号なし32ビット整数
+
+## Scenario: JSON 出力は指定した測定ショット数を報告する
+
+- Given "qni add Measure --qubit 0 --step 0" を実行
+- When "qni run --shots 3 --seed 42 --json" を実行
+- Then JSON 出力の shots は 3
+
 ## Scenario: JSON 出力は古典ビット名から値を参照できる
 
 - Given "qni add X --qubit 0 --step 0" を実行
 - Given "qni add Measure --name prepared --qubit 0 --step 1" を実行
 - Given "qni add Measure --qubit 1 --step 2" を実行
 - When "qni run --shots 3 --seed 42 --json" を実行
-- Then 標準出力は次の JSON と一致する:
+- Then JSON 出力の測定分布:
 
   ```json
   {
-    "shots": 3,
-    "seed": 42,
     "classicalBits": ["prepared", "q1"],
     "results": [
       {
@@ -51,25 +110,18 @@ qni-cli の利用者として、測定回路を独立に複数回実行し、
   }
   ```
 
-## Scenario: シード値を省略した JSON 出力は固定シード値を報告しない
+## Scenario: JSON 出力は指定したシード値を報告する
 
 - Given "qni add Measure --qubit 0 --step 0" を実行
-- When "qni run --shots 1 --json" を実行
-- Then 標準出力は次の JSON と一致する:
+- When "qni run --shots 3 --seed 42 --json" を実行
+- Then JSON 出力の seed は 42
 
-  ```json
-  {
-    "shots": 1,
-    "seed": null,
-    "classicalBits": ["q0"],
-    "results": [
-      {
-        "values": {"q0": 0},
-        "count": 1
-      }
-    ]
-  }
-  ```
+## Scenario: 生成したシード値を指定すると JSON 出力全体を再現する
+
+- Given "qni add H --qubit 0 --step 0" を実行
+- Given "qni add Measure --name result --qubit 0 --step 1" を実行
+- When "qni run --shots 8 --json" を実行
+- Then 生成したシード値を指定すると JSON の標準出力が一致する
 
 ## Scenario: 測定ショット数は正の整数でなければならない
 

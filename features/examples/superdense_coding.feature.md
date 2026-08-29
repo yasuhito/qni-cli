@@ -13,6 +13,7 @@ qni-cli の利用者として、回路内で生成したランダムな2ビッ�
 - Then 標準出力:
 
   ```text
+  shots=16 seed=42
   input_high | input_low | output_high | output_low | count
   0          | 0         | 0           | 0          | 4
   0          | 1         | 0           | 1          | 3

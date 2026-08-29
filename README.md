@@ -41,6 +41,7 @@ q0 と q1 の測定で2ビットをランダムに作ります。q2 と q3 に B
 `qni run --shots 16 --seed 42` の出力:
 
 ```text
+shots=16 seed=42
 input_high | input_low | output_high | output_low | count
 0          | 0         | 0           | 0          | 4
 0          | 1         | 0           | 1          | 3
@@ -67,7 +68,7 @@ input_high | input_low | output_high | output_low | count
 
 - 回路を作成・編集し、状態ベクトル、測定値、複数ショットの分布を実行結果として得る
 - 測定結果に名前を付け、その古典ビットを条件に後続のゲートを実行する
-- 乱数 seed を固定し、通常表示または JSON で再現可能な結果を得る
+- 出力された乱数 seed を指定し、通常表示または JSON の結果を再現する
 - 端末の回路図、PNG、LaTeX、状態ベクトル画像、Bloch sphere を生成する
 - 状態ベクトルや期待値を使って回路の性質を検証する
 - ベンチマーク提出物を検証・採点し、研究試行を記録・比較する

@@ -29,13 +29,13 @@ done < "$commands"
 
 ## 確認する
 
-通常出力では、各行について入力2列と出力2列が一致することを確認します。seed 42 の16ショットでは、4種類の入力をすべて再現できます。
+通常出力では、1行目の `shots=16 seed=42` で再現条件を確認し、各結果行で入力2列と出力2列が一致することを確認します。seed 42 の16ショットでは、4種類の入力をすべて再現できます。
 
 ```bash
 qni run --shots 16 --seed 42
 ```
 
-JSON 出力では、各結果の `input_high` と `output_high`、`input_low` と `output_low` を比較します。
+JSON 出力では、整数の `seed` と、各結果の `input_high` と `output_high`、`input_low` と `output_low` を確認します。`--seed` を省略した場合も qni が生成した値を `seed` に含めます。
 
 ```bash
 qni run --shots 16 --seed 42 --json
