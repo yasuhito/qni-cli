@@ -149,6 +149,12 @@
 - When 登録された qni ツールを確認する
 - Then qni ツールの説明に `["--help"]` がある
 
+## Scenario: qni ツールの説明から一括実行の失敗後の扱いが分かる
+
+- Given 偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When 登録された qni ツールを確認する
+- Then qni ツールの説明に一括実行と残りだけの再実行がある
+
 ## Scenario: qni ツールは引数と任意の作業場所を受け取る
 
 - Given 偽の Pi ExtensionAPI に数式描画拡張を登録する
@@ -172,3 +178,83 @@
 - Given 偽の Pi ExtensionAPI に数式描画拡張を登録する
 - When 数式描画拡張が登録したツール名を確認する
 - Then 数式描画拡張は bash ツールを登録していない
+
+## Scenario: 複数コマンドを一括実行する
+
+- Given 偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When qni ツールで X ゲートの追加と回路表示を一括実行する
+- Then 一括実行の結果はコマンドごとの見出し付き本文である
+
+## Scenario: 一括実行の見出しで特別な引数を引用する
+
+- Given 偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When qni ツールで初期状態の設定と表示を一括実行する
+- Then 一括実行の見出しは特別な引数だけを引用する
+
+## Scenario Outline: 不正な一括実行入力をコマンド実行前に拒否する
+
+- Given qni-cli の実行回数を記録する偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When qni ツールへ不正な入力 <input> を渡す
+- Then qni ツールは qni-cli を実行せず入力を拒否する
+
+### Examples
+
+| input |
+| `args` と `commands` の両方 |
+| `args` と `commands` の両方を省略 |
+| 空の `commands` |
+| 空のコマンドを含む `commands` |
+
+## Scenario: 一括実行は最初の失敗で止まる
+
+- Given 偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When qni ツールで成功、失敗、未実行のコマンドを一括実行する
+- Then 一括実行の失敗は成功分と停止位置を示して変更を残す
+
+## Scenario: 同じ作業場所への呼び出しは一括実行の途中に割り込まない
+
+- Given qni-cli の実行順を記録する偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When 同じ作業場所へ一括実行と単一実行を同時に呼ぶ
+- Then 単一実行は一括実行の後に動く
+
+## Scenario: 一括実行の LaTeX を結果の詳細に保持する
+
+- Given 偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When qni ツールで回路追加と LaTeX 実行を一括実行する
+- Then 一括実行の結果詳細は LaTeX とコマンド引数を保持する
+
+## Scenario: 一括実行の LaTeX を画像経路で描く
+
+- Given 偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When qni ツールで回路追加と LaTeX 実行を一括実行する
+- Then 一括実行の結果描画は見出し、文字列、Image 部品の順である
+
+## Scenario: テキスト経路では一括実行の LaTeX を文字列で描く
+
+- Given テキスト経路で偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When qni ツールで回路追加と LaTeX 実行を一括実行する
+- Then 一括実行の結果描画はすべて文字列である
+
+## Scenario: 一括実行の標準出力をコマンドごとに切り詰める
+
+- Given 大きな標準出力を返す偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When qni ツールで LaTeX コマンドを一括実行する
+- Then 一括実行の出力は切り詰められて LaTeX を保持しない
+
+## Scenario: 単一実行の標準出力を切り詰める
+
+- Given 大きな標準出力を返す偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When qni ツールで LaTeX コマンドを単一実行する
+- Then 単一実行の出力は切り詰められて LaTeX を保持しない
+
+## Scenario: 一括実行のキャンセルを報告する
+
+- Given キャンセル結果を返す偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When qni ツールで複数コマンドを一括実行する
+- Then qni ツールはキャンセルを終了ステータスなしで報告する
+
+## Scenario: 単一実行のキャンセルを報告する
+
+- Given キャンセル結果を返す偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When qni ツールでコマンドを単一実行する
+- Then qni ツールはキャンセルを終了ステータスなしで報告する

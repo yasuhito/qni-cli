@@ -13,8 +13,7 @@ function qniTool(world) {
   return tool;
 }
 
-async function executeQniTool(world, args, workdir) {
-  const params = workdir === undefined ? { args } : { args, workdir };
+async function executeQniParams(world, params) {
   const result = await qniTool(world).execute('qni-tool-call', params, undefined, undefined, {
     cwd: world.scenarioDir
   });
@@ -23,6 +22,16 @@ async function executeQniTool(world, args, workdir) {
     world.tempDirs = [...(world.tempDirs ?? []), actualWorkdir];
   }
   return result;
+}
+
+async function executeQniTool(world, args, workdir) {
+  const params = workdir === undefined ? { args } : { args, workdir };
+  return executeQniParams(world, params);
+}
+
+async function executeQniCommands(world, commands, workdir) {
+  const params = workdir === undefined ? { commands } : { commands, workdir };
+  return executeQniParams(world, params);
 }
 
 async function addHadamard(world, workdir) {
@@ -68,6 +77,33 @@ async function captureWorkdirError(world, workdir) {
 Given('Pi の作業場所に既存の回路がある', async function () {
   await executeQniTool(this, ['add', 'X', '--qubit', '0', '--step', '0'], '.');
   this.originalCircuit = fs.readFileSync(path.join(this.scenarioDir, 'circuit.json'), 'utf8');
+});
+
+Given('qni-cli の実行回数を記録する偽の Pi ExtensionAPI に数式描画拡張を登録する', async function () {
+  this.qniExecutionCount = 0;
+  await registerMathExtension(this, {
+    exec: async () => {
+      this.qniExecutionCount += 1;
+      return { stdout: '', stderr: '', code: 0, killed: false };
+    }
+  });
+});
+
+Given('大きな標準出力を返す偽の Pi ExtensionAPI に数式描画拡張を登録する', async function () {
+  await registerMathExtension(this, {
+    exec: async () => ({
+      stdout: `${Array.from({ length: 2001 }, (_, index) => `line-${index + 1}`).join('\n')}\n`,
+      stderr: '',
+      code: 0,
+      killed: false
+    })
+  });
+});
+
+Given('キャンセル結果を返す偽の Pi ExtensionAPI に数式描画拡張を登録する', async function () {
+  await registerMathExtension(this, {
+    exec: async () => ({ stdout: '', stderr: '', code: 143, killed: true })
+  });
 });
 
 Given('qni-cli の実行順を記録する偽の Pi ExtensionAPI に数式描画拡張を登録する', async function () {
@@ -218,6 +254,88 @@ When('数式描画拡張が登録したツール名を確認する', function ()
   this.qniMathToolNames = Array.from(this.qniMathTools.keys());
 });
 
+When('qni ツールで X ゲートの追加と回路表示を一括実行する', async function () {
+  this.qniToolResult = await executeQniCommands(this, [
+    ['add', 'X', '--qubit=1', '--step=1'],
+    ['view']
+  ]);
+});
+
+When('qni ツールで初期状態の設定と表示を一括実行する', async function () {
+  this.qniToolResult = await executeQniCommands(this, [
+    ['state', 'set', 'alpha|0> + beta|1>'],
+    ['state', 'show']
+  ]);
+});
+
+When(/^qni ツールへ不正な入力 (.*) を渡す$/, async function (input) {
+  const paramsByInput = {
+    '`args` と `commands` の両方': { args: ['--help'], commands: [['--help']] },
+    '`args` と `commands` の両方を省略': {},
+    '空の `commands`': { commands: [] },
+    '空のコマンドを含む `commands`': { commands: [[]] }
+  };
+  try {
+    await executeQniParams(this, paramsByInput[input]);
+    assert.fail('expected the qni tool to reject invalid input');
+  } catch (error) {
+    this.qniToolError = error;
+  }
+});
+
+When('qni ツールで成功、失敗、未実行のコマンドを一括実行する', async function () {
+  try {
+    await executeQniCommands(this, [
+      ['add', 'X', '--qubit=0', '--step=0'],
+      ['does-not-exist'],
+      ['add', 'H', '--qubit=0', '--step=1']
+    ], '.');
+    assert.fail('expected the qni tool batch to fail');
+  } catch (error) {
+    this.qniToolError = error;
+  }
+});
+
+When('同じ作業場所へ一括実行と単一実行を同時に呼ぶ', async function () {
+  await Promise.all([
+    executeQniCommands(this, [['--help'], ['--help']], '.'),
+    executeQniTool(this, ['--help'], '.')
+  ]);
+});
+
+When('qni ツールで回路追加と LaTeX 実行を一括実行する', async function () {
+  this.qniToolResult = await executeQniCommands(this, [
+    ['add', 'H', '--qubit=0', '--step=0'],
+    ['run', '--latex']
+  ]);
+});
+
+When('qni ツールで LaTeX コマンドを一括実行する', async function () {
+  this.qniToolResult = await executeQniCommands(this, [['run', '--latex']]);
+});
+
+When('qni ツールで LaTeX コマンドを単一実行する', async function () {
+  this.qniToolResult = await executeQniTool(this, ['run', '--latex']);
+});
+
+async function captureCancellation(world, batch) {
+  try {
+    if (batch) await executeQniCommands(world, [['--help'], ['run']]);
+    else await executeQniTool(world, ['--help']);
+    assert.fail('expected the qni tool to report cancellation');
+  } catch (error) {
+    world.qniToolError = error;
+  }
+}
+
+When('qni ツールで複数コマンドを一括実行する', async function () {
+  await captureCancellation(this, true);
+});
+
+When('qni ツールでコマンドを単一実行する', async function () {
+  await captureCancellation(this, false);
+});
+
 Then('qni ツールの結果本文は qni-cli の標準出力と一致する', function () {
   assert.equal(qniToolText(this.qniToolResult), this.directQniResult.stdout);
 });
@@ -296,6 +414,12 @@ Then(/^qni ツールの説明に `\["--help"\]` がある$/, function () {
   assert.ok(this.qniToolDefinition.description.includes('["--help"]'));
 });
 
+Then('qni ツールの説明に一括実行と残りだけの再実行がある', function () {
+  assert.match(this.qniToolDefinition.description, /commands/u);
+  assert.match(this.qniToolDefinition.description, /成功分の変更は残る/u);
+  assert.match(this.qniToolDefinition.description, /残りだけを呼び直す/u);
+});
+
 Then('qni ツールの引数スキーマに args と任意の workdir がある', function () {
   const schema = this.qniToolDefinition.parameters;
   assert.deepEqual({
@@ -303,12 +427,18 @@ Then('qni ツールの引数スキーマに args と任意の workdir がある'
     required: schema.required,
     argsType: schema.properties.args.type,
     itemType: schema.properties.args.items.type,
+    commandsType: schema.properties.commands.type,
+    commandType: schema.properties.commands.items.type,
+    commandItemType: schema.properties.commands.items.items.type,
     workdirType: schema.properties.workdir.type
   }, {
-    properties: ['args', 'workdir'],
-    required: ['args'],
+    properties: ['args', 'commands', 'workdir'],
+    required: undefined,
     argsType: 'array',
     itemType: 'string',
+    commandsType: 'array',
+    commandType: 'array',
+    commandItemType: 'string',
     workdirType: 'string'
   });
 });
@@ -325,4 +455,79 @@ Then('qni ツールの展開表示に実際の作業場所がある', function (
 
 Then('数式描画拡張は bash ツールを登録していない', function () {
   assert.ok(!this.qniMathToolNames.includes('bash'));
+});
+
+Then('一括実行の結果はコマンドごとの見出し付き本文である', function () {
+  assert.equal(this.qniToolResult.content.length, 2);
+  assert.equal(this.qniToolResult.content[0].text, '$ qni add X --qubit=1 --step=1');
+  assert.match(this.qniToolResult.content[1].text, /^\$ qni view\n[\s\S]*X/u);
+});
+
+Then('一括実行の見出しは特別な引数だけを引用する', function () {
+  assert.match(
+    this.qniToolResult.content[0].text.split('\n')[0],
+    /^\$ qni state set 'alpha\|0> \+ beta\|1>'$/u
+  );
+});
+
+Then('qni ツールは qni-cli を実行せず入力を拒否する', function () {
+  assert.equal(this.qniExecutionCount, 0);
+  assert.match(String(this.qniToolError), /args|commands/u);
+});
+
+Then('一括実行の失敗は成功分と停止位置を示して変更を残す', function () {
+  const message = String(this.qniToolError);
+  assert.match(message, /\$ qni add X --qubit=0 --step=0/u);
+  assert.match(message, /\$ qni does-not-exist/u);
+  assert.match(message, /qni exited with status 1/u);
+  assert.match(message, /Stopped at command 2 of 3\. Commands 1 succeeded and their changes remain in the workdir\. Command 3 was not run\./u);
+  assert.doesNotMatch(message, /\$ qni add H/u);
+  const circuit = JSON.parse(fs.readFileSync(path.join(this.scenarioDir, 'circuit.json'), 'utf8'));
+  assert.equal(circuit.cols.flat().includes('X'), true);
+});
+
+Then('単一実行は一括実行の後に動く', function () {
+  assert.deepEqual(this.qniExecutionOrder, [
+    'start-1', 'end-1', 'start-2', 'end-2', 'start-3', 'end-3'
+  ]);
+});
+
+Then('一括実行の結果詳細は LaTeX とコマンド引数を保持する', function () {
+  assert.deepEqual(this.qniToolResult.details.commands[0], {
+    args: ['add', 'H', '--qubit=0', '--step=0']
+  });
+  assert.deepEqual(this.qniToolResult.details.commands[1].args, ['run', '--latex']);
+  assert.match(this.qniToolResult.details.commands[1].latex, /\\ket\{/u);
+});
+
+Then('一括実行の結果描画は見出し、文字列、Image 部品の順である', function () {
+  const { Container, Image, Text } = require('@earendil-works/pi-tui');
+  const component = renderQniToolResult(this);
+  assert.ok(component instanceof Container);
+  assert.equal(component.children.length, 3);
+  assert.ok(component.children[0] instanceof Text);
+  assert.ok(component.children[1] instanceof Text);
+  assert.ok(component.children[2] instanceof Image);
+});
+
+Then('一括実行の結果描画はすべて文字列である', function () {
+  const { Container, Text } = require('@earendil-works/pi-tui');
+  const component = renderQniToolResult(this);
+  assert.ok(component instanceof Container);
+  assert.ok(component.children.every((child) => child instanceof Text));
+});
+
+Then('一括実行の出力は切り詰められて LaTeX を保持しない', function () {
+  assert.match(this.qniToolResult.content[0].text, /\[Output truncated: 2000 of 2001 lines/u);
+  assert.equal(this.qniToolResult.details.commands[0].latex, undefined);
+});
+
+Then('単一実行の出力は切り詰められて LaTeX を保持しない', function () {
+  assert.match(qniToolText(this.qniToolResult), /\[Output truncated: 2000 of 2001 lines/u);
+  assert.equal(this.qniToolResult.details.latex, undefined);
+});
+
+Then('qni ツールはキャンセルを終了ステータスなしで報告する', function () {
+  assert.match(String(this.qniToolError), /qni was cancelled/u);
+  assert.doesNotMatch(String(this.qniToolError), /status/u);
 });
