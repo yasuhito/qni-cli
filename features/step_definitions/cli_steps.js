@@ -1595,6 +1595,50 @@ Then('標準出力:', function (docString) {
   );
 });
 
+Then('標準出力は生成したシード値と次の表を含む:', function (docString) {
+  const [summary, ...tableLines] = normalizeMultilineText(this.lastCommand.stdout).split('\n');
+  const match = /^shots=(\d+) seed=(\d+)$/u.exec(summary);
+
+  assert.notEqual(match, null, `unexpected measurement summary: ${summary}`);
+  const seed = Number(match[2]);
+  assert.ok(Number.isInteger(seed) && seed >= 0 && seed <= 0xffffffff, `invalid generated seed: ${match[2]}`);
+  assert.equal(tableLines.join('\n'), normalizeMultilineText(docStringContent(docString)));
+});
+
+Then('生成したシード値を指定すると通常出力全体が一致する', async function () {
+  const original = this.lastCommand;
+  const match = /^shots=(\d+) seed=(\d+)$/mu.exec(original.stdout);
+
+  assert.notEqual(match, null, `unexpected measurement summary: ${original.stdout}`);
+  const replay = await runQniCommand(
+    this.scenarioDir,
+    `qni run --shots ${match[1]} --seed ${match[2]}`,
+    this.commandEnv
+  );
+  assert.deepEqual(replay, original);
+});
+
+Then('JSON 出力は生成したシード値と測定分布を含む', function () {
+  const output = JSON.parse(this.lastCommand.stdout);
+
+  assert.equal(output.shots, 1);
+  assert.ok(Number.isInteger(output.seed) && output.seed >= 0 && output.seed <= 0xffffffff);
+  assert.deepEqual(output.classicalBits, ['q0']);
+  assert.deepEqual(output.results, [{ values: { q0: 0 }, count: 1 }]);
+});
+
+Then('生成したシード値を指定すると JSON 出力全体が一致する', async function () {
+  const original = this.lastCommand;
+  const output = JSON.parse(original.stdout);
+  const replay = await runQniCommand(
+    this.scenarioDir,
+    `qni run --shots ${output.shots} --seed ${output.seed} --json`,
+    this.commandEnv
+  );
+
+  assert.deepEqual(replay, original);
+});
+
 Then('標準出力の内容:', function (docString) {
   assert.equal(
     normalizeMultilineText(this.lastCommand.stdout),

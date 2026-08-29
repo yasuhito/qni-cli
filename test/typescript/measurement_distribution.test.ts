@@ -17,11 +17,10 @@ describe('measurement distributions', () => {
         cols: [['X', 1], ['Measure>prepared', 1], [1, 'Measure']]
       });
 
-      assert.deepEqual(captureDispatcherRun(dir, ['run', '--shots', '3']), {
-        exitStatus: 0,
-        stderr: '',
-        stdout: 'prepared | q1 | count\n1        | 0  | 3\n'
-      });
+      const output = captureDispatcherRun(dir, ['run', '--shots', '3']);
+      assert.equal(output.exitStatus, 0);
+      assert.equal(output.stderr, '');
+      assert.match(output.stdout, /^shots=3 seed=\d+\nprepared \| q1 \| count\n1        \| 0  \| 3\n$/u);
     });
   });
 
@@ -37,6 +36,21 @@ describe('measurement distributions', () => {
 
       assert.equal(first.exitStatus, 0);
       assert.deepEqual(second, first);
+    });
+  });
+
+  it('includes an explicit seed in the table summary when shots are omitted', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        qubits: 1,
+        cols: [['Measure']]
+      });
+
+      assert.deepEqual(captureDispatcherRun(dir, ['run', '--seed', '42']), {
+        exitStatus: 0,
+        stderr: '',
+        stdout: 'shots=1 seed=42\nq0 | count\n0  | 1\n'
+      });
     });
   });
 
@@ -58,35 +72,38 @@ describe('measurement distributions', () => {
     });
   });
 
-  it('uses Math.random rather than a fixed seed when seed is omitted', async () => {
+  it('reports a generated seed that reproduces the complete JSON output', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
         qubits: 1,
         cols: [['H'], ['Measure']]
       });
-      const originalRandom = Math.random;
-      const values = [0.25, 0.75];
-      let calls = 0;
-      Math.random = () => values[calls++] ?? 0.25;
 
-      try {
-        assert.deepEqual(captureDispatcherRun(dir, ['run', '--shots', '2', '--json']), {
-          exitStatus: 0,
-          stderr: '',
-          stdout: `${JSON.stringify({
-            shots: 2,
-            seed: null,
-            classicalBits: ['q0'],
-            results: [
-              { values: { q0: 0 }, count: 1 },
-              { values: { q0: 1 }, count: 1 }
-            ]
-          }, null, 2)}\n`
-        });
-        assert.equal(calls, 2);
-      } finally {
-        Math.random = originalRandom;
-      }
+      const first = captureDispatcherRun(dir, ['run', '--shots', '20', '--json']);
+      assert.equal(first.exitStatus, 0);
+      const seed = JSON.parse(first.stdout).seed as unknown;
+      assert.equal(Number.isInteger(seed), true);
+      assert.ok((seed as number) >= 0 && (seed as number) <= 0xffffffff);
+
+      const replay = captureDispatcherRun(dir, ['run', '--shots', '20', '--seed', String(seed), '--json']);
+      assert.deepEqual(replay, first);
+    });
+  });
+
+  it('reports a generated seed that reproduces the complete table output', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        qubits: 1,
+        cols: [['H'], ['Measure']]
+      });
+
+      const first = captureDispatcherRun(dir, ['run', '--shots', '20']);
+      assert.equal(first.exitStatus, 0);
+      const seed = /^shots=20 seed=(\d+)$/mu.exec(first.stdout)?.[1];
+      assert.notEqual(seed, undefined);
+
+      const replay = captureDispatcherRun(dir, ['run', '--shots', '20', '--seed', seed as string]);
+      assert.deepEqual(replay, first);
     });
   });
 

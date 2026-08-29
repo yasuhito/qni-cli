@@ -1,9 +1,10 @@
 import { Simulator, type MeasurementResult } from './simulator';
 import type { CircuitData } from './circuit_file';
+import { seededRandom } from './random_seed';
 
 export interface MeasurementDistribution {
   readonly shots: number;
-  readonly seed: number | null;
+  readonly seed: number;
   readonly classicalBits: readonly string[];
   readonly results: readonly MeasurementDistributionResult[];
 }
@@ -16,9 +17,9 @@ export interface MeasurementDistributionResult {
 export function sampleMeasurementDistribution(
   circuit: CircuitData,
   shots: number,
-  seed: number | undefined
+  seed: number
 ): MeasurementDistribution {
-  const random = seed === undefined ? Math.random : seededRandom(seed);
+  const random = seededRandom(seed);
   const simulator = new Simulator(circuit);
   let classicalBits: readonly string[] | undefined;
   const counts = new Map<string, { count: number; values: Record<string, 0 | 1> }>();
@@ -43,7 +44,7 @@ export function sampleMeasurementDistribution(
 
   return {
     shots,
-    seed: seed ?? null,
+    seed,
     classicalBits: classicalBits ?? [],
     results: [...counts.entries()]
       .sort(([left], [right]) => left.localeCompare(right))
@@ -61,9 +62,11 @@ export function formatMeasurementDistribution(distribution: MeasurementDistribut
     Math.max(header.length, ...rows.map((row) => row[index]?.length ?? 0))
   );
 
-  return [headers, ...rows]
+  const table = [headers, ...rows]
     .map((row) => row.map((cell, index) => cell.padEnd(widths[index] ?? cell.length)).join(' | ').trimEnd())
     .join('\n');
+
+  return `shots=${distribution.shots} seed=${distribution.seed}\n${table}`;
 }
 
 function measurementLabels(measurements: readonly MeasurementResult[]): readonly string[] {
@@ -86,16 +89,4 @@ function measurementLabels(measurements: readonly MeasurementResult[]): readonly
     used.add(label);
     return label;
   });
-}
-
-function seededRandom(seed: number): () => number {
-  let state = seed;
-
-  return () => {
-    state = (state + 0x6d2b79f5) | 0;
-    let value = state;
-    value = Math.imul(value ^ (value >>> 15), value | 1);
-    value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
-    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
-  };
 }

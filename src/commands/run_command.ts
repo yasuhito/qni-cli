@@ -4,11 +4,10 @@ import {
   formatMeasurementDistribution,
   sampleMeasurementDistribution
 } from '../measurement_distribution';
+import { generateSeed, validateSeed } from '../random_seed';
 import { circuitContainsMeasurements, Simulator } from '../simulator';
 import { renderSymbolicStateVector } from '../symbolic_state_renderer';
 import { thorArgumentsError } from './thor_compatibility';
-
-const MAX_SEED = 0xffffffff;
 
 const HELP_TEXT = `Usage:
   qni run [--symbolic] [--basis=BASIS] [--latex]
@@ -19,7 +18,7 @@ Overview:
   Without --symbolic, output is numeric amplitudes in the computational basis.
   A circuit containing Measure is run once and prints qN=0 or qN=1 for each measured qubit.
   Use --shots to run a measurement circuit independently from its initial state and print a joint distribution.
-  Use --seed to reproduce the same joint distribution. Without it, measurement uses ordinary unfixed randomness.
+  Use --seed to reproduce the same joint distribution. Without it, qni generates a seed and includes it in the output.
   Use --json to return shots, seed, classical bit names, values, and counts as structured data.
   Measurement follows computational-basis probabilities and collapses the state before later operations.
   --symbolic prints a symbolic ket expression for supported small circuits.
@@ -113,7 +112,8 @@ export function runRunCommand(argv: string[], context: CommandHandlerContext): n
 }
 
 function renderDistribution(circuit: Parameters<typeof sampleMeasurementDistribution>[0], options: RunOptions): string {
-  const distribution = sampleMeasurementDistribution(circuit, options.shots, options.seed);
+  const seed = options.seed ?? generateSeed();
+  const distribution = sampleMeasurementDistribution(circuit, options.shots, seed);
   return options.json ? JSON.stringify(distribution, null, 2) : formatMeasurementDistribution(distribution);
 }
 
@@ -195,8 +195,5 @@ function setNumericOption(
     return;
   }
 
-  if (!Number.isInteger(value) || value < 0 || value > MAX_SEED) {
-    throw new Error(`--seed must be an integer between 0 and ${MAX_SEED}`);
-  }
-  options.seed = value;
+  options.seed = validateSeed(value);
 }

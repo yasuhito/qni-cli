@@ -24,7 +24,7 @@ qni run のヘルプで利用できるオプションを確認したい。
     Without --symbolic, output is numeric amplitudes in the computational basis.
     A circuit containing Measure is run once and prints qN=0 or qN=1 for each measured qubit.
     Use --shots to run a measurement circuit independently from its initial state and print a joint distribution.
-    Use --seed to reproduce the same joint distribution. Without it, measurement uses ordinary unfixed randomness.
+    Use --seed to reproduce the same joint distribution. Without it, qni generates a seed and includes it in the output.
     Use --json to return shots, seed, classical bit names, values, and counts as structured data.
     Measurement follows computational-basis probabilities and collapses the state before later operations.
     --symbolic prints a symbolic ket expression for supported small circuits.
