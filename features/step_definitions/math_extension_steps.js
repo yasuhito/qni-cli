@@ -38,12 +38,6 @@ Given('`TERM=screen` が設定された偽の端末で数式描画拡張を起�
   await registerMathExtension(this, { term: 'screen' });
 });
 
-Given(/^`\\op` を `\\mathrm\{#1\}` に展開する環境変数で数式描画拡張を起動する$/, async function () {
-  await registerMathExtension(this, {
-    envMacros: JSON.stringify({ op: ['\\mathrm{#1}', 1] })
-  });
-});
-
 Given(/^`\\op` を `\\hat\{#1\}` に展開する環境変数で数式描画拡張を起動する$/, async function () {
   await registerMathExtension(this, {
     envMacros: JSON.stringify({ op: ['\\hat{#1}', 1] })
@@ -118,6 +112,14 @@ When(/^`\$x\$` を含む本文を画像経路で変換する$/, function () {
   transform(this, '値は $x$ です。');
 });
 
+When(/^`\$\$x\$\$` を含む本文を画像経路で変換する$/, function () {
+  transform(this, '$$x$$');
+});
+
+When(/^`\\\(x\\\)` を含む本文を画像経路で変換する$/, function () {
+  transform(this, '値は \\(x\\) です。');
+});
+
 When(/^`\$\\op\{H\}\$` を含む本文を画像経路で変換する$/, function () {
   transform(this, '$\\op{H}$');
 });
@@ -130,29 +132,11 @@ When('表示数式とインライン数式を含む本文を画像経路で変�
   transform(this, '値は $x$ です。\n\n$$\\frac{1}{\\sqrt 2}(\\ket{00}+\\ket{11})$$');
 });
 
-When(/^単純な(インライン|表示)数式を端末セルに組版する$/, function (kind) {
+When('単純な表示数式を端末セルに組版する', function () {
   const { getCellDimensions } = require('@earendil-works/pi-tui');
   const { typesetMath } = require('../../dist/qni-math/typesetter.js');
   this.qniMathCell = getCellDimensions();
-  this.qniMathTypesetImage = typesetMath(
-    'x',
-    kind === '表示',
-    '#100f0f',
-    80,
-    this.qniMathCell
-  );
-});
-
-When('背の高いインライン数式を端末セルに組版する', function () {
-  const { getCellDimensions } = require('@earendil-works/pi-tui');
-  const { typesetMath } = require('../../dist/qni-math/typesetter.js');
-  this.qniMathTypesetImage = typesetMath(
-    '\\frac{\\ket{00}+\\ket{11}}{\\sqrt 2}',
-    false,
-    '#100f0f',
-    80,
-    getCellDimensions()
-  );
+  this.qniMathTypesetImage = typesetMath('x', '#100f0f', 80, this.qniMathCell);
 });
 
 When('背の高いインライン数式を画像経路で変換する', function () {
@@ -168,11 +152,11 @@ When('4 種類の数式区切りを含む本文を画像経路で変換する', 
 });
 
 When('2 つの数式を含む本文を画像経路で変換する', function () {
-  transform(this, '$x$ と $y$');
+  transform(this, '$$x$$\n\n$$y$$');
 });
 
 When('コードと通常の数式を含む本文を画像経路で変換する', function () {
-  transform(this, '```text\n$not-math$\n```\n`$also-code$` と $x$');
+  transform(this, '```text\n$not-math$\n```\n`$also-code$`\n\n$$x$$');
 });
 
 When('引用内のコードフェンスを含む本文を画像経路で変換する', function () {
@@ -188,17 +172,17 @@ When(/^ストリーミング中に `状態 \$\\frac\{1\}\{\\sqrt 2\}` まで届�
 });
 
 When('同じ数式を 2 回変換する', function () {
-  transform(this, '値は $x$ です。');
+  transform(this, '$$x$$');
   this.qniMathFirstPlacement = imagePlacement(this.qniMathMarkdown);
-  transform(this, '値は $x$ です。');
+  transform(this, '$$x$$');
   this.qniMathSecondPlacement = imagePlacement(this.qniMathMarkdown);
 });
 
 When('本文色を濃くして同じ数式を再変換する', function () {
-  transform(this, '値は $x$ です。');
+  transform(this, '$$x$$');
   this.qniMathFirstPlacement = imagePlacement(this.qniMathMarkdown);
   this.qniMathSetTextColor('\x1b[38;2;16;15;15m');
-  transform(this, '値は $x$ です。');
+  transform(this, '$$x$$');
   this.qniMathSecondPlacement = imagePlacement(this.qniMathMarkdown);
 });
 
@@ -211,7 +195,7 @@ When('長い表示数式を異なる利用可能幅で変換する', function ()
 });
 
 When('不正な数式と正しい数式を含む本文を変換する', function () {
-  transform(this, '$\\frac{$ と $x$');
+  transform(this, '$\\frac{$\n\n$$x$$');
 });
 
 When('数式を変換して `\\/math clear` のあと `\\/math status` を実行する', async function () {
@@ -311,6 +295,14 @@ Then('変換後の Markdown の先頭行に画像転送がある', function () {
   assert.match(transferLine, /^\x1b_Ga=T,f=100,q=2,U=1,i=\d+,p=\d+,c=\d+,r=\d+/u);
 });
 
+Then('単純なインライン数式は Markdown のまま残る', function () {
+  assert.equal(this.qniMathMarkdown, '値は $x$ です。');
+});
+
+Then('丸括弧区切りのインライン数式は Markdown のまま残る', function () {
+  assert.equal(this.qniMathMarkdown, '値は \\(x\\) です。');
+});
+
 Then('変換後のプレースホルダーは画像IDと配置IDを使う', function () {
   assert.deepEqual({
     hasForeground: /\x1b\[38;2;\d+;\d+;\d+m/u.test(this.qniMathMarkdown),
@@ -327,9 +319,8 @@ Then('表示数式は独立した複数行に配置される', function () {
   assert.ok(displayLines.length >= 2 && displayLines.every((line) => line.includes(PLACEHOLDER)));
 });
 
-Then('インライン数式は本文中の 1 行に配置される', function () {
-  const inlineLine = this.qniMathMarkdown.split('\n').find((line) => line.includes('値は'));
-  assert.ok(inlineLine?.includes(PLACEHOLDER));
+Then('インライン数式は本文中の Markdown のまま残る', function () {
+  assert.ok(this.qniMathMarkdown.includes('値は $x$ です。'));
 });
 
 Then('転送する PNG は配置する端末セルの 2 倍の画素密度を持つ', function () {
@@ -352,10 +343,6 @@ Then(/^表示数式の内容は端末セル高の (\d+) パーセント以上 (\
   assert.ok(ratio >= Number(minimum) / 100 && ratio < Number(maximum) / 100);
 });
 
-Then(/^インライン数式の縮小率は (\d+) パーセント未満になる$/, function (percent) {
-  assert.ok(this.qniMathTypesetImage.scale < Number(percent) / 100);
-});
-
 Then('背の高いインライン数式は Markdown のまま残る', function () {
   assert.equal(
     this.qniMathMarkdown,
@@ -375,9 +362,9 @@ Then('PNG 転送は同じ命令で仮想配置とセル寸法を指定する', f
   assert.equal(transfer[1], transfer[2]);
 });
 
-Then('4 つの数式が画像配置になる', function () {
+Then('2 つの表示数式が画像配置になる', function () {
   const transferLine = this.qniMathMarkdown.split('\n')[0];
-  assert.equal((transferLine.match(/a=T,f=100/g) ?? []).length, 4);
+  assert.equal((transferLine.match(/a=T,f=100/g) ?? []).length, 2);
 });
 
 Then('変換後の Markdown の転送行は 1 行だけになる', function () {
@@ -408,10 +395,6 @@ Then('thinking ブロックの本文は変更されない', function () {
 });
 
 Then('Bell 状態は設定なしで画像配置になる', function () {
-  assert.ok(this.qniMathMarkdown.includes(PLACEHOLDER));
-});
-
-Then('利用者マクロは画像配置になる', function () {
   assert.ok(this.qniMathMarkdown.includes(PLACEHOLDER));
 });
 

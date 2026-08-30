@@ -82,7 +82,7 @@ pi list
 確認項目:
 
 1. Pi が `qni-math` 拡張と `qni-cli` スキルを読み込む。
-2. `/math status` が `qni-math` の版、`path: image`、`reason: 問い合わせ応答 OK` を表示し、本文の `$...$`、`$$...$$`、`\\(...\\)`、`\\[...\\]` を Ghostty / Kitty の画像で描く。コードと thinking ブロックの数式は変換しない。
+2. `/math status` が `qni-math` の版、`path: image`、`reason: 問い合わせ応答 OK` を表示する。本文の `$...$` と `\\(...\\)` は Pi の Unicode テキストで、`$$...$$` と `\\[...\\]` は Ghostty / Kitty の画像で描く。コードと thinking ブロックの数式は変換しない。
 3. `/math text` の後は `/math status` が `path: text` と `reason: 手動指定` を表示し、`\\ket`、`\\bra`、`\\braket` を Pi が整形できる LaTeX に展開する。`/math auto` で端末問い合わせによる自動判定へ戻る。
 4. `/math image|text|auto` は現在のセッションに残る。`--default` を付けると `~/.config/qni-cli/qni-math.json`（`XDG_CONFIG_HOME` があればその配下）へ全体既定を保存する。`/math auto --default` は保存した既定を消す。
 5. スキル同梱の `scripts/qni` が使われ、Ruby、Bundler、リポジトリの絶対パスが使われない。

@@ -52,7 +52,7 @@ scripts/dev/headless_qni_math_images.sh kitty dark /tmp/qni-math-kitty-dark.png 
 scripts/dev/headless_qni_math_images.sh kitty light /tmp/qni-math-kitty-light.png auto
 ```
 
-各 PNG で、端末への PNG 問い合わせから画像経路が自動選択され、インライン数式が本文の 1 行に収まり、Bell 状態の表示数式が独立した行に描かれていることを確認する。古い本文の残像と色の帯がないことも確認する。固定セッションは `scripts/dev/qni_math_session.jsonl` に置く。
+各 PNG で、端末への PNG 問い合わせから画像経路が自動選択され、インライン数式が本文と同じ大きさの Unicode テキストになり、Bell 状態の表示数式が独立した画像として描かれていることを確認する。古い本文の残像と色の帯がないことも確認する。固定セッションは `scripts/dev/qni_math_session.jsonl` に置く。
 
 Ghostty で `/math text` に切り替えたテキスト経路も撮る。
 
