@@ -9,6 +9,10 @@ Given('偽の Pi ExtensionAPI に数式描画拡張を登録する', async funct
   await registerMathExtension(this);
 });
 
+Given('薄い本文色で数式描画拡張を起動する', async function () {
+  await registerMathExtension(this, { textColor: '\x1b[38;2;87;86;83m' });
+});
+
 Given('テキスト経路で偽の Pi ExtensionAPI に数式描画拡張を登録する', async function () {
   await registerMathExtension(this);
   await mathCommand(this).handler('text', { ui: { notify() {} } });
@@ -32,6 +36,12 @@ Given('`TMUX` が設定された偽の端末で数式描画拡張を起動する
 
 Given('`TERM=screen` が設定された偽の端末で数式描画拡張を起動する', async function () {
   await registerMathExtension(this, { term: 'screen' });
+});
+
+Given(/^`\\op` を `\\mathrm\{#1\}` に展開する環境変数で数式描画拡張を起動する$/, async function () {
+  await registerMathExtension(this, {
+    envMacros: JSON.stringify({ op: ['\\mathrm{#1}', 1] })
+  });
 });
 
 Given(/^`\\op` を `\\hat\{#1\}` に展開する環境変数で数式描画拡張を起動する$/, async function () {
@@ -73,9 +83,18 @@ function transform(world, markdown, options = {}) {
 }
 
 function imagePlacement(markdown) {
-  const placement = markdown.match(/a=p,U=1,q=2,i=(\d+),p=\d+,c=(\d+),r=(\d+)/u);
+  const placement = markdown.match(/a=T,f=100,q=2,U=1,i=(\d+),p=\d+,c=(\d+),r=(\d+)/u)
+    ?? markdown.match(/a=p,U=1,q=2,i=(\d+),p=\d+,c=(\d+),r=(\d+)/u);
   assert.ok(placement, 'expected an image placement');
   return { id: Number(placement[1]), columns: Number(placement[2]), rows: Number(placement[3]) };
+}
+
+function transferredPng(markdown) {
+  const chunks = Array.from(markdown.matchAll(/\x1b_G([^;]+);([A-Za-z0-9+/=]*)\x1b\\/gu))
+    .filter((match) => !match[1].includes('a=p'))
+    .map((match) => match[2]);
+  assert.ok(chunks.length > 0, 'expected PNG transfer chunks');
+  return Buffer.from(chunks.join(''), 'base64');
 }
 
 function mathCommand(world) {
@@ -95,6 +114,10 @@ When(/^`\$\\ket\{0\}\$` を含む本文を画像経路で変換する$/, functio
   transform(this, '状態は $\\ket{0}$ です。');
 });
 
+When(/^`\$x\$` を含む本文を画像経路で変換する$/, function () {
+  transform(this, '値は $x$ です。');
+});
+
 When(/^`\$\\op\{H\}\$` を含む本文を画像経路で変換する$/, function () {
   transform(this, '$\\op{H}$');
 });
@@ -104,7 +127,40 @@ When(/^`\$\\op\{H\}\$` を含む本文を変換する$/, function () {
 });
 
 When('表示数式とインライン数式を含む本文を画像経路で変換する', function () {
-  transform(this, '状態は $\\ket{0}$ です。\n\n$$\\frac{1}{\\sqrt 2}(\\ket{00}+\\ket{11})$$');
+  transform(this, '値は $x$ です。\n\n$$\\frac{1}{\\sqrt 2}(\\ket{00}+\\ket{11})$$');
+});
+
+When(/^単純な(インライン|表示)数式を端末セルに組版する$/, function (kind) {
+  const { getCellDimensions } = require('@earendil-works/pi-tui');
+  const { typesetMath } = require('../../dist/qni-math/typesetter.js');
+  this.qniMathCell = getCellDimensions();
+  this.qniMathTypesetImage = typesetMath(
+    'x',
+    kind === '表示',
+    '#100f0f',
+    80,
+    this.qniMathCell
+  );
+});
+
+When('背の高いインライン数式を端末セルに組版する', function () {
+  const { getCellDimensions } = require('@earendil-works/pi-tui');
+  const { typesetMath } = require('../../dist/qni-math/typesetter.js');
+  this.qniMathTypesetImage = typesetMath(
+    '\\frac{\\ket{00}+\\ket{11}}{\\sqrt 2}',
+    false,
+    '#100f0f',
+    80,
+    getCellDimensions()
+  );
+});
+
+When('背の高いインライン数式を画像経路で変換する', function () {
+  transform(this, 'Bell 状態は $\\frac{\\ket{00}+\\ket{11}}{\\sqrt 2}$ です。');
+});
+
+When('Pauli 相関のインライン数式を画像経路で変換する', function () {
+  transform(this, '相関は $\\langle ZZ\\rangle=1$ です。');
 });
 
 When('4 種類の数式区切りを含む本文を画像経路で変換する', function () {
@@ -112,11 +168,11 @@ When('4 種類の数式区切りを含む本文を画像経路で変換する', 
 });
 
 When('2 つの数式を含む本文を画像経路で変換する', function () {
-  transform(this, '$\\ket{0}$ と $\\ket{1}$');
+  transform(this, '$x$ と $y$');
 });
 
 When('コードと通常の数式を含む本文を画像経路で変換する', function () {
-  transform(this, '```text\n$not-math$\n```\n`$also-code$` と $\\ket{0}$');
+  transform(this, '```text\n$not-math$\n```\n`$also-code$` と $x$');
 });
 
 When('引用内のコードフェンスを含む本文を画像経路で変換する', function () {
@@ -132,9 +188,17 @@ When(/^ストリーミング中に `状態 \$\\frac\{1\}\{\\sqrt 2\}` まで届�
 });
 
 When('同じ数式を 2 回変換する', function () {
-  transform(this, '状態は $\\ket{0}$ です。');
+  transform(this, '値は $x$ です。');
   this.qniMathFirstPlacement = imagePlacement(this.qniMathMarkdown);
-  transform(this, '状態は $\\ket{0}$ です。');
+  transform(this, '値は $x$ です。');
+  this.qniMathSecondPlacement = imagePlacement(this.qniMathMarkdown);
+});
+
+When('本文色を濃くして同じ数式を再変換する', function () {
+  transform(this, '値は $x$ です。');
+  this.qniMathFirstPlacement = imagePlacement(this.qniMathMarkdown);
+  this.qniMathSetTextColor('\x1b[38;2;16;15;15m');
+  transform(this, '値は $x$ です。');
   this.qniMathSecondPlacement = imagePlacement(this.qniMathMarkdown);
 });
 
@@ -147,7 +211,7 @@ When('長い表示数式を異なる利用可能幅で変換する', function ()
 });
 
 When('不正な数式と正しい数式を含む本文を変換する', function () {
-  transform(this, '$\\frac{$ と $\\ket{0}$');
+  transform(this, '$\\frac{$ と $x$');
 });
 
 When('数式を変換して `\\/math clear` のあと `\\/math status` を実行する', async function () {
@@ -244,15 +308,15 @@ When(/^`\$\\ket\{\\psi\} \\otimes \\ket\{0\}\$` を含む本文を変換して P
 
 Then('変換後の Markdown の先頭行に画像転送がある', function () {
   const transferLine = this.qniMathMarkdown.split('\n')[0];
-  assert.match(transferLine, /^\x1b_Ga=t,f=100,q=2,i=\d+;/);
+  assert.match(transferLine, /^\x1b_Ga=T,f=100,q=2,U=1,i=\d+,p=\d+,c=\d+,r=\d+/u);
 });
 
-Then('変換後のプレースホルダーは前景色だけを使う', function () {
+Then('変換後のプレースホルダーは画像IDと配置IDを使う', function () {
   assert.deepEqual({
     hasForeground: /\x1b\[38;2;\d+;\d+;\d+m/u.test(this.qniMathMarkdown),
-    hasUnderline: /\x1b\[58;/u.test(this.qniMathMarkdown),
+    hasUnderline: /\x1b\[58;2;\d+;\d+;\d+m/u.test(this.qniMathMarkdown),
     hasPlaceholder: this.qniMathMarkdown.includes(PLACEHOLDER)
-  }, { hasForeground: true, hasUnderline: false, hasPlaceholder: true });
+  }, { hasForeground: true, hasUnderline: true, hasPlaceholder: true });
 });
 
 Then('表示数式は独立した複数行に配置される', function () {
@@ -264,13 +328,55 @@ Then('表示数式は独立した複数行に配置される', function () {
 });
 
 Then('インライン数式は本文中の 1 行に配置される', function () {
-  const inlineLine = this.qniMathMarkdown.split('\n').find((line) => line.includes('状態は'));
+  const inlineLine = this.qniMathMarkdown.split('\n').find((line) => line.includes('値は'));
   assert.ok(inlineLine?.includes(PLACEHOLDER));
+});
+
+Then('転送する PNG は配置する端末セルの 2 倍の画素密度を持つ', function () {
+  const placement = imagePlacement(this.qniMathMarkdown);
+  const png = transferredPng(this.qniMathMarkdown);
+  const { getCellDimensions } = require('@earendil-works/pi-tui');
+  const cell = getCellDimensions();
+  assert.deepEqual(
+    { width: png.readUInt32BE(16), height: png.readUInt32BE(20) },
+    { width: placement.columns * cell.widthPx * 2, height: placement.rows * cell.heightPx * 2 }
+  );
+});
+
+Then(/^インライン数式の内容は端末セル高の (\d+) パーセント以上になる$/, function (percent) {
+  assert.ok(this.qniMathTypesetImage.heightPx >= this.qniMathCell.heightPx * Number(percent) / 100);
+});
+
+Then(/^表示数式の内容は端末セル高の (\d+) パーセント以上になる$/, function (percent) {
+  assert.ok(this.qniMathTypesetImage.heightPx >= this.qniMathCell.heightPx * Number(percent) / 100);
+});
+
+Then(/^インライン数式の縮小率は (\d+) パーセント未満になる$/, function (percent) {
+  assert.ok(this.qniMathTypesetImage.scale < Number(percent) / 100);
+});
+
+Then('背の高いインライン数式は Markdown のまま残る', function () {
+  assert.equal(
+    this.qniMathMarkdown,
+    'Bell 状態は $\\frac{|00\\rangle+|11\\rangle}{\\sqrt 2}$ です。'
+  );
+});
+
+Then('Pauli 相関のインライン数式は Markdown のまま残る', function () {
+  assert.equal(this.qniMathMarkdown, '相関は $\\langle ZZ\\rangle=1$ です。');
+});
+
+Then('PNG 転送は同じ命令で仮想配置とセル寸法を指定する', function () {
+  const transfer = this.qniMathMarkdown.match(
+    /\x1b_Ga=T,f=100,q=2,U=1,i=(\d+),p=(\d+),c=(\d+),r=(\d+)(?:,m=1)?;/u
+  );
+  assert.ok(transfer, 'expected a Kitty virtual image transfer');
+  assert.equal(transfer[1], transfer[2]);
 });
 
 Then('4 つの数式が画像配置になる', function () {
   const transferLine = this.qniMathMarkdown.split('\n')[0];
-  assert.equal((transferLine.match(/a=t,f=100/g) ?? []).length, 4);
+  assert.equal((transferLine.match(/a=T,f=100/g) ?? []).length, 4);
 });
 
 Then('変換後の Markdown の転送行は 1 行だけになる', function () {
@@ -329,6 +435,10 @@ Then('2 回の変換で同じ画像 ID が使われる', function () {
   assert.equal(this.qniMathFirstPlacement.id, this.qniMathSecondPlacement.id);
 });
 
+Then('テーマ変更後の数式画像 ID は変わる', function () {
+  assert.notEqual(this.qniMathFirstPlacement.id, this.qniMathSecondPlacement.id);
+});
+
 Then('表示数式の列数が変わる', function () {
   assert.notEqual(this.qniMathWidePlacement.columns, this.qniMathNarrowPlacement.columns);
 });
@@ -342,7 +452,7 @@ Then('不正な数式は原文のまま残る', function () {
 });
 
 Then('正しい数式は画像になる', function () {
-  assert.equal((this.qniMathMarkdown.match(/a=t,f=100/g) ?? []).length, 1);
+  assert.equal((this.qniMathMarkdown.match(/a=T,f=100/g) ?? []).length, 1);
 });
 
 Then('Pi の状態表示にキャッシュ件数 0 がある', function () {

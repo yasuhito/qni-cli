@@ -16,6 +16,7 @@ async function registerMathExtension(world, options = {}) {
   let sessionStart;
   let transformer;
   let inputListener;
+  let textColor = options.textColor ?? '\x1b[38;2;212;212;212m';
   const previousHome = process.env.HOME;
   const previousConfigHome = process.env.XDG_CONFIG_HOME;
   const previousTmux = process.env.TMUX;
@@ -81,7 +82,9 @@ async function registerMathExtension(world, options = {}) {
       mode: 'tui',
       sessionManager: { getBranch: () => sessionEntries },
       ui: {
-        theme: { getFgAnsi: () => '\x1b[38;2;212;212;212m' },
+        get theme() {
+          return { getFgAnsi: () => textColor };
+        },
         setWidget(_key, content) {
           if (typeof content !== 'function') return;
           const tui = {
@@ -137,6 +140,9 @@ async function registerMathExtension(world, options = {}) {
   world.qniMathTransformer = transformer;
   world.qniMathSessionEntries = sessionEntries;
   world.qniMathTerminalWrites = terminalWrites;
+  world.qniMathSetTextColor = (ansi) => {
+    textColor = ansi;
+  };
 }
 
 module.exports = { PROJECT_ROOT, registerMathExtension };

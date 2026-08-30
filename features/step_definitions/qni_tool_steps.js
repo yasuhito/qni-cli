@@ -44,7 +44,11 @@ function qniToolText(result) {
 }
 
 function renderQniToolResult(world, expanded = false) {
-  const theme = { fg: (_color, text) => text };
+  const theme = {
+    fg: (color, text) => color === 'toolOutput'
+      ? `\x1b[38;2;87;86;83m${text}\x1b[39m`
+      : text
+  };
   return qniTool(world).renderResult(
     world.qniToolResult,
     { expanded, isPartial: false },
@@ -384,6 +388,22 @@ Then('qni ツールの結果本文と結果詳細は同じ LaTeX である', fun
 Then('qni ツールの結果描画は Image 部品である', function () {
   const { Image } = require('@earendil-works/pi-tui');
   assert.ok(renderQniToolResult(this) instanceof Image);
+});
+
+Then('qni ツールの結果画像は toolOutput 色を要求する', function () {
+  const requestedColors = [];
+  qniTool(this).renderResult(
+    this.qniToolResult,
+    { expanded: false, isPartial: false },
+    {
+      fg(color, text) {
+        requestedColors.push(color);
+        return `\x1b[38;2;1;2;3m${text}\x1b[39m`;
+      }
+    },
+    { args: {}, showImages: true }
+  );
+  assert.equal(requestedColors[0], 'toolOutput');
 });
 
 Then('qni ツールの結果描画は文字列である', function () {
