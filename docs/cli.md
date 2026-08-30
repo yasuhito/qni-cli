@@ -114,7 +114,7 @@ qni expect ZZ XX --latex
 }
 ```
 
-`qni expect` の `--latex` は `--shots`、`--seed`、`--threshold`、`--json` と併用できません。`qni run` の `--latex` は測定回路や `--shots`、`--seed`、`--json` とは併用できません。
+`qni expect` の `--latex` は `--shots`、`--seed`、`--threshold`、`--json` と併用できません。`qni run --latex` は、一意な状態ベクトルを1つの ket として表示するため、`Measure` を含む回路では使えません。測定すると状態が確率的に分岐・収縮し、単一の ket として一意に表示できないためです。測定直前の状態を確認する場合は、`Measure` を追加する前の回路で `qni run --latex` を実行してください。`qni run --latex` は `--shots`、`--seed`、`--json` とも併用できません。
 
 `Measure` を含む回路では、`qni run` は回路を1回実行します。名前付き測定は `input=0`、名前なし測定は `q0=0` の形式で表示します。測定は確率に従って状態を収縮させ、古典ビットの保存と条件付きゲートを含む後続の操作は回路のステップ順に評価します。測定回路では状態ベクトルを一意に表示できないため、`--symbolic` と `--basis` は使えません。
 

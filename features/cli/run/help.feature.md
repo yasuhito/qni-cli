@@ -32,7 +32,9 @@ qni run のヘルプで利用できるオプションを確認したい。
     Measurement follows computational-basis probabilities and collapses the state before later operations.
     --symbolic prints a symbolic ket expression for supported small circuits.
     --basis currently works only with --symbolic and supports x or y for 1-qubit output, and bell for 2-qubit output.
-    --latex prints a state vector using LaTeX ket notation.
+    --latex prints the unique state vector as a ket using LaTeX notation and cannot be used with a circuit containing Measure.
+    Measurement branches probabilistically and collapses the state, so there is no single unique ket to display.
+    To inspect the state immediately before measurement, run qni run --latex before adding Measure to the circuit.
 
   Options:
     [--symbolic]       # Show a 1-qubit symbolic state expression
