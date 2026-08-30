@@ -18,3 +18,17 @@ qni-cli の利用者として
     ]
   }
   ```
+
+## Scenario: 新しい回路では明示した量子ビット番号を維持する
+
+- When "qni add X --qubit 3 --step 0" を実行
+- Then "circuit.json" の内容:
+
+  ```json
+  {
+    "qubits": 4,
+    "cols": [
+      [1, 1, 1, "X"]
+    ]
+  }
+  ```

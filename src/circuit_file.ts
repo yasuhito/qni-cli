@@ -415,7 +415,6 @@ function normalizeAfterRemoval(circuit: CircuitData): void {
 
 function normalizeAfterAdd(circuit: CircuitData): void {
   trimLeadingEmptySteps(circuit);
-  trimLeadingEmptyQubits(circuit);
 }
 
 function trimLeadingEmptySteps(circuit: CircuitData): void {

@@ -133,14 +133,14 @@ describe('add command TypeScript route', () => {
     });
   });
 
-  it('auto-expands and normalizes leading empty qubits like Ruby', async () => {
+  it('preserves an explicit qubit index when creating a circuit', async () => {
     await withTempDir(async (dir) => {
-      const result = captureDispatcherRun(dir, ['add', 'H', '--qubit', '1', '--step', '0']);
+      const result = captureDispatcherRun(dir, ['add', 'X', '--qubit', '3', '--step', '0']);
 
       assert.equal(result.exitStatus, 0);
       assert.deepEqual(await readCircuit(path.join(dir, 'circuit.json')), {
-        qubits: 1,
-        cols: [['H']]
+        qubits: 4,
+        cols: [[1, 1, 1, 'X']]
       });
     });
   });
