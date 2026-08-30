@@ -72,6 +72,8 @@ qni run --symbolic --latex
 qni run --symbolic --basis x --latex
 qni run --symbolic --basis bell
 qni expect ZZ XX
+qni expect --same-axis-correlations 2
+qni expect ZZZ --same-axis-correlations 1
 qni expect ZZ XX --shots 1000 --seed 42
 qni expect ZX --shots 1000 --threshold 0.05
 qni expect ZZ XX --shots 1000 --seed 42 --json
@@ -80,6 +82,8 @@ qni expect ZZ XX --latex
 ```
 
 `qni run` は、測定のない回路では状態ベクトルを表示します。`--symbolic` を付けると、小さな回路を ket 表記で読みやすく表示できます。`--latex` を付けると、数値または記号の状態ベクトルを `\ket{}` 記法の LaTeX で表示します。数値の LaTeX 出力には Python は不要です。`qni expect` は Pauli 文字列の期待値を計算し、`--latex` を付けると `\langle ZZ \rangle = 1.0` の形式で表示します。Pauli 文字列は左端から `q0`、`q1`、… に対応します。たとえば `XI` は `q0` に `X`、`q1` に `I` を適用します。
+
+`qni expect --same-axis-correlations K` は、X、Y、Z の順に、ちょうど K 個の位置が同じ軸で残りが `I` の Pauli 文字列を列挙します。各軸内では位置の組合せ順です。3量子ビットの `K=2` なら `XXI`、`XIX`、`IXX`、`YYI`、`YIY`、`IYY`、`ZZI`、`ZIZ`、`IZZ` を出力します。K は1以上かつ回路の量子ビット数以下の整数です。オプションを繰り返すと指定順に列挙し、明示した Pauli 文字列がある場合はその入力順の後に列挙分を続けます。通常出力、`--json`、`--latex`、有限ショット推定のすべてで利用できます。
 
 `qni expect --shots N` は、測定のない回路の終状態から Pauli 期待値を有限ショットで推定します。量子ビットごとに同じ軸または `I` を持つ Pauli 文字列は同じ測定設定にまとめ、設定ごとに N 回測定します。通常出力には厳密な期待値、推定値、標準誤差 `sqrt((1 − m²) / N)`、測定設定数、seed を表示します。`--seed` を省略すると 0 以上 4294967295 以下の整数を生成して表示します。表示された seed を同じ回路、Pauli 文字列、ショット数で指定すると出力全体を再現できます。
 

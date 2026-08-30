@@ -35,6 +35,24 @@ qni-cli の利用者として、Pauli 文字列の期待値計算方法を確認
   [--threshold N]  # Mark an absolute value at or below N as unstable (0 to 1)
   ```
 
+## Scenario: 同軸相関だけでも有限ショット用オプションを利用できると表示
+
+- When "qni expect --help" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  qni expect --same-axis-correlations K [--shots N] [--seed N] [--threshold N] [--json]
+  ```
+
+## Scenario: 同軸相関の LaTeX は有限ショット用オプションと別の Usage で表示
+
+- When "qni expect --help" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  qni expect --same-axis-correlations K --latex
+  ```
+
 ## Scenario: qni expect は有限ショットの例を表示
 
 - When "qni expect --help" を実行

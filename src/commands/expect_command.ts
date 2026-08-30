@@ -1,11 +1,14 @@
 import { currentCircuitFile } from '../circuit_file';
 import type { CommandHandlerContext } from '../dispatcher';
 import { generateSeed, seededRandom, validateSeed } from '../random_seed';
-import { Simulator } from '../simulator';
+import { sameAxisCorrelationPauliStrings } from '../same_axis_correlations';
+import { Simulator, validateNumericQubitCount } from '../simulator';
 
 const HELP_TEXT = `Usage:
-  qni expect PAULI_STRING [PAULI_STRING...] [--shots N] [--seed N] [--threshold N] [--json]
-  qni expect PAULI_STRING [PAULI_STRING...] --latex
+  qni expect PAULI_STRING [PAULI_STRING...] [--same-axis-correlations K] [--shots N] [--seed N] [--threshold N] [--json]
+  qni expect PAULI_STRING [PAULI_STRING...] [--same-axis-correlations K] --latex
+  qni expect --same-axis-correlations K [--shots N] [--seed N] [--threshold N] [--json]
+  qni expect --same-axis-correlations K --latex
 
 Overview:
   Calculate expectation values from ./circuit.json.
@@ -15,6 +18,8 @@ Overview:
   For example, XI applies X to q0 and I to q1.
   The length of each PAULI_STRING must match the circuit qubit count.
   By default, output is one line per observable in the form PAULI_STRING=value.
+  --same-axis-correlations lists all K-body X, Y, and Z same-axis correlations.
+  It may be repeated; explicit Pauli strings are output first, followed by generated groups.
   --shots estimates expectation values from N measurements per setting.
   --seed reproduces the same finite-shot estimates. Without it, qni generates and reports a seed.
   --threshold marks values with an absolute value at or below N as unstable.
@@ -24,6 +29,7 @@ Overview:
   --latex cannot be used with --shots, --seed, --threshold, or --json.
 
 Options:
+  [--same-axis-correlations K]  # List every K-body same-axis correlation
   [--shots N]      # Estimate from N measurements per setting
   [--seed N]       # Use an unsigned 32-bit seed for reproducible estimates
   [--threshold N]  # Mark an absolute value at or below N as unstable (0 to 1)
@@ -38,12 +44,15 @@ Examples:
   qni expect ZZ XX --shots 1000 --seed 42 --json
   qni expect ZZ XX --json
   qni expect ZZ XX --latex
-  qni expect ZZI IZZ XXX`;
+  qni expect ZZI IZZ XXX
+  qni expect --same-axis-correlations 2
+  qni expect ZZZ --same-axis-correlations=1`;
 
 interface ExpectOptions {
   readonly json: boolean;
   readonly latex: boolean;
   readonly pauliStrings: readonly string[];
+  readonly sameAxisCorrelationBodyCounts: readonly number[];
   readonly seed?: number;
   readonly shots?: number;
   readonly threshold?: number;
@@ -60,10 +69,18 @@ export function runExpectCommand(argv: string[], context: CommandHandlerContext)
   }
 
   try {
-    const options = parseExpectOptions(argv);
-    validateOptionCombinations(options);
-    const simulator = new Simulator(currentCircuitFile(context.cwd).load());
-    const output = renderExpectOutput(simulator, options);
+    const parsedOptions = parseExpectOptions(argv);
+    validateOptionCombinations(parsedOptions);
+    const circuit = currentCircuitFile(context.cwd).load();
+    validateNumericQubitCount(circuit.qubits);
+    const generatedPauliStrings = parsedOptions.sameAxisCorrelationBodyCounts.flatMap((bodyCount) =>
+      sameAxisCorrelationPauliStrings(circuit.qubits, bodyCount)
+    );
+    const options: ExpectOptions = {
+      ...parsedOptions,
+      pauliStrings: [...parsedOptions.pauliStrings, ...generatedPauliStrings]
+    };
+    const output = renderExpectOutput(new Simulator(circuit), options);
     process.stdout.write(`${output}\n`);
     return 0;
   } catch (error) {
@@ -164,12 +181,30 @@ function parseExpectOptions(argv: readonly string[]): ExpectOptions {
   let shots: number | undefined;
   let threshold: number | undefined;
   const pauliStrings: string[] = [];
+  const sameAxisCorrelationBodyCounts: number[] = [];
 
   for (let index = 1; index < argv.length; index += 1) {
     const argument = argv[index] as string;
     if (argument === '--json' || argument === '--latex') {
       json ||= argument === '--json';
       latex ||= argument === '--latex';
+      continue;
+    }
+    const correlationMatch = /^--same-axis-correlations(?:=(.*))?$/u.exec(argument);
+    if (correlationMatch) {
+      const inlineValue = correlationMatch[1];
+      const nextArgument = argv[index + 1];
+      const rawValue = inlineValue === undefined && nextArgument?.startsWith('--') !== true
+        ? argv[++index]
+        : inlineValue;
+      if (rawValue === undefined || rawValue.trim() === '') {
+        throw new Error('--same-axis-correlations requires a value');
+      }
+      const value = Number(rawValue);
+      if (!Number.isSafeInteger(value) || value <= 0) {
+        throw new Error('--same-axis-correlations must be a positive integer');
+      }
+      sameAxisCorrelationBodyCounts.push(value);
       continue;
     }
     const matched = /^(--shots|--seed|--threshold)(?:=(.*))?$/u.exec(argument);
@@ -196,7 +231,7 @@ function parseExpectOptions(argv: readonly string[]): ExpectOptions {
     pauliStrings.push(argument.toUpperCase());
   }
 
-  return { json, latex, pauliStrings, seed, shots, threshold };
+  return { json, latex, pauliStrings, sameAxisCorrelationBodyCounts, seed, shots, threshold };
 }
 
 function validateOptionCombinations(options: ExpectOptions): void {
@@ -208,7 +243,7 @@ function validateOptionCombinations(options: ExpectOptions): void {
   if (options.seed !== undefined && options.shots === undefined) {
     throw new Error('--seed requires --shots');
   }
-  if (options.pauliStrings.length === 0) {
+  if (options.pauliStrings.length === 0 && options.sameAxisCorrelationBodyCounts.length === 0) {
     throw new Error(options.json
       ? 'at least one Pauli string is required with --json'
       : 'at least one Pauli string is required');

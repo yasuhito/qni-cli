@@ -83,7 +83,7 @@ export class Simulator {
 
   runMeasurements(random: () => number = Math.random): readonly MeasurementResult[] {
     try {
-      ensureSupportedQubitCount(this.data.qubits);
+      validateNumericQubitCount(this.data.qubits);
       const classicalBits = new Map<string, 0 | 1>();
       const results: MeasurementResult[] = [];
       let stateVector = this.startingStateVector();
@@ -162,7 +162,7 @@ export class Simulator {
 
   private stateVector(): StateVector {
     try {
-      ensureSupportedQubitCount(this.data.qubits);
+      validateNumericQubitCount(this.data.qubits);
 
       return this.data.cols.reduce(
         (current, col) => new StepOperation(col, this.gateOperatorFor.bind(this)).apply(current),
@@ -800,7 +800,7 @@ function ensureInitialStateFitsCircuit(initialQubits: number, circuitQubits: num
   }
 }
 
-function ensureSupportedQubitCount(qubits: number): void {
+export function validateNumericQubitCount(qubits: number): void {
   if (!Number.isInteger(qubits) || qubits < 0) {
     throw new SimulatorError(`invalid qubit count for run: ${qubits}`);
   }
@@ -811,7 +811,7 @@ function ensureSupportedQubitCount(qubits: number): void {
 }
 
 function stateVectorSize(qubits: number): number {
-  ensureSupportedQubitCount(qubits);
+  validateNumericQubitCount(qubits);
   return 2 ** qubits;
 }
 
