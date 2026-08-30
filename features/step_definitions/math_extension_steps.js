@@ -347,8 +347,9 @@ Then(/^インライン数式の内容は端末セル高の (\d+) パーセント
   assert.ok(this.qniMathTypesetImage.heightPx >= this.qniMathCell.heightPx * Number(percent) / 100);
 });
 
-Then(/^表示数式の内容は端末セル高の (\d+) パーセント以上になる$/, function (percent) {
-  assert.ok(this.qniMathTypesetImage.heightPx >= this.qniMathCell.heightPx * Number(percent) / 100);
+Then(/^表示数式の内容は端末セル高の (\d+) パーセント以上 (\d+) パーセント未満になる$/, function (minimum, maximum) {
+  const ratio = this.qniMathTypesetImage.heightPx / this.qniMathCell.heightPx;
+  assert.ok(ratio >= Number(minimum) / 100 && ratio < Number(maximum) / 100);
 });
 
 Then(/^インライン数式の縮小率は (\d+) パーセント未満になる$/, function (percent) {
