@@ -10,6 +10,12 @@ qni state clear を使いたい
 - When "qni state clear" を実行
 - Then コマンドは成功
 
+## Scenario: qni state clear は成功時に標準出力を空にする
+
+- Given "qni state set \"alpha|0> + beta|1>\"" を実行
+- When "qni state clear" を実行
+- Then 標準出力は空
+
 ## Scenario: qni state clear は circuit.json から initial_state を削除する
 
 - Given "qni state set \"alpha|0> + beta|1>\"" を実行

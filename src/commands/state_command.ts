@@ -62,11 +62,13 @@ function executeSubcommand(
   switch (subcommand) {
     case 'clear':
       requireArgumentCount(args, 0);
-      return circuitFile.clearInitialState() ? '0' : '';
+      circuitFile.clearInitialState();
+      return '';
     case 'set':
       requireArgumentCount(args, 1);
       requireStateExpression(args[0]);
-      return circuitFile.setInitialState(args[0]) ? '0' : '';
+      circuitFile.setInitialState(args[0]);
+      return '';
     case 'show':
       requireArgumentCount(args, 0);
       return circuitFile.initialStateText();

@@ -79,7 +79,7 @@ describe('state command TypeScript route', () => {
       const result = captureDispatcherRun(dir, ['state', 'set', 'alpha|0> + beta|1>']);
 
       assert.equal(result.exitStatus, 0);
-      assert.equal(result.stdout, '0\n');
+      assert.equal(result.stdout, '');
       assert.equal(result.stderr, '');
       assert.deepEqual(JSON.parse(await readFile(circuitPath, 'utf8')), {
         qubits: 1,
@@ -102,7 +102,7 @@ describe('state command TypeScript route', () => {
       const showResult = captureDispatcherRun(dir, ['state', 'show']);
 
       assert.equal(setResult.exitStatus, 0);
-      assert.equal(setResult.stdout, '0\n');
+      assert.equal(setResult.stdout, '');
       assert.equal(setResult.stderr, '');
       assert.equal(showResult.exitStatus, 0);
       assert.equal(showResult.stdout, '|+>\n');
@@ -127,7 +127,7 @@ describe('state command TypeScript route', () => {
       const result = captureDispatcherRun(dir, ['state', 'set', 'α|Φ+> + β|Φ->']);
 
       assert.equal(result.exitStatus, 0);
-      assert.equal(result.stdout, '0\n');
+      assert.equal(result.stdout, '');
       assert.equal(result.stderr, '');
       assert.deepEqual(JSON.parse(await readFile(circuitPath, 'utf8')), {
         qubits: 2,
@@ -256,7 +256,7 @@ describe('state command TypeScript route', () => {
       const result = captureDispatcherRun(dir, ['state', 'clear']);
 
       assert.equal(result.exitStatus, 0);
-      assert.equal(result.stdout, '0\n');
+      assert.equal(result.stdout, '');
       assert.equal(result.stderr, '');
       assert.deepEqual(JSON.parse(await readFile(circuitPath, 'utf8')), {
         qubits: 1,

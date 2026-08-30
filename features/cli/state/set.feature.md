@@ -9,6 +9,11 @@ qni state set を使いたい
 - When "qni state set \"alpha|0> + beta|1>\"" を実行
 - Then コマンドは成功
 
+## Scenario: qni state set は成功時に標準出力を空にする
+
+- When "qni state set \"alpha|0> + beta|1>\"" を実行
+- Then 標準出力は空
+
 ## Scenario: qni state set は alpha|0> + beta|1> を circuit.json に保存する
 
 - When "qni state set \"alpha|0> + beta|1>\"" を実行
