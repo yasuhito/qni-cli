@@ -2,12 +2,13 @@ import { currentCircuitFile } from '../circuit_file';
 import type { CommandHandlerContext } from '../dispatcher';
 import { generateSeed, seededRandom, validateSeed } from '../random_seed';
 import { sameAxisCorrelationPauliStrings } from '../same_axis_correlations';
-import { Simulator } from '../simulator';
+import { Simulator, validateNumericQubitCount } from '../simulator';
 
 const HELP_TEXT = `Usage:
   qni expect PAULI_STRING [PAULI_STRING...] [--same-axis-correlations K] [--shots N] [--seed N] [--threshold N] [--json]
   qni expect PAULI_STRING [PAULI_STRING...] [--same-axis-correlations K] --latex
-  qni expect --same-axis-correlations K [--json | --latex]
+  qni expect --same-axis-correlations K [--shots N] [--seed N] [--threshold N] [--json]
+  qni expect --same-axis-correlations K --latex
 
 Overview:
   Calculate expectation values from ./circuit.json.
@@ -71,6 +72,7 @@ export function runExpectCommand(argv: string[], context: CommandHandlerContext)
     const parsedOptions = parseExpectOptions(argv);
     validateOptionCombinations(parsedOptions);
     const circuit = currentCircuitFile(context.cwd).load();
+    validateNumericQubitCount(circuit.qubits);
     const generatedPauliStrings = parsedOptions.sameAxisCorrelationBodyCounts.flatMap((bodyCount) =>
       sameAxisCorrelationPauliStrings(circuit.qubits, bodyCount)
     );

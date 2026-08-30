@@ -6,6 +6,7 @@ import { describe, it } from 'node:test';
 
 import { Complex } from '../../src/complex';
 import { createDispatcher } from '../../src/dispatcher';
+import * as sameAxisCorrelations from '../../src/same_axis_correlations';
 
 interface CapturedRun {
   readonly exitStatus: number;
@@ -245,6 +246,39 @@ describe('expect command TypeScript route', () => {
         JSON.parse(result.stdout).expectations.map(({ pauli }: { pauli: string }) => pauli),
         ['XI', 'IX', 'YI', 'IY', 'ZI', 'IZ', 'XX', 'YY', 'ZZ']
       );
+    });
+  });
+
+  it('rejects unsupported qubit counts before generating intermediate-body correlations', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, { qubits: 31, cols: [] });
+      const originalGenerator = sameAxisCorrelations.sameAxisCorrelationPauliStrings;
+      let generatorCalled = false;
+      Object.defineProperty(sameAxisCorrelations, 'sameAxisCorrelationPauliStrings', {
+        configurable: true,
+        value: () => {
+          generatorCalled = true;
+          throw new Error('same-axis correlation generator was called');
+        }
+      });
+
+      try {
+        const result = captureDispatcherRun(dir, [
+          'expect', '--same-axis-correlations', '15'
+        ]);
+
+        assert.deepEqual(result, {
+          exitStatus: 1,
+          stdout: '',
+          stderr: 'too many qubits for TypeScript numeric run: 31\n'
+        });
+        assert.equal(generatorCalled, false);
+      } finally {
+        Object.defineProperty(sameAxisCorrelations, 'sameAxisCorrelationPauliStrings', {
+          configurable: true,
+          value: originalGenerator
+        });
+      }
     });
   });
 
