@@ -1,6 +1,6 @@
 ---
 name: qni-cli
-description: Build, run, measure, visualize, verify, and explain quantum circuits with the bundled qni CLI. Use for quantum-circuit tasks, including Quantum Katas, superdense coding, state vectors, expectation values, circuit diagrams, and Bloch-sphere images.
+description: Build, run, measure, visualize, verify, and explain quantum circuits with the bundled qni CLI. Use for quantum-circuit tasks, including Quantum Katas, superdense coding, state vectors, expectation values, circuit diagrams, and Bloch-sphere images. Also use for explaining quantum algorithms such as QFT (quantum Fourier transform), Grover, Shor, and quantum teleportation, and for unitary-matrix verification and state-vector calculation. 日本語では、量子アルゴリズムの解説、量子フーリエ変換、ユニタリ行列の検証、状態ベクトルの計算にも使う。
 license: MIT
 compatibility: Requires Node.js 22 or later. PNG export also requires pdflatex and pdftocairo; symbolic output and Bloch-sphere rendering require Python helpers.
 ---
@@ -10,6 +10,8 @@ compatibility: Requires Node.js 22 or later. PNG export also requires pdflatex a
 qni-cli を実行するときは、専用の `qni` ツールを優先する。単独のコマンドは `args` に引数の文字列配列を渡す。たとえば `qni run --latex` は `{"args":["run","--latex"]}` として呼ぶ。`add`、`view`、`run` のように依存するコマンド列は `commands` にまとめ、1回で一括実行する。途中で失敗したら修正して残りだけを呼び直す。成功分の変更は作業場所に残っている。利用者が作業場所を選んでいない場合は `workdir` を省略する。同じセッションの呼び出しは、専用ツールが用意した同じ一時作業場所を使う。利用者が作業場所を選んだ場合だけ `workdir` に Pi の作業場所からの相対パスを指定する。Pi の作業場所そのものは `"."` とする。
 
 専用ツールがない環境では、このスキルの `scripts/qni` を絶対パスで実行する。ラッパーは同じパッケージの TypeScript CLI を使うため、リポジトリを探したり、全体にインストールされた `qni` に依存したりしない。`qni` は作業ディレクトリの `./circuit.json` を読み書きするため、利用者が作業場所を選んでいなければ、一時ディレクトリで実行する。
+
+量子の行列、状態ベクトル、期待値を数値計算・検証するときは、NumPy などの使い捨てスクリプトではなく qni コマンド（必要なら `--latex`）を使う。
 
 ## 基本手順
 
