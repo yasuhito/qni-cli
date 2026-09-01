@@ -4,6 +4,26 @@
 計算結果を書き換えず研究者へ見せるために
 専用ツールの LaTeX 出力を数式として引用したい
 
+## Scenario: 量子アルゴリズムの英語による解説依頼で qni スキルを使う
+
+- Then リポジトリファイル "skills/qni-cli/SKILL.md" の frontmatter description は "quantum algorithms such as QFT (quantum Fourier transform), Grover, Shor, and quantum teleportation" を含む
+
+## Scenario: 量子アルゴリズムの日本語による解説依頼で qni スキルを使う
+
+- Then リポジトリファイル "skills/qni-cli/SKILL.md" の frontmatter description は "量子アルゴリズムの解説、量子フーリエ変換" を含む
+
+## Scenario: 行列と状態の数値検証依頼で qni スキルを使う
+
+- Then リポジトリファイル "skills/qni-cli/SKILL.md" の frontmatter description は "unitary-matrix verification and state-vector calculation" を含む
+
+## Scenario: 既存の回路課題を qni スキルの対象に保つ
+
+- Then リポジトリファイル "skills/qni-cli/SKILL.md" の frontmatter description は "Quantum Katas, superdense coding, state vectors, expectation values, circuit diagrams, and Bloch-sphere images" を含む
+
+## Scenario: 量子系の数値計算と検証には qni コマンドを使う
+
+- Then リポジトリファイル "skills/qni-cli/SKILL.md" は "NumPy などの使い捨てスクリプトではなく qni コマンド" を含む
+
 ## Scenario: 専用 qni ツールを優先する
 
 - Then リポジトリファイル "skills/qni-cli/SKILL.md" は "専用の `qni` ツールを優先する" を含む

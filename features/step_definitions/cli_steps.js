@@ -2049,6 +2049,27 @@ Then('リポジトリファイル {string} は {string} を含む', function (fi
   );
 });
 
+Then(
+  'リポジトリファイル {string} の frontmatter description は {string} を含む',
+  function (filePath, text) {
+    const actualPath = projectFilePath(filePath);
+    assert.ok(fs.existsSync(actualPath), `expected repository file to exist: ${filePath}`);
+
+    const markdown = fs.readFileSync(actualPath, 'utf8');
+    const { description } = markdownFrontmatterRecord(markdown, filePath);
+
+    assert.equal(typeof description, 'string', `expected frontmatter description in ${filePath}`);
+    assert.ok(
+      description.includes(text),
+      [
+        'expected frontmatter description to include text',
+        `file: ${filePath}`,
+        `expected: ${text}`
+      ].join('\n')
+    );
+  }
+);
+
 Then('リポジトリファイル {string} の最初の行は {string} である', function (filePath, text) {
   const actualPath = projectFilePath(filePath);
   assert.ok(fs.existsSync(actualPath), `expected repository file to exist: ${filePath}`);
