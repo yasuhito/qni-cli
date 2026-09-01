@@ -4,7 +4,7 @@ const os = require('node:os');
 const path = require('node:path');
 const { describe, it } = require('node:test');
 
-const { resolvePackResult } = require('./npm_pack_result');
+const { assertPackedFiles, resolvePackResult } = require('./npm_pack_result');
 
 function withTempDir(callback) {
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'qni-cli-pack-result-'));
@@ -17,7 +17,7 @@ function withTempDir(callback) {
 }
 
 describe('npm pack result', () => {
-  it('uses the last JSON value when stdout has noise before and after it', () => {
+  it('uses pack JSON when stdout has JSON and text noise before and after it', () => {
     withTempDir((tempRoot) => {
       fs.writeFileSync(path.join(tempRoot, 'qni-cli-noisy.tgz'), 'packed');
       const result = resolvePackResult({
@@ -38,17 +38,17 @@ describe('npm pack result', () => {
     });
   });
 
-  it('ignores a filename in trailing JSON noise and falls back to the only tarball', () => {
+  it('ignores a different tarball named by trailing JSON noise', () => {
     withTempDir((tempRoot) => {
       const tarball = path.join(tempRoot, 'qni-cli-0.1.0.tgz');
       fs.writeFileSync(tarball, 'packed');
-      fs.writeFileSync(path.join(tempRoot, 'diagnostic.log'), 'debug log');
+      fs.writeFileSync(path.join(tempRoot, 'diagnostic.tgz'), 'diagnostic');
 
       const result = resolvePackResult({
         tempRoot,
         stdout: [
-          '[{"filename":"qni-cli-0.1.0.tgz"}]',
-          '{"level":"debug","filename":"diagnostic.log"}'
+          '[{"filename":"qni-cli-0.1.0.tgz","files":[{"path":"LICENSE"}]}]',
+          '{"level":"debug","filename":"diagnostic.tgz"}'
         ].join('\n'),
         stderr: ''
       });
@@ -122,6 +122,16 @@ describe('npm pack result', () => {
         () => resolvePackResult({ tempRoot, stdout: '[]', stderr: 'ambiguous pack' }),
         /found 2 fallback tarballs/
       );
+    });
+  });
+});
+
+describe('packed files', () => {
+  it('rejects a directory at a required file path', () => {
+    withTempDir((packageRoot) => {
+      fs.mkdirSync(path.join(packageRoot, 'LICENSE'));
+
+      assert.throws(() => assertPackedFiles(packageRoot), /packed qni-cli is missing LICENSE/);
     });
   });
 });

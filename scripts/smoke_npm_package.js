@@ -6,7 +6,7 @@ const os = require('node:os');
 const path = require('node:path');
 const ts = require('typescript');
 
-const { resolvePackResult } = require('./npm_pack_result');
+const { assertPackedFiles, resolvePackResult } = require('./npm_pack_result');
 
 const projectRoot = path.resolve(__dirname, '..');
 const keepTemp = process.env.QNI_KEEP_PACKAGE_SMOKE === '1';
@@ -183,26 +183,6 @@ function sourceFilesUnder(directory) {
 function packProject(tempRoot) {
   const result = run('npm pack', 'npm', ['pack', '--json', '--pack-destination', tempRoot], { cwd: projectRoot });
   return resolvePackResult({ tempRoot, ...result });
-}
-
-function assertPackedFiles(packageRoot) {
-  const requiredFiles = [
-    'LICENSE',
-    'benchmarks/quantum-katas/basic-gates/state-flip.md',
-    'dist/bin/qni.js',
-    'dist/qni-math/index.js',
-    'examples/superdense-coding/circuit.qni',
-    'libexec/qni_symbolic_run.py',
-    'scripts/setup_symbolic_python.sh',
-    'skills/qni-cli/SKILL.md',
-    'skills/qni-cli/scripts/qni'
-  ];
-
-  for (const requiredFile of requiredFiles) {
-    if (!fs.existsSync(path.join(packageRoot, requiredFile))) {
-      throw new Error(`packed qni-cli is missing ${requiredFile}`);
-    }
-  }
 }
 
 function assertPackageMetadata(packageRoot) {

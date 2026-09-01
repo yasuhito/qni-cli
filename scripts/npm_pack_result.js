@@ -2,23 +2,22 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 function resolvePackResult({ tempRoot, stdout, stderr }) {
-  const json = extractLastJsonValue(stdout);
-  const packEntry = findPackEntry(json);
-  const filename = packEntry?.filename;
-  const reportedTarball = existingTarball(tempRoot, filename);
-  const files = packEntry && typeof packEntry === 'object' && Array.isArray(packEntry.files)
-    ? packEntry.files
-      .filter((file) => file && typeof file === 'object')
-      .map((file) => file.path)
-      .filter((filePath) => typeof filePath === 'string')
-    : [];
+  for (const json of extractJsonValues(stdout).reverse()) {
+    const packEntry = findPackEntry(json);
+    const reportedTarball = existingTarball(tempRoot, packEntry?.filename);
 
-  if (reportedTarball) {
-    return {
-      files,
-      tarball: reportedTarball
-    };
+    if (reportedTarball) {
+      return {
+        files: packEntry.files
+          .filter((file) => file && typeof file === 'object')
+          .map((file) => file.path)
+          .filter((filePath) => typeof filePath === 'string'),
+        tarball: reportedTarball
+      };
+    }
   }
+
+  const files = [];
 
   const fallbackTarballs = fs.readdirSync(tempRoot, { withFileTypes: true })
     .filter((entry) => entry.isFile() && entry.name.endsWith('.tgz'))
@@ -63,21 +62,27 @@ function existingTarball(tempRoot, filename) {
 
 function findPackEntry(json) {
   if (Array.isArray(json)) {
-    return json.find((entry) => entry && typeof entry === 'object' && typeof entry.filename === 'string');
+    return json.find(isPackEntry);
   }
   if (!json || typeof json !== 'object') {
     return undefined;
   }
-  if (typeof json.filename === 'string') {
+  if (isPackEntry(json)) {
     return json;
   }
 
-  return Object.values(json)
-    .find((entry) => entry && typeof entry === 'object' && typeof entry.filename === 'string');
+  return Object.values(json).find(isPackEntry);
 }
 
-function extractLastJsonValue(output) {
-  let lastValue;
+function isPackEntry(entry) {
+  return entry
+    && typeof entry === 'object'
+    && typeof entry.filename === 'string'
+    && Array.isArray(entry.files);
+}
+
+function extractJsonValues(output) {
+  const values = [];
 
   for (let start = 0; start < output.length; start += 1) {
     if (output[start] !== '[' && output[start] !== '{') {
@@ -90,14 +95,35 @@ function extractLastJsonValue(output) {
     }
 
     try {
-      lastValue = JSON.parse(output.slice(start, end + 1));
+      values.push(JSON.parse(output.slice(start, end + 1)));
       start = end;
     } catch {
       // This opening bracket belonged to a noise line. Keep looking.
     }
   }
 
-  return lastValue;
+  return values;
+}
+
+function assertPackedFiles(packageRoot) {
+  const requiredFiles = [
+    'LICENSE',
+    'benchmarks/quantum-katas/basic-gates/state-flip.md',
+    'dist/bin/qni.js',
+    'dist/qni-math/index.js',
+    'examples/superdense-coding/circuit.qni',
+    'libexec/qni_symbolic_run.py',
+    'scripts/setup_symbolic_python.sh',
+    'skills/qni-cli/SKILL.md',
+    'skills/qni-cli/scripts/qni'
+  ];
+
+  for (const requiredFile of requiredFiles) {
+    const entry = fs.lstatSync(path.join(packageRoot, requiredFile), { throwIfNoEntry: false });
+    if (!entry?.isFile()) {
+      throw new Error(`packed qni-cli is missing ${requiredFile}`);
+    }
+  }
 }
 
 function findJsonEnd(output, start) {
@@ -137,4 +163,4 @@ function findJsonEnd(output, start) {
   return -1;
 }
 
-module.exports = { extractLastJsonValue, resolvePackResult };
+module.exports = { assertPackedFiles, resolvePackResult };
