@@ -777,10 +777,17 @@ class TextWireCanvas {
 
   append(wireLines: string[]): void {
     const [annotationLine, topLine, midLine, bottomLine] = wireLines;
-    const mergedTop = this.mergedTopLine(topLine);
 
-    this.appendAnnotationLine(annotationLine);
-    this.appendBodyLines(mergedTop, midLine, bottomLine);
+    if (annotationLine.trim() === '') {
+      this.appendBodyLines(this.mergedTopLine(topLine), midLine, bottomLine);
+    } else {
+      const connectedAnnotationLine = this.annotationLineWithConnections(annotationLine);
+
+      this.removeConnectionOnlyPreviousBottom();
+      this.appendAnnotationLine(connectedAnnotationLine);
+      this.appendBodyLines(topLine, midLine, bottomLine);
+    }
+
     this.previousBottom = bottomLine;
   }
 
@@ -788,10 +795,16 @@ class TextWireCanvas {
     return trimmedLines(this.lines);
   }
 
-  private appendAnnotationLine(annotationLine: string): void {
-    if (annotationLine.trim() !== '') {
-      this.lines.push(annotationLine);
+  private annotationLineWithConnections(annotationLine: string): string {
+    if (!this.previousBottom) {
+      return annotationLine;
     }
+
+    return this.lineMerger.mergeBottom(this.previousBottom, annotationLine);
+  }
+
+  private appendAnnotationLine(annotationLine: string): void {
+    this.lines.push(annotationLine);
   }
 
   private appendBodyLines(mergedTopLine: string, midLine: string, bottomLine: string): void {
@@ -803,6 +816,12 @@ class TextWireCanvas {
   private appendMergedLine(nextLine: string): void {
     const currentLine = this.lines[this.lines.length - 1];
     this.lines.push(this.lineMerger.mergeBottom(currentLine, nextLine));
+  }
+
+  private removeConnectionOnlyPreviousBottom(): void {
+    if (this.previousBottom && !/[└┘]/u.test(this.previousBottom)) {
+      this.lines.pop();
+    }
   }
 
   private mergedTopLine(topLine: string): string {

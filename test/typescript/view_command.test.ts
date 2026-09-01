@@ -183,6 +183,44 @@ describe('view command TypeScript route', () => {
     });
   });
 
+  it('keeps gate boxes together when a lower qubit has an angled gate annotation', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        qubits: 3,
+        cols: [
+          ['H', 1, 1],
+          ['P(π/2)', '•', 1],
+          ['P(π/4)', 1, '•'],
+          [1, 'H', 1],
+          [1, 'P(π/2)', '•'],
+          [1, 1, 'H'],
+          ['Swap', 1, 'Swap']
+        ]
+      });
+
+      const result = captureDispatcherRun(dir, ['view']);
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stderr, '');
+      assert.equal(
+        result.stdout,
+        [
+          '           π/2  π/4',
+          '    ┌───┐┌───┐┌───┐',
+          'q0: ┤ H ├┤ P ├┤ P ├────────────────X─',
+          '    └───┘└─┬─┘└─┬─┘                │',
+          '           │    │         π/2      │',
+          '           │    │  ┌───┐┌───┐      │',
+          'q1: ───────■────│──┤ H ├┤ P ├──────│─',
+          '                │  └───┘└─┬─┘┌───┐ │',
+          'q2: ────────────■─────────■──┤ H ├─X─',
+          '                             └───┘',
+          ''
+        ].join('\n')
+      );
+    });
+  });
+
   it('renders controlled SWAP with stable ASCII art', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
