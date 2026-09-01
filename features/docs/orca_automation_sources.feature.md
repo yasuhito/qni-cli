@@ -16,6 +16,10 @@ prompt と precheck の原本をリポジトリで管理したい。
 
 - Then リポジトリファイル "docs/agents/automations/pr-reviewer.md" は存在する
 
+## Scenario: PR reviewer は読み取り専用レビューで全体チェックを実行しない
+
+- Then リポジトリファイル "docs/agents/automations/pr-reviewer.md" は "テスト、ビルド、全体チェックを実行しない。レビューは差分と契約の照合に限る。" を含む
+
 ## Scenario: PR reviewer の precheck がある
 
 - Then リポジトリファイル "docs/agents/automations/pr-reviewer.precheck.sh" は存在する
@@ -51,3 +55,7 @@ prompt と precheck の原本をリポジトリで管理したい。
 ## Scenario: README は既存 workspace で動く前提を示す
 
 - Then リポジトリファイル "docs/agents/automations/README.md" は "/home/yasuhito/Work/qni-cli" を含む
+
+## Scenario: README は coordinator が要求する issue 契約を示す
+
+- Then リポジトリファイル "docs/agents/automations/README.md" は "`## Agent Brief`、`## Acceptance criteria` または `## 受け入れ条件`、`## Out of scope` または `## 対象外` の3項目を必須とする。" を含む
