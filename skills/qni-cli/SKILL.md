@@ -7,7 +7,30 @@ compatibility: Requires Node.js 22 or later. SVG export has no external runtime 
 
 # qni CLI
 
-qni-cli を実行するときは、専用の `qni` ツールを優先する。単独のコマンドは `args` に引数の文字列配列を渡す。たとえば `qni run --latex` は `{"args":["run","--latex"]}` として呼ぶ。`add`、`view`、`run` のように依存するコマンド列は `commands` にまとめ、1回で一括実行する。途中で失敗したら修正して残りだけを呼び直す。成功分の変更は作業場所に残っている。利用者が作業場所を選んでいない場合は `workdir` を省略する。同じセッションの呼び出しは、専用ツールが用意した同じ一時作業場所を使う。利用者が作業場所を選んだ場合だけ `workdir` に Pi の作業場所からの相対パスを指定する。Pi の作業場所そのものは `"."` とする。
+qni-cli を実行するときは、専用の `qni` ツールを優先する。
+
+単独のコマンドは `args` に引数の文字列配列を渡す。
+
+```json
+{"args":["run","--latex"]}
+```
+
+`add`、`view`、`run` のように依存するコマンド列は `commands` にまとめ、1回で一括実行する。各コマンドを文字列ではなく、引数の文字列配列にする。
+
+```json
+{
+  "commands": [
+    ["add", "H", "--qubit", "0", "--step", "0"],
+    ["add", "P", "--angle", "π/2", "--control", "1", "--qubit", "0", "--step", "1"],
+    ["view"],
+    ["run", "--symbolic"]
+  ]
+}
+```
+
+`{"args":["add H --qubit 0 --step 0","view"]}` は、コマンド全体を1つの引数として渡すため失敗する。`{"commands":[["add","H","--qubit","0","--step","0"],["view"]]}` に直す。引数形式の誤りならソース探索はせず、この形に直して再実行する。
+
+途中で失敗したら修正して残りだけを呼び直す。成功分の変更は作業場所に残っている。利用者が作業場所を選んでいない場合は `workdir` を省略する。同じセッションの呼び出しは、専用ツールが用意した同じ一時作業場所を使う。利用者が作業場所を選んだ場合だけ `workdir` に Pi の作業場所からの相対パスを指定する。Pi の作業場所そのものは `"."` とする。
 
 専用ツールがない環境では、このスキルの `scripts/qni` を絶対パスで実行する。ラッパーは同じパッケージの TypeScript CLI を使うため、リポジトリを探したり、全体にインストールされた `qni` に依存したりしない。`qni` は作業ディレクトリの `./circuit.json` を読み書きするため、利用者が作業場所を選んでいなければ、一時ディレクトリで実行する。
 
@@ -22,11 +45,12 @@ qni-cli を実行するときは、専用の `qni` ツールを優先する。�
 5. 図が役立つ場合は、外部の LaTeX 処理系が不要な `qni export --svg ...` で回路を描く。PNG が必要なら `qni export --png ...`、1 量子ビットの軌跡なら `qni bloch --png --trajectory ...` を使う。
 6. ゲート列を説明し、実行結果または検証結果を引用する。観測結果と理論上の期待を区別する。状態ベクトルや期待値を説明するときは、対応するコマンドへ `--latex` を付け、`--latex` の出力を `$$...$$` でそのまま引用する。数式は `$...$` または `$$...$$` で囲み、量子状態は `\ket{}` で書く。
 
-最新のコマンド仕様は `qni --help` と `qni COMMAND --help` で確認する。専用ツールでは `["--help"]` または `["COMMAND", "--help"]` を `args` に渡す。
+主要コマンドの仕様と例は [references/commands.md](references/commands.md) を使う。そこに書かれた範囲では `--help` を実行しない。スキルにないコマンドやオプションが必要な場合だけ、`["COMMAND", "--help"]` を `args` に渡して確認する。
 
 ## 参考資料
 
 必要なものだけを開く。
 
+- 主要コマンドの名前、オプション、例: [references/commands.md](references/commands.md)
 - 測定、検証、可視化、状態ベクトル: [references/recipes.md](references/recipes.md)
 - 超密度符号化の一連の例: [references/superdense-coding.md](references/superdense-coding.md)
