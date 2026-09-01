@@ -19,6 +19,7 @@ function withTempDir(callback) {
 describe('npm pack result', () => {
   it('uses the last JSON value when stdout has noise before and after it', () => {
     withTempDir((tempRoot) => {
+      fs.writeFileSync(path.join(tempRoot, 'qni-cli-noisy.tgz'), 'packed');
       const result = resolvePackResult({
         tempRoot,
         stdout: [
@@ -37,8 +38,43 @@ describe('npm pack result', () => {
     });
   });
 
+  it('ignores a filename in trailing JSON noise and falls back to the only tarball', () => {
+    withTempDir((tempRoot) => {
+      const tarball = path.join(tempRoot, 'qni-cli-0.1.0.tgz');
+      fs.writeFileSync(tarball, 'packed');
+      fs.writeFileSync(path.join(tempRoot, 'diagnostic.log'), 'debug log');
+
+      const result = resolvePackResult({
+        tempRoot,
+        stdout: [
+          '[{"filename":"qni-cli-0.1.0.tgz"}]',
+          '{"level":"debug","filename":"diagnostic.log"}'
+        ].join('\n'),
+        stderr: ''
+      });
+
+      assert.equal(result.tarball, tarball);
+    });
+  });
+
+  it('ignores a reported tarball that does not exist', () => {
+    withTempDir((tempRoot) => {
+      const tarball = path.join(tempRoot, 'qni-cli-fallback.tgz');
+      fs.writeFileSync(tarball, 'packed');
+
+      const result = resolvePackResult({
+        tempRoot,
+        stdout: '{"filename":"missing.tgz"}',
+        stderr: ''
+      });
+
+      assert.equal(result.tarball, tarball);
+    });
+  });
+
   it('accepts an object JSON result', () => {
     withTempDir((tempRoot) => {
+      fs.writeFileSync(path.join(tempRoot, 'qni-cli-object.tgz'), 'packed');
       const result = resolvePackResult({
         tempRoot,
         stdout: '{"qni-cli":{"filename":"qni-cli-object.tgz","files":[{"path":"LICENSE"}]}}',

@@ -5,6 +5,7 @@ function resolvePackResult({ tempRoot, stdout, stderr }) {
   const json = extractLastJsonValue(stdout);
   const packEntry = findPackEntry(json);
   const filename = packEntry?.filename;
+  const reportedTarball = existingTarball(tempRoot, filename);
   const files = packEntry && typeof packEntry === 'object' && Array.isArray(packEntry.files)
     ? packEntry.files
       .filter((file) => file && typeof file === 'object')
@@ -12,10 +13,10 @@ function resolvePackResult({ tempRoot, stdout, stderr }) {
       .filter((filePath) => typeof filePath === 'string')
     : [];
 
-  if (typeof filename === 'string' && filename.length > 0) {
+  if (reportedTarball) {
     return {
       files,
-      tarball: path.join(tempRoot, filename)
+      tarball: reportedTarball
     };
   }
 
@@ -37,6 +38,27 @@ function resolvePackResult({ tempRoot, stdout, stderr }) {
     'stderr:',
     stderr
   ].join('\n'));
+}
+
+function existingTarball(tempRoot, filename) {
+  if (typeof filename !== 'string' || !filename.endsWith('.tgz')) {
+    return undefined;
+  }
+
+  const resolvedRoot = path.resolve(tempRoot);
+  const candidate = path.resolve(resolvedRoot, filename);
+  if (path.dirname(candidate) !== resolvedRoot) {
+    return undefined;
+  }
+
+  try {
+    return fs.lstatSync(candidate).isFile() ? candidate : undefined;
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      return undefined;
+    }
+    throw error;
+  }
 }
 
 function findPackEntry(json) {
