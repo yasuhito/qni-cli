@@ -105,6 +105,16 @@ async function pngStableProperties(filePath: string): Promise<PngStablePropertie
   };
 }
 
+function svgDimensions(svg: string): { readonly height: number; readonly width: number } {
+  const match = /^<svg [^>]*width="(?<width>\d+)" height="(?<height>\d+)"/u.exec(svg);
+
+  assert.ok(match?.groups);
+  return {
+    height: Number(match.groups.height),
+    width: Number(match.groups.width)
+  };
+}
+
 function pngColorTypeHasAlpha(png: Buffer): boolean {
   return png[25] === 4 || png[25] === 6;
 }
@@ -184,6 +194,7 @@ describe('export command TypeScript route', () => {
       assert.equal(result.stderr, '');
       assert.match(result.stdout, /^<svg /u);
       assert.match(result.stdout, /color:#fff/u);
+      assert.match(result.stdout, /fill="#000"/u);
       assert.match(result.stdout, /data-operation="gate"/u);
       assert.match(result.stdout, />H<\/text>/u);
     });
@@ -216,6 +227,55 @@ describe('export command TypeScript route', () => {
       assert.match(svg, /class="meter-mark"/u);
       assert.match(svg, /class="swap-mark"/u);
       assert.match(svg, /data-qubit="4"/u);
+    });
+  });
+
+  it('masks wires inside ordinary gates, controlled gates, and measurements', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        qubits: 3,
+        cols: [
+          ['H', 1, 1],
+          ['•', 'H', 'Measure']
+        ]
+      });
+
+      const result = captureDispatcherRun(dir, ['export', '--svg', '--light'], { PATH: '' });
+
+      assert.equal(result.exitStatus, 0);
+      assert.match(result.stdout, /<g data-operation="gate" data-step="0" data-qubit="0">\n<rect class="gate-box"[^>]* fill="#fff"/u);
+      assert.match(result.stdout, /<g data-operation="gate" data-step="1" data-qubit="1">\n<rect class="gate-box"[^>]* fill="#fff"/u);
+      assert.match(result.stdout, /<g data-operation="measurement" data-step="1" data-qubit="2">\n<rect class="meter-box"[^>]* fill="#fff"/u);
+    });
+  });
+
+  it('expands the SVG viewport for long top and bottom captions', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        qubits: 1,
+        cols: [['H']]
+      });
+      const caption = 'A caption that is wider than a one-gate circuit';
+
+      for (const position of ['top', 'bottom']) {
+        const result = captureDispatcherRun(dir, [
+          'export',
+          '--svg',
+          '--light',
+          '--caption',
+          caption,
+          '--caption-position',
+          position,
+          '--caption-size',
+          '48'
+        ], { PATH: '' });
+        const dimensions = svgDimensions(result.stdout);
+
+        assert.equal(result.exitStatus, 0);
+        assert.ok(dimensions.width >= [...caption].length * 48 + 32, position);
+        assert.ok(dimensions.height >= 64 + Math.ceil(48 * 1.3) + 32, position);
+        assert.match(result.stdout, new RegExp(`data-caption-position="${position}"`, 'u'));
+      }
     });
   });
 

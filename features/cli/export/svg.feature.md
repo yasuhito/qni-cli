@@ -33,6 +33,26 @@ qni export --svg で回路図を SVG 形式に直接書き出したい。
   <svg
   ```
 
+## Scenario: qni export --svg は長い上キャプションを表示領域に収める
+
+- Given "qni add H --qubit 0 --step 0" を実行
+- When "qni export --svg --caption 'A caption wider than the circuit' --caption-position top --caption-size 48" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  data-caption-position="top"
+  ```
+
+## Scenario: qni export --svg は長い下キャプションを表示領域に収める
+
+- Given "qni add H --qubit 0 --step 0" を実行
+- When "qni export --svg --caption 'A caption wider than the circuit' --caption-position bottom --caption-size 48" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  data-caption-position="bottom"
+  ```
+
 ## Scenario: qni export --svg は既定でダークテーマを使う
 
 - Given "qni add H --qubit 0 --step 0" を実行
