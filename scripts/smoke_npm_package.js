@@ -6,6 +6,9 @@ const os = require('node:os');
 const path = require('node:path');
 const ts = require('typescript');
 
+const { assertPackedFiles, resolvePackResult } = require('./npm_pack_result');
+const projectManifest = require('../package.json');
+
 const projectRoot = path.resolve(__dirname, '..');
 const keepTemp = process.env.QNI_KEEP_PACKAGE_SMOKE === '1';
 
@@ -15,8 +18,6 @@ function main() {
   try {
     assertExtensionSourceBoundary();
     const packed = packProject(tempRoot);
-    assertPackedFiles(packed.files);
-
     const tarball = packed.tarball;
     const installRoot = path.join(tempRoot, 'install');
     const workspace = path.join(tempRoot, 'workspace');
@@ -30,6 +31,7 @@ function main() {
     const packageRoot = path.join(installRoot, 'node_modules', 'qni-cli');
     const env = smokeEnv({ installRoot });
 
+    assertPackedFiles(packageRoot);
     assertPackageMetadata(packageRoot);
     assertSkillContent(packageRoot);
     assertPiSkillDetection({ packageRoot, tempRoot });
@@ -181,37 +183,11 @@ function sourceFilesUnder(directory) {
 
 function packProject(tempRoot) {
   const result = run('npm pack', 'npm', ['pack', '--json', '--pack-destination', tempRoot], { cwd: projectRoot });
-  const packEntry = JSON.parse(result.stdout)[0];
-  const filename = packEntry?.filename;
-
-  if (!filename) {
-    throw new Error(`npm pack did not report a filename:\n${result.stdout}`);
-  }
-
-  return {
-    files: (packEntry.files ?? []).map((file) => file.path),
-    tarball: path.join(tempRoot, filename)
-  };
-}
-
-function assertPackedFiles(files) {
-  const requiredFiles = [
-    'LICENSE',
-    'benchmarks/quantum-katas/basic-gates/state-flip.md',
-    'dist/bin/qni.js',
-    'dist/qni-math/index.js',
-    'examples/superdense-coding/circuit.qni',
-    'libexec/qni_symbolic_run.py',
-    'scripts/setup_symbolic_python.sh',
-    'skills/qni-cli/SKILL.md',
-    'skills/qni-cli/scripts/qni'
-  ];
-
-  for (const requiredFile of requiredFiles) {
-    if (!files.includes(requiredFile)) {
-      throw new Error(`packed qni-cli is missing ${requiredFile}`);
-    }
-  }
+  return resolvePackResult({
+    expectedPackage: { name: projectManifest.name, version: projectManifest.version },
+    tempRoot,
+    ...result
+  });
 }
 
 function assertPackageMetadata(packageRoot) {

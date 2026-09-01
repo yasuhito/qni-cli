@@ -40,13 +40,14 @@ scripts/setup_symbolic_python.sh
 npm run check
 ```
 
-`npm run check` は TypeScript テスト、cucumber-js の Markdown feature、npm パッケージのスモーク検証を実行します。
+`npm run check` は TypeScript テスト、JavaScript 補助スクリプトの単体試験、cucumber-js の Markdown feature、npm パッケージのスモーク検証を実行します。
 
 ## 個別チェックを実行する
 
 ```bash
 npm run build
 npm run test:ts
+npm run test:scripts
 npm run cucumber
 npm run smoke:package
 ```
