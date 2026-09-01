@@ -351,6 +351,17 @@ class TextStep {
     return this.rawStep[qubit] === EMPTY_SLOT;
   }
 
+  placeSingleGateOn(
+    layer: TextLayer,
+    qubit: number,
+    options: { botConnect?: string; topConnect?: string } = {}
+  ): void {
+    const placement = this.singleGateAt(qubit);
+    if (placement?.emptyWireOn(layer)) {
+      placement.placeOn(layer, options);
+    }
+  }
+
   placeSingleGatesOn(layer: TextLayer): void {
     for (const placement of this.singleGates()) {
       placement.placeOnIfEmpty(layer);
@@ -385,12 +396,17 @@ class TextStep {
     return conditions[0];
   }
 
+  private singleGateAt(qubit: number): GatePlacement | undefined {
+    const slot = this.rawStep[qubit];
+    const kind = this.operationKind(slot);
+    return kind === 'gate' || kind === 'measurement' ? new GatePlacement(slot, qubit) : undefined;
+  }
+
   private singleGates(): GatePlacement[] {
-    return this.rawStep.flatMap((slot, qubit) =>
-      slot === EMPTY_SLOT || slot === CONTROL_SYMBOL || this.operationKind(slot) === 'swap'
-        ? []
-        : [new GatePlacement(slot, qubit)]
-    );
+    return this.rawStep.flatMap((_slot, qubit) => {
+      const placement = this.singleGateAt(qubit);
+      return placement === undefined ? [] : [placement];
+    });
   }
 
   private operationKind(slot: unknown): 'gate' | 'measurement' | 'swap' | undefined {
@@ -398,7 +414,9 @@ class TextStep {
   }
 
   private targetedGates(): GatePlacement[] {
-    return this.singleGates();
+    return this.rawStep.flatMap((slot, qubit) =>
+      this.operationKind(slot) === 'gate' ? [new GatePlacement(slot, qubit)] : []
+    );
   }
 }
 
@@ -485,6 +503,13 @@ class ControlSpan {
     return range(this.minQubit + 1, this.maxQubit);
   }
 
+  connectorsFor(qubit: number): { botConnect: string; topConnect: string } {
+    return {
+      botConnect: qubit < this.maxQubit ? '│' : ' ',
+      topConnect: qubit > this.minQubit ? '│' : ' '
+    };
+  }
+
   bulletFor(qubit: number): Bullet {
     return new Bullet({
       botConnect: qubit < this.maxQubit ? '│' : ' ',
@@ -523,6 +548,8 @@ class ControlledLayerPlacement {
     for (const qubit of this.span.bridgeQubits()) {
       if (this.step.emptySlot(qubit)) {
         this.layer.place(qubit, new VerticalBridge());
+      } else {
+        this.step.placeSingleGateOn(this.layer, qubit, this.span.connectorsFor(qubit));
       }
     }
   }
