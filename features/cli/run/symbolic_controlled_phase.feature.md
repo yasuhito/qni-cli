@@ -73,6 +73,19 @@ QFT などの位相を使う量子アルゴリズムを ket 記法で説明で�
   -|11>
   ```
 
+## Scenario: 未対応ゲートの制御版は失敗する
+
+- Given 次の circuit.json がある:
+
+  ```json
+  {
+    "cols": [["•", "Unknown"]],
+    "qubits": 2
+  }
+  ```
+- When "qni run --symbolic" を実行
+- Then コマンドは失敗
+
 ## Scenario: 未対応ゲートの制御版は明確なエラーを表示する
 
 - Given 次の circuit.json がある:
