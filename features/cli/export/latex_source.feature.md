@@ -2,7 +2,7 @@
 
 qni-cli の利用者として
 外部の LaTeX ツールで回路図を利用できるように
-qni export --latex-source で qcircuit 形式の LaTeX を出力したい。
+qni export --latex-source で quantikz 形式の LaTeX を出力したい。
 
 ## Scenario: qni export --latex-source は成功する
 
@@ -10,14 +10,14 @@ qni export --latex-source で qcircuit 形式の LaTeX を出力したい。
 - When "qni export --latex-source" を実行
 - Then コマンドは成功
 
-## Scenario: qni export --latex-source は qcircuit パッケージを出力する
+## Scenario: qni export --latex-source は quantikz パッケージを出力する
 
 - Given "qni add H --qubit 0 --step 0" を実行
 - When "qni export --latex-source" を実行
 - Then 標準出力に次を含む:
 
   ```text
-  \usepackage[braket, qm]{qcircuit}
+  \usepackage{quantikz}
   ```
 
 ## Scenario: qni export --latex-source は xcolor パッケージを出力する
@@ -30,14 +30,14 @@ qni export --latex-source で qcircuit 形式の LaTeX を出力したい。
   \usepackage{xcolor}
   ```
 
-## Scenario: qni export --latex-source は Qcircuit 本体を出力する
+## Scenario: qni export --latex-source は quantikz 環境を出力する
 
 - Given "qni add H --qubit 0 --step 0" を実行
 - When "qni export --latex-source" を実行
 - Then 標準出力に次を含む:
 
   ```text
-  \Qcircuit
+  \begin{quantikz}
   ```
 
 ## Scenario: qni export --latex-source は H ゲートを LaTeX として出力する
@@ -60,6 +60,16 @@ qni export --latex-source で qcircuit 形式の LaTeX を出力したい。
   \color{white}
   ```
 
+## Scenario: qni export --latex-source はダークテーマのゲート面を黒くする
+
+- Given "qni add H --qubit 0 --step 0" を実行
+- When "qni export --latex-source" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  background color=black
+  ```
+
 ## Scenario: qni export --latex-source --light は成功する
 
 - Given "qni add H --qubit 0 --step 0" を実行
@@ -74,6 +84,16 @@ qni export --latex-source で qcircuit 形式の LaTeX を出力したい。
 
   ```text
   \color{black}
+  ```
+
+## Scenario: qni export --latex-source --light はゲート面を白くする
+
+- Given "qni add H --qubit 0 --step 0" を実行
+- When "qni export --latex-source --light" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  background color=white
   ```
 
 ## Scenario: qni export --latex-source --light はダークテーマの色を出力しない
@@ -106,22 +126,43 @@ qni export --latex-source で qcircuit 形式の LaTeX を出力したい。
   \targ
   ```
 
-## Scenario: qni export --latex-source は SWAP の qswap を出力する
+## Scenario: qni export --latex-source は SWAP の上側を出力する
 
 - Given "qni add SWAP --qubit 0,1 --step 0" を実行
 - When "qni export --latex-source" を実行
 - Then 標準出力に次を含む:
 
   ```text
-  \qswap
+  \swap{1}
   ```
 
-## Scenario: qni export --latex-source は SWAP の qwx を出力する
+## Scenario: qni export --latex-source は SWAP の下側を出力する
 
 - Given "qni add SWAP --qubit 0,1 --step 0" を実行
 - When "qni export --latex-source" を実行
 - Then 標準出力に次を含む:
 
   ```text
-  \qwx[-1]
+  \targX{}
+  ```
+
+## Scenario: qni export --latex-source は注記付きゲートを出力する
+
+- Given "qni add X --if input --qubit 0 --step 0" を実行
+- When "qni export --latex-source" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  \gate{\mathrm{X}<\mathrm{input}}
+  ```
+
+## Scenario: qni export --latex-source は複数段の回路を出力する
+
+- Given "qni add H --qubit 0 --step 0" を実行
+- Given "qni add X --qubit 0 --step 1" を実行
+- When "qni export --latex-source" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  \gate{\mathrm{H}} & \gate{\mathrm{X}}
   ```

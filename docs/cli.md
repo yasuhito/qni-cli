@@ -87,7 +87,7 @@ qni expect ZZ XX --json
 qni expect ZZ XX --latex
 ```
 
-`qni run` は、測定のない回路では状態ベクトルを表示します。`--symbolic` を付けると、小さな回路を ket 表記で読みやすく表示できます。`--latex` を付けると、数値または記号の状態ベクトルを `\ket{}` 記法の LaTeX で表示します。数値の LaTeX 出力には Python は不要です。`qni expect` は Pauli 文字列の期待値を計算し、`--latex` を付けると `\langle ZZ \rangle = 1.0` の形式で表示します。Pauli 文字列は左端から `q0`、`q1`、… に対応します。たとえば `XI` は `q0` に `X`、`q1` に `I` を適用します。
+`qni run` は、測定のない回路では状態ベクトルを表示します。`--symbolic` を付けると、小さな回路を ket 表記で読みやすく表示できます。制御付きの1量子ビットゲートは、`P`、`Rz`、`S`、`T` など、通常のシンボリック実行で扱えるゲートに対応します。複数制御と SWAP も扱えます。`--latex` を付けると、数値または記号の状態ベクトルを `\ket{}` 記法の LaTeX で表示します。数値の LaTeX 出力には Python は不要です。`qni expect` は Pauli 文字列の期待値を計算し、`--latex` を付けると `\langle ZZ \rangle = 1.0` の形式で表示します。Pauli 文字列は左端から `q0`、`q1`、… に対応します。たとえば `XI` は `q0` に `X`、`q1` に `I` を適用します。
 
 `qni expect --same-axis-correlations K` は、X、Y、Z の順に、ちょうど K 個の位置が同じ軸で残りが `I` の Pauli 文字列を列挙します。各軸内では位置の組合せ順です。3量子ビットの `K=2` なら `XXI`、`XIX`、`IXX`、`YYI`、`YIY`、`IYY`、`ZZI`、`ZIZ`、`IZZ` を出力します。K は1以上かつ回路の量子ビット数以下の整数です。オプションを繰り返すと指定順に列挙し、明示した Pauli 文字列がある場合はその入力順の後に列挙分を続けます。通常出力、`--json`、`--latex`、有限ショット推定のすべてで利用できます。
 
@@ -181,6 +181,8 @@ qni export --svg --light --output circuit.svg
 ```bash
 qni export --png --light --output circuit.png
 ```
+
+回路図は quantikz 形式の LaTeX を `pdflatex` で組版します。`qni export --latex-source` では同じ LaTeX ソースを出力できます。
 
 メモ、スライド、ドキュメントに載せる図にはキャプションを付けられます。暗いノートテーマなどで白背景を保ちたい場合は `--no-transparent` を使います。
 

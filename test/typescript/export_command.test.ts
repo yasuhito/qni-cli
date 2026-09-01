@@ -148,7 +148,7 @@ function commandPath(command: string): string {
 }
 
 describe('export command TypeScript route', () => {
-  it('renders qcircuit LaTeX source for controlled and swap operations', async () => {
+  it('renders quantikz LaTeX source for controlled and swap operations', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
         qubits: 3,
@@ -163,10 +163,11 @@ describe('export command TypeScript route', () => {
 
       assert.equal(result.exitStatus, 0);
       assert.equal(result.stderr, '');
-      assert.match(result.stdout, /\\Qcircuit/u);
+      assert.match(result.stdout, /\\usepackage\{quantikz\}/u);
+      assert.match(result.stdout, /\\begin\{quantikz\}/u);
       assert.match(result.stdout, /\\ctrl\{1\}/u);
-      assert.match(result.stdout, /\\qswap/u);
-      assert.match(result.stdout, /\\qwx\[-1\]/u);
+      assert.match(result.stdout, /\\swap\{1\}/u);
+      assert.match(result.stdout, /\\targX\{\}/u);
     });
   });
 
@@ -260,7 +261,26 @@ describe('export command TypeScript route', () => {
       assert.equal(result.stderr, '');
       assert.match(result.stdout, /\\meter/u);
       assert.match(result.stdout, /\\ctrl\{1\}/u);
-      assert.match(result.stdout, /\\qswap/u);
+      assert.match(result.stdout, /\\swap\{1\}/u);
+    });
+  });
+
+  it('uses contrasting quantikz gate fills for dark and light themes', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        qubits: 1,
+        cols: [['H']]
+      });
+
+      const dark = captureDispatcherRun(dir, ['export', '--latex-source'], { PATH: '' });
+      const light = captureDispatcherRun(dir, ['export', '--latex-source', '--light'], { PATH: '' });
+
+      assert.equal(dark.exitStatus, 0);
+      assert.match(dark.stdout, /\\color\{white\}/u);
+      assert.match(dark.stdout, /background color=black/u);
+      assert.equal(light.exitStatus, 0);
+      assert.match(light.stdout, /\\color\{black\}/u);
+      assert.match(light.stdout, /background color=white/u);
     });
   });
 
@@ -288,7 +308,7 @@ describe('export command TypeScript route', () => {
       assert.equal(result.exitStatus, 0);
       assert.equal(result.stderr, '');
       assert.match(result.stdout, /\$\\pi\$ \\& CNOT/u);
-      assert.match(result.stdout, /\\Qcircuit/u);
+      assert.match(result.stdout, /\\begin\{quantikz\}/u);
     });
   });
 
@@ -353,7 +373,7 @@ describe('export command TypeScript route', () => {
       assert.equal(result.exitStatus, 0);
       assert.equal(result.stdout, '');
       assert.equal(result.stderr, '');
-      assert.match(output, /\\Qcircuit/u);
+      assert.match(output, /\\begin\{quantikz\}/u);
       assert.match(output, /T/u);
     });
   });
@@ -478,6 +498,23 @@ describe('export command TypeScript route', () => {
     });
   });
 
+  it('renders controlled SWAP as a regular PNG', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        qubits: 3,
+        cols: [['•', 'Swap', 'Swap']]
+      });
+
+      const result = captureDispatcherRun(dir, ['export', '--png', '--light', '--output', 'swap.png']);
+      const png = await pngStableProperties(path.join(dir, 'swap.png'));
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, '');
+      assert.deepEqual(png, { height: 192, transparent: true, width: 64 });
+    });
+  });
+
   it('renders regular opaque PNG', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
@@ -495,7 +532,7 @@ describe('export command TypeScript route', () => {
     });
   });
 
-  it('sizes an empty regular PNG from the rendered qcircuit columns', async () => {
+  it('sizes an empty regular PNG from the rendered quantikz columns', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
         qubits: 1,
@@ -650,7 +687,7 @@ describe('export command TypeScript route', () => {
       assert.equal(result.exitStatus, 0);
       assert.equal(result.stdout, '');
       assert.equal(result.stderr, '');
-      assert.match(await readFile(path.join(dir, 'output'), 'utf8'), /\\Qcircuit/u);
+      assert.match(await readFile(path.join(dir, 'output'), 'utf8'), /\\begin\{quantikz\}/u);
     });
   });
 });

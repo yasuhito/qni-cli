@@ -23,11 +23,11 @@ qni export のヘルプで利用できる出力形式とオプションを確認
     qni export --circle-notation --png --output=PATH
 
   Overview:
-    Export ./circuit.json as an SVG, qcircuit LaTeX, or PNG.
+    Export ./circuit.json as an SVG, quantikz LaTeX, or PNG.
     --svg draws the circuit directly without a LaTeX installation and writes SVG to standard output by default.
     With --output=PATH, --svg or --latex-source writes the corresponding file instead.
-    --latex-source writes qcircuit LaTeX to standard output by default.
-    --png renders the qcircuit LaTeX with pdflatex and converts the PDF to PNG with pdftocairo.
+    --latex-source writes quantikz LaTeX to standard output by default.
+    --png renders the quantikz LaTeX with pdflatex and converts the PDF to PNG with pdftocairo.
     --caption adds explanatory text above or below regular circuit export.
     --caption-tex treats --caption as raw LaTeX instead of escaping it.
     --no-transparent writes an opaque PNG background, useful for light circuit lines on dark note themes.
@@ -37,8 +37,8 @@ qni export のヘルプで利用できる出力形式とオプションを確認
 
   Options:
     --svg           # write SVG directly without LaTeX
-    --latex-source  # write qcircuit LaTeX
-    --png           # write PNG rendered from qcircuit LaTeX
+    --latex-source  # write quantikz LaTeX
+    --png           # write PNG rendered from quantikz LaTeX
     --state-vector  # write the symbolic state vector as PNG
     --circle-notation # write the computational-basis circle notation as PNG
     --dark          # draw white circuit lines for dark backgrounds (default)

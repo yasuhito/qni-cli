@@ -1,6 +1,6 @@
 import type { CircuitData } from '../circuit_file';
-import { parseCircuitOperation, parseCircuitOperationSlot, type ParsedCircuitOperation } from '../circuit_operation';
-import type { ExportTheme, QCircuitCaptionOptions } from './qcircuit_latex';
+import { parseCircuitOperationSlot, type ParsedCircuitOperation } from '../circuit_operation';
+import type { ExportTheme, QuantikzCaptionOptions } from './quantikz_latex';
 
 const CONTROL_SYMBOL = '•';
 const EMPTY_SLOT = 1;
@@ -10,7 +10,7 @@ const MIN_COLUMN_WIDTH = 64;
 const GATE_HEIGHT = 34;
 const MARGIN = 16;
 
-export interface CircuitSvgOptions extends QCircuitCaptionOptions {
+export interface CircuitSvgOptions extends QuantikzCaptionOptions {
   readonly theme: ExportTheme;
 }
 
@@ -25,6 +25,7 @@ class SvgStep {
   readonly operations: Placement[];
   readonly step: number;
   readonly swaps: Placement[];
+  readonly width: number;
 
   constructor(slots: unknown[], step: number) {
     this.step = step;
@@ -35,6 +36,9 @@ class SvgStep {
     });
     this.measurements = this.operations.filter(({ operation }) => operation.kind === 'measurement');
     this.swaps = this.operations.filter(({ operation }) => operation.kind === 'swap');
+    const labels = this.operations.map(({ operation }) => displayLabel(operation));
+    const longest = Math.max(1, ...labels.map((label) => [...label].length));
+    this.width = Math.max(MIN_COLUMN_WIDTH, longest * 8 + 28);
   }
 
   get controlledTarget(): Placement | undefined {
@@ -47,12 +51,6 @@ class SvgStep {
       throw new Error(`unsupported controlled step: ${JSON.stringify(this.operations)}`);
     }
     return targets[0];
-  }
-
-  get width(): number {
-    const labels = this.operations.map(({ operation }) => displayLabel(operation));
-    const longest = Math.max(1, ...labels.map((label) => [...label].length));
-    return Math.max(MIN_COLUMN_WIDTH, longest * 8 + 28);
   }
 
   validate(): void {
@@ -73,8 +71,11 @@ export class CircuitSvg {
   private readonly captionPosition: string;
   private readonly captionSize: number;
   private readonly circuit: CircuitData;
+  private readonly columnCenters: number[];
+  private readonly height: number;
   private readonly steps: SvgStep[];
   private readonly theme: ExportTheme;
+  private readonly width: number;
 
   constructor(circuit: CircuitData, options: CircuitSvgOptions) {
     this.caption = options.caption ?? '';
@@ -86,12 +87,17 @@ export class CircuitSvg {
     for (const svgStep of this.steps) {
       svgStep.validate();
     }
+    const layout = columnLayout(this.steps);
+    this.columnCenters = layout.centers;
+    const captionWidth = this.caption === '' ? 0 : [...this.caption].length * this.captionSize + MARGIN * 2;
+    this.width = Math.max(layout.width, captionWidth);
+    this.height = Math.max(ROW_HEIGHT, this.circuit.qubits * ROW_HEIGHT) + this.captionSpace;
   }
 
   render(): string {
     const lines = [
       `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${this.width} ${this.height}" width="${this.width}" height="${this.height}" role="img" aria-label="Quantum circuit">`,
-      `<style>svg{color:${this.theme === 'light' ? '#111' : '#fff'}}text{fill:currentColor;font-family:"DejaVu Sans",sans-serif;font-size:14px}.wire,.connection,.gate-box,.meter-box,.meter-mark,.target-mark,.swap-mark{stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}.control-dot{fill:currentColor}.label{font-size:13px}.annotation{font-size:11px}</style>`,
+      `<style>svg{color:${this.theme === 'light' ? '#111' : '#fff'}}text{fill:currentColor;font-family:"DejaVu Sans",sans-serif;font-size:14px}.wire,.connection,.gate-box,.meter-box,.meter-mark,.target-mark,.swap-mark{stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.wire,.connection,.meter-mark,.target-mark,.swap-mark{fill:none}.control-dot{fill:currentColor}.label{font-size:13px}.annotation{font-size:11px}</style>`,
       ...this.topCaption,
       ...this.wires,
       ...this.steps.flatMap((step, index) => this.renderStep(step, this.columnCenters[index])),
@@ -101,27 +107,26 @@ export class CircuitSvg {
     return lines.join('\n');
   }
 
+  private get backgroundColor(): string {
+    return this.theme === 'light' ? '#fff' : '#000';
+  }
+
   private get bottomCaption(): string[] {
     return this.caption !== '' && this.captionPosition === 'bottom'
-      ? [this.text(this.width / 2, this.height - MARGIN, this.caption, `font-size:${this.captionSize}px`, 'caption')]
+      ? [this.captionText('bottom', this.circuitHeight + MARGIN + this.captionSize)]
       : [];
   }
 
   private get captionSpace(): number {
-    return this.caption === '' ? 0 : this.captionSize + 24;
+    return this.caption === '' ? 0 : Math.ceil(this.captionSize * 1.3) + MARGIN * 2;
   }
 
-  private get columnCenters(): number[] {
-    let cursor = LABEL_WIDTH + MARGIN;
-    return this.steps.map((step) => {
-      const center = cursor + step.width / 2;
-      cursor += step.width;
-      return center;
-    });
+  private captionText(position: 'bottom' | 'top', y: number): string {
+    return `<text class="caption" data-caption-position="${position}" style="font-size:${this.captionSize}px" x="${this.width / 2}" y="${y}" text-anchor="middle">${escapeXml(this.caption)}</text>`;
   }
 
-  private get height(): number {
-    return Math.max(ROW_HEIGHT, this.circuit.qubits * ROW_HEIGHT) + this.captionSpace;
+  private get circuitHeight(): number {
+    return Math.max(ROW_HEIGHT, this.circuit.qubits * ROW_HEIGHT);
   }
 
   private renderControlLines(step: SvgStep, x: number, connectedQubits: number[], targetQubit: number): string[] {
@@ -146,7 +151,7 @@ export class CircuitSvg {
     const y = this.y(placement.qubit);
     return [
       `<g data-operation="gate" data-step="${step}" data-qubit="${placement.qubit}">`,
-      `<rect class="gate-box" x="${x - width / 2}" y="${y - GATE_HEIGHT / 2}" width="${width}" height="${GATE_HEIGHT}" rx="3"/>`,
+      `<rect class="gate-box" x="${x - width / 2}" y="${y - GATE_HEIGHT / 2}" width="${width}" height="${GATE_HEIGHT}" rx="3" fill="${this.backgroundColor}"/>`,
       this.text(x, y + 5, label),
       '</g>'
     ];
@@ -157,7 +162,7 @@ export class CircuitSvg {
     const name = placement.operation.measurementName;
     return [
       `<g data-operation="measurement" data-step="${step}" data-qubit="${placement.qubit}">`,
-      `<rect class="meter-box" x="${x - 22}" y="${y - 17}" width="44" height="34" rx="3"/>`,
+      `<rect class="meter-box" x="${x - 22}" y="${y - 17}" width="44" height="34" rx="3" fill="${this.backgroundColor}"/>`,
       `<path class="meter-mark" d="M ${x - 12} ${y + 8} A 13 13 0 0 1 ${x + 12} ${y + 8} M ${x} ${y + 5} L ${x + 9} ${y - 7}"/>`,
       ...(name === undefined ? [] : [this.text(x + 28, y - 12, `>${name}`, undefined, 'annotation')]),
       '</g>'
@@ -229,15 +234,8 @@ export class CircuitSvg {
 
   private get topCaption(): string[] {
     return this.caption !== '' && this.captionPosition === 'top'
-      ? [this.text(this.width / 2, this.captionSize + MARGIN / 2, this.caption, `font-size:${this.captionSize}px`, 'caption')]
+      ? [this.captionText('top', MARGIN + this.captionSize)]
       : [];
-  }
-
-  private get width(): number {
-    if (this.steps.length === 0) {
-      return 192;
-    }
-    return LABEL_WIDTH + MARGIN * 2 + this.steps.reduce((sum, step) => sum + step.width, 0);
   }
 
   private get wires(): string[] {
@@ -255,6 +253,20 @@ export class CircuitSvg {
   private y(qubit: number): number {
     return ROW_HEIGHT / 2 + qubit * ROW_HEIGHT + (this.caption !== '' && this.captionPosition === 'top' ? this.captionSpace : 0);
   }
+}
+
+function columnLayout(steps: readonly SvgStep[]): { readonly centers: number[]; readonly width: number } {
+  if (steps.length === 0) {
+    return { centers: [], width: 192 };
+  }
+
+  let cursor = LABEL_WIDTH + MARGIN;
+  const centers = steps.map((step) => {
+    const center = cursor + step.width / 2;
+    cursor += step.width;
+    return center;
+  });
+  return { centers, width: cursor + MARGIN };
 }
 
 function displayLabel(operation: ParsedCircuitOperation): string {
