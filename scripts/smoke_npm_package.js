@@ -6,6 +6,8 @@ const os = require('node:os');
 const path = require('node:path');
 const ts = require('typescript');
 
+const { resolvePackResult } = require('./npm_pack_result');
+
 const projectRoot = path.resolve(__dirname, '..');
 const keepTemp = process.env.QNI_KEEP_PACKAGE_SMOKE === '1';
 
@@ -15,8 +17,6 @@ function main() {
   try {
     assertExtensionSourceBoundary();
     const packed = packProject(tempRoot);
-    assertPackedFiles(packed.files);
-
     const tarball = packed.tarball;
     const installRoot = path.join(tempRoot, 'install');
     const workspace = path.join(tempRoot, 'workspace');
@@ -30,6 +30,7 @@ function main() {
     const packageRoot = path.join(installRoot, 'node_modules', 'qni-cli');
     const env = smokeEnv({ installRoot });
 
+    assertPackedFiles(packageRoot);
     assertPackageMetadata(packageRoot);
     assertSkillContent(packageRoot);
     assertPiSkillDetection({ packageRoot, tempRoot });
@@ -181,20 +182,10 @@ function sourceFilesUnder(directory) {
 
 function packProject(tempRoot) {
   const result = run('npm pack', 'npm', ['pack', '--json', '--pack-destination', tempRoot], { cwd: projectRoot });
-  const packEntry = JSON.parse(result.stdout)[0];
-  const filename = packEntry?.filename;
-
-  if (!filename) {
-    throw new Error(`npm pack did not report a filename:\n${result.stdout}`);
-  }
-
-  return {
-    files: (packEntry.files ?? []).map((file) => file.path),
-    tarball: path.join(tempRoot, filename)
-  };
+  return resolvePackResult({ tempRoot, ...result });
 }
 
-function assertPackedFiles(files) {
+function assertPackedFiles(packageRoot) {
   const requiredFiles = [
     'LICENSE',
     'benchmarks/quantum-katas/basic-gates/state-flip.md',
@@ -208,7 +199,7 @@ function assertPackedFiles(files) {
   ];
 
   for (const requiredFile of requiredFiles) {
-    if (!files.includes(requiredFile)) {
+    if (!fs.existsSync(path.join(packageRoot, requiredFile))) {
       throw new Error(`packed qni-cli is missing ${requiredFile}`);
     }
   }

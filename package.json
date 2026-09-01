@@ -47,8 +47,9 @@
     "build": "tsc",
     "prepack": "npm run build",
     "build:ts": "npm run build",
-    "check": "npm run test:ts && npm run cucumber && npm run smoke:package",
+    "check": "npm run test:ts && npm run test:scripts && npm run cucumber && npm run smoke:package",
     "smoke:package": "npm run build && node scripts/smoke_npm_package.js",
+    "test:scripts": "node --test scripts/*.test.js",
     "cucumber": "npm run build && cucumber-js --config cucumber-js.mjs --require \"features/support/**/*.js\" --require \"features/step_definitions/**/*.js\" --format progress \"features/**/*.feature.md\"",
     "test:ts": "node -e \"require('node:fs').rmSync('tmp/typescript-tests', {recursive: true, force: true})\" && tsc -p tsconfig.test.json && node --test \"tmp/typescript-tests/test/typescript/**/*.test.js\""
   },
