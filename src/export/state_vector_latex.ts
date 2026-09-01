@@ -1,4 +1,4 @@
-import type { ExportTheme } from './qcircuit_latex';
+import type { ExportTheme } from './quantikz_latex';
 
 const HEADER_LINES = [
   '\\documentclass[border=2px]{standalone}',

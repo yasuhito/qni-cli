@@ -5,11 +5,11 @@ import { CircuitFileError, currentCircuitFile, type CircuitData } from '../circu
 import type { CommandHandlerContext } from '../dispatcher';
 import { CircleNotationPng } from '../export/circle_notation_png';
 import {
-  QCircuitLatex,
-  qcircuitRenderedColumnCount,
+  QuantikzLatex,
+  quantikzRenderedColumnCount,
   validateCaptionOptions,
   type ExportTheme
-} from '../export/qcircuit_latex';
+} from '../export/quantikz_latex';
 import { circuitPngHeight, circuitPngWidth, PngExporter } from '../export/png_exporter';
 import { StateVectorLatex } from '../export/state_vector_latex';
 import { Simulator } from '../simulator';
@@ -23,10 +23,10 @@ const HELP_TEXT = `Usage:
   qni export --circle-notation --png --output=PATH
 
 Overview:
-  Export ./circuit.json as qcircuit LaTeX or PNG.
-  --latex-source writes qcircuit LaTeX to standard output by default.
+  Export ./circuit.json as quantikz LaTeX or PNG.
+  --latex-source writes quantikz LaTeX to standard output by default.
   With --output=PATH, --latex-source writes the LaTeX file instead.
-  --png renders the qcircuit LaTeX with pdflatex and converts the PDF to PNG with pdftocairo.
+  --png renders the quantikz LaTeX with pdflatex and converts the PDF to PNG with pdftocairo.
   --caption adds explanatory text above or below regular circuit export.
   --caption-tex treats --caption as raw LaTeX instead of escaping it.
   --no-transparent writes an opaque PNG background, useful for light circuit lines on dark note themes.
@@ -35,8 +35,8 @@ Overview:
   qni export follows qni's step constraints, so one step can contain simple 1-qubit gates, one controlled gate, one 2-qubit SWAP, or one controlled 2-qubit SWAP.
 
 Options:
-  --latex-source  # write qcircuit LaTeX
-  --png           # write PNG rendered from qcircuit LaTeX
+  --latex-source  # write quantikz LaTeX
+  --png           # write PNG rendered from quantikz LaTeX
   --state-vector  # write the symbolic state vector as PNG
   --circle-notation # write the computational-basis circle notation as PNG
   --dark          # draw white circuit lines for dark backgrounds (default)
@@ -160,7 +160,7 @@ export function runExportCommand(argv: string[], context: CommandHandlerContext)
       return 0;
     }
 
-    const latexSource = new QCircuitLatex(circuit, {
+    const latexSource = new QuantikzLatex(circuit, {
       caption: options.caption,
       captionFormat: options.captionFormat,
       captionPosition: options.captionPosition,
@@ -169,7 +169,7 @@ export function runExportCommand(argv: string[], context: CommandHandlerContext)
     }).render();
 
     if (options.png) {
-      writePng(latexSource, options, context, qcircuitRenderedColumnCount(circuit), circuit.qubits);
+      writePng(latexSource, options, context, quantikzRenderedColumnCount(circuit), circuit.qubits);
     } else {
       writeLatexSource(latexSource, options, context.cwd);
     }

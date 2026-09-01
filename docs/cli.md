@@ -172,6 +172,8 @@ qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/
 qni export --png --light --output circuit.png
 ```
 
+回路図は quantikz 形式の LaTeX を `pdflatex` で組版します。`qni export --latex-source` では同じ LaTeX ソースを出力できます。
+
 メモ、スライド、ドキュメントに載せる図にはキャプションを付けられます。暗いノートテーマなどで白背景を保ちたい場合は `--no-transparent` を使います。
 
 ```bash

@@ -178,7 +178,7 @@ describe('named measurements and classically conditioned gates', () => {
       const latex = captureDispatcherRun(dir, ['export', '--latex-source'], { PATH: '' });
       assert.equal(latex.exitStatus, 0);
       assert.match(latex.stdout, /\\meter/u);
-      assert.match(latex.stdout, /\$>\\mathrm\{input\}\$/u);
+      assert.match(latex.stdout, /\\meter\{>\\mathrm\{input\}\}/u);
       assert.match(latex.stdout, /<\\mathrm\{input\}/u);
     });
   });
