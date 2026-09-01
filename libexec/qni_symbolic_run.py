@@ -451,12 +451,35 @@ def controlled_gate_matrix(qubits: int, controls, target: int, target_gate: Matr
     return matrix
 
 
+def swap_gate_matrix(qubits: int, controls, targets):
+    size = 2**qubits
+    matrix = Matrix.zeros(size, size)
+    first_target, second_target = targets
+
+    for basis_index in range(size):
+        output_index = basis_index
+        if all(basis_bit(basis_index, control, qubits) == 1 for control in controls):
+            first_bit = basis_bit(basis_index, first_target, qubits)
+            second_bit = basis_bit(basis_index, second_target, qubits)
+            output_index = replace_basis_bit(output_index, first_target, qubits, second_bit)
+            output_index = replace_basis_bit(output_index, second_target, qubits, first_bit)
+        matrix[output_index, basis_index] = 1
+
+    return matrix
+
+
 def column_gate_matrix(col, qubits, variables):
     if len(col) != qubits:
         raise ValueError(f"gate column width {len(col)} does not match qubit count {qubits}")
 
     controls = [index for index, gate in enumerate(col) if gate in ("●", "•")]
     non_identity = [(index, gate) for index, gate in enumerate(col) if gate != 1 and gate not in ("●", "•")]
+    swap_targets = [index for index, gate in non_identity if gate == "Swap"]
+
+    if swap_targets:
+        if len(swap_targets) != 2 or len(non_identity) != 2:
+            raise ValueError(f"unsupported symbolic gate column: {col!r}")
+        return swap_gate_matrix(qubits, controls, swap_targets)
 
     if not controls:
         matrices = [
@@ -469,9 +492,6 @@ def column_gate_matrix(col, qubits, variables):
         raise ValueError(f"unsupported symbolic gate column: {col!r}")
 
     target, target_gate = non_identity[0]
-    if target_gate not in ("X", "Z"):
-        raise ValueError(f"unsupported symbolic gate column: {col!r}")
-
     return controlled_gate_matrix(
         qubits,
         controls,
