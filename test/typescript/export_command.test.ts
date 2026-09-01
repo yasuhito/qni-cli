@@ -188,6 +188,25 @@ describe('export command TypeScript route', () => {
     });
   });
 
+  it('uses contrasting quantikz gate fills for dark and light themes', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        qubits: 1,
+        cols: [['H']]
+      });
+
+      const dark = captureDispatcherRun(dir, ['export', '--latex-source'], { PATH: '' });
+      const light = captureDispatcherRun(dir, ['export', '--latex-source', '--light'], { PATH: '' });
+
+      assert.equal(dark.exitStatus, 0);
+      assert.match(dark.stdout, /\\color\{white\}/u);
+      assert.match(dark.stdout, /background color=black/u);
+      assert.equal(light.exitStatus, 0);
+      assert.match(light.stdout, /\\color\{black\}/u);
+      assert.match(light.stdout, /background color=white/u);
+    });
+  });
+
   it('renders captioned light-theme LaTeX source', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
@@ -399,6 +418,23 @@ describe('export command TypeScript route', () => {
       assert.equal(result.stdout, '');
       assert.equal(result.stderr, '');
       assert.deepEqual(png, { height: 64, transparent: true, width: 64 });
+    });
+  });
+
+  it('renders controlled SWAP as a regular PNG', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        qubits: 3,
+        cols: [['•', 'Swap', 'Swap']]
+      });
+
+      const result = captureDispatcherRun(dir, ['export', '--png', '--light', '--output', 'swap.png']);
+      const png = await pngStableProperties(path.join(dir, 'swap.png'));
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stdout, '');
+      assert.equal(result.stderr, '');
+      assert.deepEqual(png, { height: 192, transparent: true, width: 64 });
     });
   });
 

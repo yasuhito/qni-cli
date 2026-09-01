@@ -20,7 +20,7 @@ const DOCUMENT_HEADER_LINES = [
   '\\begin{document}'
 ];
 const DOCUMENT_FOOTER_LINES = ['\\end{document}'];
-const CIRCUIT_HEADER_LINES = ['\\scalebox{1.0}{', '\\begin{quantikz}[column sep=0.55em, row sep=2.2em]'];
+const CIRCUIT_HEADER_LINES = ['\\scalebox{1.0}{'];
 const CIRCUIT_FOOTER_LINES = ['\\end{quantikz}', '}'];
 const EMPTY_CIRCUIT_MIN_COLUMNS = 3;
 
@@ -165,9 +165,14 @@ export class QuantikzLatex {
   private get circuitLines(): string[] {
     return [
       ...CIRCUIT_HEADER_LINES,
+      this.quantikzEnvironmentLine,
       this.renderedRows,
       ...CIRCUIT_FOOTER_LINES
     ];
+  }
+
+  private get quantikzEnvironmentLine(): string {
+    return `\\begin{quantikz}[column sep=0.55em, row sep=2.2em, background color=${this.themeBackgroundColorName}]`;
   }
 
   private get renderedRows(): string {
@@ -196,6 +201,10 @@ export class QuantikzLatex {
 
   private get themeColorLine(): string {
     return `\\color{${this.themeColorName}}`;
+  }
+
+  private get themeBackgroundColorName(): string {
+    return this.theme === 'light' ? 'white' : 'black';
   }
 
   private get themeColorName(): string {

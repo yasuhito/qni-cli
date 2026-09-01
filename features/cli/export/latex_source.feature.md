@@ -60,6 +60,16 @@ qni export --latex-source で quantikz 形式の LaTeX を出力したい。
   \color{white}
   ```
 
+## Scenario: qni export --latex-source はダークテーマのゲート面を黒くする
+
+- Given "qni add H --qubit 0 --step 0" を実行
+- When "qni export --latex-source" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  background color=black
+  ```
+
 ## Scenario: qni export --latex-source --light は成功する
 
 - Given "qni add H --qubit 0 --step 0" を実行
@@ -74,6 +84,16 @@ qni export --latex-source で quantikz 形式の LaTeX を出力したい。
 
   ```text
   \color{black}
+  ```
+
+## Scenario: qni export --latex-source --light はゲート面を白くする
+
+- Given "qni add H --qubit 0 --step 0" を実行
+- When "qni export --latex-source --light" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  background color=white
   ```
 
 ## Scenario: qni export --latex-source --light はダークテーマの色を出力しない
