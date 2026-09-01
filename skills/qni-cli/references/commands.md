@@ -39,7 +39,7 @@ qni add X --if input --qubit 1 --step 4
 
 ## run
 
-引数なしでは数値の状態ベクトルを表示する。記号的な ket には `--symbolic`、名前付き基底には `--symbolic --basis x|y|bell`、LaTeX の ket には `--latex` を使う。測定回路の分布にはショット数を指定する。再現が必要なら seed も指定し、機械処理には JSON を選ぶ。
+引数なしの場合、測定を含まない回路では数値の状態ベクトルを、測定回路では1回分の測定結果を表示する。記号的な ket には `--symbolic`、名前付き基底には `--symbolic --basis x|y|bell`、LaTeX の ket には `--latex` を使う。測定回路にショット数を指定すると測定分布を表示する。再現が必要なら seed も指定し、機械処理には JSON を選ぶ。
 
 ```text
 qni run --symbolic
@@ -83,7 +83,7 @@ qni expect --same-axis-correlations 2
 
 ## export
 
-SVG は LaTeX 環境なしで標準出力へ書ける。PNG には出力先が必要で、`pdflatex` と `pdftocairo` も必要になる。LaTeX ソースは標準出力またはファイルへ書ける。
+SVG は LaTeX 環境なしで標準出力へ書ける。PNG には出力先が必要になる。通常の回路 PNG と状態ベクトル PNG には `pdflatex` と `pdftocairo`、円表記 PNG には matplotlib と Pillow が必要になる。LaTeX ソースは標準出力またはファイルへ書ける。
 
 ```text
 qni export --svg

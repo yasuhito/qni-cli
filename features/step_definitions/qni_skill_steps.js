@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const { execFileSync } = require('node:child_process');
 
 const { Then } = require('@cucumber/cucumber');
+const { helpAdvertises, parseHelpEntries } = require('../../scripts/qni_skill_help');
 
 const PROJECT_ROOT = path.resolve(__dirname, '../..');
 const NODE_QNI_BIN = path.join(PROJECT_ROOT, 'dist', 'bin', 'qni.js');
@@ -46,10 +47,12 @@ Then('qni スキルのコマンド仕様にある名前とオプションは CLI
       encoding: 'utf8'
     });
 
+    const helpEntries = parseHelpEntries(stdout);
+
     for (const documentedName of [command, ...inlineCodeValues(optionCell)]) {
       assert.ok(
-        stdout.includes(documentedName),
-        `expected "${documentedName}" from ${COMMAND_REFERENCE} in "${helpWords.join(' ')} --help"`
+        helpAdvertises(helpEntries, documentedName),
+        `expected complete entry "${documentedName}" from ${COMMAND_REFERENCE} in "${helpWords.join(' ')} --help"`
       );
     }
   }
