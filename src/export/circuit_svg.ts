@@ -9,6 +9,7 @@ const LABEL_WIDTH = 72;
 const MIN_COLUMN_WIDTH = 64;
 const GATE_HEIGHT = 34;
 const MARGIN = 16;
+const SVG_UNITS_PER_POINT = 4 / 3;
 
 export interface CircuitSvgOptions extends QuantikzCaptionOptions {
   readonly theme: ExportTheme;
@@ -70,6 +71,7 @@ export class CircuitSvg {
   private readonly caption: string;
   private readonly captionPosition: string;
   private readonly captionSize: number;
+  private readonly captionSizeSvg: number;
   private readonly circuit: CircuitData;
   private readonly columnCenters: number[];
   private readonly height: number;
@@ -81,6 +83,7 @@ export class CircuitSvg {
     this.caption = options.caption ?? '';
     this.captionPosition = options.captionPosition ?? 'bottom';
     this.captionSize = options.captionSize ?? 12;
+    this.captionSizeSvg = this.captionSize * SVG_UNITS_PER_POINT;
     this.circuit = circuit;
     this.theme = options.theme;
     this.steps = circuit.cols.map((slots, step) => new SvgStep(slots, step));
@@ -89,8 +92,8 @@ export class CircuitSvg {
     }
     const layout = columnLayout(this.steps);
     this.columnCenters = layout.centers;
-    const captionWidth = this.caption === '' ? 0 : [...this.caption].length * this.captionSize + MARGIN * 2;
-    this.width = Math.max(layout.width, captionWidth);
+    const captionWidth = this.caption === '' ? 0 : [...this.caption].length * this.captionSizeSvg + MARGIN * 2;
+    this.width = Math.ceil(Math.max(layout.width, captionWidth));
     this.height = Math.max(ROW_HEIGHT, this.circuit.qubits * ROW_HEIGHT) + this.captionSpace;
   }
 
@@ -113,16 +116,16 @@ export class CircuitSvg {
 
   private get bottomCaption(): string[] {
     return this.caption !== '' && this.captionPosition === 'bottom'
-      ? [this.captionText('bottom', this.circuitHeight + MARGIN + this.captionSize)]
+      ? [this.captionText('bottom', this.circuitHeight + MARGIN + this.captionSizeSvg)]
       : [];
   }
 
   private get captionSpace(): number {
-    return this.caption === '' ? 0 : Math.ceil(this.captionSize * 1.3) + MARGIN * 2;
+    return this.caption === '' ? 0 : Math.ceil(this.captionSizeSvg * 1.3) + MARGIN * 2;
   }
 
   private captionText(position: 'bottom' | 'top', y: number): string {
-    return `<text class="caption" data-caption-position="${position}" style="font-size:${this.captionSize}px" x="${this.width / 2}" y="${y}" text-anchor="middle">${escapeXml(this.caption)}</text>`;
+    return `<text class="caption" data-caption-position="${position}" style="font-size:${this.captionSize}pt" x="${this.width / 2}" y="${y}" text-anchor="middle">${escapeXml(this.caption)}</text>`;
   }
 
   private get circuitHeight(): number {
@@ -234,7 +237,7 @@ export class CircuitSvg {
 
   private get topCaption(): string[] {
     return this.caption !== '' && this.captionPosition === 'top'
-      ? [this.captionText('top', MARGIN + this.captionSize)]
+      ? [this.captionText('top', MARGIN + this.captionSizeSvg)]
       : [];
   }
 

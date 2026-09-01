@@ -100,8 +100,8 @@ describe('SVG export command', () => {
         const dimensions = svgDimensions(result.stdout);
 
         assert.equal(result.exitStatus, 0);
-        assert.ok(dimensions.width >= [...caption].length * 48 + 32, position);
-        assert.ok(dimensions.height >= 64 + Math.ceil(48 * 1.3) + 32, position);
+        assert.match(result.stdout, /font-size:48pt/u);
+        assert.deepEqual(dimensions, { height: 180, width: 3040 }, position);
         assert.match(result.stdout, new RegExp(`data-caption-position="${position}"`, 'u'));
       }
     }, TEMP_DIR_OPTIONS);
