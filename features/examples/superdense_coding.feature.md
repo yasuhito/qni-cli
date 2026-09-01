@@ -75,7 +75,7 @@ qni-cli の利用者として、回路内で生成したランダムな2ビッ�
 - Then 標準出力に次を含む:
 
   ```text
-  $>\mathrm{output\_high}$
+  \meter{>\mathrm{output\_high}}
   ```
 
 ## Scenario: 画像の描画元に古典条件付き符号化を含む

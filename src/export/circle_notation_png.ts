@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import type { StateVectorExportPayload } from '../simulator';
-import type { ExportTheme } from './qcircuit_latex';
+import type { ExportTheme } from './quantikz_latex';
 
 export class CircleNotationPngError extends Error {}
 

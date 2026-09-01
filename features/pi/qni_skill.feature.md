@@ -48,6 +48,14 @@
 
 - Then リポジトリファイル "skills/qni-cli/SKILL.md" は "成功分の変更は作業場所に残っている" を含む
 
+## Scenario: 画像対応端末では回路図を画像で見せる
+
+- Then リポジトリファイル "skills/qni-cli/SKILL.md" は "画像を表示できる端末では `qni export --png` で回路図を画像にして見せる" を含む
+
+## Scenario: 画像を使えない端末では ASCII 回路図へ戻す
+
+- Then リポジトリファイル "skills/qni-cli/SKILL.md" は "画像を使えない場合だけ `qni view` の ASCII 回路図を見せる" を含む
+
 ## Scenario: 状態ベクトルと期待値を LaTeX で引用する
 
 - Then リポジトリファイル "skills/qni-cli/SKILL.md" は "`--latex` の出力を `$$...$$` でそのまま引用する" を含む

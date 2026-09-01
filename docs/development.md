@@ -30,7 +30,7 @@ scripts/setup_symbolic_python.sh
 
 `qni export --png` と `qni export --state-vector --png` には次の外部コマンドが必要です。
 
-- `pdflatex`
+- `pdflatex`（quantikz パッケージを含む TeX 環境）
 - `pdftocairo`
 
 ## 通常チェックを実行する

@@ -11,7 +11,8 @@ const EMPTY_SLOT = 1;
 const DOCUMENT_HEADER_LINES = [
   '\\documentclass[border=24px]{standalone}',
   '',
-  '\\usepackage[braket, qm]{qcircuit}',
+  '\\usepackage{braket}',
+  '\\usepackage{quantikz}',
   '\\usepackage{graphicx}',
   '\\usepackage{textcomp}',
   '\\usepackage{xcolor}',
@@ -19,8 +20,8 @@ const DOCUMENT_HEADER_LINES = [
   '\\begin{document}'
 ];
 const DOCUMENT_FOOTER_LINES = ['\\end{document}'];
-const CIRCUIT_HEADER_LINES = ['\\scalebox{1.0}{'];
-const CIRCUIT_FOOTER_LINES = ['\\\\ }', '}'];
+const CIRCUIT_HEADER_LINES = ['\\scalebox{1.0}{', '\\begin{quantikz}[column sep=0.55em, row sep=2.2em]'];
+const CIRCUIT_FOOTER_LINES = ['\\end{quantikz}', '}'];
 const EMPTY_CIRCUIT_MIN_COLUMNS = 3;
 
 const DIRECT_SLOT_RENDERERS = new Map<unknown, string>([
@@ -30,7 +31,7 @@ const DIRECT_SLOT_RENDERERS = new Map<unknown, string>([
 ]);
 
 const TARGET_SLOT_RENDERERS = new Map<unknown, string>([
-  ['X', '\\targ']
+  ['X', '\\targ{}']
 ]);
 
 const SPECIAL_GATE_LABELS = new Map<unknown, string>([
@@ -55,7 +56,7 @@ const LATEX_ESCAPE_MAP = new Map<string, string>([
   ['π', '$\\pi$']
 ]);
 
-export interface QCircuitCaptionOptions {
+export interface QuantikzCaptionOptions {
   readonly caption?: string;
   readonly captionFormat?: 'tex' | 'text';
   readonly captionPosition?: string;
@@ -64,15 +65,15 @@ export interface QCircuitCaptionOptions {
 
 export type ExportTheme = 'dark' | 'light';
 
-export interface QCircuitLatexOptions extends QCircuitCaptionOptions {
+export interface QuantikzLatexOptions extends QuantikzCaptionOptions {
   readonly theme: ExportTheme;
 }
 
-export function qcircuitRenderedColumnCount(circuit: Pick<CircuitData, 'cols'>): number {
+export function quantikzRenderedColumnCount(circuit: Pick<CircuitData, 'cols'>): number {
   return circuit.cols.length > 0 ? circuit.cols.length : EMPTY_CIRCUIT_MIN_COLUMNS;
 }
 
-class QCircuitCaption {
+class QuantikzCaption {
   static readonly DEFAULT_POSITION = 'bottom';
   static readonly DEFAULT_SIZE_PT = 12;
 
@@ -81,10 +82,10 @@ class QCircuitCaption {
   private readonly sizePt: number;
   private readonly text: string;
 
-  constructor(options: QCircuitCaptionOptions) {
+  constructor(options: QuantikzCaptionOptions) {
     this.format = options.captionFormat ?? 'text';
-    this.position = options.captionPosition ?? QCircuitCaption.DEFAULT_POSITION;
-    this.sizePt = options.captionSize ?? QCircuitCaption.DEFAULT_SIZE_PT;
+    this.position = options.captionPosition ?? QuantikzCaption.DEFAULT_POSITION;
+    this.sizePt = options.captionSize ?? QuantikzCaption.DEFAULT_SIZE_PT;
     this.text = options.caption ?? '';
   }
 
@@ -125,13 +126,13 @@ class QCircuitCaption {
   }
 }
 
-export class QCircuitLatex {
-  private readonly caption: QCircuitCaption;
+export class QuantikzLatex {
+  private readonly caption: QuantikzCaption;
   private readonly circuit: CircuitData;
   private readonly theme: ExportTheme;
 
-  constructor(circuit: CircuitData, options: QCircuitLatexOptions) {
-    this.caption = new QCircuitCaption(options);
+  constructor(circuit: CircuitData, options: QuantikzLatexOptions) {
+    this.caption = new QuantikzCaption(options);
     this.circuit = circuit;
     this.theme = options.theme;
   }
@@ -164,7 +165,6 @@ export class QCircuitLatex {
   private get circuitLines(): string[] {
     return [
       ...CIRCUIT_HEADER_LINES,
-      '\\Qcircuit @C=0.55em @R=2.2em @!R { \\\\',
       this.renderedRows,
       ...CIRCUIT_FOOTER_LINES
     ];
@@ -176,12 +176,12 @@ export class QCircuitLatex {
     return Array.from({ length: this.circuit.qubits }, (_unused, qubit) => {
       const renderedCells = renderedColumns.map((column) => column.renderFor(qubit));
 
-      return `  ${this.wireLabel(qubit)} & ${[...renderedCells, '\\qw'].join(' & ')}\\\\`;
+      return `  ${this.wireLabel(qubit)} & ${[...renderedCells, '\\qw'].join(' & ')} \\\\`;
     }).join('\n');
   }
 
-  private get renderedColumns(): QCircuitColumn[] {
-    return this.columns.map((column) => new QCircuitColumn(column));
+  private get renderedColumns(): QuantikzColumn[] {
+    return this.columns.map((column) => new QuantikzColumn(column));
   }
 
   private get columns(): unknown[][] {
@@ -189,7 +189,7 @@ export class QCircuitLatex {
       return this.circuit.cols;
     }
 
-    return Array.from({ length: qcircuitRenderedColumnCount(this.circuit) }, () =>
+    return Array.from({ length: quantikzRenderedColumnCount(this.circuit) }, () =>
       Array.from({ length: this.circuit.qubits }, () => EMPTY_SLOT)
     );
   }
@@ -211,11 +211,11 @@ export class QCircuitLatex {
   }
 
   private wireLabel(qubit: number): string {
-    return `\\push{q${qubit}: \\ket{0}}`;
+    return `\\lstick{$q${qubit}: \\ket{0}$}`;
   }
 }
 
-class QCircuitColumn {
+class QuantikzColumn {
   private readonly slots: unknown[];
 
   constructor(slots: unknown[]) {
@@ -293,8 +293,8 @@ class QCircuitColumn {
     const [topQubit, bottomQubit] = this.swapQubits.sort((a, b) => a - b);
     const condition = this.swapConditionLabel;
     const cells = new Map<number, string>([
-      [topQubit, `\\qswap${condition}`],
-      [bottomQubit, `\\qswap \\qwx[${topQubit - bottomQubit}]${condition}`]
+      [topQubit, `\\swap{${bottomQubit - topQubit}}${condition}`],
+      [bottomQubit, `\\targX{}${condition}`]
     ]);
 
     for (const controlQubit of this.controlQubits) {
@@ -344,7 +344,7 @@ class QCircuitColumn {
 
   private get swapConditionLabel(): string {
     const condition = this.swapOperations[0]?.classicalCondition;
-    return condition === undefined ? '' : ` \\push{$<\\mathrm{${classicalNameLabel(condition)}}$}`;
+    return condition === undefined ? '' : ` \\, {<\\mathrm{${classicalNameLabel(condition)}}}`;
   }
 
   private get swapOperations(): ParsedCircuitOperation[] {
@@ -389,8 +389,8 @@ function renderedSlot(slot: unknown): string {
   if (operation.kind === 'measurement') {
     const name = operation.measurementName;
     return name === undefined
-      ? '\\meter'
-      : `\\meter \\push{$>\\mathrm{${classicalNameLabel(name)}}$}`;
+      ? '\\meter{}'
+      : `\\meter{>\\mathrm{${classicalNameLabel(name)}}}`;
   }
 
   return gateCell(slot);
@@ -443,11 +443,11 @@ function rubyInspect(value: unknown): string {
   return String(value);
 }
 
-export function validateCaptionOptions(options: QCircuitCaptionOptions): void {
-  const position = options.captionPosition ?? QCircuitCaption.DEFAULT_POSITION;
-  const size = options.captionSize ?? QCircuitCaption.DEFAULT_SIZE_PT;
+export function validateCaptionOptions(options: QuantikzCaptionOptions): void {
+  const position = options.captionPosition ?? QuantikzCaption.DEFAULT_POSITION;
+  const size = options.captionSize ?? QuantikzCaption.DEFAULT_SIZE_PT;
 
-  if (!QCircuitCaption.validPosition(position)) {
+  if (!QuantikzCaption.validPosition(position)) {
     throw new Error('--caption-position must be top or bottom');
   }
 

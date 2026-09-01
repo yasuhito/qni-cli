@@ -157,7 +157,7 @@ qni-cli の利用者として、測定結果を名前付き古典ビットへ保
 - Then 標準出力に次を含む:
 
   ```text
-  $>\mathrm{input}$
+  \meter{>\mathrm{input}}
   ```
 
 ## Scenario: qni export は古典条件を LaTeX に出力する
