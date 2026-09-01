@@ -46,7 +46,7 @@ qni rm --qubit 0 --step 0
 qni view
 ```
 
-端末のフォントや描画環境によって `qni view` の ASCII 表示がずれて見える場合があります。安定した図が必要な場合は `qni export --png` を使ってください。
+端末のフォントや描画環境によって `qni view` の ASCII 表示がずれて見える場合があります。LaTeX なしで安定した図が必要な場合は `qni export --svg` を使ってください。
 
 ## 量子ビットと列の順序
 
@@ -166,6 +166,16 @@ qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/
 
 `qni benchmark run` は、`.qni` 提出物をベンチマーク課題ファイルに照らして採点します。スモークセットの一括実行、JSON 出力、研究試行ログの保存手順は [benchmark.md](benchmark.md) を参照してください。
 
+## 回路図を SVG で出力する
+
+```bash
+qni export --svg --light --output circuit.svg
+```
+
+`qni export --svg` は SVG の基本図形で回路図を直接描くため、LaTeX 処理系は不要です。`--output` を省略すると SVG を標準出力へ書き出します。既定のダークテーマでは白、`--light` では黒の回路線を使います。
+
+ワイヤ、ゲート、複数の制御点と制御線、CNOT の標的、SWAP、測定器に対応します。角度、`†`、`√`、測定名、古典条件も文字として描きます。`--caption-size` の単位は pt です。`--caption` と `--caption-position top|bottom` を指定すると、キャプション全体が収まるように表示領域を広げます。
+
 ## 回路図を PNG で出力する
 
 ```bash
@@ -213,4 +223,4 @@ qni bloch --inline
 scripts/setup_symbolic_python.sh
 ```
 
-`qni export --png` と `qni export --state-vector --png` には、外部コマンドとして `pdflatex` と `pdftocairo` が必要です。
+`qni export --svg` には外部コマンドは不要です。`qni export --png` と `qni export --state-vector --png` には、外部コマンドとして `pdflatex` と `pdftocairo` が必要です。

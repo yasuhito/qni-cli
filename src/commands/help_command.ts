@@ -5,7 +5,7 @@ const HELP_TEXT = `qni commands:
   qni bloch     # Render the current 1-qubit state on the Bloch sphere
   qni clear     # Delete the current circuit file
   qni expect    # Show expectation values of Pauli strings
-  qni export    # Export the circuit as quantikz LaTeX or PNG
+  qni export    # Export the circuit as SVG, quantikz LaTeX, or PNG
   qni gate      # Show the gate at a circuit slot
   qni rm        # Remove a gate from the circuit
   qni run       # Show the state vector of the circuit

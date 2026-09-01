@@ -49,9 +49,10 @@ For a bare basis state, use an explicit coefficient such as `1|1>`.
 ## Render a circuit or state
 
 ```bash
+<qni> export --svg --light --output circuit.svg
 <qni> export --png --light --output circuit.png
 <qni> export --state-vector --png --light --output state.png
 <qni> bloch --png --trajectory --light --output bloch.png
 ```
 
-Use `export --latex-source` when PNG dependencies are unavailable or the drawing source must be inspected. Use `bloch` only for a fully resolved numeric one-qubit circuit.
+Use `export --svg` when LaTeX is unavailable. Use `export --latex-source` when the drawing source must be inspected or print-quality composition is needed. Use `bloch` only for a fully resolved numeric one-qubit circuit.

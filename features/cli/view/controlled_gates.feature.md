@@ -16,6 +16,22 @@ qni view で制御点と対象ゲートの接続が分かるアスキーアー�
       └───┘
   ```
 
+## Scenario: qni view は制御線内の独立した測定を保つ
+
+- Given "qni add H --control 0 --qubit 2 --step 0" を実行
+- Given "qni add Measure --qubit 1 --step 0" を実行
+- When "qni view" を実行
+- Then 回路図:
+
+  ```text
+  q0: ─────■─────
+      ┌────│────┐
+  q1: ┤ Measure ├
+      └──┬─┴─┬──┘
+  q2: ───┤ H ├───
+         └───┘
+  ```
+
 ## Scenario: qni view は制御付き √X ゲートを表示
 
 - Given "qni add √X --control 0 --qubit 1 --step 0" を実行

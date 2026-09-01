@@ -120,7 +120,11 @@ CLI コマンドの詳細を専用ドキュメントで確認したい。
 
 - Then リポジトリファイル "docs/cli.md" は "qni expect ZZ XX --latex" を含む
 
-## Scenario: CLI リファレンスは画像出力例を示す
+## Scenario: CLI リファレンスは LaTeX 不要の SVG 出力例を示す
+
+- Then リポジトリファイル "docs/cli.md" は "qni export --svg --light --output circuit.svg" を含む
+
+## Scenario: CLI リファレンスは状態ベクトル画像の出力例を示す
 
 - Then リポジトリファイル "docs/cli.md" は "qni export --state-vector --png --light --output state.png" を含む
 
