@@ -1,9 +1,9 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-function resolvePackResult({ tempRoot, stdout, stderr }) {
+function resolvePackResult({ expectedPackage, tempRoot, stdout, stderr }) {
   for (const json of extractJsonValues(stdout).reverse()) {
-    const packEntry = findPackEntry(json);
+    const packEntry = findPackEntry(json, expectedPackage);
     const reportedTarball = existingTarball(tempRoot, packEntry?.filename);
 
     if (reportedTarball) {
@@ -60,23 +60,25 @@ function existingTarball(tempRoot, filename) {
   }
 }
 
-function findPackEntry(json) {
+function findPackEntry(json, expectedPackage) {
   if (Array.isArray(json)) {
-    return json.find(isPackEntry);
+    return json.find((entry) => isPackEntry(entry, expectedPackage));
   }
   if (!json || typeof json !== 'object') {
     return undefined;
   }
-  if (isPackEntry(json)) {
+  if (isPackEntry(json, expectedPackage)) {
     return json;
   }
 
-  return Object.values(json).find(isPackEntry);
+  return Object.values(json).find((entry) => isPackEntry(entry, expectedPackage));
 }
 
-function isPackEntry(entry) {
+function isPackEntry(entry, expectedPackage) {
   return entry
     && typeof entry === 'object'
+    && entry.name === expectedPackage?.name
+    && entry.version === expectedPackage?.version
     && typeof entry.filename === 'string'
     && Array.isArray(entry.files);
 }

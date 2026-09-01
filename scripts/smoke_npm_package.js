@@ -7,6 +7,7 @@ const path = require('node:path');
 const ts = require('typescript');
 
 const { assertPackedFiles, resolvePackResult } = require('./npm_pack_result');
+const projectManifest = require('../package.json');
 
 const projectRoot = path.resolve(__dirname, '..');
 const keepTemp = process.env.QNI_KEEP_PACKAGE_SMOKE === '1';
@@ -182,7 +183,11 @@ function sourceFilesUnder(directory) {
 
 function packProject(tempRoot) {
   const result = run('npm pack', 'npm', ['pack', '--json', '--pack-destination', tempRoot], { cwd: projectRoot });
-  return resolvePackResult({ tempRoot, ...result });
+  return resolvePackResult({
+    expectedPackage: { name: projectManifest.name, version: projectManifest.version },
+    tempRoot,
+    ...result
+  });
 }
 
 function assertPackageMetadata(packageRoot) {

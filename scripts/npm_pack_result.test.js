@@ -6,6 +6,8 @@ const { describe, it } = require('node:test');
 
 const { assertPackedFiles, resolvePackResult } = require('./npm_pack_result');
 
+const expectedPackage = { name: 'qni-cli', version: '0.1.0' };
+
 function withTempDir(callback) {
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'qni-cli-pack-result-'));
 
@@ -21,11 +23,12 @@ describe('npm pack result', () => {
     withTempDir((tempRoot) => {
       fs.writeFileSync(path.join(tempRoot, 'qni-cli-noisy.tgz'), 'packed');
       const result = resolvePackResult({
+        expectedPackage,
         tempRoot,
         stdout: [
           'mise: preparing node',
           '{"lifecycle":"prepack"}',
-          '[{"filename":"qni-cli-noisy.tgz","files":[{"path":"dist/bin/qni.js"}]}]',
+          '[{"name":"qni-cli","version":"0.1.0","filename":"qni-cli-noisy.tgz","files":[{"path":"dist/bin/qni.js"}]}]',
           'lifecycle output after JSON'
         ].join('\n'),
         stderr: 'prepack warning'
@@ -46,9 +49,10 @@ describe('npm pack result', () => {
 
       const result = resolvePackResult({
         tempRoot,
+        expectedPackage,
         stdout: [
-          '[{"filename":"qni-cli-0.1.0.tgz","files":[{"path":"LICENSE"}]}]',
-          '{"level":"debug","filename":"diagnostic.tgz"}'
+          '[{"name":"qni-cli","version":"0.1.0","filename":"qni-cli-0.1.0.tgz","files":[{"path":"LICENSE"}]}]',
+          '{"level":"debug","name":"diagnostic","version":"1.0.0","filename":"diagnostic.tgz","files":[]}'
         ].join('\n'),
         stderr: ''
       });
@@ -63,8 +67,9 @@ describe('npm pack result', () => {
       fs.writeFileSync(tarball, 'packed');
 
       const result = resolvePackResult({
+        expectedPackage,
         tempRoot,
-        stdout: '{"filename":"missing.tgz"}',
+        stdout: '{"name":"qni-cli","version":"0.1.0","filename":"missing.tgz","files":[]}',
         stderr: ''
       });
 
@@ -76,8 +81,9 @@ describe('npm pack result', () => {
     withTempDir((tempRoot) => {
       fs.writeFileSync(path.join(tempRoot, 'qni-cli-object.tgz'), 'packed');
       const result = resolvePackResult({
+        expectedPackage,
         tempRoot,
-        stdout: '{"qni-cli":{"filename":"qni-cli-object.tgz","files":[{"path":"LICENSE"}]}}',
+        stdout: '{"qni-cli":{"name":"qni-cli","version":"0.1.0","filename":"qni-cli-object.tgz","files":[{"path":"LICENSE"}]}}',
         stderr: ''
       });
 
