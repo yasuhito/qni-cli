@@ -253,9 +253,39 @@ worker_terminal=$(printf '%s' "$terminal_json" | jq -r '.result.terminal.handle 
 # PR review の修正を同じ実装ワーカーへ返せるよう、handle を worktree comment に保存する。
 orca-ide worktree set --worktree path:"$worktree_path" --comment "issue=#<N>; implementer=$worker_terminal" --json
 
+# tui-idle は pi の描画完了より早く返ることがある。pi のフッター（model 名）が出るまで待ってから送る。
 orca-ide terminal wait --terminal "$worker_terminal" --for tui-idle --timeout-ms 300000 --json
+for attempt in $(seq 1 30); do
+  orca-ide terminal read --terminal "$worker_terminal" --json | grep -q 'gpt-5.6-sol' && break
+  sleep 2
+done
+
+# 30 回待ってもフッターが出ない場合、pi が起動していない可能性がある。
+# `terminal create --command` が実行されず、コマンド文字列がシェルの入力行に
+# 残るだけの状態が実際に起きた（2026-09-02 に pi-formula の issue #17 で 1 時間半放置された）。
+# 画面にシェルプロンプトと未実行の pi コマンドが見えるなら Enter を 1 回送って起動し、
+# 再度フッターを待つ。それでも起動しなければ Fail へ進む。
+if ! orca-ide terminal read --terminal "$worker_terminal" --json | grep -q 'gpt-5.6-sol'; then
+  orca-ide terminal send --terminal "$worker_terminal" --text "" --enter --json
+  for attempt in $(seq 1 30); do
+    orca-ide terminal read --terminal "$worker_terminal" --json | grep -q 'gpt-5.6-sol' && break
+    sleep 2
+  done
+fi
+orca-ide terminal read --terminal "$worker_terminal" --json | grep -q 'gpt-5.6-sol' || {
+  echo "pi が起動しないため Fail へ進む"
+}
 orca-ide terminal send --terminal "$worker_terminal" --text "$IMPLEMENT_PROMPT" --enter --json
+
+# 送信が受理されたか確認する。pi が動き出すと画面に「Working」や tool 実行の行が出る。
+# 30 秒待っても入力欄が空のまま idle なら、1 回だけ再送する。
+sleep 30
+if ! orca-ide terminal read --terminal "$worker_terminal" --json | grep -Eq 'Working|Issue #<N>|esc.*interrupt.*working'; then
+  orca-ide terminal send --terminal "$worker_terminal" --text "$IMPLEMENT_PROMPT" --enter --json
+fi
 ```
+
+送信テキストが pi の初期化中に捨てられる競合が実際に起きたことがある（clawbar の 2026-08-29 run #1）。フッター待ちと 1 回の再送を省略しない。
 
 `IMPLEMENT_PROMPT`:
 
@@ -288,20 +318,39 @@ Issue #<N> を実装してください。
 - 1 コマンドが 10 分を超えそうな処理は `timeout` を付ける。
 
 完了出力:
+- 最終回答を出す前に、結果ファイル `<resultPath>` を書いてください。1行目を `HEAD: <git rev-parse HEAD の値>`、2行目を `RESULT: COMPLETE` または `RESULT: BLOCKED: 理由`、続けて修正・テスト・commit の要約、最終行を `<promise>COMPLETE</promise>` または `<promise>BLOCKED: 理由</promise>` にしてください。
 - 完了したら最後に必ず `<promise>COMPLETE</promise>` を出力してください。
 - 失敗、仕様不足、危険変更、または判断不能なら、最後に必ず `<promise>BLOCKED: 理由</promise>` を日本語で出力してください。
 ```
 
+`<resultPath>` は `/tmp/qni-cli-implement-<N>.md` とし、送信前に `rm -f` で消しておく。
+
 完了条件: worktree path と worker terminal handle を把握している。作成失敗なら Fail へ進む。
 
-### 6. Watch: worker の promise を待つ
+### 6. Watch: worker の結果ファイルを待つ
 
-`orca-ide terminal wait --for tui-idle --timeout-ms 300000 --json` と `orca-ide terminal read --json` を繰り返し、次のどちらかを待つ。
+pi の TUI に対する `orca-ide terminal read` は末尾の数行しか返さないため、transcript の文字列検索で `<promise>` を探してはいけない。判定の情報源は worker が書く結果ファイル `/tmp/qni-cli-implement-<N>.md` と、worktree の git 状態だけにする。
 
-- `<promise>COMPLETE</promise>`
-- `<promise>BLOCKED: ...</promise>`
+```bash
+result_path=/tmp/qni-cli-implement-<N>.md
+for attempt in $(seq 1 24); do
+  orca-ide terminal wait --terminal "$worker_terminal" --for tui-idle --timeout-ms 300000 --json || true
+  test -s "$result_path" && break
+  # 結果ファイルが無くても、worktree に新しい commit があり clean で、worker が idle なら完了とみなす
+  if [ -n "$(git -C "$worktree_path" log --oneline origin/main..HEAD)" ] && [ -z "$(git -C "$worktree_path" status --short)" ]; then
+    sleep 60
+    test -s "$result_path" && break
+    orca-ide terminal wait --terminal "$worker_terminal" --for tui-idle --timeout-ms 5000 --json >/dev/null 2>&1 && { echo "commit あり・clean・idle: 結果ファイル無しで完了扱い"; break; }
+  fi
+  sleep 30
+done
+cat "$result_path" 2>/dev/null || true
+```
 
-明確に止まった、失敗した、または BLOCKED を出した場合は Fail へ進む。
+- 結果ファイルに `RESULT: BLOCKED` があれば Fail へ進む。
+- 結果ファイルがあり `RESULT: COMPLETE` で、`HEAD:` が `git -C "$worktree_path" rev-parse HEAD` と一致すれば Verify へ進む。
+- 結果ファイルが無くても「commit あり・clean・idle」を 2 回連続で確認できたら Verify へ進む（Verify で改めて検証する）。
+- 24 回の待機後（約 2 時間）も commit が無い、または worker terminal が異常終了した場合は Fail へ進む。
 
 完了条件: COMPLETE / BLOCKED / 安全に続行できない状態のいずれかが判定できている。
 
