@@ -7,6 +7,7 @@ import path from 'node:path';
 import { describe, it, mock } from 'node:test';
 
 import { createDispatcher } from '../../src/dispatcher';
+import { typesetMath } from '../../src/qni-math/typesetter';
 import {
   renderSymbolicStateVector,
   SymbolicStateRendererError
@@ -330,6 +331,63 @@ exit 1
 });
 
 describe('run command symbolic TypeScript route', () => {
+  it('renders Bell-state --latex output from exact symbolic amplitudes', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        cols: [
+          ['H', 1],
+          ['•', 'X']
+        ],
+        qubits: 2
+      });
+
+      const result = captureDispatcherRun(dir, ['run', '--latex']);
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stderr, '');
+      assert.equal(
+        result.stdout,
+        '\\frac{\\sqrt{2}}{2}\\ket{00} + \\frac{\\sqrt{2}}{2}\\ket{11}\n'
+      );
+      assert.ok(
+        typesetMath(result.stdout.trim(), '#100f0f', 80, { heightPx: 20, widthPx: 10 }).png.length > 0
+      );
+    });
+  });
+
+  it('renders an exact complex amplitude as one fraction', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        cols: [['H'], ['T']],
+        qubits: 1
+      });
+
+      const result = captureDispatcherRun(dir, ['run', '--latex']);
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stderr, '');
+      assert.equal(
+        result.stdout,
+        '\\frac{\\sqrt{2}}{2}\\ket{0} + \\frac{1 + i}{2}\\ket{1}\n'
+      );
+    });
+  });
+
+  it('falls back to rounded numeric LaTeX for a symbolically unsupported gate', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        cols: [['X^½']],
+        qubits: 1
+      });
+
+      const result = captureDispatcherRun(dir, ['run', '--latex']);
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stderr, '');
+      assert.equal(result.stdout, '(0.5+0.5i)\\ket{0} + (0.5-0.5i)\\ket{1}\n');
+    });
+  });
+
   it('runs --symbolic through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
       const bin = path.join(dir, 'bin');

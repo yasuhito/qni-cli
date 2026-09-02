@@ -16,7 +16,7 @@ describe('TypeScript numeric simulator compatibility', () => {
     assert.equal(simulator.renderExpectationValues(['ZZ', 'XX']), 'ZZ=1.0\nXX=1.0');
   });
 
-  it('preserves both signs in a mixed complex LaTeX amplitude', () => {
+  it('rounds a mixed complex LaTeX amplitude while preserving both signs', () => {
     const simulator = new Simulator({
       cols: [['X'], ['T'], ['T'], ['T']],
       qubits: 1
@@ -24,7 +24,7 @@ describe('TypeScript numeric simulator compatibility', () => {
 
     assert.equal(
       simulator.renderStateVectorLatex(),
-      '(-0.7071067811865474+0.7071067811865477i)\\ket{1}'
+      '(-0.707106781186547+0.707106781186548i)\\ket{1}'
     );
   });
 

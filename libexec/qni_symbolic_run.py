@@ -6,7 +6,7 @@ import re
 import sys
 from dataclasses import dataclass
 
-from sympy import Float, I, Integer, Matrix, Symbol, cos, exp, latex, pi, simplify, sin, sqrt
+from sympy import Float, I, Integer, Matrix, Symbol, cos, exp, expand_complex, latex, pi, simplify, sin, sqrt, together
 
 EPSILON = sys.float_info.epsilon
 ANGLED_GATE_PATTERN = re.compile(r"\A(?P<gate>P|Rx|Ry|Rz|GlobalPhase)\((?P<angle>.+)\)\Z")
@@ -539,7 +539,8 @@ def latex_term(amplitude, basis, qubits):
     if amplitude == 1:
         return sign, basis_term
 
-    return sign, rf"{latex(amplitude)} {basis_term}"
+    readable_amplitude = together(expand_complex(amplitude)) if amplitude.is_number else amplitude
+    return sign, rf"{latex(readable_amplitude)} {basis_term}"
 
 
 def render_symbolic_state_latex_for_qubits(state, qubits: int):

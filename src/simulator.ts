@@ -349,12 +349,12 @@ class StateVector {
 
   toLatex(): string {
     const terms = this.amplitudes.flatMap((amplitude, index) => {
-      const formatted = StateVector.formatAmplitude(amplitude);
+      const formatted = formatRoundedAmplitude(amplitude);
       if (formatted === '0.0') {
         return [];
       }
 
-      const mixedComplex = normalizedScalar(amplitude.real) !== 0 && normalizedScalar(amplitude.imaginary) !== 0;
+      const mixedComplex = roundedScalar(amplitude.real) !== 0 && roundedScalar(amplitude.imaginary) !== 0;
       const negative = !mixedComplex && formatted.startsWith('-');
       const coefficient = negative ? formatted.slice(1) : formatted;
       const wrappedCoefficient = mixedComplex ? `(${coefficient})` : coefficient;
@@ -830,6 +830,25 @@ function normalizedScalar(value: number): number {
 
   const nearestInteger = Math.round(value);
   return Math.abs(value - nearestInteger) <= Number.EPSILON ? nearestInteger : value;
+}
+
+function roundedScalar(value: number): number {
+  const normalized = normalizedScalar(value);
+  return normalized === 0 ? 0 : Number(normalized.toPrecision(15));
+}
+
+function formatRoundedAmplitude(amplitude: Complex): string {
+  const real = roundedScalar(amplitude.real);
+  const imaginary = roundedScalar(amplitude.imaginary);
+
+  if (imaginary === 0) {
+    return formatRubyFloat(real);
+  }
+  if (real === 0) {
+    return `${formatRubyFloat(imaginary)}i`;
+  }
+
+  return `${formatRubyFloat(real)}${imaginary > 0 ? '+' : ''}${formatRubyFloat(imaginary)}i`;
 }
 
 function formatRubyFloat(value: number): string {

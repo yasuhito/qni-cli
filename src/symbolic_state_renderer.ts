@@ -36,6 +36,14 @@ export function renderSymbolicStateVector(options: SymbolicStateRenderOptions): 
   });
 }
 
+export function isUnsupportedSymbolicCircuitError(error: unknown): boolean {
+  return error instanceof SymbolicStateRendererError && (
+    error.message.startsWith('unsupported gate for symbolic run:') ||
+    error.message.startsWith('unsupported symbolic gate column:') ||
+    error.message.startsWith('unsupported initial state basis:')
+  );
+}
+
 function validateSymbolicBasis(options: { basis?: string; qubits: number }): void {
   if ((options.basis === 'x' || options.basis === 'y') && options.qubits !== 1) {
     throw new SymbolicStateRendererError(

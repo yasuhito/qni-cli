@@ -6,7 +6,10 @@ import {
 } from '../measurement_distribution';
 import { generateSeed, validateSeed } from '../random_seed';
 import { circuitContainsMeasurements, Simulator } from '../simulator';
-import { renderSymbolicStateVector } from '../symbolic_state_renderer';
+import {
+  isUnsupportedSymbolicCircuitError,
+  renderSymbolicStateVector
+} from '../symbolic_state_renderer';
 import { thorArgumentsError } from './thor_compatibility';
 
 const HELP_TEXT = `Usage:
@@ -105,7 +108,7 @@ export function runRunCommand(argv: string[], context: CommandHandlerContext): n
             projectRoot: context.projectRoot
           })
         : options.latex
-          ? new Simulator(circuit).renderStateVectorLatex()
+          ? renderLatexStateVector(circuit, context)
           : new Simulator(circuit).renderStateVector();
 
     process.stdout.write(`${output}\n`);
@@ -113,6 +116,26 @@ export function runRunCommand(argv: string[], context: CommandHandlerContext): n
   } catch (error) {
     process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
     return 1;
+  }
+}
+
+function renderLatexStateVector(
+  circuit: Parameters<typeof renderSymbolicStateVector>[0]['circuit'],
+  context: CommandHandlerContext
+): string {
+  try {
+    return renderSymbolicStateVector({
+      circuit,
+      env: context.env,
+      format: 'latex',
+      projectRoot: context.projectRoot
+    });
+  } catch (error) {
+    if (!isUnsupportedSymbolicCircuitError(error)) {
+      throw error;
+    }
+
+    return new Simulator(circuit).renderStateVectorLatex();
   }
 }
 

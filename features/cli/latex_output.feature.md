@@ -4,7 +4,7 @@ qni-cli の利用者として
 状態ベクトルと期待値を論文と同じ記法で読めるように
 計算結果を LaTeX で出力したい。
 
-## Scenario: qni run --latex は Bell 状態を ket 記法で表示
+## Scenario: qni run --latex は Bell 状態を厳密な ket 記法で表示
 
 - Given "qni add H --qubit 0 --step 0" を実行
 - And "qni add X --control 0 --qubit 1 --step 1" を実行
@@ -12,7 +12,28 @@ qni-cli の利用者として
 - Then 標準出力:
 
   ```text
-  0.7071067811865475\ket{00} + 0.7071067811865475\ket{11}
+  \frac{\sqrt{2}}{2}\ket{00} + \frac{\sqrt{2}}{2}\ket{11}
+  ```
+
+## Scenario: qni run --latex は複素振幅を厳密な数式で表示
+
+- Given "qni add H --qubit 0 --step 0" を実行
+- And "qni add T --qubit 0 --step 1" を実行
+- When "qni run --latex" を実行
+- Then 標準出力:
+
+  ```text
+  \frac{\sqrt{2}}{2}\ket{0} + \frac{1 + i}{2}\ket{1}
+  ```
+
+## Scenario: qni run --latex はシンボリック実行が未対応のゲートを数値で表示
+
+- Given "qni add √X --qubit 0 --step 0" を実行
+- When "qni run --latex" を実行
+- Then 標準出力:
+
+  ```text
+  (0.5+0.5i)\ket{0} + (0.5-0.5i)\ket{1}
   ```
 
 ## Scenario: qni run --symbolic --latex は記号的な初期状態を ket 記法で表示
