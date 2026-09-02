@@ -26,7 +26,7 @@ qni-cli の利用者として
   \frac{\sqrt{2}}{2}\ket{0} + \frac{1 + i}{2}\ket{1}
   ```
 
-## Scenario: qni run --latex は大きな回路を記号実行せず数値で表示
+## Scenario: qni run --latex は大きな対応回路も厳密値で表示
 
 - Given 空の 9 量子ビット回路がある
 - And "qni add H --qubit 0 --step 0" を実行
@@ -34,7 +34,7 @@ qni-cli の利用者として
 - Then 標準出力:
 
   ```text
-  0.707106781186547\ket{000000000} + 0.707106781186547\ket{100000000}
+  \frac{\sqrt{2}}{2}\ket{000000000} + \frac{\sqrt{2}}{2}\ket{100000000}
   ```
 
 ## Scenario: qni run --latex は記号実行環境がなくても数値で表示

@@ -6,7 +6,7 @@ import type { CircuitData } from './circuit_file';
 
 export class SymbolicStateRendererError extends Error {}
 
-export type SymbolicOutputFormat = 'latex' | 'text';
+export type SymbolicOutputFormat = 'latex' | 'latex-exact' | 'text';
 
 export interface SymbolicStateRenderOptions {
   readonly basis?: string;
@@ -62,7 +62,7 @@ function renderWithHelpers(options: ResolvedSymbolicStateRenderOptions): string 
     const output = renderWithHelper(command, options);
 
     if (output !== undefined) {
-      return options.format === 'latex' ? normalizeKetLatex(output) : output;
+      return options.format === 'text' ? output : normalizeKetLatex(output);
     }
   }
 

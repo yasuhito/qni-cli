@@ -7,7 +7,6 @@ import path from 'node:path';
 import { describe, it, mock } from 'node:test';
 
 import { createDispatcher } from '../../src/dispatcher';
-import { typesetMath } from '../../src/qni-math/typesetter';
 import {
   renderSymbolicStateVector,
   SymbolicStateRendererError
@@ -150,6 +149,21 @@ describe('TypeScript symbolic state renderer boundary', () => {
         projectRoot: process.cwd()
       }),
       '\\frac{\\sqrt{2}}{2}\\ket{0} + \\frac{\\sqrt{2}}{2}\\ket{1}'
+    );
+  });
+
+  it('keeps legacy complex LaTeX for explicit symbolic and state-vector export callers', () => {
+    assert.equal(
+      renderSymbolicStateVector({
+        circuit: {
+          cols: [['H'], ['T']],
+          qubits: 1
+        },
+        env: { PATH: '' },
+        format: 'latex',
+        projectRoot: process.cwd()
+      }),
+      '\\frac{\\sqrt{2}}{2}\\ket{0} + \\frac{\\sqrt[4]{-1} \\sqrt{2}}{2}\\ket{1}'
     );
   });
 
@@ -336,178 +350,21 @@ exit 1
 });
 
 describe('run command symbolic TypeScript route', () => {
-  it('renders Bell-state --latex output from exact symbolic amplitudes', async () => {
-    await withTempDir(async (dir) => {
-      await writeCircuit(dir, {
-        cols: [
-          ['H', 1],
-          ['•', 'X']
-        ],
-        qubits: 2
-      });
-
-      const result = captureDispatcherRun(dir, ['run', '--latex']);
-
-      assert.equal(result.exitStatus, 0);
-      assert.equal(result.stderr, '');
-      assert.equal(
-        result.stdout,
-        '\\frac{\\sqrt{2}}{2}\\ket{00} + \\frac{\\sqrt{2}}{2}\\ket{11}\n'
-      );
-      assert.ok(
-        typesetMath(result.stdout.trim(), '#100f0f', 80, { heightPx: 20, widthPx: 10 }).png.length > 0
-      );
-    });
-  });
-
-  it('renders an exact complex amplitude as one fraction', async () => {
+  it('keeps explicit --symbolic --latex complex output unchanged', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
         cols: [['H'], ['T']],
         qubits: 1
       });
 
-      const result = captureDispatcherRun(dir, ['run', '--latex']);
+      const result = captureDispatcherRun(dir, ['run', '--symbolic', '--latex']);
 
       assert.equal(result.exitStatus, 0);
       assert.equal(result.stderr, '');
       assert.equal(
         result.stdout,
-        '\\frac{\\sqrt{2}}{2}\\ket{0} + \\frac{1 + i}{2}\\ket{1}\n'
+        '\\frac{\\sqrt{2}}{2}\\ket{0} + \\frac{\\sqrt[4]{-1} \\sqrt{2}}{2}\\ket{1}\n'
       );
-    });
-  });
-
-  it('skips automatic symbolic LaTeX for a large supported circuit', async () => {
-    await withTempDir(async (dir) => {
-      await writeCircuit(dir, {
-        cols: [['H', ...Array(8).fill(1)]],
-        qubits: 9
-      });
-      const spawnMock = mock.method(
-        childProcessForMock,
-        'spawnSync',
-        (() => {
-          throw new Error('symbolic helper must not run');
-        }) as unknown as typeof childProcess.spawnSync
-      );
-
-      try {
-        const result = captureDispatcherRun(dir, ['run', '--latex']);
-        assert.equal(result.exitStatus, 0);
-        assert.equal(result.stderr, '');
-        assert.equal(
-          result.stdout,
-          '0.707106781186547\\ket{000000000} + 0.707106781186547\\ket{100000000}\n'
-        );
-        assert.equal(spawnMock.mock.callCount(), 0);
-      } finally {
-        spawnMock.mock.restore();
-      }
-    });
-  });
-
-  it('falls back to rounded numeric LaTeX when no symbolic runtime is available', async () => {
-    await withTempDir(async (dir) => {
-      await writeCircuit(dir, {
-        cols: [['H']],
-        qubits: 1
-      });
-
-      const result = captureDispatcherRun(dir, ['run', '--latex'], { PATH: '' }, dir);
-
-      assert.equal(result.exitStatus, 0);
-      assert.equal(result.stderr, '');
-      assert.equal(
-        result.stdout,
-        '0.707106781186547\\ket{0} + 0.707106781186547\\ket{1}\n'
-      );
-    });
-  });
-
-  it('falls back to rounded numeric LaTeX for a symbolically unsupported gate', async () => {
-    await withTempDir(async (dir) => {
-      await writeCircuit(dir, {
-        cols: [['X^½']],
-        qubits: 1
-      });
-
-      const result = captureDispatcherRun(dir, ['run', '--latex']);
-
-      assert.equal(result.exitStatus, 0);
-      assert.equal(result.stderr, '');
-      assert.equal(result.stdout, '(0.5+0.5i)\\ket{0} + (0.5-0.5i)\\ket{1}\n');
-    });
-  });
-
-  it('does not hide an unexpected symbolic helper failure', async () => {
-    await withTempDir(async (dir) => {
-      await writeCircuit(dir, {
-        cols: [['H']],
-        qubits: 1
-      });
-      const spawnMock = mock.method(
-        childProcessForMock,
-        'spawnSync',
-        (() => spawnResult({ status: 9, stderr: 'symbolic helper exploded\n' })) as unknown as typeof childProcess.spawnSync
-      );
-
-      try {
-        const result = captureDispatcherRun(dir, ['run', '--latex']);
-        assert.equal(result.exitStatus, 1);
-        assert.equal(result.stdout, '');
-        assert.equal(result.stderr, 'symbolic helper exploded\n');
-      } finally {
-        spawnMock.mock.restore();
-      }
-    });
-  });
-
-  it('validates numeric inputs before rendering exact LaTeX', async () => {
-    await withTempDir(async (dir) => {
-      const invalidCircuits = [
-        {
-          circuit: { cols: [['Ry(theta)']], qubits: 1 },
-          error: 'unresolved angle variable: theta\n'
-        },
-        {
-          circuit: {
-            cols: [],
-            initial_state: {
-              format: 'ket_sum_v1',
-              terms: [
-                { basis: '0', coefficient: 'alpha' },
-                { basis: '1', coefficient: 'beta' }
-              ]
-            },
-            qubits: 1
-          },
-          error: 'unresolved initial state variable: alpha\n'
-        },
-        {
-          circuit: {
-            cols: [],
-            initial_state: {
-              format: 'ket_sum_v1',
-              terms: [
-                { basis: '0', coefficient: 'alpha' },
-                { basis: '1', coefficient: 'beta' }
-              ]
-            },
-            qubits: 1,
-            variables: { alpha: '1', beta: '1' }
-          },
-          error: 'initial state must be normalized\n'
-        }
-      ];
-
-      for (const { circuit, error } of invalidCircuits) {
-        await writeCircuit(dir, circuit);
-        const result = captureDispatcherRun(dir, ['run', '--latex']);
-        assert.equal(result.exitStatus, 1);
-        assert.equal(result.stdout, '');
-        assert.equal(result.stderr, error);
-      }
     });
   });
 

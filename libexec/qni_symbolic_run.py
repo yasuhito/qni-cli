@@ -325,7 +325,7 @@ def render_named_basis_latex_term(amplitude, label):
 
 def render_symbolic_named_basis(state, basis, output_format):
     components = named_basis_components(state, basis)
-    if output_format == "latex":
+    if output_format in ("latex", "latex-exact"):
         terms = [render_named_basis_latex_term(amplitude, label) for amplitude, label in components]
         return join_latex_terms([term for term in terms if term])
 
@@ -366,51 +366,6 @@ def basis_latex_label(basis: int, qubits: int) -> str:
     return rf"\lvert {basis_label(basis, qubits)} \rangle"
 
 
-def tensor_product(left, right):
-    rows = []
-    for left_row in range(left.rows):
-        for right_row in range(right.rows):
-            row = []
-            for left_col in range(left.cols):
-                for right_col in range(right.cols):
-                    row.append(left[left_row, left_col] * right[right_row, right_col])
-            rows.append(row)
-    return Matrix(rows)
-
-
-def tensor_product_many(matrices):
-    result = Matrix([[1]])
-    for matrix in matrices:
-        result = tensor_product(result, matrix)
-    return result
-
-
-def identity_matrix(size: int) -> Matrix:
-    return Matrix.eye(size)
-
-
-def controlled_x_matrix():
-    return Matrix(
-        [
-            [1, 0, 0, 0],
-            [0, 1, 0, 0],
-            [0, 0, 0, 1],
-            [0, 0, 1, 0],
-        ]
-    )
-
-
-def controlled_z_matrix():
-    return Matrix(
-        [
-            [1, 0, 0, 0],
-            [0, 1, 0, 0],
-            [0, 0, 1, 0],
-            [0, 0, 0, -1],
-        ]
-    )
-
-
 def basis_bit(index: int, qubit: int, qubits: int) -> int:
     shift = qubits - qubit - 1
     return (index >> shift) & 1
@@ -431,44 +386,41 @@ def single_qubit_gate_matrix(gate, variables):
     return gate_matrix
 
 
-def controlled_gate_matrix(qubits: int, controls, target: int, target_gate: Matrix):
-    size = 2**qubits
-    matrix = Matrix.zeros(size, size)
+def apply_symbolic_single_qubit_gate(state, qubits, controls, target, gate_matrix):
+    result = list(state)
+    stride = 1 << (qubits - target - 1)
 
-    for basis_index in range(size):
-        if not all(basis_bit(basis_index, control, qubits) == 1 for control in controls):
-            matrix[basis_index, basis_index] = 1
-            continue
-
-        target_basis = basis_bit(basis_index, target, qubits)
-        for output_basis in range(2):
-            amplitude = target_gate[output_basis, target_basis]
-            if amplitude == 0:
+    for block in range(0, len(state), stride * 2):
+        for offset in range(stride):
+            zero_index = block + offset
+            if controls and not all(basis_bit(zero_index, control, qubits) == 1 for control in controls):
                 continue
-            output_index = replace_basis_bit(basis_index, target, qubits, output_basis)
-            matrix[output_index, basis_index] = amplitude
+            one_index = zero_index + stride
+            zero = state[zero_index]
+            one = state[one_index]
+            result[zero_index] = gate_matrix[0, 0] * zero + gate_matrix[0, 1] * one
+            result[one_index] = gate_matrix[1, 0] * zero + gate_matrix[1, 1] * one
 
-    return matrix
+    return Matrix(result)
 
 
-def swap_gate_matrix(qubits: int, controls, targets):
-    size = 2**qubits
-    matrix = Matrix.zeros(size, size)
+def apply_symbolic_swap(state, qubits, controls, targets):
+    result = [Integer(0)] * len(state)
     first_target, second_target = targets
 
-    for basis_index in range(size):
+    for basis_index, amplitude in enumerate(state):
         output_index = basis_index
         if all(basis_bit(basis_index, control, qubits) == 1 for control in controls):
             first_bit = basis_bit(basis_index, first_target, qubits)
             second_bit = basis_bit(basis_index, second_target, qubits)
             output_index = replace_basis_bit(output_index, first_target, qubits, second_bit)
             output_index = replace_basis_bit(output_index, second_target, qubits, first_bit)
-        matrix[output_index, basis_index] = 1
+        result[output_index] = amplitude
 
-    return matrix
+    return Matrix(result)
 
 
-def column_gate_matrix(col, qubits, variables):
+def apply_symbolic_column(state, col, qubits, variables):
     if len(col) != qubits:
         raise ValueError(f"gate column width {len(col)} does not match qubit count {qubits}")
 
@@ -479,29 +431,21 @@ def column_gate_matrix(col, qubits, variables):
     if swap_targets:
         if len(swap_targets) != 2 or len(non_identity) != 2:
             raise ValueError(f"unsupported symbolic gate column: {col!r}")
-        return swap_gate_matrix(qubits, controls, swap_targets)
+        return apply_symbolic_swap(state, qubits, controls, swap_targets)
 
-    if not controls:
-        matrices = [
-            identity_matrix(2) if gate == 1 else single_qubit_gate_matrix(gate, variables)
-            for gate in col
-        ]
-        return tensor_product_many(matrices)
-
-    if len(non_identity) != 1:
+    if controls and len(non_identity) != 1:
         raise ValueError(f"unsupported symbolic gate column: {col!r}")
 
-    target, target_gate = non_identity[0]
-    return controlled_gate_matrix(
-        qubits,
-        controls,
-        target,
-        single_qubit_gate_matrix(target_gate, variables),
-    )
-
-
-def plain_single_qubit_gate(gate):
-    return gate not in (1, "●", "•")
+    result = state
+    for target, gate in non_identity:
+        result = apply_symbolic_single_qubit_gate(
+            result,
+            qubits,
+            controls,
+            target,
+            single_qubit_gate_matrix(gate, variables),
+        )
+    return result
 
 
 def render_symbolic_state_for_qubits(state, qubits: int):
@@ -528,7 +472,7 @@ def text_basis_amplitude(amplitude):
     return f"({amplitude})" if getattr(amplitude, "is_Add", False) else str(amplitude)
 
 
-def latex_term(amplitude, basis, qubits):
+def latex_term(amplitude, basis, qubits, exact_complex=False):
     sign = "-"
     if amplitude.could_extract_minus_sign():
         amplitude = -amplitude
@@ -539,17 +483,18 @@ def latex_term(amplitude, basis, qubits):
     if amplitude == 1:
         return sign, basis_term
 
-    readable_amplitude = together(expand_complex(amplitude)) if amplitude.is_number else amplitude
-    return sign, rf"{latex(readable_amplitude)} {basis_term}"
+    if exact_complex and amplitude.is_number:
+        amplitude = together(expand_complex(amplitude))
+    return sign, rf"{latex(amplitude)} {basis_term}"
 
 
-def render_symbolic_state_latex_for_qubits(state, qubits: int):
+def render_symbolic_state_latex_for_qubits(state, qubits: int, exact_complex=False):
     terms = []
     for basis, amplitude in enumerate(state):
         simplified = simplify(amplitude)
         if simplified == 0:
             continue
-        terms.append(latex_term(simplified, basis, qubits))
+        terms.append(latex_term(simplified, basis, qubits, exact_complex))
 
     return join_latex_terms(terms)
 
@@ -559,7 +504,7 @@ def symbolic_state_for_qubits(circuit, qubits, variables):
     symbolic_state = symbolic_initial_state_for_qubits(circuit, qubits, variables)
 
     for col in cols:
-        symbolic_state = column_gate_matrix(col, qubits, variables) * symbolic_state
+        symbolic_state = apply_symbolic_column(symbolic_state, col, qubits, variables)
 
     return symbolic_state
 
@@ -594,9 +539,13 @@ def run(circuit, output_format="text", basis=None):
     if basis is not None:
         raise ValueError(f"unsupported symbolic basis: {basis}")
 
-    if output_format == "latex":
+    if output_format in ("latex", "latex-exact"):
         symbolic_state = symbolic_state_for_qubits(circuit, qubits, variables)
-        return render_symbolic_state_latex_for_qubits(symbolic_state, qubits)
+        return render_symbolic_state_latex_for_qubits(
+            symbolic_state,
+            qubits,
+            exact_complex=output_format == "latex-exact",
+        )
 
     if "initial_state" in circuit:
         symbolic_state = symbolic_state_for_qubits(circuit, qubits, variables)
@@ -645,7 +594,7 @@ def parse_args(argv):
 
         raise ValueError("unsupported symbolic renderer arguments")
 
-    if output_format not in {"text", "latex"}:
+    if output_format not in {"text", "latex", "latex-exact"}:
         raise ValueError("unsupported symbolic renderer arguments")
 
     return output_format, basis
