@@ -7,7 +7,7 @@ import {
 import { generateSeed, validateSeed } from '../random_seed';
 import { circuitContainsMeasurements, Simulator } from '../simulator';
 import {
-  isUnsupportedSymbolicCircuitError,
+  isSymbolicLatexFallbackError,
   renderSymbolicStateVector
 } from '../symbolic_state_renderer';
 import { thorArgumentsError } from './thor_compatibility';
@@ -123,6 +123,8 @@ function renderLatexStateVector(
   circuit: Parameters<typeof renderSymbolicStateVector>[0]['circuit'],
   context: CommandHandlerContext
 ): string {
+  const numericLatex = new Simulator(circuit).renderStateVectorLatex();
+
   try {
     return renderSymbolicStateVector({
       circuit,
@@ -131,11 +133,11 @@ function renderLatexStateVector(
       projectRoot: context.projectRoot
     });
   } catch (error) {
-    if (!isUnsupportedSymbolicCircuitError(error)) {
+    if (!isSymbolicLatexFallbackError(error)) {
       throw error;
     }
 
-    return new Simulator(circuit).renderStateVectorLatex();
+    return numericLatex;
   }
 }
 

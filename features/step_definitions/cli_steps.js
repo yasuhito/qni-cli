@@ -106,6 +106,33 @@ function runNodeDispatcherCommand(scenarioDir, command, extraEnv = {}) {
   return runNodeQniCommand(scenarioDir, command, extraEnv);
 }
 
+function runNodeDispatcherWithoutSymbolicRuntime(scenarioDir, command) {
+  const argv = splitCommand(command);
+
+  if (argv[0] !== 'qni') {
+    throw new Error(`command must start with qni: ${command}`);
+  }
+
+  const script = [
+    "const { createDispatcher } = require(process.argv[1]);",
+    'const status = createDispatcher({',
+    '  cwd: process.argv[2],',
+    "  env: { ...process.env, PATH: '' },",
+    '  projectRoot: process.argv[2]',
+    '}).run(JSON.parse(process.argv[3]));',
+    'process.exitCode = status;'
+  ].join('\n');
+  const dispatcherPath = path.join(PROJECT_ROOT, 'dist', 'dispatcher.js');
+
+  return captureSpawn(process.execPath, [
+    '-e',
+    script,
+    dispatcherPath,
+    scenarioDir,
+    JSON.stringify(argv.slice(1))
+  ], scenarioDir);
+}
+
 function runNodeQniCommand(scenarioDir, command, extraEnv = {}) {
   const argv = splitCommand(command);
 
@@ -113,12 +140,17 @@ function runNodeQniCommand(scenarioDir, command, extraEnv = {}) {
     throw new Error(`command must start with qni: ${command}`);
   }
 
-  return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [NODE_QNI_BIN, ...argv.slice(1)], {
-      cwd: scenarioDir,
-      env: scenarioEnv(extraEnv)
-    });
+  return captureSpawn(
+    process.execPath,
+    [NODE_QNI_BIN, ...argv.slice(1)],
+    scenarioDir,
+    scenarioEnv(extraEnv)
+  );
+}
 
+function captureSpawn(command, args, cwd, env = process.env) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, { cwd, env });
     const stdout = [];
     const stderr = [];
 
@@ -1319,6 +1351,11 @@ Given('リポジトリの qni コマンド列 {string} を実行', async functio
 When('{string} を実行', async function (command) {
   this.lastCommandText = command;
   this.lastCommand = await runQniCommand(this.scenarioDir, command, this.commandEnv);
+});
+
+When('{string} を記号実行環境なしで実行', async function (command) {
+  this.lastCommandText = command;
+  this.lastCommand = await runNodeDispatcherWithoutSymbolicRuntime(this.scenarioDir, command);
 });
 
 When('{string} を2回正常に実行', async function (command) {

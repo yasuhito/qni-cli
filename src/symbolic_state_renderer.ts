@@ -36,8 +36,9 @@ export function renderSymbolicStateVector(options: SymbolicStateRenderOptions): 
   });
 }
 
-export function isUnsupportedSymbolicCircuitError(error: unknown): boolean {
+export function isSymbolicLatexFallbackError(error: unknown): boolean {
   return error instanceof SymbolicStateRendererError && (
+    error.message === SETUP_MESSAGE ||
     error.message.startsWith('unsupported gate for symbolic run:') ||
     error.message.startsWith('unsupported symbolic gate column:') ||
     error.message.startsWith('unsupported initial state basis:')

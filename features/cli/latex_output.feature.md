@@ -26,6 +26,16 @@ qni-cli の利用者として
   \frac{\sqrt{2}}{2}\ket{0} + \frac{1 + i}{2}\ket{1}
   ```
 
+## Scenario: qni run --latex は記号実行環境がなくても数値で表示
+
+- Given "qni add H --qubit 0 --step 0" を実行
+- When "qni run --latex" を記号実行環境なしで実行
+- Then 標準出力:
+
+  ```text
+  0.707106781186547\ket{0} + 0.707106781186547\ket{1}
+  ```
+
 ## Scenario: qni run --latex はシンボリック実行が未対応のゲートを数値で表示
 
 - Given "qni add √X --qubit 0 --step 0" を実行
