@@ -500,6 +500,7 @@ gh issue edit <N> -R yasuhito/qni-cli --remove-label "agent:in-progress" || true
 - PR URL（あれば）
 - blocked 理由（あれば）
 - stale `agent:in-progress` 候補（あれば。自動では触っていないことも明記）
+- `needs-triage` の open issue（あれば番号と件数。誰も見ないまま溜まると、レビューが切り出した実在の不具合が放置される）
 - dependency wait に移した issue（あれば）
 - dependency wait から再実行候補へ戻した issue（あれば）
 - 停止した closed / merged PR の worker terminal（あれば）
