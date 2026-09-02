@@ -6,9 +6,12 @@ import re
 import sys
 from dataclasses import dataclass
 
-from sympy import Float, I, Integer, Matrix, Symbol, cos, exp, latex, pi, simplify, sin, sqrt
+from sympy import Float, I, Integer, Matrix, Rational, Symbol, cos, exp, expand_complex, latex, pi, simplify, sin, sqrt, together
 
 EPSILON = sys.float_info.epsilon
+MAX_SYMBOLIC_STATE_TERMS = 65536
+MAX_SYMBOLIC_OUTPUT_BYTES = 8 * 1024 * 1024
+SQRT_HALF_TEXT = "0.7071067811865476"
 ANGLED_GATE_PATTERN = re.compile(r"\A(?P<gate>P|Rx|Ry|Rz|GlobalPhase)\((?P<angle>.+)\)\Z")
 IDENTIFIER_PATTERN = re.compile(r"\A[a-zA-Z_][a-zA-Z0-9_]*\Z")
 SIGNED_IDENTIFIER_PATTERN = re.compile(r"\A(?P<sign>[+-])(?P<identifier>[a-zA-Z_][a-zA-Z0-9_]*)\Z")
@@ -60,12 +63,15 @@ def format_numeric_amplitude(amplitude: complex | float) -> str:
     return str(normalize_scalar(float(amplitude)))
 
 
-def symbolic_scalar(value: str):
+def symbolic_scalar(value: str, exact=False):
+    if exact:
+        return Rational(value) if "." in value else Integer(value)
+
     number = float(value)
     return Integer(int(number)) if number.is_integer() else Float(number)
 
 
-def parse_pi_term(value: str) -> tuple[object, float] | None:
+def parse_pi_term(value: str, exact_numeric=False) -> tuple[object, float | None] | None:
     match = PI_PATTERN.match(value)
     if not match:
         return None
@@ -74,14 +80,19 @@ def parse_pi_term(value: str) -> tuple[object, float] | None:
     concrete_sign = -1.0 if match.group("sign") == "-" else 1.0
     coefficient_text = match.group("coefficient") or "1"
     denominator_text = match.group("denominator") or "1"
-    coefficient = float(coefficient_text)
-    denominator = float(denominator_text)
-    symbolic = symbolic_sign * symbolic_scalar(coefficient_text) * pi / symbolic_scalar(denominator_text)
-    concrete = concrete_sign * coefficient * math.pi / denominator
+    symbolic = (
+        symbolic_sign
+        * symbolic_scalar(coefficient_text, exact_numeric)
+        * pi
+        / symbolic_scalar(denominator_text, exact_numeric)
+    )
+    concrete = None
+    if not exact_numeric:
+        concrete = concrete_sign * float(coefficient_text) * math.pi / float(denominator_text)
     return symbolic, concrete
 
 
-def parse_angle(raw_value: str, variables: dict[str, str]) -> ParsedAngle:
+def parse_angle(raw_value: str, variables: dict[str, str], exact_numeric=False) -> ParsedAngle:
     normalized = str(raw_value).replace(" ", "")
 
     signed_identifier = SIGNED_IDENTIFIER_PATTERN.match(normalized)
@@ -89,7 +100,7 @@ def parse_angle(raw_value: str, variables: dict[str, str]) -> ParsedAngle:
         symbolic_sign = Integer(-1) if signed_identifier.group("sign") == "-" else Integer(1)
         concrete_sign = -1.0 if signed_identifier.group("sign") == "-" else 1.0
         resolved_identifier = signed_identifier.group("identifier")
-        resolved_term = parse_angle(resolved_identifier, variables)
+        resolved_term = parse_angle(resolved_identifier, variables, exact_numeric)
         symbolic = symbolic_sign * resolved_term.symbolic
         concrete = None if resolved_term.concrete is None else concrete_sign * resolved_term.concrete
         return ParsedAngle(symbolic=symbolic, concrete=concrete, unresolved=resolved_term.unresolved)
@@ -97,10 +108,13 @@ def parse_angle(raw_value: str, variables: dict[str, str]) -> ParsedAngle:
     resolved = variables.get(normalized, normalized)
 
     if NUMERIC_PATTERN.match(resolved):
+        if exact_numeric:
+            return ParsedAngle(symbolic=symbolic_scalar(resolved, True), concrete=None, unresolved=False)
+
         value = float(resolved)
         return ParsedAngle(symbolic=value, concrete=value, unresolved=False)
 
-    pi_term = parse_pi_term(resolved)
+    pi_term = parse_pi_term(resolved, exact_numeric)
     if pi_term:
         symbolic, concrete = pi_term
         return ParsedAngle(symbolic=symbolic, concrete=concrete, unresolved=False)
@@ -110,11 +124,13 @@ def parse_angle(raw_value: str, variables: dict[str, str]) -> ParsedAngle:
 
     multiplied = MULTIPLIED_PATTERN.match(resolved)
     if multiplied:
-        coefficient = float(multiplied.group("coefficient"))
-        symbolic_coefficient = symbolic_scalar(multiplied.group("coefficient"))
-        term = parse_angle(multiplied.group("term"), variables)
+        coefficient_text = multiplied.group("coefficient")
+        symbolic_coefficient = symbolic_scalar(coefficient_text, exact_numeric)
+        term = parse_angle(multiplied.group("term"), variables, exact_numeric)
         symbolic = symbolic_coefficient * term.symbolic
-        concrete = None if term.concrete is None else coefficient * term.concrete
+        concrete = None
+        if not exact_numeric and term.concrete is not None:
+            concrete = float(coefficient_text) * term.concrete
         return ParsedAngle(symbolic=symbolic, concrete=concrete, unresolved=term.unresolved)
 
     raise ValueError(f"invalid angle: {resolved}")
@@ -124,40 +140,82 @@ def initial_state_terms(circuit):
     return circuit.get("initial_state", {}).get("terms", [])
 
 
-def parse_state_coefficient(raw_value: str, variables: dict[str, str]):
+def parse_state_coefficient(raw_value: str, variables: dict[str, str], exact_numeric=False):
     normalized = str(raw_value).replace(" ", "")
     imaginary_numeric = IMAGINARY_NUMERIC_PATTERN.match(normalized)
     if imaginary_numeric:
-        return I * symbolic_scalar(imaginary_numeric.group("real"))
+        return I * symbolic_scalar(imaginary_numeric.group("real"), exact_numeric)
     if NUMERIC_PATTERN.match(normalized):
-        return symbolic_scalar(normalized)
+        return symbolic_scalar(normalized, exact_numeric)
 
-    return parse_angle(normalized, variables).symbolic
+    return parse_angle(normalized, variables, exact_numeric).symbolic
 
 
-def symbolic_initial_state_for_qubits(circuit, qubits, variables):
+def exact_one_qubit_special_state(circuit, qubits):
+    initial_terms = initial_state_terms(circuit)
+    terms = {term["basis"]: term["coefficient"] for term in initial_terms}
+    if len(initial_terms) != 2 or set(terms) != {"0", "1"} or terms["0"] != SQRT_HALF_TEXT:
+        return None
+
+    scale = sqrt(2) / 2
+    one_amplitudes = {
+        SQRT_HALF_TEXT: scale,
+        f"-{SQRT_HALF_TEXT}": -scale,
+        f"{SQRT_HALF_TEXT}i": I * scale,
+        f"-{SQRT_HALF_TEXT}i": -I * scale,
+    }
+    one = one_amplitudes.get(terms["1"])
+    suffix_width = qubits - 1
+    return None if one is None else {0: scale, 1 << suffix_width: one}
+
+
+def add_state_amplitude(state, basis_index, amplitude):
+    updated = state.get(basis_index, Integer(0)) + amplitude
+    if updated == 0:
+        state.pop(basis_index, None)
+    else:
+        state[basis_index] = updated
+
+    if len(state) > MAX_SYMBOLIC_STATE_TERMS:
+        raise ValueError(f"symbolic state exceeds {MAX_SYMBOLIC_STATE_TERMS} nonzero terms")
+
+
+def symbolic_initial_state_for_qubits(circuit, qubits, variables, exact_numeric=False):
     if "initial_state" not in circuit:
-        return Matrix([Integer(1), *([Integer(0)] * ((2**qubits) - 1))])
+        return {0: Integer(1)}
 
-    state = [Integer(0)] * (2**qubits)
+    if exact_numeric:
+        special_state = exact_one_qubit_special_state(circuit, qubits)
+        if special_state is not None:
+            return special_state
+
+    state = {}
     for term in initial_state_terms(circuit):
         coefficient = parse_state_coefficient(term["coefficient"], variables)
         for basis_index, scale in basis_components(term["basis"], qubits):
-            state[basis_index] += coefficient * scale / bell_basis_scale(term["basis"])
-    return Matrix(state)
+            add_state_amplitude(
+                state,
+                basis_index,
+                coefficient * scale / bell_basis_scale(term["basis"]),
+            )
+    return state
 
 
 def basis_components(basis: str, qubits: int):
-    if qubits == 1:
-        return ((int(basis), Integer(1)),)
+    if re.fullmatch(r"[01]+", basis):
+        initial_qubits = len(basis)
+        components = ((int(basis, 2), Integer(1)),)
+    elif basis in BELL_BASIS_COMPONENTS:
+        initial_qubits = 2
+        components = BELL_BASIS_COMPONENTS[basis]
+    else:
+        raise ValueError(f"unsupported initial state basis: {basis}")
 
-    if re.fullmatch(rf"[01]{{{qubits}}}", basis):
-        return ((int(basis, 2), Integer(1)),)
+    if initial_qubits > qubits:
+        raise ValueError("initial state qubit count cannot exceed circuit qubit count")
 
-    if basis in BELL_BASIS_COMPONENTS:
-        return BELL_BASIS_COMPONENTS[basis]
-
-    raise ValueError(f"unsupported initial state basis: {basis}")
+    suffix_width = qubits - initial_qubits
+    return tuple((index << suffix_width, scale) for index, scale in components)
 
 
 def bell_basis_scale(basis: str):
@@ -195,7 +253,7 @@ def numeric_gate(gate, variables):
     return None
 
 
-def symbolic_gate(gate, variables):
+def symbolic_gate(gate, variables, exact_numeric=False):
     if gate == 1:
         return Matrix([[1, 0], [0, 1]])
     if gate == "H":
@@ -222,7 +280,7 @@ def symbolic_gate(gate, variables):
     if not match:
         raise ValueError(f"unsupported gate for symbolic run: {gate!r}")
 
-    angle = parse_angle(match.group("angle"), variables).symbolic
+    angle = parse_angle(match.group("angle"), variables, exact_numeric).symbolic
     gate_name = match.group("gate")
 
     if gate_name == "P":
@@ -266,7 +324,7 @@ def render_numeric_state(state):
 
 def render_symbolic_state(state):
     terms = []
-    for basis, amplitude in enumerate(state):
+    for basis, amplitude in sorted(state.items()):
         simplified = simplify(amplitude)
         if simplified == 0:
             continue
@@ -324,8 +382,12 @@ def render_named_basis_latex_term(amplitude, label):
 
 
 def render_symbolic_named_basis(state, basis, output_format):
-    components = named_basis_components(state, basis)
-    if output_format == "latex":
+    state_size = 4 if basis == "bell" else 2
+    components = named_basis_components(
+        [state.get(index, Integer(0)) for index in range(state_size)],
+        basis,
+    )
+    if output_format in ("latex", "latex-exact"):
         terms = [render_named_basis_latex_term(amplitude, label) for amplitude, label in components]
         return join_latex_terms([term for term in terms if term])
 
@@ -358,57 +420,18 @@ def join_latex_terms(terms):
     return rendered
 
 
+def ensure_latex_ket_fits(qubits: int):
+    minimum_output_bytes = qubits + len(r"\lvert  \rangle".encode("utf-8")) + 1
+    if minimum_output_bytes > MAX_SYMBOLIC_OUTPUT_BYTES:
+        raise ValueError(f"symbolic output exceeds {MAX_SYMBOLIC_OUTPUT_BYTES} bytes")
+
+
 def basis_label(basis: int, qubits: int) -> str:
     return format(basis, f"0{qubits}b")
 
 
 def basis_latex_label(basis: int, qubits: int) -> str:
     return rf"\lvert {basis_label(basis, qubits)} \rangle"
-
-
-def tensor_product(left, right):
-    rows = []
-    for left_row in range(left.rows):
-        for right_row in range(right.rows):
-            row = []
-            for left_col in range(left.cols):
-                for right_col in range(right.cols):
-                    row.append(left[left_row, left_col] * right[right_row, right_col])
-            rows.append(row)
-    return Matrix(rows)
-
-
-def tensor_product_many(matrices):
-    result = Matrix([[1]])
-    for matrix in matrices:
-        result = tensor_product(result, matrix)
-    return result
-
-
-def identity_matrix(size: int) -> Matrix:
-    return Matrix.eye(size)
-
-
-def controlled_x_matrix():
-    return Matrix(
-        [
-            [1, 0, 0, 0],
-            [0, 1, 0, 0],
-            [0, 0, 0, 1],
-            [0, 0, 1, 0],
-        ]
-    )
-
-
-def controlled_z_matrix():
-    return Matrix(
-        [
-            [1, 0, 0, 0],
-            [0, 1, 0, 0],
-            [0, 0, 1, 0],
-            [0, 0, 0, -1],
-        ]
-    )
 
 
 def basis_bit(index: int, qubit: int, qubits: int) -> int:
@@ -424,51 +447,48 @@ def replace_basis_bit(index: int, qubit: int, qubits: int, value: int) -> int:
     return index & ~mask
 
 
-def single_qubit_gate_matrix(gate, variables):
-    gate_matrix = symbolic_gate(gate, variables)
+def single_qubit_gate_matrix(gate, variables, exact_numeric=False):
+    gate_matrix = symbolic_gate(gate, variables, exact_numeric)
     if gate_matrix.shape != (2, 2):
         raise ValueError(f"unsupported gate for symbolic run: {gate!r}")
     return gate_matrix
 
 
-def controlled_gate_matrix(qubits: int, controls, target: int, target_gate: Matrix):
-    size = 2**qubits
-    matrix = Matrix.zeros(size, size)
+def apply_symbolic_single_qubit_gate(state, qubits, controls, target, gate_matrix):
+    result = {}
 
-    for basis_index in range(size):
-        if not all(basis_bit(basis_index, control, qubits) == 1 for control in controls):
-            matrix[basis_index, basis_index] = 1
+    for basis_index, amplitude in state.items():
+        if controls and not all(basis_bit(basis_index, control, qubits) == 1 for control in controls):
+            add_state_amplitude(result, basis_index, amplitude)
             continue
 
-        target_basis = basis_bit(basis_index, target, qubits)
-        for output_basis in range(2):
-            amplitude = target_gate[output_basis, target_basis]
-            if amplitude == 0:
-                continue
-            output_index = replace_basis_bit(basis_index, target, qubits, output_basis)
-            matrix[output_index, basis_index] = amplitude
+        input_bit = basis_bit(basis_index, target, qubits)
+        for output_bit in (0, 1):
+            coefficient = gate_matrix[output_bit, input_bit]
+            if coefficient != 0:
+                output_index = replace_basis_bit(basis_index, target, qubits, output_bit)
+                add_state_amplitude(result, output_index, coefficient * amplitude)
 
-    return matrix
+    return result
 
 
-def swap_gate_matrix(qubits: int, controls, targets):
-    size = 2**qubits
-    matrix = Matrix.zeros(size, size)
+def apply_symbolic_swap(state, qubits, controls, targets):
+    result = {}
     first_target, second_target = targets
 
-    for basis_index in range(size):
+    for basis_index, amplitude in state.items():
         output_index = basis_index
         if all(basis_bit(basis_index, control, qubits) == 1 for control in controls):
             first_bit = basis_bit(basis_index, first_target, qubits)
             second_bit = basis_bit(basis_index, second_target, qubits)
             output_index = replace_basis_bit(output_index, first_target, qubits, second_bit)
             output_index = replace_basis_bit(output_index, second_target, qubits, first_bit)
-        matrix[output_index, basis_index] = 1
+        add_state_amplitude(result, output_index, amplitude)
 
-    return matrix
+    return result
 
 
-def column_gate_matrix(col, qubits, variables):
+def apply_symbolic_column(state, col, qubits, variables, exact_numeric=False):
     if len(col) != qubits:
         raise ValueError(f"gate column width {len(col)} does not match qubit count {qubits}")
 
@@ -479,34 +499,26 @@ def column_gate_matrix(col, qubits, variables):
     if swap_targets:
         if len(swap_targets) != 2 or len(non_identity) != 2:
             raise ValueError(f"unsupported symbolic gate column: {col!r}")
-        return swap_gate_matrix(qubits, controls, swap_targets)
+        return apply_symbolic_swap(state, qubits, controls, swap_targets)
 
-    if not controls:
-        matrices = [
-            identity_matrix(2) if gate == 1 else single_qubit_gate_matrix(gate, variables)
-            for gate in col
-        ]
-        return tensor_product_many(matrices)
-
-    if len(non_identity) != 1:
+    if controls and len(non_identity) != 1:
         raise ValueError(f"unsupported symbolic gate column: {col!r}")
 
-    target, target_gate = non_identity[0]
-    return controlled_gate_matrix(
-        qubits,
-        controls,
-        target,
-        single_qubit_gate_matrix(target_gate, variables),
-    )
-
-
-def plain_single_qubit_gate(gate):
-    return gate not in (1, "●", "•")
+    result = state
+    for target, gate in non_identity:
+        result = apply_symbolic_single_qubit_gate(
+            result,
+            qubits,
+            controls,
+            target,
+            single_qubit_gate_matrix(gate, variables, exact_numeric),
+        )
+    return result
 
 
 def render_symbolic_state_for_qubits(state, qubits: int):
     terms = []
-    for basis, amplitude in enumerate(state):
+    for basis, amplitude in sorted(state.items()):
         simplified = simplify(amplitude)
         if simplified == 0:
             continue
@@ -528,7 +540,7 @@ def text_basis_amplitude(amplitude):
     return f"({amplitude})" if getattr(amplitude, "is_Add", False) else str(amplitude)
 
 
-def latex_term(amplitude, basis, qubits):
+def latex_term(amplitude, basis, qubits, exact_complex=False):
     sign = "-"
     if amplitude.could_extract_minus_sign():
         amplitude = -amplitude
@@ -539,26 +551,44 @@ def latex_term(amplitude, basis, qubits):
     if amplitude == 1:
         return sign, basis_term
 
-    return sign, rf"{latex(amplitude)} {basis_term}"
+    if exact_complex and amplitude.is_number:
+        amplitude = together(expand_complex(amplitude))
+    rendered_amplitude = latex(amplitude)
+    if exact_complex and amplitude.is_Add:
+        rendered_amplitude = rf"\left({rendered_amplitude}\right)"
+    return sign, rf"{rendered_amplitude} {basis_term}"
 
 
-def render_symbolic_state_latex_for_qubits(state, qubits: int):
+def render_symbolic_state_latex_for_qubits(state, qubits: int, exact_complex=False):
     terms = []
-    for basis, amplitude in enumerate(state):
-        simplified = simplify(amplitude)
+    output_bytes = 0
+    simplified_amplitudes = {}
+    for basis, amplitude in sorted(state.items()):
+        if amplitude not in simplified_amplitudes:
+            simplified_amplitudes[amplitude] = simplify(amplitude)
+        simplified = simplified_amplitudes[amplitude]
         if simplified == 0:
             continue
-        terms.append(latex_term(simplified, basis, qubits))
 
-    return join_latex_terms(terms)
+        sign, term = latex_term(simplified, basis, qubits, exact_complex)
+        if not terms:
+            piece = f"- {term}" if sign == "-" else term
+        else:
+            piece = f" {sign} {term}"
+        output_bytes += len(piece.encode("utf-8"))
+        if exact_complex and output_bytes + 1 > MAX_SYMBOLIC_OUTPUT_BYTES:
+            raise ValueError(f"symbolic output exceeds {MAX_SYMBOLIC_OUTPUT_BYTES} bytes")
+        terms.append(piece)
+
+    return "".join(terms) if terms else "0"
 
 
-def symbolic_state_for_qubits(circuit, qubits, variables):
+def symbolic_state_for_qubits(circuit, qubits, variables, exact_numeric=False):
     cols = circuit.get("cols", [])
-    symbolic_state = symbolic_initial_state_for_qubits(circuit, qubits, variables)
+    symbolic_state = symbolic_initial_state_for_qubits(circuit, qubits, variables, exact_numeric)
 
     for col in cols:
-        symbolic_state = column_gate_matrix(col, qubits, variables) * symbolic_state
+        symbolic_state = apply_symbolic_column(symbolic_state, col, qubits, variables, exact_numeric)
 
     return symbolic_state
 
@@ -568,44 +598,52 @@ def run(circuit, output_format="text", basis=None):
 
     cols = circuit.get("cols", [])
     variables = circuit.get("variables", {})
+    exact_numeric = output_format == "latex-exact"
+
+    if exact_numeric and basis is None:
+        ensure_latex_ket_fits(qubits)
 
     if basis == "x":
         if qubits != 1:
             raise ValueError("symbolic x-basis run currently supports only 1-qubit circuits")
 
-        symbolic_state = symbolic_state_for_qubits(circuit, qubits, variables)
+        symbolic_state = symbolic_state_for_qubits(circuit, qubits, variables, exact_numeric)
         return render_symbolic_named_basis(symbolic_state, basis, output_format)
 
     if basis == "y":
         if qubits != 1:
             raise ValueError("symbolic y-basis run currently supports only 1-qubit circuits")
 
-        symbolic_state = symbolic_state_for_qubits(circuit, qubits, variables)
+        symbolic_state = symbolic_state_for_qubits(circuit, qubits, variables, exact_numeric)
         return render_symbolic_named_basis(symbolic_state, basis, output_format)
 
     if basis == "bell":
         if qubits != 2:
             raise ValueError("symbolic bell-basis run currently supports only 2-qubit circuits")
 
-        symbolic_state = symbolic_state_for_qubits(circuit, qubits, variables)
+        symbolic_state = symbolic_state_for_qubits(circuit, qubits, variables, exact_numeric)
         return render_symbolic_named_basis(symbolic_state, basis, output_format)
 
     if basis is not None:
         raise ValueError(f"unsupported symbolic basis: {basis}")
 
-    if output_format == "latex":
-        symbolic_state = symbolic_state_for_qubits(circuit, qubits, variables)
-        return render_symbolic_state_latex_for_qubits(symbolic_state, qubits)
+    if output_format in ("latex", "latex-exact"):
+        symbolic_state = symbolic_state_for_qubits(circuit, qubits, variables, exact_numeric)
+        return render_symbolic_state_latex_for_qubits(
+            symbolic_state,
+            qubits,
+            exact_complex=output_format == "latex-exact",
+        )
 
     if "initial_state" in circuit:
-        symbolic_state = symbolic_state_for_qubits(circuit, qubits, variables)
+        symbolic_state = symbolic_state_for_qubits(circuit, qubits, variables, exact_numeric)
         if qubits > 1:
             return render_symbolic_state_for_qubits(symbolic_state, qubits)
 
         return render_symbolic_state(symbolic_state)
 
     if qubits > 1:
-        symbolic_state = symbolic_state_for_qubits(circuit, qubits, variables)
+        symbolic_state = symbolic_state_for_qubits(circuit, qubits, variables, exact_numeric)
         return render_symbolic_state_for_qubits(symbolic_state, qubits)
 
     numeric_state = [1.0, 0.0]
@@ -622,7 +660,7 @@ def run(circuit, output_format="text", basis=None):
     if not requires_symbolic:
         return render_numeric_state(numeric_state)
 
-    symbolic_state = symbolic_state_for_qubits(circuit, qubits, variables)
+    symbolic_state = symbolic_state_for_qubits(circuit, qubits, variables, exact_numeric)
 
     return render_symbolic_state(symbolic_state)
 
@@ -644,7 +682,7 @@ def parse_args(argv):
 
         raise ValueError("unsupported symbolic renderer arguments")
 
-    if output_format not in {"text", "latex"}:
+    if output_format not in {"text", "latex", "latex-exact"}:
         raise ValueError("unsupported symbolic renderer arguments")
 
     return output_format, basis
@@ -654,7 +692,10 @@ def main():
     try:
         output_format, basis = parse_args(sys.argv)
         circuit = json.load(sys.stdin)
-        print(run(circuit, output_format=output_format, basis=basis))
+        output = run(circuit, output_format=output_format, basis=basis)
+        if len(output.encode("utf-8")) + 1 > MAX_SYMBOLIC_OUTPUT_BYTES:
+            raise ValueError(f"symbolic output exceeds {MAX_SYMBOLIC_OUTPUT_BYTES} bytes")
+        print(output)
     except ValueError as e:
         print(str(e), file=sys.stderr)
         raise SystemExit(1)

@@ -2,7 +2,12 @@ import { AngleExpression, AngleExpressionError } from './angle_expression';
 import { Complex } from './complex';
 import type { CircuitData } from './circuit_file';
 import { parseCircuitOperationSlot, type ParsedCircuitOperation } from './circuit_operation';
-import { InitialStateError, initialStateQubitCount, resolveNumericInitialState } from './initial_state';
+import {
+  InitialStateError,
+  initialStateQubitCount,
+  resolveNumericInitialState,
+  validateNumericInitialState
+} from './initial_state';
 import {
   samplePauliExpectationValues,
   type PauliExpectationEstimation
@@ -160,6 +165,20 @@ export class Simulator {
     return this.stateVector().exportPayload();
   }
 
+  validateStateVectorInput(): void {
+    try {
+      validateQubitCount(this.data.qubits);
+      this.validateInitialStateInput();
+      this.data.cols.forEach((col) => new StepOperation(col, this.gateOperatorFor.bind(this)).validate());
+    } catch (error) {
+      if (error instanceof AngleExpressionError || error instanceof InitialStateError) {
+        throw new SimulatorError(error.message);
+      }
+
+      throw error;
+    }
+  }
+
   private stateVector(): StateVector {
     try {
       validateNumericQubitCount(this.data.qubits);
@@ -179,6 +198,15 @@ export class Simulator {
 
       throw error;
     }
+  }
+
+  private validateInitialStateInput(): void {
+    if (this.data.initial_state == null) {
+      return;
+    }
+
+    ensureInitialStateFitsCircuit(initialStateQubitCount(this.data.initial_state), this.data.qubits);
+    validateNumericInitialState(this.data.initial_state, this.variables());
   }
 
   private startingStateVector(): StateVector {
@@ -349,12 +377,12 @@ class StateVector {
 
   toLatex(): string {
     const terms = this.amplitudes.flatMap((amplitude, index) => {
-      const formatted = StateVector.formatAmplitude(amplitude);
+      const formatted = formatRoundedAmplitude(amplitude);
       if (formatted === '0.0') {
         return [];
       }
 
-      const mixedComplex = normalizedScalar(amplitude.real) !== 0 && normalizedScalar(amplitude.imaginary) !== 0;
+      const mixedComplex = roundedScalar(amplitude.real) !== 0 && roundedScalar(amplitude.imaginary) !== 0;
       const negative = !mixedComplex && formatted.startsWith('-');
       const coefficient = negative ? formatted.slice(1) : formatted;
       const wrappedCoefficient = mixedComplex ? `(${coefficient})` : coefficient;
@@ -465,6 +493,26 @@ class StepOperation {
   constructor(col: readonly unknown[], gateOperatorFor: (gate: unknown) => GateOperator) {
     this.col = col;
     this.gateOperatorFor = gateOperatorFor;
+  }
+
+  validate(): void {
+    if (this.swap()) {
+      if (!this.validSwapStep()) {
+        throw new SimulatorError(`unsupported swap step: ${JSON.stringify(this.col)}`);
+      }
+      return;
+    }
+
+    if (this.controlled()) {
+      this.gateOperatorFor(this.target().gate);
+      return;
+    }
+
+    this.col.forEach((gate) => {
+      if (gate !== EMPTY_SLOT) {
+        this.gateOperatorFor(gate);
+      }
+    });
   }
 
   apply(stateVector: StateVector): StateVector {
@@ -800,10 +848,14 @@ function ensureInitialStateFitsCircuit(initialQubits: number, circuitQubits: num
   }
 }
 
-export function validateNumericQubitCount(qubits: number): void {
+function validateQubitCount(qubits: number): void {
   if (!Number.isInteger(qubits) || qubits < 0) {
     throw new SimulatorError(`invalid qubit count for run: ${qubits}`);
   }
+}
+
+export function validateNumericQubitCount(qubits: number): void {
+  validateQubitCount(qubits);
 
   if (qubits > MAX_IN_MEMORY_QUBITS) {
     throw new SimulatorError(`too many qubits for TypeScript numeric run: ${qubits}`);
@@ -830,6 +882,25 @@ function normalizedScalar(value: number): number {
 
   const nearestInteger = Math.round(value);
   return Math.abs(value - nearestInteger) <= Number.EPSILON ? nearestInteger : value;
+}
+
+function roundedScalar(value: number): number {
+  const normalized = normalizedScalar(value);
+  return normalized === 0 ? 0 : Number(normalized.toPrecision(15));
+}
+
+function formatRoundedAmplitude(amplitude: Complex): string {
+  const real = roundedScalar(amplitude.real);
+  const imaginary = roundedScalar(amplitude.imaginary);
+
+  if (imaginary === 0) {
+    return formatRubyFloat(real);
+  }
+  if (real === 0) {
+    return `${formatRubyFloat(imaginary)}i`;
+  }
+
+  return `${formatRubyFloat(real)}${imaginary > 0 ? '+' : ''}${formatRubyFloat(imaginary)}i`;
 }
 
 function formatRubyFloat(value: number): string {

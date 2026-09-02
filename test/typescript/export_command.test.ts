@@ -301,11 +301,11 @@ describe('export command TypeScript route', () => {
     });
   });
 
-  it('exports state-vector PNG through the retained Python helper contract', async () => {
+  it('exports a complex state-vector PNG through the legacy symbolic LaTeX format', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
         qubits: 1,
-        cols: [['H']]
+        cols: [['H'], ['T']]
       });
 
       const result = captureDispatcherRun(dir, [

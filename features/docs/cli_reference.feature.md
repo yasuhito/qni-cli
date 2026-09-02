@@ -92,6 +92,10 @@ CLI コマンドの詳細を専用ドキュメントで確認したい。
 
 - Then リポジトリファイル "docs/cli.md" は "qni run --symbolic --basis x" を含む
 
+## Scenario: CLI リファレンスは LaTeX の記号実行環境と数値経路を区別する
+
+- Then リポジトリファイル "docs/cli.md" は "記号実行環境を順に試し、利用できない場合または回路が未対応の場合は TypeScript で生成した丸め済みの数値表示へ戻ります。数値フォールバックの生成自体には Python を使いません。" を含む
+
 ## Scenario: CLI リファレンスは期待値計算例を示す
 
 - Then リポジトリファイル "docs/cli.md" は "qni expect ZZ XX" を含む

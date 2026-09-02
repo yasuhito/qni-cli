@@ -4,7 +4,7 @@ qni-cli の利用者として
 状態ベクトルと期待値を論文と同じ記法で読めるように
 計算結果を LaTeX で出力したい。
 
-## Scenario: qni run --latex は Bell 状態を ket 記法で表示
+## Scenario: qni run --latex は Bell 状態を厳密な ket 記法で表示
 
 - Given "qni add H --qubit 0 --step 0" を実行
 - And "qni add X --control 0 --qubit 1 --step 1" を実行
@@ -12,7 +12,203 @@ qni-cli の利用者として
 - Then 標準出力:
 
   ```text
-  0.7071067811865475\ket{00} + 0.7071067811865475\ket{11}
+  \frac{\sqrt{2}}{2}\ket{00} + \frac{\sqrt{2}}{2}\ket{11}
+  ```
+
+## Scenario: qni run --latex は複素振幅を厳密な数式で表示
+
+- Given "qni add H --qubit 0 --step 0" を実行
+- And "qni add T --qubit 0 --step 1" を実行
+- When "qni run --latex" を実行
+- Then 標準出力:
+
+  ```text
+  \frac{\sqrt{2}}{2}\ket{0} + \frac{1 + i}{2}\ket{1}
+  ```
+
+## Scenario: qni run --latex は加算式の複素振幅全体を ket の係数にする
+
+- Given "qni add X --qubit 0 --step 0" を実行
+- And "qni add P --angle 1 --qubit 0 --step 1" を実行
+- When "qni run --latex" を実行
+- Then 標準出力:
+
+  ```text
+  \left(\cos{\left(1 \right)} + i \sin{\left(1 \right)}\right)\ket{1}
+  ```
+
+## Scenario: qni run --latex は |+> の意味上の厳密値を表示
+
+- Given "qni state set \"|+>\"" を実行
+- When "qni run --latex" を実行
+- Then 標準出力:
+
+  ```text
+  \frac{\sqrt{2}}{2}\ket{0} + \frac{\sqrt{2}}{2}\ket{1}
+  ```
+
+## Scenario: qni run --latex は |-> の意味上の厳密値を表示
+
+- Given "qni state set \"|->\"" を実行
+- When "qni run --latex" を実行
+- Then 標準出力:
+
+  ```text
+  \frac{\sqrt{2}}{2}\ket{0} - \frac{\sqrt{2}}{2}\ket{1}
+  ```
+
+## Scenario: qni run --latex は |+i> の意味上の厳密値を表示
+
+- Given "qni state set \"|+i>\"" を実行
+- When "qni run --latex" を実行
+- Then 標準出力:
+
+  ```text
+  \frac{\sqrt{2}}{2}\ket{0} + \frac{\sqrt{2} i}{2}\ket{1}
+  ```
+
+## Scenario: qni run --latex は |-i> の意味上の厳密値を表示
+
+- Given "qni state set \"|-i>\"" を実行
+- When "qni run --latex" を実行
+- Then 標準出力:
+
+  ```text
+  \frac{\sqrt{2}}{2}\ket{0} - \frac{\sqrt{2} i}{2}\ket{1}
+  ```
+
+## Scenario: 2量子ビット回路の |+> は通常実行で左の量子ビットに置く
+
+- Given 空の 2 量子ビット回路がある
+- And "qni state set \"|+>\"" を実行
+- When "qni run" を実行
+- Then 標準出力:
+
+  ```text
+  0.7071067811865476,0.0,0.7071067811865476,0.0
+  ```
+
+## Scenario: 2量子ビット回路の |+> は LaTeX でも左の量子ビットに置く
+
+- Given 空の 2 量子ビット回路がある
+- And "qni state set \"|+>\"" を実行
+- When "qni run --latex" を実行
+- Then 標準出力:
+
+  ```text
+  \frac{\sqrt{2}}{2}\ket{00} + \frac{\sqrt{2}}{2}\ket{10}
+  ```
+
+## Scenario: 3量子ビット回路の |Φ+> は通常実行で左の2量子ビットに置く
+
+- Given 空の 3 量子ビット回路がある
+- And "qni state set \"|Φ+>\"" を実行
+- When "qni run" を実行
+- Then 標準出力:
+
+  ```text
+  0.7071067811865476,0.0,0.0,0.0,0.0,0.0,0.7071067811865476,0.0
+  ```
+
+## Scenario: 3量子ビット回路の |Φ+> は LaTeX でも左の2量子ビットに置く
+
+- Given 空の 3 量子ビット回路がある
+- And "qni state set \"|Φ+>\"" を実行
+- When "qni run --latex" を実行
+- Then 標準出力:
+
+  ```text
+  \frac{\sqrt{2}}{2}\ket{000} + \frac{\sqrt{2}}{2}\ket{110}
+  ```
+
+## Scenario: qni run --latex は大きな整数の角度を厳密に保つ
+
+- Given "qni add X --qubit 0 --step 0" を実行
+- And "qni add P --angle 9007199254740993 --qubit 0 --step 1" を実行
+- When "qni run --latex" を実行
+- Then 標準出力:
+
+  ```text
+  \left(\cos{\left(9007199254740993 \right)} + i \sin{\left(9007199254740993 \right)}\right)\ket{1}
+  ```
+
+## Scenario: qni run --latex は有限小数の角度を有理数として保つ
+
+- Given "qni add X --qubit 0 --step 0" を実行
+- And "qni add P --angle 0.1 --qubit 0 --step 1" を実行
+- When "qni run --latex" を実行
+- Then 標準出力:
+
+  ```text
+  \left(\cos{\left(\frac{1}{10} \right)} + i \sin{\left(\frac{1}{10} \right)}\right)\ket{1}
+  ```
+
+## Scenario: qni run --latex は大きな疎な回路も厳密値で表示
+
+- Given 空の 31 量子ビット回路がある
+- And "qni add H --qubit 0 --step 0" を実行
+- When "qni run --latex" を実行
+- Then 標準出力:
+
+  ```text
+  \frac{\sqrt{2}}{2}\ket{0000000000000000000000000000000} + \frac{\sqrt{2}}{2}\ket{1000000000000000000000000000000}
+  ```
+
+## Scenario: qni run --latex は大きな計算基底初期状態を密ベクトルへ展開しない
+
+- Given 空の 31 量子ビット回路がある
+- And "qni state set \"|0000000000000000000000000000000>\"" を実行
+- When "qni run --latex" を実行
+- Then 標準出力:
+
+  ```text
+  \ket{0000000000000000000000000000000}
+  ```
+
+## Scenario: qni run --latex は巨大な ket を生成する前に出力上限で拒否
+
+- Given 1項の記号出力上限を超える巨大な回路がある
+- When "qni run --latex" を実行
+- Then 標準エラー:
+
+  ```text
+  symbolic output exceeds 8388608 bytes
+  ```
+
+## Scenario: qni run --latex は17量子ビットの全 H 回路を数値表示へ戻す
+
+- Given 全量子ビットに H がある 17 量子ビット回路がある
+- When "qni run --latex" を実行
+- Then コマンドは成功
+
+## Scenario: qni run --latex は厳密値と数値の上限を超える回路を安全に拒否
+
+- Given 厳密値の非ゼロ項上限を超える 30 量子ビット回路がある
+- When "qni run --latex" を実行
+- Then 標準エラー:
+
+  ```text
+  symbolic state exceeds 65536 nonzero terms
+  ```
+
+## Scenario: qni run --latex は記号実行環境がなくても数値で表示
+
+- Given "qni add H --qubit 0 --step 0" を実行
+- When "qni run --latex" を記号実行環境なしで実行
+- Then 標準出力:
+
+  ```text
+  0.707106781186547\ket{0} + 0.707106781186547\ket{1}
+  ```
+
+## Scenario: qni run --latex はシンボリック実行が未対応のゲートを数値で表示
+
+- Given "qni add √X --qubit 0 --step 0" を実行
+- When "qni run --latex" を実行
+- Then 標準出力:
+
+  ```text
+  (0.5+0.5i)\ket{0} + (0.5-0.5i)\ket{1}
   ```
 
 ## Scenario: qni run --symbolic --latex は記号的な初期状態を ket 記法で表示

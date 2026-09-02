@@ -6,8 +6,14 @@ import {
 } from '../measurement_distribution';
 import { generateSeed, validateSeed } from '../random_seed';
 import { circuitContainsMeasurements, Simulator } from '../simulator';
-import { renderSymbolicStateVector } from '../symbolic_state_renderer';
+import {
+  isSymbolicLatexFallbackError,
+  isSymbolicLatexResourceLimitError,
+  renderSymbolicStateVector
+} from '../symbolic_state_renderer';
 import { thorArgumentsError } from './thor_compatibility';
+
+const MAX_SAFE_RESOURCE_FALLBACK_QUBITS = 17;
 
 const HELP_TEXT = `Usage:
   qni run [--symbolic] [--basis=BASIS] [--latex]
@@ -105,7 +111,7 @@ export function runRunCommand(argv: string[], context: CommandHandlerContext): n
             projectRoot: context.projectRoot
           })
         : options.latex
-          ? new Simulator(circuit).renderStateVectorLatex()
+          ? renderLatexStateVector(circuit, context)
           : new Simulator(circuit).renderStateVector();
 
     process.stdout.write(`${output}\n`);
@@ -113,6 +119,32 @@ export function runRunCommand(argv: string[], context: CommandHandlerContext): n
   } catch (error) {
     process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
     return 1;
+  }
+}
+
+function renderLatexStateVector(
+  circuit: Parameters<typeof renderSymbolicStateVector>[0]['circuit'],
+  context: CommandHandlerContext
+): string {
+  const simulator = new Simulator(circuit);
+  simulator.validateStateVectorInput();
+
+  try {
+    return renderSymbolicStateVector({
+      circuit,
+      env: context.env,
+      format: 'latex-exact',
+      projectRoot: context.projectRoot
+    });
+  } catch (error) {
+    const safeResourceFallback =
+      isSymbolicLatexResourceLimitError(error) && circuit.qubits <= MAX_SAFE_RESOURCE_FALLBACK_QUBITS;
+
+    if (!isSymbolicLatexFallbackError(error) && !safeResourceFallback) {
+      throw error;
+    }
+
+    return simulator.renderStateVectorLatex();
   }
 }
 

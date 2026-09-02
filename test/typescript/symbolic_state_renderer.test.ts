@@ -67,7 +67,12 @@ function epipeProneCircuit(): { cols: number[][]; qubits: number } {
   };
 }
 
-function captureDispatcherRun(cwd: string, argv: string[], env: NodeJS.ProcessEnv = { PATH: '' }): CapturedRun {
+function captureDispatcherRun(
+  cwd: string,
+  argv: string[],
+  env: NodeJS.ProcessEnv = { PATH: '' },
+  projectRoot = process.cwd()
+): CapturedRun {
   let stdout = '';
   let stderr = '';
   const originalStdoutWrite = process.stdout.write;
@@ -107,7 +112,7 @@ function captureDispatcherRun(cwd: string, argv: string[], env: NodeJS.ProcessEn
     const dispatcher = createDispatcher({
       cwd,
       env,
-      projectRoot: process.cwd()
+      projectRoot
     });
 
     return {
@@ -144,6 +149,21 @@ describe('TypeScript symbolic state renderer boundary', () => {
         projectRoot: process.cwd()
       }),
       '\\frac{\\sqrt{2}}{2}\\ket{0} + \\frac{\\sqrt{2}}{2}\\ket{1}'
+    );
+  });
+
+  it('keeps legacy complex LaTeX for explicit symbolic and state-vector export callers', () => {
+    assert.equal(
+      renderSymbolicStateVector({
+        circuit: {
+          cols: [['H'], ['T']],
+          qubits: 1
+        },
+        env: { PATH: '' },
+        format: 'latex',
+        projectRoot: process.cwd()
+      }),
+      '\\frac{\\sqrt{2}}{2}\\ket{0} + \\frac{\\sqrt[4]{-1} \\sqrt{2}}{2}\\ket{1}'
     );
   });
 
@@ -330,6 +350,24 @@ exit 1
 });
 
 describe('run command symbolic TypeScript route', () => {
+  it('keeps explicit --symbolic --latex complex output unchanged', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        cols: [['H'], ['T']],
+        qubits: 1
+      });
+
+      const result = captureDispatcherRun(dir, ['run', '--symbolic', '--latex']);
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stderr, '');
+      assert.equal(
+        result.stdout,
+        '\\frac{\\sqrt{2}}{2}\\ket{0} + \\frac{\\sqrt[4]{-1} \\sqrt{2}}{2}\\ket{1}\n'
+      );
+    });
+  });
+
   it('runs --symbolic through the TypeScript route', async () => {
     await withTempDir(async (dir) => {
       const bin = path.join(dir, 'bin');

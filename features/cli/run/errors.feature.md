@@ -57,6 +57,58 @@ qni run が明確な失敗とエラーを返すことを確認したい。
   initial state must be normalized
   ```
 
+## Scenario: qni run --latex は未束縛の角度変数があると失敗
+
+- Given "qni add Ry --angle theta --qubit 0 --step 0" を実行
+- When "qni run --latex" を実行
+- Then コマンドは失敗
+
+## Scenario: qni run --latex は未束縛の角度変数があると標準エラーを表示
+
+- Given "qni add Ry --angle theta --qubit 0 --step 0" を実行
+- When "qni run --latex" を実行
+- Then 標準エラー:
+
+  ```text
+  unresolved angle variable: theta
+  ```
+
+## Scenario: qni run --latex は未束縛の初期状態変数があると失敗
+
+- Given "qni state set \"alpha|0> + beta|1>\"" を実行
+- When "qni run --latex" を実行
+- Then コマンドは失敗
+
+## Scenario: qni run --latex は未束縛の初期状態変数があると標準エラーを表示
+
+- Given "qni state set \"alpha|0> + beta|1>\"" を実行
+- When "qni run --latex" を実行
+- Then 標準エラー:
+
+  ```text
+  unresolved initial state variable: alpha
+  ```
+
+## Scenario: qni run --latex は非正規化の初期状態ベクトルでは失敗
+
+- Given "qni state set \"alpha|0> + beta|1>\"" を実行
+- And "qni variable set alpha 1" を実行
+- And "qni variable set beta 1" を実行
+- When "qni run --latex" を実行
+- Then コマンドは失敗
+
+## Scenario: qni run --latex は非正規化の初期状態ベクトルで標準エラーを表示
+
+- Given "qni state set \"alpha|0> + beta|1>\"" を実行
+- And "qni variable set alpha 1" を実行
+- And "qni variable set beta 1" を実行
+- When "qni run --latex" を実行
+- Then 標準エラー:
+
+  ```text
+  initial state must be normalized
+  ```
+
 ## Scenario: qni run --symbolic --basis x は 2 量子ビット回路では失敗
 
 - Given 空の 2 量子ビット回路がある
