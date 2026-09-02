@@ -160,6 +160,20 @@ export class Simulator {
     return this.stateVector().exportPayload();
   }
 
+  validateStateVectorInput(): void {
+    try {
+      validateQubitCount(this.data.qubits);
+      this.validateInitialStateInput();
+      this.data.cols.forEach((col) => new StepOperation(col, this.gateOperatorFor.bind(this)).validate());
+    } catch (error) {
+      if (error instanceof AngleExpressionError || error instanceof InitialStateError) {
+        throw new SimulatorError(error.message);
+      }
+
+      throw error;
+    }
+  }
+
   private stateVector(): StateVector {
     try {
       validateNumericQubitCount(this.data.qubits);
@@ -179,6 +193,15 @@ export class Simulator {
 
       throw error;
     }
+  }
+
+  private validateInitialStateInput(): void {
+    if (this.data.initial_state == null) {
+      return;
+    }
+
+    ensureInitialStateFitsCircuit(initialStateQubitCount(this.data.initial_state), this.data.qubits);
+    resolveNumericInitialState(this.data.initial_state, this.variables());
   }
 
   private startingStateVector(): StateVector {
@@ -465,6 +488,26 @@ class StepOperation {
   constructor(col: readonly unknown[], gateOperatorFor: (gate: unknown) => GateOperator) {
     this.col = col;
     this.gateOperatorFor = gateOperatorFor;
+  }
+
+  validate(): void {
+    if (this.swap()) {
+      if (!this.validSwapStep()) {
+        throw new SimulatorError(`unsupported swap step: ${JSON.stringify(this.col)}`);
+      }
+      return;
+    }
+
+    if (this.controlled()) {
+      this.gateOperatorFor(this.target().gate);
+      return;
+    }
+
+    this.col.forEach((gate) => {
+      if (gate !== EMPTY_SLOT) {
+        this.gateOperatorFor(gate);
+      }
+    });
   }
 
   apply(stateVector: StateVector): StateVector {
@@ -800,10 +843,14 @@ function ensureInitialStateFitsCircuit(initialQubits: number, circuitQubits: num
   }
 }
 
-export function validateNumericQubitCount(qubits: number): void {
+function validateQubitCount(qubits: number): void {
   if (!Number.isInteger(qubits) || qubits < 0) {
     throw new SimulatorError(`invalid qubit count for run: ${qubits}`);
   }
+}
+
+export function validateNumericQubitCount(qubits: number): void {
+  validateQubitCount(qubits);
 
   if (qubits > MAX_IN_MEMORY_QUBITS) {
     throw new SimulatorError(`too many qubits for TypeScript numeric run: ${qubits}`);

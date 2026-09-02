@@ -8,6 +8,7 @@ import { describe, it, mock } from 'node:test';
 
 import { createDispatcher } from '../../src/dispatcher';
 import { typesetMath } from '../../src/qni-math/typesetter';
+import { Simulator } from '../../src/simulator';
 
 interface CapturedRun {
   readonly exitStatus: number;
@@ -98,6 +99,55 @@ describe('run command exact LaTeX route', () => {
       assert.ok(
         typesetMath(result.stdout.trim(), '#100f0f', 80, { heightPx: 20, widthPx: 10 }).png.length > 0
       );
+    });
+  });
+
+  it('does not render the numeric state vector when exact LaTeX succeeds', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        cols: [['H']],
+        qubits: 1
+      });
+      const numericRenderMock = mock.method(Simulator.prototype, 'renderStateVectorLatex', () => {
+        throw new Error('numeric state vector must not render');
+      });
+
+      try {
+        assert.deepEqual(captureDispatcherRun(dir, ['run', '--latex']), {
+          exitStatus: 0,
+          stderr: '',
+          stdout: '\\frac{\\sqrt{2}}{2}\\ket{0} + \\frac{\\sqrt{2}}{2}\\ket{1}\n'
+        });
+        assert.equal(numericRenderMock.mock.callCount(), 0);
+      } finally {
+        numericRenderMock.mock.restore();
+      }
+    });
+  });
+
+  it('tries the exact renderer above the numeric simulator qubit limit', async () => {
+    await withTempDir(async (dir) => {
+      const basis = '0'.repeat(31);
+      await writeCircuit(dir, {
+        cols: [Array(31).fill(1)],
+        qubits: 31
+      });
+      const spawnMock = mock.method(
+        childProcessForMock,
+        'spawnSync',
+        (() => spawnResult({ stdout: `\\lvert ${basis} \\rangle\n` })) as unknown as typeof childProcess.spawnSync
+      );
+
+      try {
+        assert.deepEqual(captureDispatcherRun(dir, ['run', '--latex']), {
+          exitStatus: 0,
+          stderr: '',
+          stdout: `\\ket{${basis}}\n`
+        });
+        assert.equal(spawnMock.mock.callCount(), 1);
+      } finally {
+        spawnMock.mock.restore();
+      }
     });
   });
 

@@ -123,7 +123,8 @@ function renderLatexStateVector(
   circuit: Parameters<typeof renderSymbolicStateVector>[0]['circuit'],
   context: CommandHandlerContext
 ): string {
-  const numericLatex = new Simulator(circuit).renderStateVectorLatex();
+  const simulator = new Simulator(circuit);
+  simulator.validateStateVectorInput();
 
   try {
     return renderSymbolicStateVector({
@@ -137,7 +138,7 @@ function renderLatexStateVector(
       throw error;
     }
 
-    return numericLatex;
+    return simulator.renderStateVectorLatex();
   }
 }
 
