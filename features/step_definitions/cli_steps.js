@@ -1337,6 +1337,13 @@ Given(/^空の 3 (?:qubit 回路|量子ビット回路)がある$/, function () 
   });
 });
 
+Given('空の 9 量子ビット回路がある', function () {
+  writeCircuitJson(this.scenarioDir, {
+    qubits: 9,
+    cols: [Array(9).fill(1)]
+  });
+});
+
 Given('リポジトリの qni コマンド列 {string} を実行', async function (filePath) {
   const commands = fs.readFileSync(projectFilePath(filePath), 'utf8')
     .split('\n')

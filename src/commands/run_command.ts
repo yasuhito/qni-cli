@@ -12,6 +12,9 @@ import {
 } from '../symbolic_state_renderer';
 import { thorArgumentsError } from './thor_compatibility';
 
+const MAX_AUTOMATIC_SYMBOLIC_LATEX_COLUMNS = 256;
+const MAX_AUTOMATIC_SYMBOLIC_LATEX_QUBITS = 8;
+
 const HELP_TEXT = `Usage:
   qni run [--symbolic] [--basis=BASIS] [--latex]
   qni run [--shots N] [--seed N] [--json]
@@ -124,6 +127,13 @@ function renderLatexStateVector(
   context: CommandHandlerContext
 ): string {
   const numericLatex = new Simulator(circuit).renderStateVectorLatex();
+
+  if (
+    circuit.qubits > MAX_AUTOMATIC_SYMBOLIC_LATEX_QUBITS ||
+    circuit.cols.length > MAX_AUTOMATIC_SYMBOLIC_LATEX_COLUMNS
+  ) {
+    return numericLatex;
+  }
 
   try {
     return renderSymbolicStateVector({

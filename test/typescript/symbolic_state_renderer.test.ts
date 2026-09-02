@@ -378,6 +378,35 @@ describe('run command symbolic TypeScript route', () => {
     });
   });
 
+  it('skips automatic symbolic LaTeX for a large supported circuit', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        cols: [['H', ...Array(8).fill(1)]],
+        qubits: 9
+      });
+      const spawnMock = mock.method(
+        childProcessForMock,
+        'spawnSync',
+        (() => {
+          throw new Error('symbolic helper must not run');
+        }) as unknown as typeof childProcess.spawnSync
+      );
+
+      try {
+        const result = captureDispatcherRun(dir, ['run', '--latex']);
+        assert.equal(result.exitStatus, 0);
+        assert.equal(result.stderr, '');
+        assert.equal(
+          result.stdout,
+          '0.707106781186547\\ket{000000000} + 0.707106781186547\\ket{100000000}\n'
+        );
+        assert.equal(spawnMock.mock.callCount(), 0);
+      } finally {
+        spawnMock.mock.restore();
+      }
+    });
+  });
+
   it('falls back to rounded numeric LaTeX when no symbolic runtime is available', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
