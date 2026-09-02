@@ -26,6 +26,17 @@ qni-cli の利用者として
   \frac{\sqrt{2}}{2}\ket{0} + \frac{1 + i}{2}\ket{1}
   ```
 
+## Scenario: qni run --latex は加算式の複素振幅全体を ket の係数にする
+
+- Given "qni add X --qubit 0 --step 0" を実行
+- And "qni add P --angle 1 --qubit 0 --step 1" を実行
+- When "qni run --latex" を実行
+- Then 標準出力:
+
+  ```text
+  \left(\cos{\left(1 \right)} + i \sin{\left(1 \right)}\right)\ket{1}
+  ```
+
 ## Scenario: qni run --latex は大きな対応回路も厳密値で表示
 
 - Given 空の 9 量子ビット回路がある

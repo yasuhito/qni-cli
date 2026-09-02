@@ -116,6 +116,21 @@ describe('run command exact LaTeX route', () => {
     });
   });
 
+  it('groups an additive complex amplitude as the ket coefficient', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        cols: [['X'], ['P(1)']],
+        qubits: 1
+      });
+
+      assert.deepEqual(captureDispatcherRun(dir, ['run', '--latex']), {
+        exitStatus: 0,
+        stderr: '',
+        stdout: '\\left(\\cos{\\left(1 \\right)} + i \\sin{\\left(1 \\right)}\\right)\\ket{1}\n'
+      });
+    });
+  });
+
   it('renders a large supported circuit exactly without dense gate matrices', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
