@@ -165,6 +165,16 @@ qni-cli の利用者として
   \ket{0000000000000000000000000000000}
   ```
 
+## Scenario: qni run --latex は巨大な ket を生成する前に出力上限で拒否
+
+- Given 1項の記号出力上限を超える巨大な回路がある
+- When "qni run --latex" を実行
+- Then 標準エラー:
+
+  ```text
+  symbolic output exceeds 8388608 bytes
+  ```
+
 ## Scenario: qni run --latex は厳密値と数値の上限を超える回路を安全に拒否
 
 - Given 厳密値の非ゼロ項上限を超える 30 量子ビット回路がある

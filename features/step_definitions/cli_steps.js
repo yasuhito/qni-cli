@@ -1344,6 +1344,13 @@ Given('空の 31 量子ビット回路がある', function () {
   });
 });
 
+Given('1項の記号出力上限を超える巨大な回路がある', function () {
+  writeCircuitJson(this.scenarioDir, {
+    qubits: 1_000_000_000,
+    cols: []
+  });
+});
+
 Given('厳密値の非ゼロ項上限を超える 30 量子ビット回路がある', function () {
   const qubits = 30;
   writeCircuitJson(this.scenarioDir, {

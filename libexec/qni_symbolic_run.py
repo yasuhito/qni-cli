@@ -420,6 +420,12 @@ def join_latex_terms(terms):
     return rendered
 
 
+def ensure_latex_ket_fits(qubits: int):
+    minimum_output_bytes = qubits + len(r"\lvert  \rangle".encode("utf-8")) + 1
+    if minimum_output_bytes > MAX_SYMBOLIC_OUTPUT_BYTES:
+        raise ValueError(f"symbolic output exceeds {MAX_SYMBOLIC_OUTPUT_BYTES} bytes")
+
+
 def basis_label(basis: int, qubits: int) -> str:
     return format(basis, f"0{qubits}b")
 
@@ -555,6 +561,7 @@ def latex_term(amplitude, basis, qubits, exact_complex=False):
 
 def render_symbolic_state_latex_for_qubits(state, qubits: int, exact_complex=False):
     terms = []
+    output_bytes = 0
     simplified_amplitudes = {}
     for basis, amplitude in sorted(state.items()):
         if amplitude not in simplified_amplitudes:
@@ -562,9 +569,18 @@ def render_symbolic_state_latex_for_qubits(state, qubits: int, exact_complex=Fal
         simplified = simplified_amplitudes[amplitude]
         if simplified == 0:
             continue
-        terms.append(latex_term(simplified, basis, qubits, exact_complex))
 
-    return join_latex_terms(terms)
+        sign, term = latex_term(simplified, basis, qubits, exact_complex)
+        if not terms:
+            piece = f"- {term}" if sign == "-" else term
+        else:
+            piece = f" {sign} {term}"
+        output_bytes += len(piece.encode("utf-8"))
+        if exact_complex and output_bytes + 1 > MAX_SYMBOLIC_OUTPUT_BYTES:
+            raise ValueError(f"symbolic output exceeds {MAX_SYMBOLIC_OUTPUT_BYTES} bytes")
+        terms.append(piece)
+
+    return "".join(terms) if terms else "0"
 
 
 def symbolic_state_for_qubits(circuit, qubits, variables, exact_numeric=False):
@@ -583,6 +599,9 @@ def run(circuit, output_format="text", basis=None):
     cols = circuit.get("cols", [])
     variables = circuit.get("variables", {})
     exact_numeric = output_format == "latex-exact"
+
+    if exact_numeric and basis is None:
+        ensure_latex_ket_fits(qubits)
 
     if basis == "x":
         if qubits != 1:
