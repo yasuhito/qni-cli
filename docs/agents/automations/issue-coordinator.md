@@ -137,7 +137,7 @@ worktrees_json=$(orca-ide worktree ps --json)
 `agent:waiting-dependency` が付いている open issue を読む。依存先は次の規則で機械的に確定する。
 
 1. GitHub Relationships の `blockedBy` が1件以上あれば、その全件だけを依存先とする。本文やコメントから依存先を追加・置換しない。
-2. `blockedBy` が空の場合だけ、本文・コメントの独立した行にある `Depends on #M` / `Blocked by #M` / `依存: #M` / `ブロック: #M` を依存先としてよい。
+2. `blockedBy` が空の場合だけ、本文・コメントの独立した行にある `Depends on #M` / `Blocked by #M` / `依存: #M` / `ブロック: #M` を依存先としてよい。本文の `## Blocked by` 見出し直下の `- #M` 箇条書きも同様に扱う。
 3. `Parent`、`親`、`Related`、`関連`、`Out of scope`、一般的な issue 参照、`#M の後`、`#M のマージ後` から依存関係を推測してはならない。
 
 - 確定した依存 issue が1つ以上あり、すべて closed なら、`agent:waiting-dependency` を外して `agent:implement` を付け、依存が解けたことを短くコメントする。
@@ -150,7 +150,7 @@ worktrees_json=$(orca-ide worktree ps --json)
 
 ```bash
 waiting_json=$(printf '%s' "$issues_json" | jq '[.[] | {number,title,url,labels:[.labels[].name]} | select(.labels | index("agent:waiting-dependency"))] | sort_by(.number)')
-# 各 waiting issue は GraphQL blockedBy を最優先する。blockedBy が空の場合だけ、上記4形式の独立行を厳密に確認する。
+# 各 waiting issue は GraphQL blockedBy を最優先する。blockedBy が空の場合だけ、上記4形式の独立行と `## Blocked by` 見出し直下の `- #M` 箇条書きを厳密に確認する。
 # ラベル変更直前に gh issue view <M> --json state を依存先ごとに再実行する。
 ```
 
@@ -195,7 +195,7 @@ gh issue view <N> -R yasuhito/qni-cli --comments --json number,title,body,labels
 - 子 issue / task list を実装単位として要求していない
 - PRD 型 issue、設計検討、RFC、計画作成だけの issue ではない
 - 既存 open PR が `Closes #N` / `Fixes #N` / `Resolves #N` で対象 issue を閉じる形になっていない
-- `Depends on #M` / `Blocked by #M` / `依存: #M` / `ブロック: #M` などで参照された依存 issue が、すべて closed である
+- `Depends on #M` / `Blocked by #M` / `依存: #M` / `ブロック: #M`、および本文の `## Blocked by` 見出し直下の `- #M` 箇条書きで参照された依存 issue が、すべて closed である
 
 
 依存 issue の確認例:
@@ -284,6 +284,8 @@ Issue #<N> を実装してください。
 - PR を作らない。
 - issue を閉じない。
 - unrelated な変更を戻さない。
+- GUI ウィンドウ（Ghostty / Kitty などの端末エミュレータを含む）を開かない。スクリーンショットを撮らない。`hyprctl` / `grim` などデスクトップ操作コマンドを使わない。実表示の目視確認は人間が行う。
+- 1 コマンドが 10 分を超えそうな処理は `timeout` を付ける。
 
 完了出力:
 - 完了したら最後に必ず `<promise>COMPLETE</promise>` を出力してください。
