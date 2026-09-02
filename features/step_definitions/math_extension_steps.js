@@ -208,6 +208,18 @@ When(/^`\\ket\{\\Phi\^\+\}=\\frac\{\\ket\{00\}\+\\ket\{11\}\}\{\\sqrt 2\}` を�
   transform(this, '$$\\ket{\\Phi^+}=\\frac{\\ket{00}+\\ket{11}}{\\sqrt 2}$$');
 });
 
+When(/^`\\braket\{s\|\\psi\} - \\ket\{\\psi\}` を含む表示数式を画像経路で変換する$/, function () {
+  transform(this, '$$\\braket{s|\\psi} - \\ket{\\psi}$$');
+});
+
+When(/^`\\ket\{\\psi\}` を含む表示数式を画像経路で変換する$/, function () {
+  transform(this, '$$\\ket{\\psi}$$');
+});
+
+When(/^`\\bra\{s\}` を含む表示数式を画像経路で変換する$/, function () {
+  transform(this, '$$\\bra{s}$$');
+});
+
 When('`\\/math status` を実行する', async function () {
   await captureMathStatus(this);
 });
@@ -259,8 +271,8 @@ When(/^`\$\\bra\{0\}\$` を含む本文を変換する$/, function () {
   transform(this, '状態は $\\bra{0}$ です。');
 });
 
-When(/^`\$\\braket\{0\}\{1\}\$` を含む本文を変換する$/, function () {
-  transform(this, '内積は $\\braket{0}{1}$ です。');
+When(/^`\$\\braket\{s\|\\psi\} - \\ket\{\\psi\}\$` を含む本文を変換する$/, function () {
+  transform(this, '内積は $\\braket{s|\\psi} - \\ket{\\psi}$ です。');
 });
 
 When(/^引数の前に改行がある `\\ket` を含む表示数式を変換する$/, function () {
@@ -398,6 +410,18 @@ Then('Bell 状態は設定なしで画像配置になる', function () {
   assert.ok(this.qniMathMarkdown.includes(PLACEHOLDER));
 });
 
+Then('braket と直後の ket は画像配置になる', function () {
+  assert.ok(this.qniMathMarkdown.includes(PLACEHOLDER));
+});
+
+Then('ket は画像配置になる', function () {
+  assert.ok(this.qniMathMarkdown.includes(PLACEHOLDER));
+});
+
+Then('bra は画像配置になる', function () {
+  assert.ok(this.qniMathMarkdown.includes(PLACEHOLDER));
+});
+
 Then(/^変換後の Markdown は `\$\\hat\{H\}\$` を含む$/, function () {
   assert.ok(this.qniMathMarkdown.includes('$\\hat{H}$'));
 });
@@ -510,8 +534,8 @@ Then(/^変換後の Markdown は `\$\\langle 0\|\$` を含む$/, function () {
   assert.ok(this.qniMathMarkdown.includes('$\\langle 0|$'));
 });
 
-Then(/^変換後の Markdown は `\$\\langle 0\|1\\rangle\$` を含む$/, function () {
-  assert.ok(this.qniMathMarkdown.includes('$\\langle 0|1\\rangle$'));
+Then(/^変換後の Markdown は `\$\\langle s\|\\psi\\rangle - \|\\psi\\rangle\$` を含む$/, function () {
+  assert.ok(this.qniMathMarkdown.includes('$\\langle s|\\psi\\rangle - |\\psi\\rangle$'));
 });
 
 Then(/^変換後の Markdown は `\|0\\rangle` を含む$/, function () {
