@@ -111,6 +111,24 @@ qni-cli を Pi に導入した利用者として
 - When `\ket{\Phi^+}=\frac{\ket{00}+\ket{11}}{\sqrt 2}` を画像経路で変換する
 - Then Bell 状態は設定なしで画像配置になる
 
+## Scenario: braket の直後の項を外側に組版する
+
+- Given 偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When `\braket{s|\psi} - \ket{\psi}` を組版する
+- Then braket と直後の ket は独立した項として描かれる
+
+## Scenario: ket を量子系マクロで組版する
+
+- Given 偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When `\ket{\psi}` を組版する
+- Then ket は縦棒と右山括弧で描かれる
+
+## Scenario: bra を量子系マクロで組版する
+
+- Given 偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When `\bra{s}` を組版する
+- Then bra は左山括弧と縦棒で描かれる
+
 ## Scenario: 画像経路でもインラインの利用者マクロを展開する
 
 - Given `\op` を `\hat{#1}` に展開する環境変数で数式描画拡張を起動する

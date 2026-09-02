@@ -208,6 +208,32 @@ When(/^`\\ket\{\\Phi\^\+\}=\\frac\{\\ket\{00\}\+\\ket\{11\}\}\{\\sqrt 2\}` を�
   transform(this, '$$\\ket{\\Phi^+}=\\frac{\\ket{00}+\\ket{11}}{\\sqrt 2}$$');
 });
 
+function typesetExpectedMacro(world, actual, expected) {
+  const { getCellDimensions } = require('@earendil-works/pi-tui');
+  const { typesetMath } = require('../../dist/qni-math/typesetter.js');
+  const cell = getCellDimensions();
+  const renderedSvg = (latex) => typesetMath(latex, '#100f0f', 80, cell).svg
+    .replace(/(<g data-mml-node="math") data-latex="[^"]*"/u, '$1');
+  world.qniMathActualMacroSvg = renderedSvg(actual);
+  world.qniMathExpectedMacroSvg = renderedSvg(expected);
+}
+
+When(/^`\\braket\{s\|\\psi\} - \\ket\{\\psi\}` を組版する$/, function () {
+  typesetExpectedMacro(
+    this,
+    '\\braket{s|\\psi} - \\ket{\\psi}',
+    '\\left\\langle s|\\psi\\right\\rangle - \\left|\\psi\\right\\rangle'
+  );
+});
+
+When(/^`\\ket\{\\psi\}` を組版する$/, function () {
+  typesetExpectedMacro(this, '\\ket{\\psi}', '\\left|\\psi\\right\\rangle');
+});
+
+When(/^`\\bra\{s\}` を組版する$/, function () {
+  typesetExpectedMacro(this, '\\bra{s}', '\\left\\langle s\\right|');
+});
+
 When('`\\/math status` を実行する', async function () {
   await captureMathStatus(this);
 });
@@ -396,6 +422,18 @@ Then('thinking ブロックの本文は変更されない', function () {
 
 Then('Bell 状態は設定なしで画像配置になる', function () {
   assert.ok(this.qniMathMarkdown.includes(PLACEHOLDER));
+});
+
+Then('braket と直後の ket は独立した項として描かれる', function () {
+  assert.equal(this.qniMathActualMacroSvg, this.qniMathExpectedMacroSvg);
+});
+
+Then('ket は縦棒と右山括弧で描かれる', function () {
+  assert.equal(this.qniMathActualMacroSvg, this.qniMathExpectedMacroSvg);
+});
+
+Then('bra は左山括弧と縦棒で描かれる', function () {
+  assert.equal(this.qniMathActualMacroSvg, this.qniMathExpectedMacroSvg);
 });
 
 Then(/^変換後の Markdown は `\$\\hat\{H\}\$` を含む$/, function () {
