@@ -125,29 +125,73 @@ describe('run command exact LaTeX route', () => {
     });
   });
 
-  it('tries the exact renderer above the numeric simulator qubit limit', async () => {
+  it('renders a sparse circuit above the numeric simulator qubit limit with the actual helper', async () => {
     await withTempDir(async (dir) => {
       const basis = '0'.repeat(31);
       await writeCircuit(dir, {
         cols: [Array(31).fill(1)],
         qubits: 31
       });
-      const spawnMock = mock.method(
-        childProcessForMock,
-        'spawnSync',
-        (() => spawnResult({ stdout: `\\lvert ${basis} \\rangle\n` })) as unknown as typeof childProcess.spawnSync
-      );
 
-      try {
-        assert.deepEqual(captureDispatcherRun(dir, ['run', '--latex']), {
-          exitStatus: 0,
-          stderr: '',
-          stdout: `\\ket{${basis}}\n`
-        });
-        assert.equal(spawnMock.mock.callCount(), 1);
-      } finally {
-        spawnMock.mock.restore();
-      }
+      assert.deepEqual(captureDispatcherRun(dir, ['run', '--latex']), {
+        exitStatus: 0,
+        stderr: '',
+        stdout: `\\ket{${basis}}\n`
+      });
+    });
+  });
+
+  it('fails safely when neither exact nor numeric state limits can handle the circuit', async () => {
+    await withTempDir(async (dir) => {
+      const qubits = 31;
+      await writeCircuit(dir, {
+        cols: Array.from({ length: 17 }, (_, target) =>
+          Array.from({ length: qubits }, (_, qubit) => (qubit === target ? 'H' : 1))
+        ),
+        qubits
+      });
+
+      assert.deepEqual(captureDispatcherRun(dir, ['run', '--latex']), {
+        exitStatus: 1,
+        stderr: 'too many qubits for TypeScript numeric run: 31\n',
+        stdout: ''
+      });
+    });
+  });
+
+  it('keeps a large integer angle exact', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        cols: [['X'], ['P(9007199254740993)']],
+        qubits: 1
+      });
+
+      assert.deepEqual(captureDispatcherRun(dir, ['run', '--latex']), {
+        exitStatus: 0,
+        stderr: '',
+        stdout: [
+          '\\left(\\cos{\\left(9007199254740993 \\right)}',
+          ' + i \\sin{\\left(9007199254740993 \\right)}\\right)\\ket{1}\n'
+        ].join('')
+      });
+    });
+  });
+
+  it('keeps a finite decimal angle as an exact rational', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        cols: [['X'], ['P(0.1)']],
+        qubits: 1
+      });
+
+      assert.deepEqual(captureDispatcherRun(dir, ['run', '--latex']), {
+        exitStatus: 0,
+        stderr: '',
+        stdout: [
+          '\\left(\\cos{\\left(\\frac{1}{10} \\right)}',
+          ' + i \\sin{\\left(\\frac{1}{10} \\right)}\\right)\\ket{1}\n'
+        ].join('')
+      });
     });
   });
 

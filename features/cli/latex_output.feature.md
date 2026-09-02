@@ -37,15 +37,47 @@ qni-cli の利用者として
   \left(\cos{\left(1 \right)} + i \sin{\left(1 \right)}\right)\ket{1}
   ```
 
-## Scenario: qni run --latex は大きな対応回路も厳密値で表示
+## Scenario: qni run --latex は大きな整数の角度を厳密に保つ
 
-- Given 空の 9 量子ビット回路がある
+- Given "qni add X --qubit 0 --step 0" を実行
+- And "qni add P --angle 9007199254740993 --qubit 0 --step 1" を実行
+- When "qni run --latex" を実行
+- Then 標準出力:
+
+  ```text
+  \left(\cos{\left(9007199254740993 \right)} + i \sin{\left(9007199254740993 \right)}\right)\ket{1}
+  ```
+
+## Scenario: qni run --latex は有限小数の角度を有理数として保つ
+
+- Given "qni add X --qubit 0 --step 0" を実行
+- And "qni add P --angle 0.1 --qubit 0 --step 1" を実行
+- When "qni run --latex" を実行
+- Then 標準出力:
+
+  ```text
+  \left(\cos{\left(\frac{1}{10} \right)} + i \sin{\left(\frac{1}{10} \right)}\right)\ket{1}
+  ```
+
+## Scenario: qni run --latex は大きな疎な回路も厳密値で表示
+
+- Given 空の 31 量子ビット回路がある
 - And "qni add H --qubit 0 --step 0" を実行
 - When "qni run --latex" を実行
 - Then 標準出力:
 
   ```text
-  \frac{\sqrt{2}}{2}\ket{000000000} + \frac{\sqrt{2}}{2}\ket{100000000}
+  \frac{\sqrt{2}}{2}\ket{0000000000000000000000000000000} + \frac{\sqrt{2}}{2}\ket{1000000000000000000000000000000}
+  ```
+
+## Scenario: qni run --latex は厳密値と数値の上限を超える回路を安全に拒否
+
+- Given 厳密値の非ゼロ項上限を超える 31 量子ビット回路がある
+- When "qni run --latex" を実行
+- Then 標準エラー:
+
+  ```text
+  too many qubits for TypeScript numeric run: 31
   ```
 
 ## Scenario: qni run --latex は記号実行環境がなくても数値で表示

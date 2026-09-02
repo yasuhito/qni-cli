@@ -6,9 +6,10 @@ import re
 import sys
 from dataclasses import dataclass
 
-from sympy import Float, I, Integer, Matrix, Symbol, cos, exp, expand_complex, latex, pi, simplify, sin, sqrt, together
+from sympy import Float, I, Integer, Matrix, Rational, Symbol, cos, exp, expand_complex, latex, pi, simplify, sin, sqrt, together
 
 EPSILON = sys.float_info.epsilon
+MAX_SYMBOLIC_STATE_TERMS = 65536
 ANGLED_GATE_PATTERN = re.compile(r"\A(?P<gate>P|Rx|Ry|Rz|GlobalPhase)\((?P<angle>.+)\)\Z")
 IDENTIFIER_PATTERN = re.compile(r"\A[a-zA-Z_][a-zA-Z0-9_]*\Z")
 SIGNED_IDENTIFIER_PATTERN = re.compile(r"\A(?P<sign>[+-])(?P<identifier>[a-zA-Z_][a-zA-Z0-9_]*)\Z")
@@ -60,12 +61,15 @@ def format_numeric_amplitude(amplitude: complex | float) -> str:
     return str(normalize_scalar(float(amplitude)))
 
 
-def symbolic_scalar(value: str):
+def symbolic_scalar(value: str, exact=False):
+    if exact:
+        return Rational(value) if "." in value else Integer(value)
+
     number = float(value)
     return Integer(int(number)) if number.is_integer() else Float(number)
 
 
-def parse_pi_term(value: str) -> tuple[object, float] | None:
+def parse_pi_term(value: str, exact_numeric=False) -> tuple[object, float | None] | None:
     match = PI_PATTERN.match(value)
     if not match:
         return None
@@ -74,10 +78,15 @@ def parse_pi_term(value: str) -> tuple[object, float] | None:
     concrete_sign = -1.0 if match.group("sign") == "-" else 1.0
     coefficient_text = match.group("coefficient") or "1"
     denominator_text = match.group("denominator") or "1"
-    coefficient = float(coefficient_text)
-    denominator = float(denominator_text)
-    symbolic = symbolic_sign * symbolic_scalar(coefficient_text) * pi / symbolic_scalar(denominator_text)
-    concrete = concrete_sign * coefficient * math.pi / denominator
+    symbolic = (
+        symbolic_sign
+        * symbolic_scalar(coefficient_text, exact_numeric)
+        * pi
+        / symbolic_scalar(denominator_text, exact_numeric)
+    )
+    concrete = None
+    if not exact_numeric:
+        concrete = concrete_sign * float(coefficient_text) * math.pi / float(denominator_text)
     return symbolic, concrete
 
 
@@ -97,11 +106,13 @@ def parse_angle(raw_value: str, variables: dict[str, str], exact_numeric=False) 
     resolved = variables.get(normalized, normalized)
 
     if NUMERIC_PATTERN.match(resolved):
-        value = float(resolved)
-        symbolic = symbolic_scalar(resolved) if exact_numeric else value
-        return ParsedAngle(symbolic=symbolic, concrete=value, unresolved=False)
+        if exact_numeric:
+            return ParsedAngle(symbolic=symbolic_scalar(resolved, True), concrete=None, unresolved=False)
 
-    pi_term = parse_pi_term(resolved)
+        value = float(resolved)
+        return ParsedAngle(symbolic=value, concrete=value, unresolved=False)
+
+    pi_term = parse_pi_term(resolved, exact_numeric)
     if pi_term:
         symbolic, concrete = pi_term
         return ParsedAngle(symbolic=symbolic, concrete=concrete, unresolved=False)
@@ -111,11 +122,13 @@ def parse_angle(raw_value: str, variables: dict[str, str], exact_numeric=False) 
 
     multiplied = MULTIPLIED_PATTERN.match(resolved)
     if multiplied:
-        coefficient = float(multiplied.group("coefficient"))
-        symbolic_coefficient = symbolic_scalar(multiplied.group("coefficient"))
+        coefficient_text = multiplied.group("coefficient")
+        symbolic_coefficient = symbolic_scalar(coefficient_text, exact_numeric)
         term = parse_angle(multiplied.group("term"), variables, exact_numeric)
         symbolic = symbolic_coefficient * term.symbolic
-        concrete = None if term.concrete is None else coefficient * term.concrete
+        concrete = None
+        if not exact_numeric and term.concrete is not None:
+            concrete = float(coefficient_text) * term.concrete
         return ParsedAngle(symbolic=symbolic, concrete=concrete, unresolved=term.unresolved)
 
     raise ValueError(f"invalid angle: {resolved}")
@@ -125,27 +138,42 @@ def initial_state_terms(circuit):
     return circuit.get("initial_state", {}).get("terms", [])
 
 
-def parse_state_coefficient(raw_value: str, variables: dict[str, str]):
+def parse_state_coefficient(raw_value: str, variables: dict[str, str], exact_numeric=False):
     normalized = str(raw_value).replace(" ", "")
     imaginary_numeric = IMAGINARY_NUMERIC_PATTERN.match(normalized)
     if imaginary_numeric:
-        return I * symbolic_scalar(imaginary_numeric.group("real"))
+        return I * symbolic_scalar(imaginary_numeric.group("real"), exact_numeric)
     if NUMERIC_PATTERN.match(normalized):
-        return symbolic_scalar(normalized)
+        return symbolic_scalar(normalized, exact_numeric)
 
-    return parse_angle(normalized, variables).symbolic
+    return parse_angle(normalized, variables, exact_numeric).symbolic
 
 
-def symbolic_initial_state_for_qubits(circuit, qubits, variables):
+def add_state_amplitude(state, basis_index, amplitude):
+    updated = state.get(basis_index, Integer(0)) + amplitude
+    if updated == 0:
+        state.pop(basis_index, None)
+    else:
+        state[basis_index] = updated
+
+    if len(state) > MAX_SYMBOLIC_STATE_TERMS:
+        raise ValueError(f"symbolic state exceeds {MAX_SYMBOLIC_STATE_TERMS} nonzero terms")
+
+
+def symbolic_initial_state_for_qubits(circuit, qubits, variables, exact_numeric=False):
     if "initial_state" not in circuit:
-        return Matrix([Integer(1), *([Integer(0)] * ((2**qubits) - 1))])
+        return {0: Integer(1)}
 
-    state = [Integer(0)] * (2**qubits)
+    state = {}
     for term in initial_state_terms(circuit):
-        coefficient = parse_state_coefficient(term["coefficient"], variables)
+        coefficient = parse_state_coefficient(term["coefficient"], variables, exact_numeric)
         for basis_index, scale in basis_components(term["basis"], qubits):
-            state[basis_index] += coefficient * scale / bell_basis_scale(term["basis"])
-    return Matrix(state)
+            add_state_amplitude(
+                state,
+                basis_index,
+                coefficient * scale / bell_basis_scale(term["basis"]),
+            )
+    return state
 
 
 def basis_components(basis: str, qubits: int):
@@ -267,7 +295,7 @@ def render_numeric_state(state):
 
 def render_symbolic_state(state):
     terms = []
-    for basis, amplitude in enumerate(state):
+    for basis, amplitude in sorted(state.items()):
         simplified = simplify(amplitude)
         if simplified == 0:
             continue
@@ -325,7 +353,11 @@ def render_named_basis_latex_term(amplitude, label):
 
 
 def render_symbolic_named_basis(state, basis, output_format):
-    components = named_basis_components(state, basis)
+    state_size = 4 if basis == "bell" else 2
+    components = named_basis_components(
+        [state.get(index, Integer(0)) for index in range(state_size)],
+        basis,
+    )
     if output_format in ("latex", "latex-exact"):
         terms = [render_named_basis_latex_term(amplitude, label) for amplitude, label in components]
         return join_latex_terms([term for term in terms if term])
@@ -388,37 +420,37 @@ def single_qubit_gate_matrix(gate, variables, exact_numeric=False):
 
 
 def apply_symbolic_single_qubit_gate(state, qubits, controls, target, gate_matrix):
-    result = list(state)
-    stride = 1 << (qubits - target - 1)
+    result = {}
 
-    for block in range(0, len(state), stride * 2):
-        for offset in range(stride):
-            zero_index = block + offset
-            if controls and not all(basis_bit(zero_index, control, qubits) == 1 for control in controls):
-                continue
-            one_index = zero_index + stride
-            zero = state[zero_index]
-            one = state[one_index]
-            result[zero_index] = gate_matrix[0, 0] * zero + gate_matrix[0, 1] * one
-            result[one_index] = gate_matrix[1, 0] * zero + gate_matrix[1, 1] * one
+    for basis_index, amplitude in state.items():
+        if controls and not all(basis_bit(basis_index, control, qubits) == 1 for control in controls):
+            add_state_amplitude(result, basis_index, amplitude)
+            continue
 
-    return Matrix(result)
+        input_bit = basis_bit(basis_index, target, qubits)
+        for output_bit in (0, 1):
+            coefficient = gate_matrix[output_bit, input_bit]
+            if coefficient != 0:
+                output_index = replace_basis_bit(basis_index, target, qubits, output_bit)
+                add_state_amplitude(result, output_index, coefficient * amplitude)
+
+    return result
 
 
 def apply_symbolic_swap(state, qubits, controls, targets):
-    result = [Integer(0)] * len(state)
+    result = {}
     first_target, second_target = targets
 
-    for basis_index, amplitude in enumerate(state):
+    for basis_index, amplitude in state.items():
         output_index = basis_index
         if all(basis_bit(basis_index, control, qubits) == 1 for control in controls):
             first_bit = basis_bit(basis_index, first_target, qubits)
             second_bit = basis_bit(basis_index, second_target, qubits)
             output_index = replace_basis_bit(output_index, first_target, qubits, second_bit)
             output_index = replace_basis_bit(output_index, second_target, qubits, first_bit)
-        result[output_index] = amplitude
+        add_state_amplitude(result, output_index, amplitude)
 
-    return Matrix(result)
+    return result
 
 
 def apply_symbolic_column(state, col, qubits, variables, exact_numeric=False):
@@ -451,7 +483,7 @@ def apply_symbolic_column(state, col, qubits, variables, exact_numeric=False):
 
 def render_symbolic_state_for_qubits(state, qubits: int):
     terms = []
-    for basis, amplitude in enumerate(state):
+    for basis, amplitude in sorted(state.items()):
         simplified = simplify(amplitude)
         if simplified == 0:
             continue
@@ -494,7 +526,7 @@ def latex_term(amplitude, basis, qubits, exact_complex=False):
 
 def render_symbolic_state_latex_for_qubits(state, qubits: int, exact_complex=False):
     terms = []
-    for basis, amplitude in enumerate(state):
+    for basis, amplitude in sorted(state.items()):
         simplified = simplify(amplitude)
         if simplified == 0:
             continue
@@ -505,7 +537,7 @@ def render_symbolic_state_latex_for_qubits(state, qubits: int, exact_complex=Fal
 
 def symbolic_state_for_qubits(circuit, qubits, variables, exact_numeric=False):
     cols = circuit.get("cols", [])
-    symbolic_state = symbolic_initial_state_for_qubits(circuit, qubits, variables)
+    symbolic_state = symbolic_initial_state_for_qubits(circuit, qubits, variables, exact_numeric)
 
     for col in cols:
         symbolic_state = apply_symbolic_column(symbolic_state, col, qubits, variables, exact_numeric)
