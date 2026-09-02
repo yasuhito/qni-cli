@@ -62,6 +62,24 @@ export function initialStateQubitCount(value: unknown): number {
   return basis ? qubitCount(basis) : 1;
 }
 
+export function validateNumericInitialState(
+  value: unknown,
+  variables: Readonly<Record<string, string>>
+): void {
+  const amplitudes = new Map<string, Complex>();
+
+  for (const term of loadTerms(value)) {
+    const coefficient = resolveCoefficient(term.coefficient, variables);
+
+    for (const [basis, scale] of sparseBasisComponents(term.basis)) {
+      const amplitude = amplitudes.get(basis) ?? new Complex(0);
+      amplitudes.set(basis, amplitude.add(coefficient.multiply(scale)));
+    }
+  }
+
+  ensureNormalized([...amplitudes.values()]);
+}
+
 export function resolveNumericInitialState(
   value: unknown,
   variables: Readonly<Record<string, string>>
@@ -244,6 +262,27 @@ function qubitCount(basis: string): number {
   }
 
   return BELL_BASES.has(basis) ? 2 : 0;
+}
+
+function sparseBasisComponents(basis: string): Array<[string, number]> {
+  if (COMPUTATIONAL_BASIS_PATTERN.test(basis)) {
+    return [[basis, 1]];
+  }
+
+  const factor = Math.sqrt(0.5);
+  const components = new Map<string, Array<[string, number]>>([
+    ['Φ+', [['00', factor], ['11', factor]]],
+    ['Φ-', [['00', factor], ['11', -factor]]],
+    ['Ψ+', [['01', factor], ['10', factor]]],
+    ['Ψ-', [['01', factor], ['10', -factor]]]
+  ]);
+  const result = components.get(basis);
+
+  if (!result) {
+    throw new InitialStateError(`unsupported basis state: ${basis}`);
+  }
+
+  return result;
 }
 
 function basisComponents(basis: string): Array<[number, number]> {

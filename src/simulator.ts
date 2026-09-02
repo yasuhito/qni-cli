@@ -2,7 +2,12 @@ import { AngleExpression, AngleExpressionError } from './angle_expression';
 import { Complex } from './complex';
 import type { CircuitData } from './circuit_file';
 import { parseCircuitOperationSlot, type ParsedCircuitOperation } from './circuit_operation';
-import { InitialStateError, initialStateQubitCount, resolveNumericInitialState } from './initial_state';
+import {
+  InitialStateError,
+  initialStateQubitCount,
+  resolveNumericInitialState,
+  validateNumericInitialState
+} from './initial_state';
 import {
   samplePauliExpectationValues,
   type PauliExpectationEstimation
@@ -201,7 +206,7 @@ export class Simulator {
     }
 
     ensureInitialStateFitsCircuit(initialStateQubitCount(this.data.initial_state), this.data.qubits);
-    resolveNumericInitialState(this.data.initial_state, this.variables());
+    validateNumericInitialState(this.data.initial_state, this.variables());
   }
 
   private startingStateVector(): StateVector {

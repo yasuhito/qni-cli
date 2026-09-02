@@ -17,6 +17,17 @@ function fullySuperposedCircuit(qubits: number): { cols: unknown[][]; qubits: nu
 }
 
 describe('symbolic state resource limit', () => {
+  it('accepts helper output above the Node.js default one-megabyte buffer', () => {
+    const output = renderSymbolicStateVector({
+      circuit: fullySuperposedCircuit(15),
+      format: 'latex-exact',
+      projectRoot: process.cwd()
+    });
+
+    assert.ok(Buffer.byteLength(output) > 1024 * 1024);
+    assert.match(output, /\\ket\{111111111111111\}$/u);
+  });
+
   it('stops the actual helper before exceeding the sparse-state term limit', () => {
     assert.throws(
       () =>

@@ -10,6 +10,8 @@ from sympy import Float, I, Integer, Matrix, Rational, Symbol, cos, exp, expand_
 
 EPSILON = sys.float_info.epsilon
 MAX_SYMBOLIC_STATE_TERMS = 65536
+MAX_SYMBOLIC_OUTPUT_BYTES = 8 * 1024 * 1024
+SQRT_HALF_TEXT = "0.7071067811865476"
 ANGLED_GATE_PATTERN = re.compile(r"\A(?P<gate>P|Rx|Ry|Rz|GlobalPhase)\((?P<angle>.+)\)\Z")
 IDENTIFIER_PATTERN = re.compile(r"\A[a-zA-Z_][a-zA-Z0-9_]*\Z")
 SIGNED_IDENTIFIER_PATTERN = re.compile(r"\A(?P<sign>[+-])(?P<identifier>[a-zA-Z_][a-zA-Z0-9_]*)\Z")
@@ -149,6 +151,23 @@ def parse_state_coefficient(raw_value: str, variables: dict[str, str], exact_num
     return parse_angle(normalized, variables, exact_numeric).symbolic
 
 
+def exact_one_qubit_special_state(circuit):
+    initial_terms = initial_state_terms(circuit)
+    terms = {term["basis"]: term["coefficient"] for term in initial_terms}
+    if len(initial_terms) != 2 or set(terms) != {"0", "1"} or terms["0"] != SQRT_HALF_TEXT:
+        return None
+
+    scale = sqrt(2) / 2
+    one_amplitudes = {
+        SQRT_HALF_TEXT: scale,
+        f"-{SQRT_HALF_TEXT}": -scale,
+        f"{SQRT_HALF_TEXT}i": I * scale,
+        f"-{SQRT_HALF_TEXT}i": -I * scale,
+    }
+    one = one_amplitudes.get(terms["1"])
+    return None if one is None else {0: scale, 1: one}
+
+
 def add_state_amplitude(state, basis_index, amplitude):
     updated = state.get(basis_index, Integer(0)) + amplitude
     if updated == 0:
@@ -164,9 +183,14 @@ def symbolic_initial_state_for_qubits(circuit, qubits, variables, exact_numeric=
     if "initial_state" not in circuit:
         return {0: Integer(1)}
 
+    if exact_numeric:
+        special_state = exact_one_qubit_special_state(circuit)
+        if special_state is not None:
+            return special_state
+
     state = {}
     for term in initial_state_terms(circuit):
-        coefficient = parse_state_coefficient(term["coefficient"], variables, exact_numeric)
+        coefficient = parse_state_coefficient(term["coefficient"], variables)
         for basis_index, scale in basis_components(term["basis"], qubits):
             add_state_amplitude(
                 state,
@@ -526,8 +550,11 @@ def latex_term(amplitude, basis, qubits, exact_complex=False):
 
 def render_symbolic_state_latex_for_qubits(state, qubits: int, exact_complex=False):
     terms = []
+    simplified_amplitudes = {}
     for basis, amplitude in sorted(state.items()):
-        simplified = simplify(amplitude)
+        if amplitude not in simplified_amplitudes:
+            simplified_amplitudes[amplitude] = simplify(amplitude)
+        simplified = simplified_amplitudes[amplitude]
         if simplified == 0:
             continue
         terms.append(latex_term(simplified, basis, qubits, exact_complex))
@@ -641,7 +668,10 @@ def main():
     try:
         output_format, basis = parse_args(sys.argv)
         circuit = json.load(sys.stdin)
-        print(run(circuit, output_format=output_format, basis=basis))
+        output = run(circuit, output_format=output_format, basis=basis)
+        if len(output.encode("utf-8")) + 1 > MAX_SYMBOLIC_OUTPUT_BYTES:
+            raise ValueError(f"symbolic output exceeds {MAX_SYMBOLIC_OUTPUT_BYTES} bytes")
+        print(output)
     except ValueError as e:
         print(str(e), file=sys.stderr)
         raise SystemExit(1)

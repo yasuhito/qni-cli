@@ -141,6 +141,90 @@ describe('run command exact LaTeX route', () => {
     });
   });
 
+  it('validates a large sparse initial state without expanding it numerically', async () => {
+    await withTempDir(async (dir) => {
+      const basis = '0'.repeat(31);
+      await writeCircuit(dir, {
+        cols: [Array(31).fill(1)],
+        initial_state: {
+          format: 'ket_sum_v1',
+          terms: [{ basis, coefficient: '1' }]
+        },
+        qubits: 31
+      });
+
+      assert.deepEqual(captureDispatcherRun(dir, ['run', '--latex']), {
+        exitStatus: 0,
+        stderr: '',
+        stdout: `\\ket{${basis}}\n`
+      });
+    });
+  });
+
+  it('renders canonical one-qubit initial states with exact normalized amplitudes', async () => {
+    await withTempDir(async (dir) => {
+      const cases = [
+        {
+          one: '0.7071067811865476',
+          output: '\\frac{\\sqrt{2}}{2}\\ket{0} + \\frac{\\sqrt{2}}{2}\\ket{1}\n'
+        },
+        {
+          one: '-0.7071067811865476',
+          output: '\\frac{\\sqrt{2}}{2}\\ket{0} - \\frac{\\sqrt{2}}{2}\\ket{1}\n'
+        },
+        {
+          one: '0.7071067811865476i',
+          output: '\\frac{\\sqrt{2}}{2}\\ket{0} + \\frac{\\sqrt{2} i}{2}\\ket{1}\n'
+        },
+        {
+          one: '-0.7071067811865476i',
+          output: '\\frac{\\sqrt{2}}{2}\\ket{0} - \\frac{\\sqrt{2} i}{2}\\ket{1}\n'
+        }
+      ];
+
+      for (const { one, output } of cases) {
+        await writeCircuit(dir, {
+          cols: [],
+          initial_state: {
+            format: 'ket_sum_v1',
+            terms: [
+              { basis: '0', coefficient: '0.7071067811865476' },
+              { basis: '1', coefficient: one }
+            ]
+          },
+          qubits: 1
+        });
+        assert.deepEqual(captureDispatcherRun(dir, ['run', '--latex']), {
+          exitStatus: 0,
+          stderr: '',
+          stdout: output
+        });
+      }
+    });
+  });
+
+  it('keeps arbitrary decimal initial-state coefficients approximate', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        cols: [],
+        initial_state: {
+          format: 'ket_sum_v1',
+          terms: [
+            { basis: '0', coefficient: '0.6' },
+            { basis: '1', coefficient: '0.8' }
+          ]
+        },
+        qubits: 1
+      });
+
+      assert.deepEqual(captureDispatcherRun(dir, ['run', '--latex']), {
+        exitStatus: 0,
+        stderr: '',
+        stdout: '0.6\\ket{0} + 0.8\\ket{1}\n'
+      });
+    });
+  });
+
   it('fails safely when neither exact nor numeric state limits can handle the circuit', async () => {
     await withTempDir(async (dir) => {
       const qubits = 31;

@@ -26,6 +26,7 @@ interface ResolvedSymbolicStateRenderOptions extends SymbolicStateRenderOptions 
 }
 
 const SETUP_MESSAGE = 'symbolic run requires SymPy runtime; run scripts/setup_symbolic_python.sh';
+const HELPER_MAX_BUFFER_BYTES = 8 * 1024 * 1024 + 1024;
 
 export function renderSymbolicStateVector(options: SymbolicStateRenderOptions): string {
   validateSymbolicBasis({ basis: options.basis, qubits: options.circuit.qubits });
@@ -42,7 +43,8 @@ export function isSymbolicLatexFallbackError(error: unknown): boolean {
     error.message.startsWith('unsupported gate for symbolic run:') ||
     error.message.startsWith('unsupported symbolic gate column:') ||
     error.message.startsWith('unsupported initial state basis:') ||
-    error.message.startsWith('symbolic state exceeds ')
+    error.message.startsWith('symbolic state exceeds ') ||
+    error.message.startsWith('symbolic output exceeds ')
   );
 }
 
@@ -103,6 +105,7 @@ function renderWithHelper(command: HelperCommand, options: ResolvedSymbolicState
       UV_CACHE_DIR: path.join(tmpdir(), 'qni-cli-uv-cache')
     },
     input: JSON.stringify(options.circuit),
+    maxBuffer: HELPER_MAX_BUFFER_BYTES,
     stdio: ['pipe', 'pipe', 'pipe']
   });
 

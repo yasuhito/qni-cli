@@ -37,6 +37,46 @@ qni-cli の利用者として
   \left(\cos{\left(1 \right)} + i \sin{\left(1 \right)}\right)\ket{1}
   ```
 
+## Scenario: qni run --latex は |+> の意味上の厳密値を表示
+
+- Given "qni state set \"|+>\"" を実行
+- When "qni run --latex" を実行
+- Then 標準出力:
+
+  ```text
+  \frac{\sqrt{2}}{2}\ket{0} + \frac{\sqrt{2}}{2}\ket{1}
+  ```
+
+## Scenario: qni run --latex は |-> の意味上の厳密値を表示
+
+- Given "qni state set \"|->\"" を実行
+- When "qni run --latex" を実行
+- Then 標準出力:
+
+  ```text
+  \frac{\sqrt{2}}{2}\ket{0} - \frac{\sqrt{2}}{2}\ket{1}
+  ```
+
+## Scenario: qni run --latex は |+i> の意味上の厳密値を表示
+
+- Given "qni state set \"|+i>\"" を実行
+- When "qni run --latex" を実行
+- Then 標準出力:
+
+  ```text
+  \frac{\sqrt{2}}{2}\ket{0} + \frac{\sqrt{2} i}{2}\ket{1}
+  ```
+
+## Scenario: qni run --latex は |-i> の意味上の厳密値を表示
+
+- Given "qni state set \"|-i>\"" を実行
+- When "qni run --latex" を実行
+- Then 標準出力:
+
+  ```text
+  \frac{\sqrt{2}}{2}\ket{0} - \frac{\sqrt{2} i}{2}\ket{1}
+  ```
+
 ## Scenario: qni run --latex は大きな整数の角度を厳密に保つ
 
 - Given "qni add X --qubit 0 --step 0" を実行
@@ -68,6 +108,17 @@ qni-cli の利用者として
 
   ```text
   \frac{\sqrt{2}}{2}\ket{0000000000000000000000000000000} + \frac{\sqrt{2}}{2}\ket{1000000000000000000000000000000}
+  ```
+
+## Scenario: qni run --latex は大きな計算基底初期状態を密ベクトルへ展開しない
+
+- Given 空の 31 量子ビット回路がある
+- And "qni state set \"|0000000000000000000000000000000>\"" を実行
+- When "qni run --latex" を実行
+- Then 標準出力:
+
+  ```text
+  \ket{0000000000000000000000000000000}
   ```
 
 ## Scenario: qni run --latex は厳密値と数値の上限を超える回路を安全に拒否
