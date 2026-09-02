@@ -48,7 +48,13 @@ prs_json=$(gh pr list -R yasuhito/qni-cli --state open --label agent:review --li
 - `agent:review` label がある
 - `agent:reviewing`、`ready-for-human`、`agent:blocked` がない
 
-候補が0件なら、GitHub へ書き込まず「対象 PR なし」と要約して終了する。複数ある場合は番号が最小の1件だけ扱う。
+候補が0件なら、GitHub へ書き込まず「対象 PR なし」と要約して終了する。複数ある場合は、**直近のレビューから最も長く放置されている 1 件**を選ぶ。判定は自分が投稿した `<!-- qni-auto-review:` marker 付きコメントの最終投稿時刻で行い、記録が 1 件も無い PR を最優先、次に最終記録が古いものから順とする。同時刻や判定不能なら番号が小さいものを選ぶ。番号順の固定にしない理由は、番号の小さい大きな PR が何巡もレビューを占有し、後ろの PR が一度も判定に進めない状態が起きたため（2026-09-02 に pi-formula #51 が 7 巡するあいだ #57 / #61 / #62 が滞留した）。
+
+```bash
+viewer=$(gh api user --jq '.login')
+# 候補ごとに最終レビュー記録の時刻を取り、古い順に並べる
+gh api repos/yasuhito/qni-cli/issues/<PR>/comments --paginate | jq --arg viewer "$viewer" '[.[] | select(.user.login == $viewer and ((.body // "") | contains("<!-- qni-auto-review:"))) | .created_at] | max // ""'
+```
 
 選んだ PR が bot review 待ちで、その依頼が前の run で済んでいる場合は、この run では先へ進めない。run を空振りで終えず、次の候補 PR を同じ手順で選び直す。実際にレビュー作業を行うのは1つの run につき1件までにする。すべての候補が bot review 待ちなら、その旨を要約して終了する（2026-09-02 に、最小番号の PR が Copilot 待ちのあいだ、より重要な修正の PR が複数 run にわたって触られないまま溜まった）。
 
