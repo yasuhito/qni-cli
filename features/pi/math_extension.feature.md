@@ -111,6 +111,24 @@ qni-cli を Pi に導入した利用者として
 - When `\ket{\Phi^+}=\frac{\ket{00}+\ket{11}}{\sqrt 2}` を画像経路で変換する
 - Then Bell 状態は設定なしで画像配置になる
 
+## Scenario: braket の直後の項を外側に組版する
+
+- Given 偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When `\braket{s|\psi} - \ket{\psi}` を含む表示数式を画像経路で変換する
+- Then braket と直後の ket は画像配置になる
+
+## Scenario: ket を量子系マクロで組版する
+
+- Given 偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When `\ket{\psi}` を含む表示数式を画像経路で変換する
+- Then ket は画像配置になる
+
+## Scenario: bra を量子系マクロで組版する
+
+- Given 偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When `\bra{s}` を含む表示数式を画像経路で変換する
+- Then bra は画像配置になる
+
 ## Scenario: 画像経路でもインラインの利用者マクロを展開する
 
 - Given `\op` を `\hat{#1}` に展開する環境変数で数式描画拡張を起動する
@@ -291,11 +309,11 @@ qni-cli を Pi に導入した利用者として
 - When `$\bra{0}$` を含む本文を変換する
 - Then 変換後の Markdown は `$\langle 0|$` を含む
 
-## Scenario: テキスト経路で braket を素の LaTeX に展開する
+## Scenario: テキスト経路で braket の直後の項を外側に展開する
 
 - Given テキスト経路で偽の Pi ExtensionAPI に数式描画拡張を登録する
-- When `$\braket{0}{1}$` を含む本文を変換する
-- Then 変換後の Markdown は `$\langle 0|1\rangle$` を含む
+- When `$\braket{s|\psi} - \ket{\psi}$` を含む本文を変換する
+- Then 変換後の Markdown は `$\langle s|\psi\rangle - |\psi\rangle$` を含む
 
 ## Scenario: テキスト経路で改行後のマクロ引数を展開する
 

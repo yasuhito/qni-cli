@@ -33,7 +33,7 @@ function mathDocument(macros: MathMacros) {
       ...configured,
       ket: ["\\left|#1\\right\\rangle", 1],
       bra: ["\\left\\langle#1\\right|", 1],
-      braket: ["\\left\\langle#1\\middle|#2\\right\\rangle", 2]
+      braket: ["\\left\\langle#1\\right\\rangle", 1]
     },
     formatError: (_jax: unknown, error: unknown) => {
       throw error;
