@@ -151,7 +151,7 @@ def parse_state_coefficient(raw_value: str, variables: dict[str, str], exact_num
     return parse_angle(normalized, variables, exact_numeric).symbolic
 
 
-def exact_one_qubit_special_state(circuit):
+def exact_one_qubit_special_state(circuit, qubits):
     initial_terms = initial_state_terms(circuit)
     terms = {term["basis"]: term["coefficient"] for term in initial_terms}
     if len(initial_terms) != 2 or set(terms) != {"0", "1"} or terms["0"] != SQRT_HALF_TEXT:
@@ -165,7 +165,8 @@ def exact_one_qubit_special_state(circuit):
         f"-{SQRT_HALF_TEXT}i": -I * scale,
     }
     one = one_amplitudes.get(terms["1"])
-    return None if one is None else {0: scale, 1: one}
+    suffix_width = qubits - 1
+    return None if one is None else {0: scale, 1 << suffix_width: one}
 
 
 def add_state_amplitude(state, basis_index, amplitude):
@@ -184,7 +185,7 @@ def symbolic_initial_state_for_qubits(circuit, qubits, variables, exact_numeric=
         return {0: Integer(1)}
 
     if exact_numeric:
-        special_state = exact_one_qubit_special_state(circuit)
+        special_state = exact_one_qubit_special_state(circuit, qubits)
         if special_state is not None:
             return special_state
 
@@ -201,16 +202,20 @@ def symbolic_initial_state_for_qubits(circuit, qubits, variables, exact_numeric=
 
 
 def basis_components(basis: str, qubits: int):
-    if qubits == 1:
-        return ((int(basis), Integer(1)),)
+    if re.fullmatch(r"[01]+", basis):
+        initial_qubits = len(basis)
+        components = ((int(basis, 2), Integer(1)),)
+    elif basis in BELL_BASIS_COMPONENTS:
+        initial_qubits = 2
+        components = BELL_BASIS_COMPONENTS[basis]
+    else:
+        raise ValueError(f"unsupported initial state basis: {basis}")
 
-    if re.fullmatch(rf"[01]{{{qubits}}}", basis):
-        return ((int(basis, 2), Integer(1)),)
+    if initial_qubits > qubits:
+        raise ValueError("initial state qubit count cannot exceed circuit qubit count")
 
-    if basis in BELL_BASIS_COMPONENTS:
-        return BELL_BASIS_COMPONENTS[basis]
-
-    raise ValueError(f"unsupported initial state basis: {basis}")
+    suffix_width = qubits - initial_qubits
+    return tuple((index << suffix_width, scale) for index, scale in components)
 
 
 def bell_basis_scale(basis: str):

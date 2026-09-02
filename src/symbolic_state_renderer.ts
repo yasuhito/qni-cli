@@ -42,9 +42,7 @@ export function isSymbolicLatexFallbackError(error: unknown): boolean {
     error.message === SETUP_MESSAGE ||
     error.message.startsWith('unsupported gate for symbolic run:') ||
     error.message.startsWith('unsupported symbolic gate column:') ||
-    error.message.startsWith('unsupported initial state basis:') ||
-    error.message.startsWith('symbolic state exceeds ') ||
-    error.message.startsWith('symbolic output exceeds ')
+    error.message.startsWith('unsupported initial state basis:')
   );
 }
 

@@ -77,6 +77,50 @@ qni-cli の利用者として
   \frac{\sqrt{2}}{2}\ket{0} - \frac{\sqrt{2} i}{2}\ket{1}
   ```
 
+## Scenario: 2量子ビット回路の |+> は通常実行で左の量子ビットに置く
+
+- Given 空の 2 量子ビット回路がある
+- And "qni state set \"|+>\"" を実行
+- When "qni run" を実行
+- Then 標準出力:
+
+  ```text
+  0.7071067811865476,0.0,0.7071067811865476,0.0
+  ```
+
+## Scenario: 2量子ビット回路の |+> は LaTeX でも左の量子ビットに置く
+
+- Given 空の 2 量子ビット回路がある
+- And "qni state set \"|+>\"" を実行
+- When "qni run --latex" を実行
+- Then 標準出力:
+
+  ```text
+  \frac{\sqrt{2}}{2}\ket{00} + \frac{\sqrt{2}}{2}\ket{10}
+  ```
+
+## Scenario: 3量子ビット回路の |Φ+> は通常実行で左の2量子ビットに置く
+
+- Given 空の 3 量子ビット回路がある
+- And "qni state set \"|Φ+>\"" を実行
+- When "qni run" を実行
+- Then 標準出力:
+
+  ```text
+  0.7071067811865476,0.0,0.0,0.0,0.0,0.0,0.7071067811865476,0.0
+  ```
+
+## Scenario: 3量子ビット回路の |Φ+> は LaTeX でも左の2量子ビットに置く
+
+- Given 空の 3 量子ビット回路がある
+- And "qni state set \"|Φ+>\"" を実行
+- When "qni run --latex" を実行
+- Then 標準出力:
+
+  ```text
+  \frac{\sqrt{2}}{2}\ket{000} + \frac{\sqrt{2}}{2}\ket{110}
+  ```
+
 ## Scenario: qni run --latex は大きな整数の角度を厳密に保つ
 
 - Given "qni add X --qubit 0 --step 0" を実行
@@ -123,12 +167,12 @@ qni-cli の利用者として
 
 ## Scenario: qni run --latex は厳密値と数値の上限を超える回路を安全に拒否
 
-- Given 厳密値の非ゼロ項上限を超える 31 量子ビット回路がある
+- Given 厳密値の非ゼロ項上限を超える 30 量子ビット回路がある
 - When "qni run --latex" を実行
 - Then 標準エラー:
 
   ```text
-  too many qubits for TypeScript numeric run: 31
+  symbolic state exceeds 65536 nonzero terms
   ```
 
 ## Scenario: qni run --latex は記号実行環境がなくても数値で表示

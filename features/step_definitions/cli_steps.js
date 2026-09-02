@@ -1344,8 +1344,8 @@ Given('空の 31 量子ビット回路がある', function () {
   });
 });
 
-Given('厳密値の非ゼロ項上限を超える 31 量子ビット回路がある', function () {
-  const qubits = 31;
+Given('厳密値の非ゼロ項上限を超える 30 量子ビット回路がある', function () {
+  const qubits = 30;
   writeCircuitJson(this.scenarioDir, {
     qubits,
     cols: Array.from({ length: 17 }, (_, target) =>

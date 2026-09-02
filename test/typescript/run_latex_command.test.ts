@@ -203,6 +203,54 @@ describe('run command exact LaTeX route', () => {
     });
   });
 
+  it('places shorter initial states on the leftmost circuit qubits', async () => {
+    await withTempDir(async (dir) => {
+      const cases = [
+        {
+          circuit: {
+            cols: [[1, 1]],
+            initial_state: {
+              format: 'ket_sum_v1',
+              terms: [
+                { basis: '0', coefficient: '0.7071067811865476' },
+                { basis: '1', coefficient: '0.7071067811865476' }
+              ]
+            },
+            qubits: 2
+          },
+          latex: '\\frac{\\sqrt{2}}{2}\\ket{00} + \\frac{\\sqrt{2}}{2}\\ket{10}\n',
+          numeric: '0.7071067811865476,0.0,0.7071067811865476,0.0\n'
+        },
+        {
+          circuit: {
+            cols: [[1, 1, 1]],
+            initial_state: {
+              format: 'ket_sum_v1',
+              terms: [{ basis: 'Φ+', coefficient: '1' }]
+            },
+            qubits: 3
+          },
+          latex: '\\frac{\\sqrt{2}}{2}\\ket{000} + \\frac{\\sqrt{2}}{2}\\ket{110}\n',
+          numeric: '0.7071067811865476,0.0,0.0,0.0,0.0,0.0,0.7071067811865476,0.0\n'
+        }
+      ];
+
+      for (const { circuit, latex, numeric } of cases) {
+        await writeCircuit(dir, circuit);
+        assert.deepEqual(captureDispatcherRun(dir, ['run']), {
+          exitStatus: 0,
+          stderr: '',
+          stdout: numeric
+        });
+        assert.deepEqual(captureDispatcherRun(dir, ['run', '--latex']), {
+          exitStatus: 0,
+          stderr: '',
+          stdout: latex
+        });
+      }
+    });
+  });
+
   it('keeps arbitrary decimal initial-state coefficients approximate', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
@@ -225,21 +273,29 @@ describe('run command exact LaTeX route', () => {
     });
   });
 
-  it('fails safely when neither exact nor numeric state limits can handle the circuit', async () => {
+  it('does not allocate a numeric state after reaching the symbolic state limit', async () => {
     await withTempDir(async (dir) => {
-      const qubits = 31;
+      const qubits = 30;
       await writeCircuit(dir, {
         cols: Array.from({ length: 17 }, (_, target) =>
           Array.from({ length: qubits }, (_, qubit) => (qubit === target ? 'H' : 1))
         ),
         qubits
       });
-
-      assert.deepEqual(captureDispatcherRun(dir, ['run', '--latex']), {
-        exitStatus: 1,
-        stderr: 'too many qubits for TypeScript numeric run: 31\n',
-        stdout: ''
+      const numericRenderMock = mock.method(Simulator.prototype, 'renderStateVectorLatex', () => {
+        throw new Error('numeric state vector must not render');
       });
+
+      try {
+        assert.deepEqual(captureDispatcherRun(dir, ['run', '--latex']), {
+          exitStatus: 1,
+          stderr: 'symbolic state exceeds 65536 nonzero terms\n',
+          stdout: ''
+        });
+        assert.equal(numericRenderMock.mock.callCount(), 0);
+      } finally {
+        numericRenderMock.mock.restore();
+      }
     });
   });
 

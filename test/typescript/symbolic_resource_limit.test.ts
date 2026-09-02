@@ -28,6 +28,13 @@ describe('symbolic state resource limit', () => {
     assert.match(output, /\\ket\{111111111111111\}$/u);
   });
 
+  it('does not treat output resource limits as numeric fallback errors', () => {
+    assert.equal(
+      isSymbolicLatexFallbackError(new SymbolicStateRendererError('symbolic output exceeds 8388608 bytes')),
+      false
+    );
+  });
+
   it('stops the actual helper before exceeding the sparse-state term limit', () => {
     assert.throws(
       () =>
@@ -39,7 +46,7 @@ describe('symbolic state resource limit', () => {
       (error: unknown) => {
         assert.ok(error instanceof SymbolicStateRendererError);
         assert.equal(error.message, 'symbolic state exceeds 65536 nonzero terms');
-        assert.equal(isSymbolicLatexFallbackError(error), true);
+        assert.equal(isSymbolicLatexFallbackError(error), false);
         return true;
       }
     );
