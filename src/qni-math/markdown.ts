@@ -93,10 +93,7 @@ export function expandQuantumMacros(latex: string, macros: MathMacros = {}): str
     }
 
     const first = readMacroArgument(source, index + macro[0].length);
-    const second = macro[1] === "braket" && first
-      ? readMacroArgument(source, first.end)
-      : undefined;
-    if (!first || (macro[1] === "braket" && !second)) {
+    if (!first) {
       expanded += macro[0];
       index += macro[0].length;
       continue;
@@ -105,10 +102,8 @@ export function expandQuantumMacros(latex: string, macros: MathMacros = {}): str
     const firstValue = expandQuantumMacros(first.value, macros);
     if (macro[1] === "ket") expanded += `|${firstValue}\\rangle`;
     if (macro[1] === "bra") expanded += `\\langle ${firstValue}|`;
-    if (macro[1] === "braket") {
-      expanded += `\\langle ${firstValue}|${expandQuantumMacros(second!.value, macros)}\\rangle`;
-    }
-    index = second?.end ?? first.end;
+    if (macro[1] === "braket") expanded += `\\langle ${firstValue}\\rangle`;
+    index = first.end;
   }
 
   return expanded;

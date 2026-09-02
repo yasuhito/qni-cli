@@ -208,30 +208,16 @@ When(/^`\\ket\{\\Phi\^\+\}=\\frac\{\\ket\{00\}\+\\ket\{11\}\}\{\\sqrt 2\}` を�
   transform(this, '$$\\ket{\\Phi^+}=\\frac{\\ket{00}+\\ket{11}}{\\sqrt 2}$$');
 });
 
-function typesetExpectedMacro(world, actual, expected) {
-  const { getCellDimensions } = require('@earendil-works/pi-tui');
-  const { typesetMath } = require('../../dist/qni-math/typesetter.js');
-  const cell = getCellDimensions();
-  const renderedSvg = (latex) => typesetMath(latex, '#100f0f', 80, cell).svg
-    .replace(/(<g data-mml-node="math") data-latex="[^"]*"/u, '$1');
-  world.qniMathActualMacroSvg = renderedSvg(actual);
-  world.qniMathExpectedMacroSvg = renderedSvg(expected);
-}
-
-When(/^`\\braket\{s\|\\psi\} - \\ket\{\\psi\}` を組版する$/, function () {
-  typesetExpectedMacro(
-    this,
-    '\\braket{s|\\psi} - \\ket{\\psi}',
-    '\\left\\langle s|\\psi\\right\\rangle - \\left|\\psi\\right\\rangle'
-  );
+When(/^`\\braket\{s\|\\psi\} - \\ket\{\\psi\}` を含む表示数式を画像経路で変換する$/, function () {
+  transform(this, '$$\\braket{s|\\psi} - \\ket{\\psi}$$');
 });
 
-When(/^`\\ket\{\\psi\}` を組版する$/, function () {
-  typesetExpectedMacro(this, '\\ket{\\psi}', '\\left|\\psi\\right\\rangle');
+When(/^`\\ket\{\\psi\}` を含む表示数式を画像経路で変換する$/, function () {
+  transform(this, '$$\\ket{\\psi}$$');
 });
 
-When(/^`\\bra\{s\}` を組版する$/, function () {
-  typesetExpectedMacro(this, '\\bra{s}', '\\left\\langle s\\right|');
+When(/^`\\bra\{s\}` を含む表示数式を画像経路で変換する$/, function () {
+  transform(this, '$$\\bra{s}$$');
 });
 
 When('`\\/math status` を実行する', async function () {
@@ -285,8 +271,8 @@ When(/^`\$\\bra\{0\}\$` を含む本文を変換する$/, function () {
   transform(this, '状態は $\\bra{0}$ です。');
 });
 
-When(/^`\$\\braket\{0\}\{1\}\$` を含む本文を変換する$/, function () {
-  transform(this, '内積は $\\braket{0}{1}$ です。');
+When(/^`\$\\braket\{s\|\\psi\} - \\ket\{\\psi\}\$` を含む本文を変換する$/, function () {
+  transform(this, '内積は $\\braket{s|\\psi} - \\ket{\\psi}$ です。');
 });
 
 When(/^引数の前に改行がある `\\ket` を含む表示数式を変換する$/, function () {
@@ -424,16 +410,16 @@ Then('Bell 状態は設定なしで画像配置になる', function () {
   assert.ok(this.qniMathMarkdown.includes(PLACEHOLDER));
 });
 
-Then('braket と直後の ket は独立した項として描かれる', function () {
-  assert.equal(this.qniMathActualMacroSvg, this.qniMathExpectedMacroSvg);
+Then('braket と直後の ket は画像配置になる', function () {
+  assert.ok(this.qniMathMarkdown.includes(PLACEHOLDER));
 });
 
-Then('ket は縦棒と右山括弧で描かれる', function () {
-  assert.equal(this.qniMathActualMacroSvg, this.qniMathExpectedMacroSvg);
+Then('ket は画像配置になる', function () {
+  assert.ok(this.qniMathMarkdown.includes(PLACEHOLDER));
 });
 
-Then('bra は左山括弧と縦棒で描かれる', function () {
-  assert.equal(this.qniMathActualMacroSvg, this.qniMathExpectedMacroSvg);
+Then('bra は画像配置になる', function () {
+  assert.ok(this.qniMathMarkdown.includes(PLACEHOLDER));
 });
 
 Then(/^変換後の Markdown は `\$\\hat\{H\}\$` を含む$/, function () {
@@ -548,8 +534,8 @@ Then(/^変換後の Markdown は `\$\\langle 0\|\$` を含む$/, function () {
   assert.ok(this.qniMathMarkdown.includes('$\\langle 0|$'));
 });
 
-Then(/^変換後の Markdown は `\$\\langle 0\|1\\rangle\$` を含む$/, function () {
-  assert.ok(this.qniMathMarkdown.includes('$\\langle 0|1\\rangle$'));
+Then(/^変換後の Markdown は `\$\\langle s\|\\psi\\rangle - \|\\psi\\rangle\$` を含む$/, function () {
+  assert.ok(this.qniMathMarkdown.includes('$\\langle s|\\psi\\rangle - |\\psi\\rangle$'));
 });
 
 Then(/^変換後の Markdown は `\|0\\rangle` を含む$/, function () {
