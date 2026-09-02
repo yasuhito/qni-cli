@@ -164,7 +164,7 @@ function normalizeKetLatex(output: string): string {
 function retryableWithNextCommand(command: string, stderr: string): boolean {
   return (
     (command === 'uv' && stderr.includes('Failed to fetch:')) ||
-    (command === 'python3' && stderr.includes("No module named 'sympy'"))
+    (command !== 'uv' && stderr.includes("No module named 'sympy'"))
   );
 }
 

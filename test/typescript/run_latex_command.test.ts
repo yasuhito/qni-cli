@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import * as childProcess from 'node:child_process';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -44,6 +44,12 @@ async function withTempDir<T>(callback: (dir: string) => Promise<T>): Promise<T>
 
 async function writeCircuit(dir: string, circuit: unknown): Promise<void> {
   await writeFile(path.join(dir, 'circuit.json'), `${JSON.stringify(circuit, null, 2)}\n`);
+}
+
+async function writeExecutable(filePath: string, body: string): Promise<void> {
+  await mkdir(path.dirname(filePath), { recursive: true });
+  await writeFile(filePath, body);
+  await chmod(filePath, 0o755);
 }
 
 function captureDispatcherRun(
@@ -409,6 +415,28 @@ describe('run command exact LaTeX route', () => {
         cols: [['H']],
         qubits: 1
       });
+
+      assert.deepEqual(captureDispatcherRun(dir, ['run', '--latex'], { PATH: '' }, dir), {
+        exitStatus: 0,
+        stderr: '',
+        stdout: '0.707106781186547\\ket{0} + 0.707106781186547\\ket{1}\n'
+      });
+    });
+  });
+
+  it('falls back when the repository Python exists without SymPy', async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        cols: [['H']],
+        qubits: 1
+      });
+      await writeExecutable(
+        path.join(dir, '.python-symbolic', 'bin', 'python'),
+        `#!/bin/sh
+printf '%s\\n' "ModuleNotFoundError: No module named 'sympy'" >&2
+exit 1
+`
+      );
 
       assert.deepEqual(captureDispatcherRun(dir, ['run', '--latex'], { PATH: '' }, dir), {
         exitStatus: 0,
