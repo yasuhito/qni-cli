@@ -1351,6 +1351,16 @@ Given('1項の記号出力上限を超える巨大な回路がある', function 
   });
 });
 
+Given('全量子ビットに H がある 17 量子ビット回路がある', function () {
+  const qubits = 17;
+  writeCircuitJson(this.scenarioDir, {
+    qubits,
+    cols: Array.from({ length: qubits }, (_, target) =>
+      Array.from({ length: qubits }, (_, qubit) => (qubit === target ? 'H' : 1))
+    )
+  });
+});
+
 Given('厳密値の非ゼロ項上限を超える 30 量子ビット回路がある', function () {
   const qubits = 30;
   writeCircuitJson(this.scenarioDir, {

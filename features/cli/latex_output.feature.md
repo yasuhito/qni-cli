@@ -175,6 +175,12 @@ qni-cli の利用者として
   symbolic output exceeds 8388608 bytes
   ```
 
+## Scenario: qni run --latex は17量子ビットの全 H 回路を数値表示へ戻す
+
+- Given 全量子ビットに H がある 17 量子ビット回路がある
+- When "qni run --latex" を実行
+- Then コマンドは成功
+
 ## Scenario: qni run --latex は厳密値と数値の上限を超える回路を安全に拒否
 
 - Given 厳密値の非ゼロ項上限を超える 30 量子ビット回路がある

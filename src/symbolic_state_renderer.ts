@@ -37,6 +37,13 @@ export function renderSymbolicStateVector(options: SymbolicStateRenderOptions): 
   });
 }
 
+export function isSymbolicLatexResourceLimitError(error: unknown): boolean {
+  return error instanceof SymbolicStateRendererError && (
+    error.message.startsWith('symbolic state exceeds ') ||
+    error.message.startsWith('symbolic output exceeds ')
+  );
+}
+
 export function isSymbolicLatexFallbackError(error: unknown): boolean {
   return error instanceof SymbolicStateRendererError && (
     error.message === SETUP_MESSAGE ||

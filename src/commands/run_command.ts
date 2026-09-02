@@ -8,9 +8,12 @@ import { generateSeed, validateSeed } from '../random_seed';
 import { circuitContainsMeasurements, Simulator } from '../simulator';
 import {
   isSymbolicLatexFallbackError,
+  isSymbolicLatexResourceLimitError,
   renderSymbolicStateVector
 } from '../symbolic_state_renderer';
 import { thorArgumentsError } from './thor_compatibility';
+
+const MAX_SAFE_RESOURCE_FALLBACK_QUBITS = 17;
 
 const HELP_TEXT = `Usage:
   qni run [--symbolic] [--basis=BASIS] [--latex]
@@ -134,7 +137,10 @@ function renderLatexStateVector(
       projectRoot: context.projectRoot
     });
   } catch (error) {
-    if (!isSymbolicLatexFallbackError(error)) {
+    const safeResourceFallback =
+      isSymbolicLatexResourceLimitError(error) && circuit.qubits <= MAX_SAFE_RESOURCE_FALLBACK_QUBITS;
+
+    if (!isSymbolicLatexFallbackError(error) && !safeResourceFallback) {
       throw error;
     }
 

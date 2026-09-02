@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 
 import {
   isSymbolicLatexFallbackError,
+  isSymbolicLatexResourceLimitError,
   renderSymbolicStateVector,
   SymbolicStateRendererError
 } from '../../src/symbolic_state_renderer';
@@ -63,11 +64,10 @@ describe('symbolic state resource limit', () => {
     );
   });
 
-  it('does not treat output resource limits as numeric fallback errors', () => {
-    assert.equal(
-      isSymbolicLatexFallbackError(new SymbolicStateRendererError('symbolic output exceeds 8388608 bytes')),
-      false
-    );
+  it('classifies output limits separately from unconditional fallback errors', () => {
+    const error = new SymbolicStateRendererError('symbolic output exceeds 8388608 bytes');
+    assert.equal(isSymbolicLatexFallbackError(error), false);
+    assert.equal(isSymbolicLatexResourceLimitError(error), true);
   });
 
   it('stops the actual helper before exceeding the sparse-state term limit', () => {
@@ -82,6 +82,7 @@ describe('symbolic state resource limit', () => {
         assert.ok(error instanceof SymbolicStateRendererError);
         assert.equal(error.message, 'symbolic state exceeds 65536 nonzero terms');
         assert.equal(isSymbolicLatexFallbackError(error), false);
+        assert.equal(isSymbolicLatexResourceLimitError(error), true);
         return true;
       }
     );

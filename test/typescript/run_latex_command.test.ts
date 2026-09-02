@@ -273,6 +273,25 @@ describe('run command exact LaTeX route', () => {
     });
   });
 
+  it('falls back to numeric LaTeX at the safe symbolic-state boundary', async () => {
+    await withTempDir(async (dir) => {
+      const qubits = 17;
+      await writeCircuit(dir, {
+        cols: Array.from({ length: qubits }, (_, target) =>
+          Array.from({ length: qubits }, (_, qubit) => (qubit === target ? 'H' : 1))
+        ),
+        qubits
+      });
+
+      const result = captureDispatcherRun(dir, ['run', '--latex']);
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stderr, '');
+      assert.ok(Buffer.byteLength(result.stdout) > 1024 * 1024);
+      assert.ok(result.stdout.startsWith('0.00276213586400995\\ket{00000000000000000}'));
+      assert.ok(result.stdout.endsWith('0.00276213586400995\\ket{11111111111111111}\n'));
+    });
+  });
+
   it('does not allocate a numeric state after reaching the symbolic state limit', async () => {
     await withTempDir(async (dir) => {
       const qubits = 30;
