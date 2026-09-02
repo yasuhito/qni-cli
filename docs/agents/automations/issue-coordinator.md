@@ -187,6 +187,22 @@ gh issue view <N> -R yasuhito/qni-cli --comments --json number,title,body,labels
 # 併せて GraphQL で parent / subIssues / blockedBy / blocking を確認する
 ```
 
+Relationships の確認には次のクエリをそのまま使う。フィールド名を推測しない（`blockedByIssues` などは存在しない）。
+
+```bash
+gh api graphql -f owner=yasuhito -f name=qni-cli -F number=<N> -f query='
+query($owner:String!,$name:String!,$number:Int!){
+  repository(owner:$owner,name:$name){
+    issue(number:$number){
+      parent{number}
+      subIssues(first:50){nodes{number state}}
+      blockedBy(first:20){nodes{number state}}
+      blocking(first:20){nodes{number state}}
+    }
+  }
+}'
+```
+
 実装に進める条件:
 
 - `## Agent Brief` がある
