@@ -1,6 +1,6 @@
 {
   "name": "qni-cli",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Deterministic quantum circuit CLI and Pi skill for Qni CoResearcher",
   "private": false,
   "license": "MIT",

@@ -8,9 +8,9 @@ npm パッケージとしての通常経路を確認できるように
 
 - Then リポジトリファイル "package.json" は "\"smoke:package\": \"npm run build && node scripts/smoke_npm_package.js\"" を含む
 
-## Scenario: 数式描画移行版が定義されている
+## Scenario: 数式描画移行の修正版が定義されている
 
-- Then リポジトリファイル "package.json" は "\"version\": \"0.2.0\"" を含む
+- Then リポジトリファイル "package.json" は "\"version\": \"0.2.1\"" を含む
 
 ## Scenario: npm 公開が許可されている
 
@@ -19,6 +19,10 @@ npm パッケージとしての通常経路を確認できるように
 ## Scenario: npm bin は配布した CLI を指す
 
 - Then リポジトリファイル "package.json" は "\"qni\": \"dist/bin/qni.js\"" を含む
+
+## Scenario: Pi パッケージのスモーク検証は qni-cli の peer dependency を隔離する
+
+- Then リポジトリファイル "scripts/smoke_npm_package.js" は "removeQniPeerDependency" を含む
 
 ## Scenario: Piパッケージとして識別される
 

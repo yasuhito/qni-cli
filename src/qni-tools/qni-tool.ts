@@ -1,18 +1,48 @@
-type TruncationApi = {
-  DEFAULT_MAX_BYTES: number;
-  DEFAULT_MAX_LINES: number;
-  formatSize(bytes: number): string;
-  truncateHead(content: string, options: { maxBytes: number; maxLines: number }): {
-    content: string;
-    truncated: boolean;
-    totalLines: number;
-    totalBytes: number;
-    outputLines: number;
-    outputBytes: number;
-  };
+const MAX_OUTPUT_BYTES = 50 * 1024;
+const MAX_OUTPUT_LINES = 2000;
+
+type TruncatedOutput = {
+  content: string;
+  truncated: boolean;
+  totalLines: number;
+  totalBytes: number;
+  outputLines: number;
+  outputBytes: number;
 };
 
-const truncationApi = import("@earendil-works/pi-coding-agent") as Promise<TruncationApi>;
+function formatSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes}B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
+}
+
+function truncateHead(content: string): TruncatedOutput {
+  const totalBytes = Buffer.byteLength(content, "utf8");
+  const lines = content === "" ? [] : content.endsWith("\n") ? content.slice(0, -1).split("\n") : content.split("\n");
+  const totalLines = lines.length;
+  if (totalLines <= MAX_OUTPUT_LINES && totalBytes <= MAX_OUTPUT_BYTES) {
+    return { content, truncated: false, totalLines, totalBytes, outputLines: totalLines, outputBytes: totalBytes };
+  }
+
+  const outputLines: string[] = [];
+  let outputBytes = 0;
+  for (const line of lines) {
+    const newlineBytes = outputLines.length === 0 ? 0 : 1;
+    const lineBytes = Buffer.byteLength(line, "utf8") + newlineBytes;
+    if (outputLines.length === MAX_OUTPUT_LINES || outputBytes + lineBytes > MAX_OUTPUT_BYTES) break;
+    outputLines.push(line);
+    outputBytes += lineBytes;
+  }
+  const truncatedContent = outputLines.join("\n");
+  return {
+    content: truncatedContent,
+    truncated: true,
+    totalLines,
+    totalBytes,
+    outputLines: outputLines.length,
+    outputBytes: Buffer.byteLength(truncatedContent, "utf8")
+  };
+}
 
 export type QniToolParams = {
   args?: string[];
@@ -65,11 +95,7 @@ export function formatCommandHeading(args: readonly string[]): string {
 }
 
 export async function truncateQniOutput(stdout: string): Promise<FormattedOutput> {
-  const { DEFAULT_MAX_BYTES, DEFAULT_MAX_LINES, formatSize, truncateHead } = await truncationApi;
-  const truncated = truncateHead(stdout, {
-    maxBytes: DEFAULT_MAX_BYTES,
-    maxLines: DEFAULT_MAX_LINES
-  });
+  const truncated = truncateHead(stdout);
   if (!truncated.truncated) return { text: stdout, truncated: false };
 
   const separator = truncated.content === "" || truncated.content.endsWith("\n") ? "" : "\n";

@@ -36,6 +36,13 @@ test("truncates each qni stdout with Pi's default line limit", async () => {
   assert.doesNotMatch(output.text, /line-2001/u);
 });
 
+test("truncates qni stdout at Pi's default byte limit without partial lines", async () => {
+  const output = await truncateQniOutput("x".repeat(50 * 1024 + 1));
+
+  assert.equal(output.truncated, true);
+  assert.match(output.text, /\[Output truncated: 0 of 1 lines \(0B of 50\.0KB\)\]/u);
+});
+
 test("does not claim the workdir is unchanged when the first command fails", () => {
   const message = formatBatchFailure(
     [],

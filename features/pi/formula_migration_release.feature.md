@@ -1,12 +1,16 @@
 # Feature: pi-formula 移行版を公開案内する
 
-qni-cli 0.2.0 の利用者として
+qni-cli 0.2 系の利用者として
 数式描画の提供元と互換性変更を把握したい
 確認済みの pi-formula を使って Pi で数式を読めるようにするため
 
-## Scenario: qni-cli 0.2.0 は pi-formula 0.1.0 を完全固定する
+## Scenario: qni-cli 0.2.1 は pi-formula 0.1.0 を完全固定する
 
-- Then リポジトリファイル "package.json" は "\"version\": \"0.2.0\"" を含む
+- Then リポジトリファイル "package.json" は "\"version\": \"0.2.1\"" を含む
+
+## Scenario: Pi 拡張の実行時依存を修正した版を案内する
+
+- Then リポジトリファイル "docs/releases/pi-extension-hotfix-0.2.1.md" は "`pi install npm:qni-cli`" を含む
 
 ## Scenario: pi-formula の版範囲を使わない
 

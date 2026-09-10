@@ -193,7 +193,7 @@ function packProject(tempRoot) {
 function assertPackageMetadata(packageRoot) {
   const manifest = JSON.parse(fs.readFileSync(path.join(packageRoot, 'package.json'), 'utf8'));
 
-  if (manifest.name !== 'qni-cli' || manifest.version !== '0.2.0' || manifest.private === true) {
+  if (manifest.name !== projectManifest.name || manifest.version !== projectManifest.version || manifest.private === true) {
     throw new Error('packed qni-cli has invalid publication identity');
   }
   if (manifest.bin?.qni !== 'dist/bin/qni.js' || manifest.license !== 'MIT') {
@@ -239,6 +239,7 @@ function assertPiSkillDetection({ packageRoot, tempRoot }) {
   const env = { ...process.env, HOME: homeDir, PI_CODING_AGENT_DIR: agentDir, PI_OFFLINE: '1' };
 
   run('pi install packed qni-cli', 'pi', ['install', packageRoot], { cwd: tempRoot, env });
+  removeQniPeerDependency(agentDir);
   const rpc = run('pi package resource discovery', 'pi', [
     '--mode', 'rpc', '--offline', '--no-session', '--no-tools', '--no-context-files',
     '--no-prompt-templates', '--no-themes'
@@ -262,6 +263,13 @@ function assertPiSkillDetection({ packageRoot, tempRoot }) {
   if (!formulaCommand || formulaCommand.sourceInfo?.origin !== 'package') {
     throw new Error(`Pi did not load pi-formula from the packed qni-tools extension:\n${rpc.stdout}`);
   }
+}
+
+function removeQniPeerDependency(agentDir) {
+  fs.rmSync(path.join(agentDir, 'npm', 'node_modules', '@earendil-works', 'pi-coding-agent'), {
+    force: true,
+    recursive: true
+  });
 }
 
 function assertSuperdenseCoding({ env, packageRoot, workspace }) {
