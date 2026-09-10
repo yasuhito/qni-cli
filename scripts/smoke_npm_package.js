@@ -122,7 +122,7 @@ function main() {
 }
 
 function assertExtensionSourceBoundary() {
-  const extensionRoot = path.join(projectRoot, 'src', 'qni-math');
+  const extensionRoot = path.join(projectRoot, 'src', 'qni-tools');
   const sourceFiles = sourceFilesUnder(extensionRoot);
 
   for (const sourceFile of sourceFiles) {
@@ -140,7 +140,7 @@ function assertExtensionSourceBoundary() {
 
       const importedPath = path.resolve(path.dirname(sourceFile), specifier);
       if (importedPath !== extensionRoot && !importedPath.startsWith(`${extensionRoot}${path.sep}`)) {
-        throw new Error(`qni-math source imports another qni-cli module: ${specifier}`);
+        throw new Error(`qni-tools source imports another qni-cli module: ${specifier}`);
       }
     }
 
@@ -202,16 +202,16 @@ function assertPackageMetadata(packageRoot) {
   if (!manifest.keywords?.includes('pi-package') || !manifest.pi?.skills?.includes('./skills/qni-cli')) {
     throw new Error('packed qni-cli does not declare its Pi skill');
   }
-  if (!manifest.pi?.extensions?.includes('./dist/qni-math/index.js')) {
-    throw new Error('packed qni-cli does not declare its qni-math extension');
+  if (!manifest.pi?.extensions?.includes('./dist/qni-tools/index.js')) {
+    throw new Error('packed qni-cli does not declare its qni-tools extension');
   }
   if (manifest.peerDependencies?.['@earendil-works/pi-coding-agent'] !== '*') {
     throw new Error('packed qni-cli must use Pi from peerDependencies');
   }
 
-  const extensionSource = fs.readFileSync(path.join(packageRoot, 'dist', 'qni-math', 'index.js'), 'utf8');
+  const extensionSource = fs.readFileSync(path.join(packageRoot, 'dist', 'qni-tools', 'index.js'), 'utf8');
   if (/require\(["']\.\.[/\\]/u.test(extensionSource)) {
-    throw new Error('qni-math extension imports another qni-cli module');
+    throw new Error('qni-tools extension imports another qni-cli module');
   }
 }
 
@@ -254,13 +254,13 @@ function assertPiSkillDetection({ packageRoot, tempRoot }) {
     .find((entry) => entry.id === 'package-smoke');
   const commands = response?.data?.commands ?? [];
   const qniSkill = commands.find((command) => command.name === 'skill:qni-cli');
-  const mathCommand = commands.find((command) => command.name === 'math');
+  const formulaCommand = commands.find((command) => command.name === 'formula');
 
   if (!qniSkill || qniSkill.sourceInfo?.origin !== 'package') {
     throw new Error(`Pi did not detect the packed qni-cli skill:\n${rpc.stdout}`);
   }
-  if (!mathCommand || mathCommand.sourceInfo?.origin !== 'package') {
-    throw new Error(`Pi did not load the packed qni-math extension:\n${rpc.stdout}`);
+  if (!formulaCommand || formulaCommand.sourceInfo?.origin !== 'package') {
+    throw new Error(`Pi did not load pi-formula from the packed qni-tools extension:\n${rpc.stdout}`);
   }
 }
 

@@ -6,7 +6,7 @@ import {
   formatCommandHeading,
   truncateQniOutput,
   validateQniToolParams
-} from "../../src/qni-math/qni-tool";
+} from "../../src/qni-tools/qni-tool";
 
 test("formats qni command headings with shell-style quoting only when needed", () => {
   assert.equal(

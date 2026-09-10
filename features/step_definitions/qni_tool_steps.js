@@ -5,11 +5,11 @@ const os = require('node:os');
 const path = require('node:path');
 
 const { Given, Then, When } = require('@cucumber/cucumber');
-const { PROJECT_ROOT, registerMathExtension } = require('../support/qni_math_extension');
+const { PROJECT_ROOT, registerQniToolsExtension } = require('../support/qni_tools_extension');
 
 function qniTool(world) {
-  const tool = world.qniMathTools.get('qni');
-  assert.ok(tool, 'expected qni-math to register the qni tool');
+  const tool = world.qniToolsTools.get('qni');
+  assert.ok(tool, 'expected qni-tools to register the qni tool');
   return tool;
 }
 
@@ -83,9 +83,9 @@ Given('Pi の作業場所に既存の回路がある', async function () {
   this.originalCircuit = fs.readFileSync(path.join(this.scenarioDir, 'circuit.json'), 'utf8');
 });
 
-Given('qni-cli の実行回数を記録する偽の Pi ExtensionAPI に数式描画拡張を登録する', async function () {
+Given('qni-cli の実行回数を記録する偽の Pi ExtensionAPI に qni ツール拡張を登録する', async function () {
   this.qniExecutionCount = 0;
-  await registerMathExtension(this, {
+  await registerQniToolsExtension(this, {
     exec: async () => {
       this.qniExecutionCount += 1;
       return { stdout: '', stderr: '', code: 0, killed: false };
@@ -93,10 +93,10 @@ Given('qni-cli の実行回数を記録する偽の Pi ExtensionAPI に数式描
   });
 });
 
-Given('pi-formula の公開インターフェースを返す偽の Pi ExtensionAPI に数式描画拡張を登録する', async function () {
+Given('pi-formula の公開インターフェースを返す偽の Pi ExtensionAPI に qni ツール拡張を登録する', async function () {
   this.qniFormulaLatex = [];
   const formulaLatex = this.qniFormulaLatex;
-  await registerMathExtension(this, {
+  await registerQniToolsExtension(this, {
     formulaModule: {
       registerFormula(pi) {
         pi.registerMarkdownTransformer((markdown) => markdown);
@@ -118,8 +118,8 @@ Given('pi-formula の公開インターフェースを返す偽の Pi ExtensionA
   });
 });
 
-Given('テキスト経路の pi-formula を返す偽の Pi ExtensionAPI に数式描画拡張を登録する', async function () {
-  await registerMathExtension(this, {
+Given('テキスト経路の pi-formula を返す偽の Pi ExtensionAPI に qni ツール拡張を登録する', async function () {
+  await registerQniToolsExtension(this, {
     formulaModule: {
       registerFormula(pi) {
         pi.registerMarkdownTransformer((markdown) => markdown);
@@ -134,8 +134,8 @@ Given('テキスト経路の pi-formula を返す偽の Pi ExtensionAPI に数�
   });
 });
 
-Given('大きな標準出力を返す偽の Pi ExtensionAPI に数式描画拡張を登録する', async function () {
-  await registerMathExtension(this, {
+Given('大きな標準出力を返す偽の Pi ExtensionAPI に qni ツール拡張を登録する', async function () {
+  await registerQniToolsExtension(this, {
     exec: async () => ({
       stdout: `${Array.from({ length: 2001 }, (_, index) => `line-${index + 1}`).join('\n')}\n`,
       stderr: '',
@@ -145,16 +145,16 @@ Given('大きな標準出力を返す偽の Pi ExtensionAPI に数式描画拡�
   });
 });
 
-Given('キャンセル結果を返す偽の Pi ExtensionAPI に数式描画拡張を登録する', async function () {
-  await registerMathExtension(this, {
+Given('キャンセル結果を返す偽の Pi ExtensionAPI に qni ツール拡張を登録する', async function () {
+  await registerQniToolsExtension(this, {
     exec: async () => ({ stdout: '', stderr: '', code: 143, killed: true })
   });
 });
 
-Given('qni-cli の実行順を記録する偽の Pi ExtensionAPI に数式描画拡張を登録する', async function () {
+Given('qni-cli の実行順を記録する偽の Pi ExtensionAPI に qni ツール拡張を登録する', async function () {
   this.qniExecutionOrder = [];
   let call = 0;
-  await registerMathExtension(this, {
+  await registerQniToolsExtension(this, {
     exec: async () => {
       call += 1;
       const current = call;
@@ -184,10 +184,10 @@ When('作業場所を省略して H ゲートを追加して回路を実行す�
 
 When('作業場所を省略して H ゲートを追加して拡張を reload して回路を実行する', async function () {
   const added = await addHadamard(this);
-  const shutdown = this.qniMathEventHandlers.get('session_shutdown');
+  const shutdown = this.qniToolsEventHandlers.get('session_shutdown');
   assert.ok(shutdown);
   await shutdown({ reason: 'reload' }, {});
-  await registerMathExtension(this, { sessionStartReason: 'reload' });
+  await registerQniToolsExtension(this, { sessionStartReason: 'reload' });
   this.qniToolResult = await executeQniTool(this, ['run']);
   this.directQniResult = await executeBundledQni(['run'], added.details.workdir);
 });
@@ -195,9 +195,9 @@ When('作業場所を省略して H ゲートを追加して拡張を reload し
 When('各セッション終了理由で一時作業場所を終了する', async function () {
   this.closedTemporaryWorkdirs = [];
   for (const reason of ['quit', 'new', 'resume', 'fork']) {
-    await registerMathExtension(this, { newSession: true });
+    await registerQniToolsExtension(this, { newSession: true });
     const result = await executeQniTool(this, ['--help']);
-    const shutdown = this.qniMathEventHandlers.get('session_shutdown');
+    const shutdown = this.qniToolsEventHandlers.get('session_shutdown');
     assert.ok(shutdown);
     await shutdown({ reason }, {});
     this.closedTemporaryWorkdirs.push(result.details.workdir);
@@ -208,13 +208,13 @@ When('保存された一時作業場所が別のディレクトリへのシン�
   const victim = fs.mkdtempSync(path.join(os.tmpdir(), 'qni-cli-victim-'));
   const link = path.join(os.tmpdir(), `qni-cli-pi-restored-${path.basename(this.scenarioDir)}`);
   fs.symlinkSync(victim, link);
-  this.qniMathSessionEntries.push({
+  this.qniToolsSessionEntries.push({
     type: 'custom',
     customType: 'qni-tool-temporary-workdir',
     data: { workdir: link }
   });
-  await registerMathExtension(this, { sessionStartReason: 'reload' });
-  const shutdown = this.qniMathEventHandlers.get('session_shutdown');
+  await registerQniToolsExtension(this, { sessionStartReason: 'reload' });
+  const shutdown = this.qniToolsEventHandlers.get('session_shutdown');
   assert.ok(shutdown);
   await shutdown({ reason: 'quit' }, {});
   this.restoredWorkdirVictimExists = fs.existsSync(victim);
@@ -295,8 +295,8 @@ When('登録された qni ツールを確認する', function () {
   this.qniToolDefinition = qniTool(this);
 });
 
-When('数式描画拡張が登録したツール名を確認する', function () {
-  this.qniMathToolNames = Array.from(this.qniMathTools.keys());
+When('qni ツール拡張が登録したツール名を確認する', function () {
+  this.qniToolsToolNames = Array.from(this.qniToolsTools.keys());
 });
 
 When('qni ツールで X ゲートの追加と回路表示を一括実行する', async function () {
@@ -503,8 +503,8 @@ Then('qni ツールの展開表示に実際の作業場所がある', function (
   assert.ok(lines.includes(this.qniToolResult.details.workdir));
 });
 
-Then('数式描画拡張は bash ツールを登録していない', function () {
-  assert.ok(!this.qniMathToolNames.includes('bash'));
+Then('qni ツール拡張は bash ツールを登録していない', function () {
+  assert.ok(!this.qniToolsToolNames.includes('bash'));
 });
 
 Then('一括実行の結果はコマンドごとの見出し付き本文である', function () {

@@ -112,7 +112,7 @@ function assertPackedFiles(packageRoot) {
     'LICENSE',
     'benchmarks/quantum-katas/basic-gates/state-flip.md',
     'dist/bin/qni.js',
-    'dist/qni-math/index.js',
+    'dist/qni-tools/index.js',
     'examples/superdense-coding/circuit.qni',
     'libexec/qni_symbolic_run.py',
     'scripts/setup_symbolic_python.sh',

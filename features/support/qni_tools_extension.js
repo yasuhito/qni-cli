@@ -1,43 +1,32 @@
 const assert = require('node:assert/strict');
 const { execFile } = require('node:child_process');
-const { mkdirSync, writeFileSync } = require('node:fs');
 const path = require('node:path');
 
 const PROJECT_ROOT = path.resolve(__dirname, '../..');
+let previousSessionShutdown;
 
-async function registerMathExtension(world, options = {}) {
-  const extensionModule = require(path.join(PROJECT_ROOT, 'dist', 'qni-math', 'index.js'));
+async function registerQniToolsExtension(world, options = {}) {
+  previousSessionShutdown?.({ reason: 'test-reset' });
+  previousSessionShutdown = undefined;
+  const extensionModule = require(path.join(PROJECT_ROOT, 'dist', 'qni-tools', 'index.js'));
   const { setCapabilities } = require('@earendil-works/pi-tui');
   const commands = new Map();
+  const commandRegistrations = [];
   const tools = new Map();
   const terminalWrites = [];
-  const sessionEntries = options.newSession ? [] : (world.qniMathSessionEntries ?? []);
+  const sessionEntries = options.newSession ? [] : (world.qniToolsSessionEntries ?? []);
   const eventHandlers = new Map();
+  const sessionShutdownHandlers = [];
   const sessionStarts = [];
   let sessionStart;
   const transformers = [];
   let transformer;
   let inputListener;
   let textColor = options.textColor ?? '\x1b[38;2;212;212;212m';
-  const previousHome = process.env.HOME;
-  const previousConfigHome = process.env.XDG_CONFIG_HOME;
   const previousTmux = process.env.TMUX;
   const previousTerm = process.env.TERM;
-  const previousMacros = process.env.QNI_MATH_MACROS;
   const Module = require('node:module');
   const originalLoad = Module._load;
-  const configHome = path.join(world.scenarioDir, 'qni-math-config');
-  const configPath = path.join(configHome, 'qni-cli', 'qni-math.json');
-
-  process.env.HOME = world.scenarioDir;
-  process.env.XDG_CONFIG_HOME = configHome;
-  if (options.envMacros !== undefined) process.env.QNI_MATH_MACROS = options.envMacros;
-  else delete process.env.QNI_MATH_MACROS;
-  if (options.configMacros !== undefined || options.configRaw !== undefined) {
-    mkdirSync(path.dirname(configPath), { recursive: true });
-    const config = options.configRaw ?? JSON.stringify({ macros: options.configMacros });
-    writeFileSync(configPath, config);
-  }
   if (options.tmux) process.env.TMUX = '/tmp/tmux-test/default,1,0';
   else delete process.env.TMUX;
   if (options.term) process.env.TERM = options.term;
@@ -58,6 +47,7 @@ async function registerMathExtension(world, options = {}) {
     extensionModule.default({
       on(event, handler) {
         eventHandlers.set(event, handler);
+        if (event === 'session_shutdown') sessionShutdownHandlers.push(handler);
         if (event === 'session_start') {
           sessionStart = handler;
           sessionStarts.push(handler);
@@ -68,6 +58,7 @@ async function registerMathExtension(world, options = {}) {
       },
       registerCommand(name, commandOptions) {
         commands.set(name, commandOptions);
+        commandRegistrations.push([name, commandOptions]);
       },
       registerMarkdownTransformer(registered) {
         transformers.push(registered);
@@ -95,8 +86,7 @@ async function registerMathExtension(world, options = {}) {
       }
     });
 
-    assert.ok(transformer, 'expected qni-math to register a Markdown transformer');
-    assert.ok(sessionStart, 'expected qni-math to observe session startup');
+    assert.ok(sessionStart, 'expected pi-formula to observe session startup');
     const sessionContext = {
       mode: 'tui',
       sessionManager: { getBranch: () => sessionEntries },
@@ -116,7 +106,7 @@ async function registerMathExtension(world, options = {}) {
                 const sequence = `\x1b_Gi=${id};${response}\x1b\\`;
                 const deliver = (data) => {
                   const result = inputListener?.(data);
-                  if (result?.data) world.qniMathForwardedInput = result.data;
+                  if (result?.data) world.qniToolsForwardedInput = result.data;
                 };
                 if (options.splitResponse) {
                   queueMicrotask(() => deliver(sequence.slice(0, 8)));
@@ -145,28 +135,29 @@ async function registerMathExtension(world, options = {}) {
     }
   } finally {
     Module._load = originalLoad;
-    if (previousHome === undefined) delete process.env.HOME;
-    else process.env.HOME = previousHome;
-    if (previousConfigHome === undefined) delete process.env.XDG_CONFIG_HOME;
-    else process.env.XDG_CONFIG_HOME = previousConfigHome;
     if (previousTmux === undefined) delete process.env.TMUX;
     else process.env.TMUX = previousTmux;
     if (previousTerm === undefined) delete process.env.TERM;
     else process.env.TERM = previousTerm;
-    if (previousMacros === undefined) delete process.env.QNI_MATH_MACROS;
-    else process.env.QNI_MATH_MACROS = previousMacros;
   }
 
-  world.qniMathCommands = commands;
-  world.qniMathEventHandlers = eventHandlers;
-  world.qniMathTools = tools;
-  world.qniMathTransformer = transformer;
-  world.qniFormulaTransformer = transformers.find((registered) => registered !== transformer);
-  world.qniMathSessionEntries = sessionEntries;
-  world.qniMathTerminalWrites = terminalWrites;
-  world.qniMathSetTextColor = (ansi) => {
+  previousSessionShutdown = sessionShutdownHandlers[0];
+  world.qniToolsCommands = new Map();
+  for (const [name, command] of commandRegistrations) {
+    const registered = world.qniToolsCommands.get(name) ?? [];
+    registered.push(command);
+    world.qniToolsCommands.set(name, registered);
+  }
+  world.qniToolsEventHandlers = eventHandlers;
+  world.qniToolsTools = tools;
+  world.qniToolsTransformer = undefined;
+  world.qniToolsTransformers = transformers;
+  world.qniFormulaTransformer = transformer;
+  world.qniToolsSessionEntries = sessionEntries;
+  world.qniToolsTerminalWrites = terminalWrites;
+  world.qniToolsSetTextColor = (ansi) => {
     textColor = ansi;
   };
 }
 
-module.exports = { PROJECT_ROOT, registerMathExtension };
+module.exports = { PROJECT_ROOT, registerQniToolsExtension };

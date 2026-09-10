@@ -6,16 +6,16 @@ qni-cli と pi-formula を併用する研究者として
 
 ## Scenario: 量子系マクロを pi-formula の表示数式で組版する
 
-- Given 偽の Pi ExtensionAPI に数式描画拡張を登録する
+- Given 偽の Pi ExtensionAPI に qni ツール拡張を登録する
 - When pi-formula の変換器で `\ket{\psi}`、`\bra{\psi}`、`\braket{\phi|\psi}` を含む表示数式を変換する
 - Then pi-formula の変換結果は画像配置になる
 
-## Scenario: pi-formula がない環境でも数式描画拡張を登録できる
+## Scenario: qni ツール拡張は数式描画器を登録しない
 
-- Given pi-formula がない偽の Pi ExtensionAPI に数式描画拡張を登録する
-- Then 数式描画拡張の登録は成功する
+- Given 偽の Pi ExtensionAPI に qni ツール拡張を登録する
+- Then qni ツール拡張が登録する Markdown 変換器はない
 
-## Scenario: 想定外の pi-formula 版でも数式描画拡張を登録できる
+## Scenario: qni ツール拡張は `/formula` を重複登録しない
 
-- Given 想定外の版の pi-formula を返す偽の Pi ExtensionAPI に数式描画拡張を登録する
-- Then 数式描画拡張の登録は成功する
+- Given 偽の Pi ExtensionAPI に qni ツール拡張を登録する
+- Then `/formula` は一つだけ登録される

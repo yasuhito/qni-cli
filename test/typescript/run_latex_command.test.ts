@@ -7,7 +7,6 @@ import path from 'node:path';
 import { describe, it, mock } from 'node:test';
 
 import { createDispatcher } from '../../src/dispatcher';
-import { typesetMath } from '../../src/qni-math/typesetter';
 import { Simulator } from '../../src/simulator';
 
 interface CapturedRun {
@@ -85,7 +84,7 @@ function captureDispatcherRun(
 }
 
 describe('run command exact LaTeX route', () => {
-  it('renders Bell-state amplitudes exactly and MathJax can typeset them', async () => {
+  it('renders Bell-state amplitudes exactly', async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
         cols: [
@@ -102,9 +101,6 @@ describe('run command exact LaTeX route', () => {
         stderr: '',
         stdout: '\\frac{\\sqrt{2}}{2}\\ket{00} + \\frac{\\sqrt{2}}{2}\\ket{11}\n'
       });
-      assert.ok(
-        typesetMath(result.stdout.trim(), '#100f0f', 80, { heightPx: 20, widthPx: 10 }).png.length > 0
-      );
     });
   });
 
