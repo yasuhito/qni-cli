@@ -10,7 +10,7 @@ npm パッケージとしての通常経路を確認できるように
 
 ## Scenario: 数式描画移行の修正版が定義されている
 
-- Then リポジトリファイル "package.json" は "\"version\": \"0.2.1\"" を含む
+- Then リポジトリファイル "package.json" は "\"version\": \"0.2.2\"" を含む
 
 ## Scenario: npm 公開が許可されている
 
