@@ -73,13 +73,20 @@ const qniExecutable = resolve(__dirname, "../bin/qni.js");
 
 type FormulaModule = {
   registerFormula: (pi: ExtensionAPI, macros: typeof quantumMacros) => void;
+  getFormulaPath: () => "image" | "text";
+  createFormulaPng: (latex: string, availableWidth: number) => {
+    data: Buffer;
+  } | undefined;
 };
+
+let formula: FormulaModule | undefined;
 
 function registerPiFormulaWithQuantumMacros(pi: ExtensionAPI): void {
   try {
-    const formula = require("pi-formula") as FormulaModule;
+    formula = require("pi-formula") as FormulaModule;
     formula.registerFormula(pi, quantumMacros);
   } catch {
+    formula = undefined;
     // pi-formula is optional for qni-cli installations made before it was published.
   }
 }
@@ -327,14 +334,12 @@ export default function qniMathExtension(pi: ExtensionAPI): void {
     renderResult(result, { expanded }, theme) {
       const details = result.details as QniToolDetails | undefined;
       const imageForLatex = (latex: string) => {
-        if (effectivePath !== "image") return undefined;
-        const color = rgbFromAnsi(theme.fg("toolOutput", "sample"));
-        if (!color) return undefined;
+        if (effectivePath !== "image" || formula?.getFormulaPath() !== "image") return undefined;
         const maxWidthCells = expanded ? 120 : 60;
-        const image = cachedImage(latex.trim(), color, maxWidthCells, userMacros);
+        const image = formula.createFormulaPng(latex.trim(), maxWidthCells);
         if (!image) return undefined;
         return new Image(
-          image.png.toString("base64"),
+          image.data.toString("base64"),
           "image/png",
           { fallbackColor: (fallback) => theme.fg("muted", fallback) },
           { maxWidthCells, maxHeightCells: 4 }

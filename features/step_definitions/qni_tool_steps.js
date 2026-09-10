@@ -93,6 +93,47 @@ Given('qni-cli の実行回数を記録する偽の Pi ExtensionAPI に数式描
   });
 });
 
+Given('pi-formula の公開インターフェースを返す偽の Pi ExtensionAPI に数式描画拡張を登録する', async function () {
+  this.qniFormulaLatex = [];
+  const formulaLatex = this.qniFormulaLatex;
+  await registerMathExtension(this, {
+    formulaModule: {
+      registerFormula(pi) {
+        pi.registerMarkdownTransformer((markdown) => markdown);
+      },
+      getFormulaPath() {
+        return 'image';
+      },
+      createFormulaPng(latex) {
+        formulaLatex.push(latex);
+        return {
+          data: Buffer.from('fake-png'),
+          widthPx: 1,
+          heightPx: 1,
+          columns: 1,
+          rows: 1
+        };
+      }
+    }
+  });
+});
+
+Given('テキスト経路の pi-formula を返す偽の Pi ExtensionAPI に数式描画拡張を登録する', async function () {
+  await registerMathExtension(this, {
+    formulaModule: {
+      registerFormula(pi) {
+        pi.registerMarkdownTransformer((markdown) => markdown);
+      },
+      getFormulaPath() {
+        return 'text';
+      },
+      createFormulaPng() {
+        assert.fail('text path must not create a PNG');
+      }
+    }
+  });
+});
+
 Given('大きな標準出力を返す偽の Pi ExtensionAPI に数式描画拡張を登録する', async function () {
   await registerMathExtension(this, {
     exec: async () => ({
@@ -390,20 +431,9 @@ Then('qni ツールの結果描画は Image 部品である', function () {
   assert.ok(renderQniToolResult(this) instanceof Image);
 });
 
-Then('qni ツールの結果画像は toolOutput 色を要求する', function () {
-  const requestedColors = [];
-  qniTool(this).renderResult(
-    this.qniToolResult,
-    { expanded: false, isPartial: false },
-    {
-      fg(color, text) {
-        requestedColors.push(color);
-        return `\x1b[38;2;1;2;3m${text}\x1b[39m`;
-      }
-    },
-    { args: {}, showImages: true }
-  );
-  assert.equal(requestedColors[0], 'toolOutput');
+Then('qni ツールは pi-formula に LaTeX の結果を渡す', function () {
+  renderQniToolResult(this);
+  assert.deepEqual(this.qniFormulaLatex, [this.qniToolResult.details.latex.trim()]);
 });
 
 Then('qni ツールの結果描画は文字列である', function () {

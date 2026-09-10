@@ -107,11 +107,17 @@
 - When qni ツールに `["expect", "ZZ", "--latex"]` を渡す
 - Then qni ツールの結果描画は Image 部品である
 
-## Scenario: LaTeX の結果画像にツール出力色を使う
+## Scenario: LaTeX の結果を pi-formula の公開インターフェースで組版する
 
-- Given 偽の Pi ExtensionAPI に数式描画拡張を登録する
+- Given pi-formula の公開インターフェースを返す偽の Pi ExtensionAPI に数式描画拡張を登録する
 - When qni ツールに `["run", "--latex"]` を渡す
-- Then qni ツールの結果画像は toolOutput 色を要求する
+- Then qni ツールは pi-formula に LaTeX の結果を渡す
+
+## Scenario: pi-formula のテキスト経路では LaTeX の結果を文字列で描く
+
+- Given テキスト経路の pi-formula を返す偽の Pi ExtensionAPI に数式描画拡張を登録する
+- When qni ツールに `["run", "--latex"]` を渡す
+- Then qni ツールの結果描画は文字列である
 
 ## Scenario: LaTeX 以外の結果を文字列で描く
 
