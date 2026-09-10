@@ -8,9 +8,9 @@ npm パッケージとしての通常経路を確認できるように
 
 - Then リポジトリファイル "package.json" は "\"smoke:package\": \"npm run build && node scripts/smoke_npm_package.js\"" を含む
 
-## Scenario: 初回公開版が定義されている
+## Scenario: 数式描画移行版が定義されている
 
-- Then リポジトリファイル "package.json" は "\"version\": \"0.1.0\"" を含む
+- Then リポジトリファイル "package.json" は "\"version\": \"0.2.0\"" を含む
 
 ## Scenario: npm 公開が許可されている
 

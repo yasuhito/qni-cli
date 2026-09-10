@@ -193,7 +193,7 @@ function packProject(tempRoot) {
 function assertPackageMetadata(packageRoot) {
   const manifest = JSON.parse(fs.readFileSync(path.join(packageRoot, 'package.json'), 'utf8'));
 
-  if (manifest.name !== 'qni-cli' || manifest.version !== '0.1.0' || manifest.private === true) {
+  if (manifest.name !== 'qni-cli' || manifest.version !== '0.2.0' || manifest.private === true) {
     throw new Error('packed qni-cli has invalid publication identity');
   }
   if (manifest.bin?.qni !== './dist/bin/qni.js' || manifest.license !== 'MIT') {

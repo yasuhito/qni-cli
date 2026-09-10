@@ -46,6 +46,8 @@ qni run --shots 16 --seed 42 --json
 
 ## Pi でスキルを確認する
 
+qni-cli 0.2.0 は pi-formula 0.1.0 を完全固定して同梱する。数式描画と設定は pi-formula が正本であり、確認には `/formula` を使う。
+
 Pi はディレクトリ形式のローカルパッケージを読み込むため、tarball を一時ディレクトリへ展開する。
 
 ```bash

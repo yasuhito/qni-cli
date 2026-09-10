@@ -15,7 +15,7 @@ qni-cli に同梱した数式描画拡張は、Pi の会話本文にあるイン
 - qni-cli は pi-formula の公開インターフェースを使い、量子系マクロと qni 専用ツールだけを追加する。
 - qni-cli は確認済みの pi-formula の版を同梱し、`pi install npm:qni-cli` 一回で従来の体験を提供する。
 - pi-formula 単体と qni-cli を両方導入しても、数式描画と `/formula` コマンドは一つだけ登録し、qni-cli の量子系マクロを追加する。
-- pi-formula 0.1.0 を qni-cli 0.1.0 より先に公開する。
+- pi-formula 0.1.0 を qni-cli 0.2.0 より先に公開する。
 
 ## 結果
 
