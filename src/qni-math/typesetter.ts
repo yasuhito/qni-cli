@@ -17,6 +17,12 @@ const EX_TO_CELL_HEIGHT = 0.65;
 const CONTENT_BLEED_PX = 1;
 const DEVICE_SCALE = 2;
 
+export const quantumMacros = {
+  ket: ["\\left|#1\\right\\rangle", 1],
+  bra: ["\\left\\langle#1\\right|", 1],
+  braket: ["\\left\\langle#1\\right\\rangle", 1]
+} as const;
+
 const adaptor = liteAdaptor({ fontSize: 16 });
 RegisterHTMLHandler(adaptor);
 
@@ -31,9 +37,7 @@ function mathDocument(macros: MathMacros) {
     packages: ["base", "ams", "newcommand", "configmacros"],
     macros: {
       ...configured,
-      ket: ["\\left|#1\\right\\rangle", 1],
-      bra: ["\\left\\langle#1\\right|", 1],
-      braket: ["\\left\\langle#1\\right\\rangle", 1]
+      ...quantumMacros
     },
     formatError: (_jax: unknown, error: unknown) => {
       throw error;

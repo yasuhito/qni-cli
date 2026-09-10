@@ -13,6 +13,14 @@ Given('薄い本文色で数式描画拡張を起動する', async function () {
   await registerMathExtension(this, { textColor: '\x1b[38;2;87;86;83m' });
 });
 
+Given('pi-formula がない偽の Pi ExtensionAPI に数式描画拡張を登録する', async function () {
+  await registerMathExtension(this, { formulaAvailable: false });
+});
+
+Given('想定外の版の pi-formula を返す偽の Pi ExtensionAPI に数式描画拡張を登録する', async function () {
+  await registerMathExtension(this, { formulaModule: {} });
+});
+
 Given('テキスト経路で偽の Pi ExtensionAPI に数式描画拡張を登録する', async function () {
   await registerMathExtension(this);
   await mathCommand(this).handler('text', { ui: { notify() {} } });
@@ -106,6 +114,26 @@ async function captureMathStatus(world) {
 
 When(/^`\$\\ket\{0\}\$` を含む本文を画像経路で変換する$/, function () {
   transform(this, '状態は $\\ket{0}$ です。');
+});
+
+When(/^pi-formula の変換器で `\\ket\{\\psi\}`、`\\bra\{\\psi\}`、`\\braket\{\\phi\|\\psi\}` を含む表示数式を変換する$/, function () {
+  assert.ok(this.qniFormulaTransformer, 'expected pi-formula to register a Markdown transformer');
+  this.qniFormulaMarkdown = this.qniFormulaTransformer(
+    '$$\\ket{\\psi} + \\bra{\\psi} + \\braket{\\phi|\\psi}$$',
+    {
+      messageType: 'assistant',
+      isStreaming: false,
+      availableWidth: 80
+    }
+  );
+});
+
+Then('pi-formula の変換結果は画像配置になる', function () {
+  imagePlacement(this.qniFormulaMarkdown);
+});
+
+Then('数式描画拡張の登録は成功する', function () {
+  assert.ok(this.qniMathTransformer, 'expected qni-math to register a Markdown transformer');
 });
 
 When(/^`\$x\$` を含む本文を画像経路で変換する$/, function () {

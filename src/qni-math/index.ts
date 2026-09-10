@@ -14,7 +14,7 @@ import {
   type MathPathMode
 } from "./path-settings";
 import { multiplexerProbeResult, probePngSupport, type TerminalProbe } from "./terminal-probe";
-import { typesetMath, type TypesetImage } from "./typesetter";
+import { quantumMacros, typesetMath, type TypesetImage } from "./typesetter";
 import {
   formatBatchFailure,
   formatCommandOutput,
@@ -70,6 +70,19 @@ const {
 
 const imageCache = new RenderCache<TypesetImage>(128, 32 * 1024 * 1024);
 const qniExecutable = resolve(__dirname, "../bin/qni.js");
+
+type FormulaModule = {
+  registerFormula: (pi: ExtensionAPI, macros: typeof quantumMacros) => void;
+};
+
+function registerPiFormulaWithQuantumMacros(pi: ExtensionAPI): void {
+  try {
+    const formula = require("pi-formula") as FormulaModule;
+    formula.registerFormula(pi, quantumMacros);
+  } catch {
+    // pi-formula is optional for qni-cli installations made before it was published.
+  }
+}
 
 function rgbFromAnsi(ansi: string): string | undefined {
   const trueColor = ansi.match(/38;2;(\d+);(\d+);(\d+)/);
@@ -144,6 +157,8 @@ function applyCapabilities(path: "image" | "text"): void {
 }
 
 export default function qniMathExtension(pi: ExtensionAPI): void {
+  registerPiFormulaWithQuantumMacros(pi);
+
   let effectivePath: "image" | "text" = "text";
   let selectionReason = "起動前";
   let probe: TerminalProbe = {

@@ -13,7 +13,9 @@ async function registerMathExtension(world, options = {}) {
   const terminalWrites = [];
   const sessionEntries = options.newSession ? [] : (world.qniMathSessionEntries ?? []);
   const eventHandlers = new Map();
+  const sessionStarts = [];
   let sessionStart;
+  const transformers = [];
   let transformer;
   let inputListener;
   let textColor = options.textColor ?? '\x1b[38;2;212;212;212m';
@@ -22,6 +24,8 @@ async function registerMathExtension(world, options = {}) {
   const previousTmux = process.env.TMUX;
   const previousTerm = process.env.TERM;
   const previousMacros = process.env.QNI_MATH_MACROS;
+  const Module = require('node:module');
+  const originalLoad = Module._load;
   const configHome = path.join(world.scenarioDir, 'qni-math-config');
   const configPath = path.join(configHome, 'qni-cli', 'qni-math.json');
 
@@ -40,10 +44,24 @@ async function registerMathExtension(world, options = {}) {
   setCapabilities({ images: null, trueColor: true, hyperlinks: true });
 
   try {
+    if (options.formulaAvailable === false || options.formulaModule !== undefined) {
+      Module._load = function (request, parent, isMain) {
+        if (request === 'pi-formula') {
+          if (options.formulaModule !== undefined) return options.formulaModule;
+          const error = new Error("Cannot find module 'pi-formula'");
+          error.code = 'MODULE_NOT_FOUND';
+          throw error;
+        }
+        return originalLoad.call(this, request, parent, isMain);
+      };
+    }
     extensionModule.default({
       on(event, handler) {
         eventHandlers.set(event, handler);
-        if (event === 'session_start') sessionStart = handler;
+        if (event === 'session_start') {
+          sessionStart = handler;
+          sessionStarts.push(handler);
+        }
       },
       appendEntry(customType, data) {
         sessionEntries.push({ type: 'custom', customType, data });
@@ -52,6 +70,7 @@ async function registerMathExtension(world, options = {}) {
         commands.set(name, commandOptions);
       },
       registerMarkdownTransformer(registered) {
+        transformers.push(registered);
         transformer = registered;
       },
       registerTool(tool) {
@@ -78,7 +97,7 @@ async function registerMathExtension(world, options = {}) {
 
     assert.ok(transformer, 'expected qni-math to register a Markdown transformer');
     assert.ok(sessionStart, 'expected qni-math to observe session startup');
-    await sessionStart({ reason: options.sessionStartReason ?? 'startup' }, {
+    const sessionContext = {
       mode: 'tui',
       sessionManager: { getBranch: () => sessionEntries },
       ui: {
@@ -120,8 +139,12 @@ async function registerMathExtension(world, options = {}) {
         },
         notify() {}
       }
-    });
+    };
+    for (const handler of sessionStarts) {
+      await handler({ reason: options.sessionStartReason ?? 'startup' }, sessionContext);
+    }
   } finally {
+    Module._load = originalLoad;
     if (previousHome === undefined) delete process.env.HOME;
     else process.env.HOME = previousHome;
     if (previousConfigHome === undefined) delete process.env.XDG_CONFIG_HOME;
@@ -138,6 +161,7 @@ async function registerMathExtension(world, options = {}) {
   world.qniMathEventHandlers = eventHandlers;
   world.qniMathTools = tools;
   world.qniMathTransformer = transformer;
+  world.qniFormulaTransformer = transformers.find((registered) => registered !== transformer);
   world.qniMathSessionEntries = sessionEntries;
   world.qniMathTerminalWrites = terminalWrites;
   world.qniMathSetTextColor = (ansi) => {
