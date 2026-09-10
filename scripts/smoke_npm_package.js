@@ -196,7 +196,7 @@ function assertPackageMetadata(packageRoot) {
   if (manifest.name !== 'qni-cli' || manifest.version !== '0.2.0' || manifest.private === true) {
     throw new Error('packed qni-cli has invalid publication identity');
   }
-  if (manifest.bin?.qni !== './dist/bin/qni.js' || manifest.license !== 'MIT') {
+  if (manifest.bin?.qni !== 'dist/bin/qni.js' || manifest.license !== 'MIT') {
     throw new Error('packed qni-cli has invalid command or license metadata');
   }
   if (!manifest.keywords?.includes('pi-package') || !manifest.pi?.skills?.includes('./skills/qni-cli')) {

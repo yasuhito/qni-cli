@@ -21,7 +21,7 @@
   ],
   "type": "commonjs",
   "bin": {
-    "qni": "./dist/bin/qni.js"
+    "qni": "dist/bin/qni.js"
   },
   "files": [
     "benchmarks/",

@@ -16,6 +16,10 @@ npm パッケージとしての通常経路を確認できるように
 
 - Then リポジトリファイル "package.json" は "\"private\": false" を含む
 
+## Scenario: npm bin は配布した CLI を指す
+
+- Then リポジトリファイル "package.json" は "\"qni\": \"dist/bin/qni.js\"" を含む
+
 ## Scenario: Piパッケージとして識別される
 
 - Then リポジトリファイル "package.json" は "\"pi-package\"" を含む
