@@ -27,3 +27,11 @@ qni-cli 0.2.0 の利用者として
 ## Scenario: Ghostty と Kitty の実端末確認結果を記録する
 
 - Then リポジトリファイル "docs/releases/formula-migration-0.2.0.md" は "Ghostty と Kitty の両方" を含む
+
+## Scenario: 実端末確認は qni ツールを実行する
+
+- Then リポジトリファイル "scripts/dev/verify_qni_formula_tool.sh" は "qni-formula-fixture" を含む
+
+## Scenario: 実端末確認の画面を記録する
+
+- Then リポジトリファイル "docs/releases/formula-migration-0.2.0.md" は "formula-migration-0.2.0-ghostty.png" を含む
