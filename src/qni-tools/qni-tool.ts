@@ -52,11 +52,12 @@ export type QniToolParams = {
 
 export type QniCommandDetail = {
   args: string[];
+  circuitSvg?: string;
   latex?: string;
 };
 
 export type QniToolDetails =
-  | { latex?: string; workdir: string }
+  | { circuitSvg?: string; latex?: string; workdir: string }
   | { workdir: string; commands: QniCommandDetail[] };
 
 export type QniExecResult = {

@@ -28,6 +28,10 @@
 
 - Then リポジトリファイル "skills/qni-cli/SKILL.md" は "専用の `qni` ツールを優先する" を含む
 
+## Scenario: 回路説明では画像と ASCII の表示経路を使い分ける
+
+- Then リポジトリファイル "skills/qni-cli/SKILL.md" は "画像経路では回路図を PNG で表示し、テキスト経路では ASCII 図へ戻す" を含む
+
 ## Scenario: 作業場所を選んでいない場合は一時作業場所を使う
 
 - Then リポジトリファイル "skills/qni-cli/SKILL.md" は "`workdir` を省略する" を含む

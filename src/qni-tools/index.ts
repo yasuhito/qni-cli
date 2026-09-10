@@ -1,5 +1,6 @@
 import { resolve } from "node:path";
 
+import { Resvg } from "@resvg/resvg-js";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent" with { "resolution-mode": "import" };
 
 import { quantumMacros } from "./quantum-macros";
@@ -42,6 +43,15 @@ type FormulaModule = {
   createFormulaPng: (latex: string, availableWidth: number) => { data: Buffer } | undefined;
 };
 
+async function circuitSvgFor(
+  args: readonly string[],
+  executeCommand: (args: string[]) => Promise<QniExecResult>,
+): Promise<string | undefined> {
+  if (args.length !== 1 || args[0] !== "view") return undefined;
+  const result = await executeCommand(["export", "--svg"]);
+  return result.killed || result.code !== 0 ? undefined : result.stdout;
+}
+
 function formulaModule(): FormulaModule {
   return require("pi-formula") as FormulaModule;
 }
@@ -80,10 +90,12 @@ export default function qniToolsExtension(pi: ExtensionAPI): void {
           if (result.killed) throw new Error("qni was cancelled");
           if (result.code !== 0) throw new Error(formatQniExitError(result));
           const output = await truncateQniOutput(result.stdout);
+          const circuitSvg = await circuitSvgFor(params.args, executeCommand);
           return {
             content: [{ type: "text" as const, text: output.text }],
             details: {
               ...(params.args.includes("--latex") && !output.truncated ? { latex: result.stdout } : {}),
+              ...(circuitSvg === undefined ? {} : { circuitSvg }),
               workdir
             }
           };
@@ -99,7 +111,12 @@ export default function qniToolsExtension(pi: ExtensionAPI): void {
           }
           const output = await formatCommandOutput(args, result.stdout);
           content.push({ type: "text", text: output.text });
-          commandDetails.push({ args, ...(args.includes("--latex") && !output.truncated ? { latex: result.stdout } : {}) });
+          const circuitSvg = await circuitSvgFor(args, executeCommand);
+          commandDetails.push({
+            args,
+            ...(args.includes("--latex") && !output.truncated ? { latex: result.stdout } : {}),
+            ...(circuitSvg === undefined ? {} : { circuitSvg })
+          });
         }
         return { content, details: { workdir, commands: commandDetails } };
       });
@@ -113,6 +130,16 @@ export default function qniToolsExtension(pi: ExtensionAPI): void {
         if (!image) return undefined;
         return new Image(image.data.toString("base64"), "image/png", { fallbackColor: (fallback) => theme.fg("muted", fallback) }, { maxWidthCells, maxHeightCells: 4 });
       };
+      const imageForCircuit = (svg: string) => {
+        if (formula.getFormulaPath() !== "image") return undefined;
+        try {
+          const png = new Resvg(svg).render().asPng();
+          const maxWidthCells = expanded ? 120 : 60;
+          return new Image(png.toString("base64"), "image/png", { fallbackColor: (fallback) => theme.fg("muted", fallback) }, { maxWidthCells, maxHeightCells: 30 });
+        } catch {
+          return undefined;
+        }
+      };
 
       let body;
       if (details && "commands" in details) {
@@ -120,7 +147,9 @@ export default function qniToolsExtension(pi: ExtensionAPI): void {
         const texts = result.content.filter((item) => item.type === "text");
         texts.forEach((item, index) => {
           const command = details.commands[index];
-          const image = command?.latex ? imageForLatex(command.latex) : undefined;
+          const image = command?.circuitSvg
+            ? imageForCircuit(command.circuitSvg)
+            : command?.latex ? imageForLatex(command.latex) : undefined;
           if (image) {
             batch.addChild(new Text(item.text.split("\n", 1)[0]!, 0, 0));
             batch.addChild(image);
@@ -129,7 +158,9 @@ export default function qniToolsExtension(pi: ExtensionAPI): void {
         body = batch;
       } else {
         const text = result.content.find((item) => item.type === "text")?.text ?? "";
-        body = details?.latex ? imageForLatex(details.latex) : undefined;
+        body = details?.circuitSvg
+          ? imageForCircuit(details.circuitSvg)
+          : details?.latex ? imageForLatex(details.latex) : undefined;
         body ??= new Text(text.trimEnd(), 0, 0);
       }
       if (!expanded || !details) return body;

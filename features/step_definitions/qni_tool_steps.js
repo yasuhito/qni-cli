@@ -172,6 +172,11 @@ When('qni ツールで H ゲートを追加して回路を実行する', async f
   this.directQniResult = await executeBundledQni(['run'], added.details.workdir);
 });
 
+When('qni ツールで H ゲートを追加して回路を表示する', async function () {
+  await addHadamard(this);
+  this.qniToolResult = await executeQniTool(this, ['view']);
+});
+
 When('作業場所を省略して qni ツールで H ゲートを追加する', async function () {
   await addHadamard(this);
 });
@@ -429,6 +434,13 @@ Then('qni ツールの結果本文と結果詳細は同じ LaTeX である', fun
 Then('qni ツールの結果描画は Image 部品である', function () {
   const { Image } = require('@earendil-works/pi-tui');
   assert.ok(renderQniToolResult(this) instanceof Image);
+});
+
+Then('qni ツールの回路図結果描画は ASCII 図の文字列である', function () {
+  const component = renderQniToolResult(this);
+  const rendered = component.render(80).join('\n');
+  assert.match(rendered, /┌───┐/u);
+  assert.doesNotMatch(rendered, /\x1b_G/u);
 });
 
 Then('qni ツールは pi-formula に LaTeX の結果を渡す', function () {
