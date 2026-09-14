@@ -1,21 +1,24 @@
-import { mkdirSync, writeFileSync } from 'node:fs';
-import path from 'node:path';
+import { mkdirSync, writeFileSync } from "node:fs";
+import path from "node:path";
 
-import { CircuitFileError, currentCircuitFile, type CircuitData } from '../circuit_file';
-import type { CommandHandlerContext } from '../dispatcher';
-import { CircleNotationPng } from '../export/circle_notation_png';
-import { CircuitSvg } from '../export/circuit_svg';
+import {
+  CircuitFileError,
+  currentCircuitFile,
+  type CircuitData,
+} from "../circuit_file";
+import type { CommandHandlerContext } from "../dispatcher";
+import { CircleNotationPng } from "../export/circle_notation_png";
+import { CircuitSvg } from "../export/circuit_svg";
 import {
   QuantikzLatex,
-  quantikzRenderedColumnCount,
   validateCaptionOptions,
-  type ExportTheme
-} from '../export/quantikz_latex';
-import { circuitPngHeight, circuitPngWidth, PngExporter } from '../export/png_exporter';
-import { StateVectorLatex } from '../export/state_vector_latex';
-import { Simulator } from '../simulator';
-import { thorArgumentsError } from './thor_compatibility';
-import { renderSymbolicStateVector } from '../symbolic_state_renderer';
+  type ExportTheme,
+} from "../export/quantikz_latex";
+import { PngExporter } from "../export/png_exporter";
+import { StateVectorLatex } from "../export/state_vector_latex";
+import { Simulator } from "../simulator";
+import { thorArgumentsError } from "./thor_compatibility";
+import { renderSymbolicStateVector } from "../symbolic_state_renderer";
 
 const HELP_TEXT = `Usage:
   qni export --svg [--caption=TEXT] [--caption-position=top|bottom] [--caption-size=N] [--output=PATH]
@@ -69,7 +72,7 @@ Examples:
 
 interface ExportOptions {
   readonly caption?: string;
-  readonly captionFormat: 'tex' | 'text';
+  readonly captionFormat: "tex" | "text";
   readonly captionSizeError?: string;
   readonly captionPosition: string;
   readonly captionSize: number;
@@ -84,71 +87,123 @@ interface ExportOptions {
   readonly transparent: boolean;
 }
 
-const BOOLEAN_OPTIONS = new Map<string, (options: MutableExportOptions) => void>([
-  ['--caption-tex', (options) => {
-    options.captionFormat = 'tex';
-  }],
-  ['--circle-notation', (options) => {
-    options.circleNotation = true;
-  }],
-  ['--dark', (options) => {
-    options.dark = true;
-  }],
-  ['--latex-source', (options) => {
-    options.latexSource = true;
-  }],
-  ['--light', (options) => {
-    options.light = true;
-  }],
-  ['--no-transparent', (options) => {
-    options.transparent = false;
-  }],
-  ['--png', (options) => {
-    options.png = true;
-  }],
-  ['--state-vector', (options) => {
-    options.stateVector = true;
-  }],
-  ['--svg', (options) => {
-    options.svg = true;
-  }],
-  ['--transparent', (options) => {
-    options.transparent = true;
-  }]
+const BOOLEAN_OPTIONS = new Map<
+  string,
+  (options: MutableExportOptions) => void
+>([
+  [
+    "--caption-tex",
+    (options) => {
+      options.captionFormat = "tex";
+    },
+  ],
+  [
+    "--circle-notation",
+    (options) => {
+      options.circleNotation = true;
+    },
+  ],
+  [
+    "--dark",
+    (options) => {
+      options.dark = true;
+    },
+  ],
+  [
+    "--latex-source",
+    (options) => {
+      options.latexSource = true;
+    },
+  ],
+  [
+    "--light",
+    (options) => {
+      options.light = true;
+    },
+  ],
+  [
+    "--no-transparent",
+    (options) => {
+      options.transparent = false;
+    },
+  ],
+  [
+    "--png",
+    (options) => {
+      options.png = true;
+    },
+  ],
+  [
+    "--state-vector",
+    (options) => {
+      options.stateVector = true;
+    },
+  ],
+  [
+    "--svg",
+    (options) => {
+      options.svg = true;
+    },
+  ],
+  [
+    "--transparent",
+    (options) => {
+      options.transparent = true;
+    },
+  ],
 ]);
 
-const VALUE_OPTIONS = new Map<string, (options: MutableExportOptions, value: string) => void>([
-  ['--caption', (options, value) => {
-    options.caption = value;
-  }],
-  ['--caption-position', (options, value) => {
-    options.captionPosition = value;
-  }],
-  ['--caption-size', (options, value) => {
-    if (value.length === 0) {
-      options.captionSizeError = "No value provided for option '--caption-size'";
-      return;
-    }
+const VALUE_OPTIONS = new Map<
+  string,
+  (options: MutableExportOptions, value: string) => void
+>([
+  [
+    "--caption",
+    (options, value) => {
+      options.caption = value;
+    },
+  ],
+  [
+    "--caption-position",
+    (options, value) => {
+      options.captionPosition = value;
+    },
+  ],
+  [
+    "--caption-size",
+    (options, value) => {
+      if (value.length === 0) {
+        options.captionSizeError =
+          "No value provided for option '--caption-size'";
+        return;
+      }
 
-    const captionSize = parseCaptionSize(value);
+      const captionSize = parseCaptionSize(value);
 
-    if (captionSize === undefined) {
-      options.captionSizeError = `Expected numeric value for '--caption-size'; got "${value}"`;
-      return;
-    }
+      if (captionSize === undefined) {
+        options.captionSizeError = `Expected numeric value for '--caption-size'; got "${value}"`;
+        return;
+      }
 
-    options.captionSize = captionSize;
-  }],
-  ['--output', (options, value) => {
-    options.output = value;
-  }]
+      options.captionSize = captionSize;
+    },
+  ],
+  [
+    "--output",
+    (options, value) => {
+      options.output = value;
+    },
+  ],
 ]);
 
 type MutableExportOptions = {
   -readonly [Property in keyof ExportOptions]: ExportOptions[Property];
 };
 
-export function runExportCommand(argv: string[], context: CommandHandlerContext): number {
+export function runExportCommand(
+  argv: string[],
+  context: CommandHandlerContext
+): number {
   if (helpRequest(argv)) {
     process.stdout.write(HELP_TEXT);
     return 0;
@@ -175,7 +230,7 @@ export function runExportCommand(argv: string[], context: CommandHandlerContext)
         caption: options.caption,
         captionPosition: options.captionPosition,
         captionSize: options.captionSize,
-        theme: theme(options)
+        theme: theme(options),
       }).render();
       writeTextOutput(svg, options, context.cwd);
       return 0;
@@ -186,11 +241,11 @@ export function runExportCommand(argv: string[], context: CommandHandlerContext)
       captionFormat: options.captionFormat,
       captionPosition: options.captionPosition,
       captionSize: options.captionSize,
-      theme: theme(options)
+      theme: theme(options),
     }).render();
 
     if (options.png) {
-      writePng(latexSource, options, context, quantikzRenderedColumnCount(circuit), circuit.qubits);
+      writePng(latexSource, options, context);
     } else {
       writeTextOutput(latexSource, options, context.cwd);
     }
@@ -207,13 +262,16 @@ export function runExportCommand(argv: string[], context: CommandHandlerContext)
 }
 
 function helpRequest(argv: string[]): boolean {
-  return argv.length === 1 || (argv.length === 2 && (argv[1] === '--help' || argv[1] === '-h'));
+  return (
+    argv.length === 1 ||
+    (argv.length === 2 && (argv[1] === "--help" || argv[1] === "-h"))
+  );
 }
 
 function parseExportOptions(args: string[]): ExportOptions {
   const options: MutableExportOptions = {
-    captionFormat: 'text',
-    captionPosition: 'bottom',
+    captionFormat: "text",
+    captionPosition: "bottom",
     captionSize: 12,
     circleNotation: false,
     dark: false,
@@ -222,7 +280,7 @@ function parseExportOptions(args: string[]): ExportOptions {
     png: false,
     stateVector: false,
     svg: false,
-    transparent: true
+    transparent: true,
   };
 
   for (let index = 0; index < args.length; index += 1) {
@@ -244,7 +302,7 @@ function parseExportOptions(args: string[]): ExportOptions {
     const booleanSetter = BOOLEAN_OPTIONS.get(arg);
 
     if (!booleanSetter) {
-      throw new Error(thorArgumentsError('qni export', [arg], 'qni export'));
+      throw new Error(thorArgumentsError("qni export", [arg], "qni export"));
     }
 
     booleanSetter(options);
@@ -259,54 +317,66 @@ function validateOptions(options: ExportOptions): void {
   }
 
   if (!options.png && options.stateVector) {
-    throw new Error('--state-vector currently supports only --png');
+    throw new Error("--state-vector currently supports only --png");
   }
 
   if (!options.png && options.circleNotation) {
-    throw new Error('--circle-notation currently supports only --png');
+    throw new Error("--circle-notation currently supports only --png");
   }
 
-  if (Number(options.latexSource) + Number(options.png) + Number(options.svg) !== 1) {
-    throw new Error('choose exactly one of --svg, --latex-source, or --png');
+  if (
+    Number(options.latexSource) + Number(options.png) + Number(options.svg) !==
+    1
+  ) {
+    throw new Error("choose exactly one of --svg, --latex-source, or --png");
   }
 
   if (options.svg && (options.stateVector || options.circleNotation)) {
-    throw new Error('--svg supports only regular circuit export');
+    throw new Error("--svg supports only regular circuit export");
   }
 
-  if (options.svg && options.captionFormat === 'tex') {
-    throw new Error('--caption-tex is not supported with --svg');
+  if (options.svg && options.captionFormat === "tex") {
+    throw new Error("--caption-tex is not supported with --svg");
   }
 
   if (options.dark && options.light) {
-    throw new Error('choose at most one of --dark or --light');
+    throw new Error("choose at most one of --dark or --light");
   }
 
   if (options.stateVector && options.circleNotation) {
-    throw new Error('choose at most one of --state-vector or --circle-notation');
+    throw new Error(
+      "choose at most one of --state-vector or --circle-notation"
+    );
   }
 
-  if (captionPresent(options) && (options.stateVector || options.circleNotation)) {
-    throw new Error('--caption is supported only for regular circuit export');
+  if (
+    captionPresent(options) &&
+    (options.stateVector || options.circleNotation)
+  ) {
+    throw new Error("--caption is supported only for regular circuit export");
   }
 
   validateCaptionOptions({
     caption: options.caption,
     captionFormat: options.captionFormat,
     captionPosition: options.captionPosition,
-    captionSize: options.captionSize
+    captionSize: options.captionSize,
   });
 
   if (options.png && !options.output) {
-    throw new Error('--output=PATH is required for --png');
+    throw new Error("--output=PATH is required for --png");
   }
 }
 
 function captionPresent(options: ExportOptions): boolean {
-  return (options.caption ?? '').length > 0;
+  return (options.caption ?? "").length > 0;
 }
 
-function optionValue(optionName: string, inlineValue: string | undefined, nextValue: string | undefined): {
+function optionValue(
+  optionName: string,
+  inlineValue: string | undefined,
+  nextValue: string | undefined
+): {
   readonly consumeNext: boolean;
   readonly value: string;
 } {
@@ -314,15 +384,15 @@ function optionValue(optionName: string, inlineValue: string | undefined, nextVa
     return { consumeNext: false, value: inlineValue };
   }
 
-  if (optionName === '--caption-size') {
+  if (optionName === "--caption-size") {
     if (nextValue === undefined || optionLikeCaptionSizeValue(nextValue)) {
-      return { consumeNext: false, value: '' };
+      return { consumeNext: false, value: "" };
     }
 
     return { consumeNext: true, value: nextValue };
   }
 
-  if (nextValue === undefined || nextValue.startsWith('-')) {
+  if (nextValue === undefined || nextValue.startsWith("-")) {
     return { consumeNext: false, value: optionName.slice(2) };
   }
 
@@ -330,7 +400,7 @@ function optionValue(optionName: string, inlineValue: string | undefined, nextVa
 }
 
 function optionLikeCaptionSizeValue(value: string): boolean {
-  return value.startsWith('-') && parseCaptionSize(value) === undefined;
+  return value.startsWith("-") && parseCaptionSize(value) === undefined;
 }
 
 function parseCaptionSize(value: string): number | undefined {
@@ -342,10 +412,14 @@ function parseCaptionSize(value: string): number | undefined {
 }
 
 function theme(options: ExportOptions): ExportTheme {
-  return options.light ? 'light' : 'dark';
+  return options.light ? "light" : "dark";
 }
 
-function writeTextOutput(output: string, options: ExportOptions, cwd: string): void {
+function writeTextOutput(
+  output: string,
+  options: ExportOptions,
+  cwd: string
+): void {
   if (!options.output) {
     process.stdout.write(`${output}\n`);
     return;
@@ -360,56 +434,54 @@ function writeTextOutput(output: string, options: ExportOptions, cwd: string): v
 function writePng(
   latexSource: string,
   options: ExportOptions,
-  context: CommandHandlerContext,
-  columns: number,
-  qubits: number
+  context: CommandHandlerContext
 ): void {
-  const exporterOptions = captionPresent(options)
-    ? {}
-    : {
-        targetHeight: circuitPngHeight(qubits),
-        targetWidth: circuitPngWidth(columns)
-      };
-
   new PngExporter(latexSource, {
     cwd: context.cwd,
     env: context.env,
     outputPath: outputPath(options, context.cwd),
     transparent: options.transparent,
-    ...exporterOptions
   }).export();
 }
 
-function writeStateVectorPng(circuit: CircuitData, options: ExportOptions, context: CommandHandlerContext): void {
+function writeStateVectorPng(
+  circuit: CircuitData,
+  options: ExportOptions,
+  context: CommandHandlerContext
+): void {
   const latexFormula = renderSymbolicStateVector({
     circuit,
     env: context.env,
-    format: 'latex',
-    projectRoot: context.projectRoot
+    format: "latex",
+    projectRoot: context.projectRoot,
   });
   const latexSource = new StateVectorLatex({
     latexFormula,
-    theme: theme(options)
+    theme: theme(options),
   }).render();
 
   new PngExporter(latexSource, {
     cwd: context.cwd,
     env: context.env,
     outputPath: outputPath(options, context.cwd),
-    transparent: options.transparent
+    transparent: options.transparent,
   }).export();
 }
 
-function writeCircleNotationPng(circuit: CircuitData, options: ExportOptions, context: CommandHandlerContext): void {
+function writeCircleNotationPng(
+  circuit: CircuitData,
+  options: ExportOptions,
+  context: CommandHandlerContext
+): void {
   new CircleNotationPng({
     env: context.env,
     outputPath: outputPath(options, context.cwd),
     projectRoot: context.projectRoot,
     stateVector: new Simulator(circuit).exportPayload(),
-    theme: theme(options)
+    theme: theme(options),
   }).export();
 }
 
 function outputPath(options: ExportOptions, cwd: string): string {
-  return path.resolve(cwd, options.output ?? '');
+  return path.resolve(cwd, options.output ?? "");
 }
