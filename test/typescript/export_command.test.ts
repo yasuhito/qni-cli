@@ -721,6 +721,7 @@ describe("export command TypeScript route", () => {
       assert.equal(result.stdout, "");
       assert.equal(result.stderr, "");
       assert.equal(png.transparent, false);
+      assert.equal(transparentPng.transparent, true);
       assert.deepEqual(
         { height: png.height, width: png.width },
         { height: transparentPng.height, width: transparentPng.width }
