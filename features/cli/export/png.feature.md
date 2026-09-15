@@ -40,6 +40,18 @@ qni export --png で通常の回路図を PNG 形式で書き出したい。
 - When "qni export --png --light --no-transparent --output circuit.png" を実行
 - Then "circuit.png" は不透過 PNG 画像である
 
+## Scenario: ダークテーマの不透過 PNG は黒い背景を持つ
+
+- Given "qni add H --qubit 0 --step 0" を実行
+- When "qni export --png --dark --no-transparent --output circuit.png" を実行
+- Then "circuit.png" の背景色は "#000000" である
+
+## Scenario: ダークテーマの不透過 PNG でも回路が見える
+
+- Given "qni add H --qubit 0 --step 0" を実行
+- When "qni export --png --dark --no-transparent --output circuit.png" を実行
+- Then "circuit.png" の四辺のインク余白は 15px 以上 17px 以下である
+
 ## Scenario: qni export --png は 1x1 回路を読み取れる大きさと均等な余白で書き出す
 
 - Given "qni add H --qubit 0 --step 0" を実行

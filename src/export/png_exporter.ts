@@ -1,11 +1,26 @@
-import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+  cpSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { spawnSync, type SpawnSyncReturns } from "node:child_process";
 
+import {
+  flattenPngBackground,
+  normalizePngInkMargin,
+  type PngBackground,
+} from "./png_ink_margin";
+
 export interface PngExportOptions {
   readonly cwd: string;
   readonly env: NodeJS.ProcessEnv;
+  readonly inkMargin?: number;
+  readonly opaqueBackground: PngBackground;
   readonly outputPath: string;
   readonly transparent: boolean;
 }
@@ -20,14 +35,18 @@ interface ArtifactPaths {
 export class PngExporter {
   private readonly cwd: string;
   private readonly env: NodeJS.ProcessEnv;
+  private readonly inkMargin?: number;
   private readonly latexSource: string;
+  private readonly opaqueBackground: PngBackground;
   private readonly outputPath: string;
   private readonly transparent: boolean;
 
   constructor(latexSource: string, options: PngExportOptions) {
     this.cwd = options.cwd;
     this.env = options.env;
+    this.inkMargin = options.inkMargin;
     this.latexSource = latexSource;
+    this.opaqueBackground = options.opaqueBackground;
     this.outputPath = options.outputPath;
     this.transparent = options.transparent;
   }
@@ -50,7 +69,27 @@ export class PngExporter {
     writeFileSync(paths.tex, this.latexSource);
     this.compilePdf(dir, paths.tex);
     this.convertPdfToPng(paths.pdf, paths.pngBase);
-    cpSync(paths.png, this.outputPath);
+    if (this.inkMargin !== undefined) {
+      writeFileSync(
+        this.outputPath,
+        normalizePngInkMargin(
+          readFileSync(paths.png),
+          this.inkMargin,
+          this.transparent ? undefined : this.opaqueBackground
+        )
+      );
+      return;
+    }
+
+    if (this.transparent) {
+      cpSync(paths.png, this.outputPath);
+      return;
+    }
+
+    writeFileSync(
+      this.outputPath,
+      flattenPngBackground(readFileSync(paths.png), this.opaqueBackground)
+    );
   }
 
   private compilePdf(dir: string, texPath: string): void {
@@ -78,9 +117,8 @@ export class PngExporter {
   private pdfToPngBaseArgs(): string[] {
     const args = ["-singlefile", "-png", "-q"];
 
-    if (this.transparent) {
-      args.push("-transp");
-    }
+    // テーマに合う不透過背景へ後から合成できるよう、常にアルファ付きで描く。
+    args.push("-transp");
 
     return args;
   }

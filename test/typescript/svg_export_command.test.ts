@@ -3,6 +3,9 @@ import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { describe, it } from "node:test";
 
+import { Resvg } from "@resvg/resvg-js";
+import { PNG } from "pngjs";
+
 import { captureDispatcherRun, withTempDir } from "./helpers/command";
 
 const TEMP_DIR_OPTIONS = { prefix: "qni-cli-svg-export-" };
@@ -12,6 +15,75 @@ async function writeCircuit(dir: string, circuit: unknown): Promise<void> {
     path.join(dir, "circuit.json"),
     `${JSON.stringify(circuit, null, 2)}\n`
   );
+}
+
+interface InkBounds {
+  readonly bottom: number;
+  readonly left: number;
+  readonly right: number;
+  readonly top: number;
+}
+
+function pngInkBounds(png: Buffer): InkBounds {
+  const image = PNG.sync.read(png);
+  let bottom = 0;
+  let left = image.width;
+  let right = 0;
+  let top = image.height;
+
+  for (let y = 0; y < image.height; y += 1) {
+    for (let x = 0; x < image.width; x += 1) {
+      if (image.data[(y * image.width + x) * 4 + 3] === 0) {
+        continue;
+      }
+      bottom = Math.max(bottom, y + 1);
+      left = Math.min(left, x);
+      right = Math.max(right, x + 1);
+      top = Math.min(top, y);
+    }
+  }
+
+  assert.ok(right > left && bottom > top, "expected rendered SVG ink");
+  return { bottom, left, right, top };
+}
+
+function isolatedSvgInkBounds(
+  svg: string,
+  elementPattern: RegExp,
+  cropY = 0
+): InkBounds {
+  const dimensions = svgDimensions(svg);
+  const root = svg
+    .split("\n")[0]
+    .replace(
+      /viewBox="[^"]+" width="\d+" height="\d+"/u,
+      `viewBox="0 ${cropY} ${dimensions.width} 64" width="${dimensions.width}" height="64"`
+    );
+  const style = svg.split("\n")[1];
+  const element = svg.split("\n").find((line) => elementPattern.test(line));
+
+  assert.ok(element, `expected SVG element matching ${elementPattern}`);
+  return pngInkBounds(
+    new Resvg([root, style, element, "</svg>"].join("\n")).render().asPng()
+  );
+}
+
+function numberAttribute(element: string, name: string): number {
+  const match = new RegExp(`${name}="(?<value>[0-9.]+)"`, "u").exec(element);
+
+  assert.ok(match?.groups);
+  return Number(match.groups.value);
+}
+
+function seededRandom(seed: number): () => number {
+  let state = seed >>> 0;
+
+  return () => {
+    state ^= state << 13;
+    state ^= state >>> 17;
+    state ^= state << 5;
+    return (state >>> 0) / 0x1_0000_0000;
+  };
 }
 
 function svgDimensions(svg: string): {
@@ -72,6 +144,147 @@ describe("SVG export command", () => {
         result.stdout,
         /<text x="84" y="37" text-anchor="middle">H<\/text>/u
       );
+    }, TEMP_DIR_OPTIONS);
+  });
+
+  it("keeps a four-digit qubit label clear of its wire", async () => {
+    await withTempDir(async (dir) => {
+      const qubit = 1000;
+      const slots = Array.from(
+        { length: qubit + 1 },
+        () => 1 as string | number
+      );
+      slots[qubit] = "H";
+      await writeCircuit(dir, { qubits: qubit + 1, cols: [slots] });
+
+      const result = captureDispatcherRun(dir, ["export", "--svg", "--light"], {
+        PATH: "",
+      });
+      const labelBounds = isolatedSvgInkBounds(
+        result.stdout,
+        new RegExp(`data-operation="wire-label" data-qubit="${qubit}"`, "u"),
+        qubit * 64
+      );
+      const wire = result.stdout
+        .split("\n")
+        .find((line) =>
+          line.includes(`data-operation="wire" data-qubit="${qubit}"`)
+        );
+
+      assert.equal(result.exitStatus, 0);
+      assert.ok(wire);
+      assert.ok(
+        numberAttribute(wire, "x1") - labelBounds.right >= 8,
+        `expected q${qubit} label to be at least 8px left of its wire`
+      );
+    }, TEMP_DIR_OPTIONS);
+  });
+
+  it("places a long measurement name after the meter without clipping it", async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        qubits: 1,
+        cols: [["Measure>very_long_measurement_register_name"]],
+      });
+
+      const result = captureDispatcherRun(dir, ["export", "--svg", "--light"], {
+        PATH: "",
+      });
+      const annotationBounds = isolatedSvgInkBounds(
+        result.stdout,
+        /class="annotation measurement-name"/u
+      );
+      const meter = result.stdout
+        .split("\n")
+        .find((line) => line.includes('<rect class="meter-box"'));
+      const dimensions = svgDimensions(result.stdout);
+
+      assert.equal(result.exitStatus, 0);
+      assert.ok(meter);
+      const meterRight =
+        numberAttribute(meter, "x") + numberAttribute(meter, "width");
+      assert.ok(
+        annotationBounds.left - meterRight >= 4,
+        "expected measurement name to start after the meter"
+      );
+      assert.ok(
+        dimensions.width - annotationBounds.right >= 16,
+        "expected measurement name to fit within the SVG viewport"
+      );
+    }, TEMP_DIR_OPTIONS);
+  });
+
+  it("keeps seed-fixed generated labels and measurement names clear and unclipped", async () => {
+    await withTempDir(async (dir) => {
+      const random = seededRandom(0xd02);
+
+      for (let index = 0; index < 8; index += 1) {
+        const qubits =
+          index < 4
+            ? 1 + Math.floor(random() * 8)
+            : 100 + Math.floor(random() * 1101);
+        const measurementName = Array.from(
+          { length: 4 + Math.floor(random() * 33) },
+          () => "abcdefghijklmnopqrstuvwxyz_W"[Math.floor(random() * 29)]
+        ).join("");
+        const slots = Array.from(
+          { length: qubits },
+          () => 1 as string | number
+        );
+        slots[qubits - 1] = `Measure>${measurementName}`;
+        await writeCircuit(dir, { qubits, cols: [slots] });
+
+        const result = captureDispatcherRun(
+          dir,
+          ["export", "--svg", "--light"],
+          { PATH: "" }
+        );
+        const cropY = (qubits - 1) * 64;
+        const labelBounds = isolatedSvgInkBounds(
+          result.stdout,
+          new RegExp(
+            `data-operation="wire-label" data-qubit="${qubits - 1}"`,
+            "u"
+          ),
+          cropY
+        );
+        const annotationBounds = isolatedSvgInkBounds(
+          result.stdout,
+          /class="annotation measurement-name"/u,
+          cropY
+        );
+        const lines = result.stdout.split("\n");
+        const wire = lines.find((line) =>
+          line.includes(`data-operation="wire" data-qubit="${qubits - 1}"`)
+        );
+        const meter = lines.find((line) =>
+          line.includes('<rect class="meter-box"')
+        );
+
+        assert.equal(result.exitStatus, 0, `generated case ${index}`);
+        assert.ok(wire && meter);
+        assert.ok(
+          numberAttribute(wire, "x1") - labelBounds.right >= 8,
+          `generated case ${index}: label overlaps wire`
+        );
+        if (qubits <= 8) {
+          assert.equal(
+            numberAttribute(wire, "x1"),
+            48,
+            `generated case ${index}: ordinary wire placement changed`
+          );
+        }
+        assert.ok(
+          annotationBounds.left -
+            (numberAttribute(meter, "x") + numberAttribute(meter, "width")) >=
+            4,
+          `generated case ${index}: measurement name overlaps meter`
+        );
+        assert.ok(
+          svgDimensions(result.stdout).width - annotationBounds.right >= 16,
+          `generated case ${index}: measurement name is clipped`
+        );
+      }
     }, TEMP_DIR_OPTIONS);
   });
 

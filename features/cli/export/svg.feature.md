@@ -41,6 +41,26 @@ qni export --svg で回路図を SVG 形式に直接書き出したい。
   viewBox="0 0 136 64" width="136" height="64"
   ```
 
+## Scenario: 1001量子ビットの SVG は高桁の量子ビットラベルとワイヤを離す
+
+- Given "qni add H --qubit 1000 --step 0" を実行
+- When "qni export --svg --output high-digit.svg" を実行
+- Then 作業ディレクトリのファイル "high-digit.svg" は次を含む:
+
+  ```text
+  data-operation="wire" data-qubit="1000" x1="72"
+  ```
+
+## Scenario: qni export --svg は長い測定名を計測器の右側に配置する
+
+- Given "qni add Measure --name very_long_measurement_register_name --qubit 0 --step 0" を実行
+- When "qni export --svg" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  class="annotation measurement-name" x="112" y="20" text-anchor="start"
+  ```
+
 ## Scenario: qni export --svg --output は SVG ファイルを書き出す
 
 - Given "qni add X --control 0 --qubit 1 --step 0" を実行

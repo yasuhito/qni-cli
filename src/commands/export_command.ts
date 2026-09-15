@@ -20,6 +20,9 @@ import { Simulator } from "../simulator";
 import { thorArgumentsError } from "./thor_compatibility";
 import { renderSymbolicStateVector } from "../symbolic_state_renderer";
 
+// TeX の行ボックスではなく、PNG に描かれた実際のインク端から測る余白。
+const CAPTION_PNG_INK_MARGIN = 16;
+
 const HELP_TEXT = `Usage:
   qni export --svg [--caption=TEXT] [--caption-position=top|bottom] [--caption-size=N] [--output=PATH]
   qni export --latex-source [--output=PATH]
@@ -439,6 +442,8 @@ function writePng(
   new PngExporter(latexSource, {
     cwd: context.cwd,
     env: context.env,
+    inkMargin: captionPresent(options) ? CAPTION_PNG_INK_MARGIN : undefined,
+    opaqueBackground: pngBackground(options),
     outputPath: outputPath(options, context.cwd),
     transparent: options.transparent,
   }).export();
@@ -463,9 +468,14 @@ function writeStateVectorPng(
   new PngExporter(latexSource, {
     cwd: context.cwd,
     env: context.env,
+    opaqueBackground: pngBackground(options),
     outputPath: outputPath(options, context.cwd),
     transparent: options.transparent,
   }).export();
+}
+
+function pngBackground(options: ExportOptions): "black" | "white" {
+  return theme(options) === "dark" ? "black" : "white";
 }
 
 function writeCircleNotationPng(

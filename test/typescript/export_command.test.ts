@@ -13,6 +13,8 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, it } from "node:test";
 
+import { PNG } from "pngjs";
+
 import { createDispatcher } from "../../src/dispatcher";
 
 interface CapturedRun {
@@ -143,8 +145,9 @@ function pngInkMargins(filePath: string): PngMargins {
   const script = [
     "import json, sys",
     "from PIL import Image, ImageChops",
-    'image = Image.open(sys.argv[1]).convert("RGB")',
-    'bounds = ImageChops.difference(image, Image.new("RGB", image.size, "white")).getbbox()',
+    'image = Image.open(sys.argv[1]).convert("RGBA")',
+    'alpha = image.getchannel("A")',
+    'bounds = alpha.getbbox() if alpha.getextrema()[0] < 255 else ImageChops.difference(image.convert("RGB"), Image.new("RGB", image.size, image.getpixel((0, 0))[:3])).getbbox()',
     "assert bounds is not None",
     "left, top, right, bottom = bounds",
     'print(json.dumps({"bottom": image.height - bottom, "left": left, "right": image.width - right, "top": top}))',
@@ -155,6 +158,52 @@ function pngInkMargins(filePath: string): PngMargins {
   });
 
   return JSON.parse(output) as PngMargins;
+}
+
+function assertBalancedInkMargins(filePath: string, context: string): void {
+  for (const [edge, margin] of Object.entries(pngInkMargins(filePath))) {
+    assert.ok(
+      margin >= 15 && margin <= 17,
+      `${context}: expected ${edge} ink margin near 16px, got ${margin}px`
+    );
+  }
+}
+
+async function assertPngBackground(
+  filePath: string,
+  expected: readonly [number, number, number, number]
+): Promise<void> {
+  const png = PNG.sync.read(await readFile(filePath));
+  assert.deepEqual(Array.from(png.data.subarray(0, 4)), expected);
+}
+
+async function assertPngHasVisibleInk(filePath: string): Promise<void> {
+  const png = PNG.sync.read(await readFile(filePath));
+  const background = png.data.subarray(0, 3);
+
+  for (let offset = 0; offset < png.data.length; offset += 4) {
+    if (
+      png.data[offset + 3] > 0 &&
+      (png.data[offset] !== background[0] ||
+        png.data[offset + 1] !== background[1] ||
+        png.data[offset + 2] !== background[2])
+    ) {
+      return;
+    }
+  }
+
+  assert.fail(`expected ${filePath} to contain visible ink`);
+}
+
+function seededRandom(seed: number): () => number {
+  let state = seed >>> 0;
+
+  return () => {
+    state ^= state << 13;
+    state ^= state >>> 17;
+    state ^= state << 5;
+    return (state >>> 0) / 0x1_0000_0000;
+  };
 }
 
 function pngChunks(png: Buffer): Array<{ readonly type: string }> {
@@ -442,6 +491,34 @@ describe("export command TypeScript route", () => {
     });
   });
 
+  it("keeps a dark opaque state-vector visible against a black background", async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        qubits: 1,
+        cols: [["H"]],
+      });
+
+      const result = captureDispatcherRun(dir, [
+        "export",
+        "--state-vector",
+        "--png",
+        "--dark",
+        "--no-transparent",
+        "--output",
+        "state.png",
+      ]);
+      const output = path.join(dir, "state.png");
+      const statePng = await pngStableProperties(output);
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stdout, "");
+      assert.equal(result.stderr, "");
+      assert.equal(statePng.transparent, false);
+      await assertPngBackground(output, [0, 0, 0, 255]);
+      await assertPngHasVisibleInk(output);
+    });
+  });
+
   it("exports circle-notation PNG through the retained Python helper contract", async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
@@ -599,15 +676,42 @@ describe("export command TypeScript route", () => {
       assert.equal(result.stdout, "");
       assert.equal(result.stderr, "");
       assert.deepEqual(png, { height: 66, transparent: false, width: 158 });
+      await assertPngBackground(
+        path.join(dir, "circuit.png"),
+        [255, 255, 255, 255]
+      );
 
-      for (const margin of Object.values(
-        pngInkMargins(path.join(dir, "circuit.png"))
-      )) {
-        assert.ok(
-          margin >= 15 && margin <= 17,
-          `expected a 16px margin, got ${margin}px`
-        );
-      }
+      assertBalancedInkMargins(
+        path.join(dir, "circuit.png"),
+        "uncaptioned circuit"
+      );
+    });
+  });
+
+  it("keeps a dark opaque circuit visible against a black background", async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        qubits: 1,
+        cols: [["H"]],
+      });
+
+      const result = captureDispatcherRun(dir, [
+        "export",
+        "--png",
+        "--dark",
+        "--no-transparent",
+        "--output",
+        "circuit.png",
+      ]);
+      const output = path.join(dir, "circuit.png");
+      const png = await pngStableProperties(output);
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stdout, "");
+      assert.equal(result.stderr, "");
+      assert.deepEqual(png, { height: 66, transparent: false, width: 158 });
+      await assertPngBackground(output, [0, 0, 0, 255]);
+      assertBalancedInkMargins(output, "dark uncaptioned circuit");
     });
   });
 
@@ -695,6 +799,145 @@ describe("export command TypeScript route", () => {
         assert.ok(
           margin >= 15 && margin <= 19,
           `expected a 16px margin, got ${margin}px`
+        );
+      }
+    });
+  });
+
+  it("keeps adversarial caption ink margins balanced across size and position", async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        qubits: 2,
+        cols: [["•", "X"]],
+      });
+
+      const captions = [
+        { caption: "gyp jq", position: "bottom", size: 24 },
+        { caption: "gyp", position: "top", size: 8 },
+        { caption: "HI TALL", position: "bottom", size: 12 },
+        { caption: "Wide caption text", position: "bottom", size: 12 },
+      ] as const;
+
+      for (const { caption, position, size } of captions) {
+        const output = `caption-${position}-${size}-${caption.length}.png`;
+        const result = captureDispatcherRun(dir, [
+          "export",
+          "--png",
+          "--light",
+          "--no-transparent",
+          "--caption",
+          caption,
+          "--caption-position",
+          position,
+          "--caption-size",
+          String(size),
+          "--output",
+          output,
+        ]);
+
+        assert.equal(result.exitStatus, 0, `${position} ${size}pt ${caption}`);
+        assertBalancedInkMargins(
+          path.join(dir, output),
+          `${position} ${size}pt ${caption}`
+        );
+      }
+    });
+  });
+
+  it("keeps transparent caption ink margins balanced", async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        qubits: 2,
+        cols: [["•", "X"]],
+      });
+
+      const result = captureDispatcherRun(dir, [
+        "export",
+        "--png",
+        "--light",
+        "--caption",
+        "gyp jq",
+        "--caption-position",
+        "bottom",
+        "--caption-size",
+        "24",
+        "--output",
+        "transparent-caption.png",
+      ]);
+
+      assert.equal(result.exitStatus, 0);
+      assertBalancedInkMargins(
+        path.join(dir, "transparent-caption.png"),
+        "transparent caption"
+      );
+    });
+  });
+
+  it("keeps a dark opaque caption and circuit visible against a black background", async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        qubits: 2,
+        cols: [["•", "X"]],
+      });
+
+      const result = captureDispatcherRun(dir, [
+        "export",
+        "--png",
+        "--dark",
+        "--no-transparent",
+        "--caption",
+        "gyp",
+        "--output",
+        "dark-caption.png",
+      ]);
+
+      assert.equal(result.exitStatus, 0);
+      const output = path.join(dir, "dark-caption.png");
+      await assertPngBackground(output, [0, 0, 0, 255]);
+      assertBalancedInkMargins(output, "dark opaque caption");
+    });
+  });
+
+  it("keeps seed-fixed generated caption PNG margins balanced", async () => {
+    await withTempDir(async (dir) => {
+      const random = seededRandom(0xd02);
+      const alphabet = "ABCDEFGHabcdefghijklmnpqyg_ ";
+
+      for (let index = 0; index < 8; index += 1) {
+        const qubits = 1 + Math.floor(random() * 8);
+        const slots = Array.from(
+          { length: qubits },
+          () => 1 as string | number
+        );
+        slots[Math.floor(random() * qubits)] = "H";
+        await writeCircuit(dir, { qubits, cols: [slots] });
+        const caption = Array.from(
+          { length: 3 + Math.floor(random() * 22) },
+          () => alphabet[Math.floor(random() * alphabet.length)]
+        ).join("");
+        const position = random() < 0.5 ? "top" : "bottom";
+        const size = 8 + Math.floor(random() * 21);
+        const output = `generated-caption-${index}.png`;
+        const result = captureDispatcherRun(dir, [
+          "export",
+          "--png",
+          ...(index % 2 === 0
+            ? ["--light", "--no-transparent"]
+            : ["--dark", "--no-transparent"]),
+          "--caption",
+          caption,
+          "--caption-position",
+          position,
+          "--caption-size",
+          String(size),
+          "--output",
+          output,
+        ]);
+
+        assert.equal(result.exitStatus, 0, `generated case ${index}`);
+        assertBalancedInkMargins(
+          path.join(dir, output),
+          `generated case ${index}: ${position} ${size}pt ${caption}`
         );
       }
     });

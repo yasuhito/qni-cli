@@ -44,6 +44,18 @@ qni export のキャプションオプションを使いたい。
 - When "qni export --png --light --caption 'CNOT before cut' --output circuit.png" を実行
 - Then コマンドは成功
 
+## Scenario: 下側のディセンダ付きキャプションは PNG のインク余白を均等に保つ
+
+- Given "qni add X --control 0 --qubit 1 --step 0" を実行
+- When "qni export --png --light --caption 'gyp jq' --caption-position bottom --caption-size 24 --no-transparent --output circuit.png" を実行
+- Then "circuit.png" の四辺のインク余白は 15px 以上 17px 以下である
+
+## Scenario: 上側の小さいキャプションは PNG のインク余白を均等に保つ
+
+- Given "qni add X --control 0 --qubit 1 --step 0" を実行
+- When "qni export --png --light --caption 'gyp' --caption-position top --caption-size 8 --no-transparent --output circuit.png" を実行
+- Then "circuit.png" の四辺のインク余白は 15px 以上 17px 以下である
+
 ## Scenario: qni export --png --caption は標準出力を空にする
 
 - Given "qni add X --control 0 --qubit 1 --step 0" を実行
@@ -67,3 +79,15 @@ qni export のキャプションオプションを使いたい。
 - Given "qni add X --control 0 --qubit 1 --step 0" を実行
 - When "qni export --png --light --caption 'CNOT before cut' --no-transparent --output circuit.png" を実行
 - Then "circuit.png" は不透過 PNG 画像である
+
+## Scenario: ダークテーマの不透過キャプション PNG は黒い背景を持つ
+
+- Given "qni add H --qubit 0 --step 0" を実行
+- When "qni export --png --dark --caption 'Dark caption' --no-transparent --output circuit.png" を実行
+- Then "circuit.png" の背景色は "#000000" である
+
+## Scenario: ダークテーマの不透過 PNG でもキャプションと回路が見える
+
+- Given "qni add H --qubit 0 --step 0" を実行
+- When "qni export --png --dark --caption 'Dark caption' --no-transparent --output circuit.png" を実行
+- Then "circuit.png" の四辺のインク余白は 15px 以上 17px 以下である
