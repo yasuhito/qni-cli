@@ -17,7 +17,7 @@ qni export のキャプションオプションを使いたい。
 - Then 標準出力に次を含む:
 
   ```text
-  {\fontsize{12}{15}\selectfont CNOT before cut}
+  {\fontsize{12}{15}\selectfont \hspace*{6.7pt}CNOT before cut\hspace*{6.7pt}}
   ```
 
 ## Scenario: qni export --latex-source --caption-position top は成功する
@@ -33,7 +33,7 @@ qni export のキャプションオプションを使いたい。
 - Then 標準出力に次を含む:
 
   ```text
-  {\fontsize{12}{15}\selectfont Top caption}
+  {\fontsize{12}{15}\selectfont \hspace*{6.7pt}Top caption\hspace*{6.7pt}}
   \\[0.8em]
   \scalebox{1.0}{
   ```
