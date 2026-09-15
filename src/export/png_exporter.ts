@@ -10,12 +10,17 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { spawnSync, type SpawnSyncReturns } from "node:child_process";
 
-import { normalizePngInkMargin } from "./png_ink_margin";
+import {
+  flattenPngBackground,
+  normalizePngInkMargin,
+  type PngBackground,
+} from "./png_ink_margin";
 
 export interface PngExportOptions {
   readonly cwd: string;
   readonly env: NodeJS.ProcessEnv;
   readonly inkMargin?: number;
+  readonly opaqueBackground: PngBackground;
   readonly outputPath: string;
   readonly transparent: boolean;
 }
@@ -32,6 +37,7 @@ export class PngExporter {
   private readonly env: NodeJS.ProcessEnv;
   private readonly inkMargin?: number;
   private readonly latexSource: string;
+  private readonly opaqueBackground: PngBackground;
   private readonly outputPath: string;
   private readonly transparent: boolean;
 
@@ -40,6 +46,7 @@ export class PngExporter {
     this.env = options.env;
     this.inkMargin = options.inkMargin;
     this.latexSource = latexSource;
+    this.opaqueBackground = options.opaqueBackground;
     this.outputPath = options.outputPath;
     this.transparent = options.transparent;
   }
@@ -62,18 +69,26 @@ export class PngExporter {
     writeFileSync(paths.tex, this.latexSource);
     this.compilePdf(dir, paths.tex);
     this.convertPdfToPng(paths.pdf, paths.pngBase);
-    if (this.inkMargin === undefined) {
+    if (this.inkMargin !== undefined) {
+      writeFileSync(
+        this.outputPath,
+        normalizePngInkMargin(
+          readFileSync(paths.png),
+          this.inkMargin,
+          this.transparent ? undefined : this.opaqueBackground
+        )
+      );
+      return;
+    }
+
+    if (this.transparent) {
       cpSync(paths.png, this.outputPath);
       return;
     }
 
     writeFileSync(
       this.outputPath,
-      normalizePngInkMargin(
-        readFileSync(paths.png),
-        this.inkMargin,
-        this.transparent
-      )
+      flattenPngBackground(readFileSync(paths.png), this.opaqueBackground)
     );
   }
 
@@ -102,11 +117,8 @@ export class PngExporter {
   private pdfToPngBaseArgs(): string[] {
     const args = ["-singlefile", "-png", "-q"];
 
-    // インク端を求める場合は、不透過出力でも一度アルファ付きで描く。
-    // これにより暗いテーマの白い線も白背景へ溶けずに検出できる。
-    if (this.transparent || this.inkMargin !== undefined) {
-      args.push("-transp");
-    }
+    // テーマに合う不透過背景へ後から合成できるよう、常にアルファ付きで描く。
+    args.push("-transp");
 
     return args;
   }

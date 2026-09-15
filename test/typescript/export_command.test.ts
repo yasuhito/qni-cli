@@ -169,6 +169,32 @@ function assertBalancedInkMargins(filePath: string, context: string): void {
   }
 }
 
+async function assertPngBackground(
+  filePath: string,
+  expected: readonly [number, number, number, number]
+): Promise<void> {
+  const png = PNG.sync.read(await readFile(filePath));
+  assert.deepEqual(Array.from(png.data.subarray(0, 4)), expected);
+}
+
+async function assertPngHasVisibleInk(filePath: string): Promise<void> {
+  const png = PNG.sync.read(await readFile(filePath));
+  const background = png.data.subarray(0, 3);
+
+  for (let offset = 0; offset < png.data.length; offset += 4) {
+    if (
+      png.data[offset + 3] > 0 &&
+      (png.data[offset] !== background[0] ||
+        png.data[offset + 1] !== background[1] ||
+        png.data[offset + 2] !== background[2])
+    ) {
+      return;
+    }
+  }
+
+  assert.fail(`expected ${filePath} to contain visible ink`);
+}
+
 function seededRandom(seed: number): () => number {
   let state = seed >>> 0;
 
@@ -465,6 +491,34 @@ describe("export command TypeScript route", () => {
     });
   });
 
+  it("keeps a dark opaque state-vector visible against a black background", async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        qubits: 1,
+        cols: [["H"]],
+      });
+
+      const result = captureDispatcherRun(dir, [
+        "export",
+        "--state-vector",
+        "--png",
+        "--dark",
+        "--no-transparent",
+        "--output",
+        "state.png",
+      ]);
+      const output = path.join(dir, "state.png");
+      const statePng = await pngStableProperties(output);
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stdout, "");
+      assert.equal(result.stderr, "");
+      assert.equal(statePng.transparent, false);
+      await assertPngBackground(output, [0, 0, 0, 255]);
+      await assertPngHasVisibleInk(output);
+    });
+  });
+
   it("exports circle-notation PNG through the retained Python helper contract", async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
@@ -622,11 +676,42 @@ describe("export command TypeScript route", () => {
       assert.equal(result.stdout, "");
       assert.equal(result.stderr, "");
       assert.deepEqual(png, { height: 66, transparent: false, width: 158 });
+      await assertPngBackground(
+        path.join(dir, "circuit.png"),
+        [255, 255, 255, 255]
+      );
 
       assertBalancedInkMargins(
         path.join(dir, "circuit.png"),
         "uncaptioned circuit"
       );
+    });
+  });
+
+  it("keeps a dark opaque circuit visible against a black background", async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        qubits: 1,
+        cols: [["H"]],
+      });
+
+      const result = captureDispatcherRun(dir, [
+        "export",
+        "--png",
+        "--dark",
+        "--no-transparent",
+        "--output",
+        "circuit.png",
+      ]);
+      const output = path.join(dir, "circuit.png");
+      const png = await pngStableProperties(output);
+
+      assert.equal(result.exitStatus, 0);
+      assert.equal(result.stdout, "");
+      assert.equal(result.stderr, "");
+      assert.deepEqual(png, { height: 66, transparent: false, width: 158 });
+      await assertPngBackground(output, [0, 0, 0, 255]);
+      assertBalancedInkMargins(output, "dark uncaptioned circuit");
     });
   });
 
@@ -788,7 +873,7 @@ describe("export command TypeScript route", () => {
     });
   });
 
-  it("keeps the opaque caption PNG background white for the dark theme", async () => {
+  it("keeps a dark opaque caption and circuit visible against a black background", async () => {
     await withTempDir(async (dir) => {
       await writeCircuit(dir, {
         qubits: 2,
@@ -807,13 +892,9 @@ describe("export command TypeScript route", () => {
       ]);
 
       assert.equal(result.exitStatus, 0);
-      const png = PNG.sync.read(
-        await readFile(path.join(dir, "dark-caption.png"))
-      );
-      assert.deepEqual(
-        Array.from(png.data.subarray(0, 4)),
-        [255, 255, 255, 255]
-      );
+      const output = path.join(dir, "dark-caption.png");
+      await assertPngBackground(output, [0, 0, 0, 255]);
+      assertBalancedInkMargins(output, "dark opaque caption");
     });
   });
 
@@ -837,12 +918,12 @@ describe("export command TypeScript route", () => {
         const position = random() < 0.5 ? "top" : "bottom";
         const size = 8 + Math.floor(random() * 21);
         const output = `generated-caption-${index}.png`;
-        // 不透過 PNG の背景は常に白なので、暗いテーマの白いインクは透過出力で
-        // アルファから測る。明るいテーマは不透過出力で白背景との差から測る。
         const result = captureDispatcherRun(dir, [
           "export",
           "--png",
-          ...(index % 2 === 0 ? ["--light", "--no-transparent"] : ["--dark"]),
+          ...(index % 2 === 0
+            ? ["--light", "--no-transparent"]
+            : ["--dark", "--no-transparent"]),
           "--caption",
           caption,
           "--caption-position",

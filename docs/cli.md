@@ -184,7 +184,7 @@ qni export --png --light --output circuit.png
 
 回路図は quantikz 形式の LaTeX を `pdflatex` で組版します。`qni export --latex-source` では同じ LaTeX ソースを出力できます。
 
-メモ、スライド、ドキュメントに載せる図にはキャプションを付けられます。暗いノートテーマなどで白背景を保ちたい場合は `--no-transparent` を使います。
+メモ、スライド、ドキュメントに載せる図にはキャプションを付けられます。背景を不透過にする場合は `--no-transparent` を使います。背景色はテーマに合わせ、既定のダークテーマでは黒、`--light` では白になります。
 
 ```bash
 qni export --png --light --no-transparent \

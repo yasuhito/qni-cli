@@ -22,6 +22,18 @@ qni export --state-vector --png を使いたい。
 - When "qni export --state-vector --png --output state.png" を実行
 - Then "state.png" は透過 PNG 画像である
 
+## Scenario: ダークテーマの不透過状態ベクトル PNG は黒い背景を持つ
+
+- Given "qni add H --qubit 0 --step 0" を実行
+- When "qni export --state-vector --png --dark --no-transparent --output state.png" を実行
+- Then "state.png" の背景色は "#000000" である
+
+## Scenario: ダークテーマの不透過状態ベクトル PNG でも数式が見える
+
+- Given "qni add H --qubit 0 --step 0" を実行
+- When "qni export --state-vector --png --dark --no-transparent --output state.png" を実行
+- Then "state.png" は背景と異なる可視ピクセルを含む
+
 ## Scenario: qni export --state-vector --png は回路 PNG と異なる画像を書き出す
 
 - Given "qni add H --qubit 0 --step 0" を実行

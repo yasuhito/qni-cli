@@ -14,13 +14,30 @@ interface InkBounds {
   readonly top: number;
 }
 
+const BLACK: Pixel = { alpha: 255, blue: 0, green: 0, red: 0 };
 const WHITE: Pixel = { alpha: 255, blue: 255, green: 255, red: 255 };
 const CLEAR: Pixel = { alpha: 0, blue: 0, green: 0, red: 0 };
+
+export type PngBackground = "black" | "white";
+
+export function flattenPngBackground(
+  source: Buffer,
+  background: PngBackground
+): Buffer {
+  const input = PNG.sync.read(source);
+  const output = new PNG({ height: input.height, width: input.width });
+  const backgroundPixel = pixelForBackground(background);
+
+  fill(output, backgroundPixel);
+  copyRegion(input, output, fullBounds(input), 0, backgroundPixel);
+
+  return opaquePng(output);
+}
 
 export function normalizePngInkMargin(
   source: Buffer,
   margin: number,
-  transparent: boolean
+  background?: PngBackground
 ): Buffer {
   const input = PNG.sync.read(source);
   const bounds = inkBounds(input);
@@ -29,27 +46,33 @@ export function normalizePngInkMargin(
     width: bounds.right - bounds.left + margin * 2,
   });
 
-  fill(output, transparent ? CLEAR : WHITE);
-  copyInk(input, output, bounds, margin, transparent);
+  const backgroundPixel =
+    background === undefined ? undefined : pixelForBackground(background);
 
-  return PNG.sync.write(output, {
-    colorType: transparent ? 6 : 2,
-    inputColorType: 6,
-    inputHasAlpha: true,
-  });
+  fill(output, backgroundPixel ?? CLEAR);
+  copyRegion(input, output, bounds, margin, backgroundPixel);
+
+  return background === undefined
+    ? PNG.sync.write(output, {
+        colorType: 6,
+        inputColorType: 6,
+        inputHasAlpha: true,
+      })
+    : opaquePng(output);
 }
 
-function copyInk(
+function copyRegion(
   input: PNG,
   output: PNG,
   bounds: InkBounds,
   margin: number,
-  transparent: boolean
+  background?: Pixel
 ): void {
   for (let y = bounds.top; y < bounds.bottom; y += 1) {
     for (let x = bounds.left; x < bounds.right; x += 1) {
       const source = pixelAt(input, x, y);
-      const target = transparent ? source : composite(source, WHITE);
+      const target =
+        background === undefined ? source : composite(source, background);
       setPixel(
         output,
         x - bounds.left + margin,
@@ -71,6 +94,22 @@ function composite(foreground: Pixel, background: Pixel): Pixel {
     green: blend(foreground.green, background.green),
     red: blend(foreground.red, background.red),
   };
+}
+
+function fullBounds(image: PNG): InkBounds {
+  return { bottom: image.height, left: 0, right: image.width, top: 0 };
+}
+
+function opaquePng(image: PNG): Buffer {
+  return PNG.sync.write(image, {
+    colorType: 2,
+    inputColorType: 6,
+    inputHasAlpha: true,
+  });
+}
+
+function pixelForBackground(background: PngBackground): Pixel {
+  return background === "black" ? BLACK : WHITE;
 }
 
 function fill(image: PNG, pixel: Pixel): void {

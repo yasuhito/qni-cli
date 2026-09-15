@@ -443,6 +443,7 @@ function writePng(
     cwd: context.cwd,
     env: context.env,
     inkMargin: captionPresent(options) ? CAPTION_PNG_INK_MARGIN : undefined,
+    opaqueBackground: pngBackground(options),
     outputPath: outputPath(options, context.cwd),
     transparent: options.transparent,
   }).export();
@@ -467,9 +468,14 @@ function writeStateVectorPng(
   new PngExporter(latexSource, {
     cwd: context.cwd,
     env: context.env,
+    opaqueBackground: pngBackground(options),
     outputPath: outputPath(options, context.cwd),
     transparent: options.transparent,
   }).export();
+}
+
+function pngBackground(options: ExportOptions): "black" | "white" {
+  return theme(options) === "dark" ? "black" : "white";
 }
 
 function writeCircleNotationPng(

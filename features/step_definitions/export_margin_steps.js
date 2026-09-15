@@ -12,6 +12,45 @@ const PYTHON_SYMBOLIC = path.join(
   "python"
 );
 
+function pngBackgroundColor(actualPath) {
+  const script = `
+from PIL import Image
+import json
+import sys
+
+image = Image.open(sys.argv[1]).convert("RGBA")
+print(json.dumps("#%02x%02x%02x" % image.getpixel((0, 0))[:3]))
+`;
+  return JSON.parse(
+    execFileSync(PYTHON_SYMBOLIC, ["-c", script, actualPath], {
+      encoding: "utf8",
+    })
+  );
+}
+
+function pngHasVisibleInk(actualPath) {
+  const script = `
+from PIL import Image
+import json
+import sys
+
+image = Image.open(sys.argv[1]).convert("RGBA")
+pixels = image.load()
+width, height = image.size
+background = pixels[0, 0][:3]
+print(json.dumps(any(
+    pixels[x, y][:3] != background and pixels[x, y][3] > 0
+    for y in range(height)
+    for x in range(width)
+)))
+`;
+  return JSON.parse(
+    execFileSync(PYTHON_SYMBOLIC, ["-c", script, actualPath], {
+      encoding: "utf8",
+    })
+  );
+}
+
 function pngInkMargins(actualPath) {
   const script = `
 from PIL import Image, ImageChops
@@ -36,6 +75,20 @@ print(json.dumps({
     })
   );
 }
+
+Then("{string} の背景色は {string} である", function (filePath, color) {
+  const actualPath = path.join(this.scenarioDir, filePath);
+
+  assert.ok(fs.existsSync(actualPath), `expected file to exist: ${filePath}`);
+  assert.equal(pngBackgroundColor(actualPath), color.toLowerCase());
+});
+
+Then("{string} は背景と異なる可視ピクセルを含む", function (filePath) {
+  const actualPath = path.join(this.scenarioDir, filePath);
+
+  assert.ok(fs.existsSync(actualPath), `expected file to exist: ${filePath}`);
+  assert.equal(pngHasVisibleInk(actualPath), true);
+});
 
 Then(
   "{string} の四辺のインク余白は {int}px 以上 {int}px 以下である",
