@@ -22,6 +22,10 @@ const DOCUMENT_FOOTER_LINES = ["\\end{document}"];
 const CIRCUIT_HEADER_LINES = ["\\scalebox{1.0}{"];
 const CIRCUIT_FOOTER_LINES = ["\\end{quantikz}", "}"];
 const EMPTY_CIRCUIT_MIN_COLUMNS = 3;
+const BORDER_HORIZONTAL_PX = 1;
+const BORDER_CIRCUIT_EDGE_PX = 5;
+const BORDER_TOP_CAPTION_EDGE_PX = 8;
+const CAPTION_HORIZONTAL_INSET = "6.7pt";
 
 const DIRECT_SLOT_RENDERERS = new Map<unknown, string>([
   [null, "\\qw"],
@@ -66,7 +70,7 @@ export interface QuantikzLatexOptions extends QuantikzCaptionOptions {
   readonly theme: ExportTheme;
 }
 
-export function quantikzRenderedColumnCount(
+function quantikzRenderedColumnCount(
   circuit: Pick<CircuitData, "cols">
 ): number {
   return circuit.cols.length > 0
@@ -96,7 +100,7 @@ class QuantikzCaption {
     }
 
     return [
-      `{\\fontsize{${this.sizePt}}{${this.lineHeightPt}}\\selectfont ${this.escapedText}}`,
+      `{\\fontsize{${this.sizePt}}{${this.lineHeightPt}}\\selectfont \\hspace*{${CAPTION_HORIZONTAL_INSET}}${this.escapedText}\\hspace*{${CAPTION_HORIZONTAL_INSET}}}`,
     ];
   }
 
@@ -160,7 +164,7 @@ export class QuantikzLatex {
 
   private get captionedContentLines(): string[] {
     return [
-      "\\begin{tabular}{c}",
+      "\\begin{tabular}{@{}c@{}}",
       ...this.topCaptionLines,
       ...this.circuitLines,
       ...this.bottomCaptionLines,
@@ -169,9 +173,11 @@ export class QuantikzLatex {
   }
 
   private get documentClassLine(): string {
-    return this.caption.present
-      ? "\\documentclass[border=24px]{standalone}"
-      : "\\documentclass[border={1px 5px}]{standalone}";
+    const topBorder =
+      this.caption.present && this.caption.positionTop
+        ? BORDER_TOP_CAPTION_EDGE_PX
+        : BORDER_CIRCUIT_EDGE_PX;
+    return `\\documentclass[border={${BORDER_HORIZONTAL_PX}px ${BORDER_CIRCUIT_EDGE_PX}px ${BORDER_HORIZONTAL_PX}px ${topBorder}px}]{standalone}`;
   }
 
   private get bottomCaptionLines(): string[] {

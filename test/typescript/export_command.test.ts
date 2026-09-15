@@ -289,7 +289,7 @@ describe("export command TypeScript route", () => {
       assert.equal(result.exitStatus, 0);
       assert.match(
         result.stdout,
-        /\\documentclass\[border=\{1px 5px\}\]\{standalone\}/u
+        /\\documentclass\[border=\{1px 5px 1px 5px\}\]\{standalone\}/u
       );
       assert.doesNotMatch(result.stdout, /\\begin\{tabular\}/u);
       assert.match(
@@ -688,6 +688,15 @@ describe("export command TypeScript route", () => {
       assert.equal(png.transparent, false);
       assert.ok(png.height > 64);
       assert.ok(png.width >= 64);
+
+      for (const margin of Object.values(
+        pngInkMargins(path.join(dir, "caption.png"))
+      )) {
+        assert.ok(
+          margin >= 15 && margin <= 19,
+          `expected a 16px margin, got ${margin}px`
+        );
+      }
     });
   });
 

@@ -58,7 +58,7 @@ describe("SVG export command", () => {
       assert.equal(result.exitStatus, 0);
       assert.deepEqual(svgDimensions(result.stdout), {
         height: 64,
-        width: 124,
+        width: 136,
       });
       assert.match(
         result.stdout,

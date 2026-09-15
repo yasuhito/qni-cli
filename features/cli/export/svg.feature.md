@@ -31,6 +31,16 @@ qni export --svg で回路図を SVG 形式に直接書き出したい。
   data-operation="wire" data-qubit="0" x1="48" y1="32" x2="120"
   ```
 
+## Scenario: 1量子ビットの SVG は右辺にも 16px の余白を確保する
+
+- Given "qni add H --qubit 0 --step 0" を実行
+- When "qni export --svg" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  viewBox="0 0 136 64" width="136" height="64"
+  ```
+
 ## Scenario: qni export --svg --output は SVG ファイルを書き出す
 
 - Given "qni add X --control 0 --qubit 1 --step 0" を実行

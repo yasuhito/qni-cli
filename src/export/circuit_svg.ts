@@ -347,7 +347,7 @@ export class CircuitSvg {
 
   private get wires(): string[] {
     const wireStart = LABEL_WIDTH;
-    const wireEnd = this.width - CIRCUIT_HORIZONTAL_PADDING;
+    const wireEnd = this.width - MARGIN;
     return Array.from({ length: this.circuit.qubits }, (_unused, qubit) => {
       const y = this.y(qubit);
       return [
@@ -382,7 +382,7 @@ function columnLayout(steps: readonly SvgStep[]): {
     cursor += step.width;
     return center;
   });
-  return { centers, width: cursor + CIRCUIT_HORIZONTAL_PADDING * 2 };
+  return { centers, width: cursor + CIRCUIT_HORIZONTAL_PADDING + MARGIN };
 }
 
 function displayLabel(operation: ParsedCircuitOperation): string {
