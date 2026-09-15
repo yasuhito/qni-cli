@@ -837,11 +837,12 @@ describe("export command TypeScript route", () => {
         const position = random() < 0.5 ? "top" : "bottom";
         const size = 8 + Math.floor(random() * 21);
         const output = `generated-caption-${index}.png`;
+        // 不透過 PNG の背景は常に白なので、暗いテーマの白いインクは透過出力で
+        // アルファから測る。明るいテーマは不透過出力で白背景との差から測る。
         const result = captureDispatcherRun(dir, [
           "export",
           "--png",
-          ...(index % 2 === 0 ? ["--light"] : []),
-          "--no-transparent",
+          ...(index % 2 === 0 ? ["--light", "--no-transparent"] : ["--dark"]),
           "--caption",
           caption,
           "--caption-position",
