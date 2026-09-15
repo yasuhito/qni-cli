@@ -11,6 +11,9 @@ const ROW_HEIGHT = 64;
 const LABEL_WIDTH = 48;
 const MIN_COLUMN_WIDTH = 64;
 const GATE_HEIGHT = 34;
+// MARGIN は SVG 四辺の外側余白。CIRCUIT_HORIZONTAL_PADDING はワイヤ端と
+// 最初/最後のゲート列の間の内側余白で、ゲート左右のワイヤ長を揃える。
+// 期待値は features/cli/export/svg.feature.md の 1量子ビットシナリオが固定する。
 const MARGIN = 16;
 const CIRCUIT_HORIZONTAL_PADDING = 4;
 const SVG_UNITS_PER_POINT = 4 / 3;

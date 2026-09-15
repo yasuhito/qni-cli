@@ -22,6 +22,10 @@ const DOCUMENT_FOOTER_LINES = ["\\end{document}"];
 const CIRCUIT_HEADER_LINES = ["\\scalebox{1.0}{"];
 const CIRCUIT_FOOTER_LINES = ["\\end{quantikz}", "}"];
 const EMPTY_CIRCUIT_MIN_COLUMNS = 3;
+// standalone の border は quantikz/tabular のボックス端から測られ、インク端とは
+// ずれる。pdftocairo 既定の 150dpi で PNG の四辺のインク余白が約 16px になるよう
+// 経験的に調整した値。回帰テストは test/typescript/export_command.test.ts の
+// pngInkMargins を使う PNG 余白テスト。
 const BORDER_HORIZONTAL_PX = 1;
 const BORDER_CIRCUIT_EDGE_PX = 5;
 const BORDER_TOP_CAPTION_EDGE_PX = 8;
