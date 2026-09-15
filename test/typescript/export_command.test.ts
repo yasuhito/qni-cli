@@ -13,6 +13,8 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, it } from "node:test";
 
+import { PNG } from "pngjs";
+
 import { createDispatcher } from "../../src/dispatcher";
 
 interface CapturedRun {
@@ -782,6 +784,35 @@ describe("export command TypeScript route", () => {
       assertBalancedInkMargins(
         path.join(dir, "transparent-caption.png"),
         "transparent caption"
+      );
+    });
+  });
+
+  it("keeps the opaque caption PNG background white for the dark theme", async () => {
+    await withTempDir(async (dir) => {
+      await writeCircuit(dir, {
+        qubits: 2,
+        cols: [["•", "X"]],
+      });
+
+      const result = captureDispatcherRun(dir, [
+        "export",
+        "--png",
+        "--dark",
+        "--no-transparent",
+        "--caption",
+        "gyp",
+        "--output",
+        "dark-caption.png",
+      ]);
+
+      assert.equal(result.exitStatus, 0);
+      const png = PNG.sync.read(
+        await readFile(path.join(dir, "dark-caption.png"))
+      );
+      assert.deepEqual(
+        Array.from(png.data.subarray(0, 4)),
+        [255, 255, 255, 255]
       );
     });
   });

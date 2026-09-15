@@ -10,10 +10,9 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { spawnSync, type SpawnSyncReturns } from "node:child_process";
 
-import { normalizePngInkMargin, type PngBackground } from "./png_ink_margin";
+import { normalizePngInkMargin } from "./png_ink_margin";
 
 export interface PngExportOptions {
-  readonly background?: PngBackground;
   readonly cwd: string;
   readonly env: NodeJS.ProcessEnv;
   readonly inkMargin?: number;
@@ -29,7 +28,6 @@ interface ArtifactPaths {
 }
 
 export class PngExporter {
-  private readonly background: PngBackground;
   private readonly cwd: string;
   private readonly env: NodeJS.ProcessEnv;
   private readonly inkMargin?: number;
@@ -38,7 +36,6 @@ export class PngExporter {
   private readonly transparent: boolean;
 
   constructor(latexSource: string, options: PngExportOptions) {
-    this.background = options.background ?? "white";
     this.cwd = options.cwd;
     this.env = options.env;
     this.inkMargin = options.inkMargin;
@@ -75,8 +72,7 @@ export class PngExporter {
       normalizePngInkMargin(
         readFileSync(paths.png),
         this.inkMargin,
-        this.transparent,
-        this.background
+        this.transparent
       )
     );
   }

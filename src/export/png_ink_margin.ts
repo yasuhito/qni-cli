@@ -14,13 +14,13 @@ interface InkBounds {
   readonly top: number;
 }
 
-export type PngBackground = "black" | "white";
+const WHITE: Pixel = { alpha: 255, blue: 255, green: 255, red: 255 };
+const CLEAR: Pixel = { alpha: 0, blue: 0, green: 0, red: 0 };
 
 export function normalizePngInkMargin(
   source: Buffer,
   margin: number,
-  transparent: boolean,
-  background: PngBackground
+  transparent: boolean
 ): Buffer {
   const input = PNG.sync.read(source);
   const bounds = inkBounds(input);
@@ -28,16 +28,9 @@ export function normalizePngInkMargin(
     height: bounds.bottom - bounds.top + margin * 2,
     width: bounds.right - bounds.left + margin * 2,
   });
-  const backgroundPixel =
-    background === "black"
-      ? { alpha: 255, blue: 0, green: 0, red: 0 }
-      : { alpha: 255, blue: 255, green: 255, red: 255 };
 
-  fill(
-    output,
-    transparent ? { alpha: 0, blue: 0, green: 0, red: 0 } : backgroundPixel
-  );
-  copyInk(input, output, bounds, margin, transparent, backgroundPixel);
+  fill(output, transparent ? CLEAR : WHITE);
+  copyInk(input, output, bounds, margin, transparent);
 
   return PNG.sync.write(output, {
     colorType: transparent ? 6 : 2,
@@ -51,13 +44,12 @@ function copyInk(
   output: PNG,
   bounds: InkBounds,
   margin: number,
-  transparent: boolean,
-  background: Pixel
+  transparent: boolean
 ): void {
   for (let y = bounds.top; y < bounds.bottom; y += 1) {
     for (let x = bounds.left; x < bounds.right; x += 1) {
       const source = pixelAt(input, x, y);
-      const target = transparent ? source : composite(source, background);
+      const target = transparent ? source : composite(source, WHITE);
       setPixel(
         output,
         x - bounds.left + margin,

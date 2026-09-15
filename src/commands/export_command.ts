@@ -440,7 +440,6 @@ function writePng(
   context: CommandHandlerContext
 ): void {
   new PngExporter(latexSource, {
-    background: theme(options) === "light" ? "white" : "black",
     cwd: context.cwd,
     env: context.env,
     inkMargin: captionPresent(options) ? CAPTION_PNG_INK_MARGIN : undefined,
