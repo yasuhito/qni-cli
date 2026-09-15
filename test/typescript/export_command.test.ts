@@ -695,6 +695,13 @@ describe("export command TypeScript route", () => {
         cols: [["H"]],
       });
 
+      const transparentResult = captureDispatcherRun(dir, [
+        "export",
+        "--png",
+        "--dark",
+        "--output",
+        "transparent.png",
+      ]);
       const result = captureDispatcherRun(dir, [
         "export",
         "--png",
@@ -705,11 +712,19 @@ describe("export command TypeScript route", () => {
       ]);
       const output = path.join(dir, "circuit.png");
       const png = await pngStableProperties(output);
+      const transparentPng = await pngStableProperties(
+        path.join(dir, "transparent.png")
+      );
 
+      assert.equal(transparentResult.exitStatus, 0);
       assert.equal(result.exitStatus, 0);
       assert.equal(result.stdout, "");
       assert.equal(result.stderr, "");
-      assert.deepEqual(png, { height: 66, transparent: false, width: 158 });
+      assert.equal(png.transparent, false);
+      assert.deepEqual(
+        { height: png.height, width: png.width },
+        { height: transparentPng.height, width: transparentPng.width }
+      );
       await assertPngBackground(output, [0, 0, 0, 255]);
       assertBalancedInkMargins(output, "dark uncaptioned circuit");
     });

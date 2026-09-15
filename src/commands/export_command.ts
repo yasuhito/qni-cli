@@ -15,6 +15,7 @@ import {
   type ExportTheme,
 } from "../export/quantikz_latex";
 import { PngExporter } from "../export/png_exporter";
+import type { PngBackground } from "../export/png_ink_margin";
 import { StateVectorLatex } from "../export/state_vector_latex";
 import { Simulator } from "../simulator";
 import { thorArgumentsError } from "./thor_compatibility";
@@ -474,7 +475,7 @@ function writeStateVectorPng(
   }).export();
 }
 
-function pngBackground(options: ExportOptions): "black" | "white" {
+function pngBackground(options: ExportOptions): PngBackground {
   return theme(options) === "dark" ? "black" : "white";
 }
 
