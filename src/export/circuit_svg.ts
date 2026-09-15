@@ -8,9 +8,16 @@ import type { ExportTheme, QuantikzCaptionOptions } from "./quantikz_latex";
 const CONTROL_SYMBOL = "•";
 const EMPTY_SLOT = 1;
 const ROW_HEIGHT = 64;
-const LABEL_WIDTH = 48;
+const MIN_LABEL_WIDTH = 48;
 const MIN_COLUMN_WIDTH = 64;
 const GATE_HEIGHT = 34;
+// 指定フォントの実測幅より少し広い文字送りを使い、フォント版の差で
+// ラベルがワイヤや表示領域へ入り込まないようにする。
+const WIRE_LABEL_CHARACTER_WIDTH = 8;
+const ANNOTATION_CHARACTER_WIDTH = 7;
+const MEASUREMENT_BOX_HALF_WIDTH = 22;
+const MEASUREMENT_LABEL_GAP = 6;
+const COLUMN_CONTENT_PADDING = 5;
 // MARGIN は SVG 四辺の外側余白。CIRCUIT_HORIZONTAL_PADDING はワイヤ端と
 // 最初/最後のゲート列の間の内側余白で、ゲート左右のワイヤ長を揃える。
 // 期待値は features/cli/export/svg.feature.md の 1量子ビットシナリオが固定する。
@@ -32,8 +39,9 @@ class SvgStep {
   readonly measurements: Placement[];
   readonly operations: Placement[];
   readonly step: number;
+  readonly leftWidth: number;
+  readonly rightWidth: number;
   readonly swaps: Placement[];
-  readonly width: number;
 
   constructor(slots: unknown[], step: number) {
     this.step = step;
@@ -50,11 +58,19 @@ class SvgStep {
     this.swaps = this.operations.filter(
       ({ operation }) => operation.kind === "swap"
     );
-    const labels = this.operations.map(({ operation }) =>
-      displayLabel(operation)
+    const symmetricWidth = Math.max(
+      MIN_COLUMN_WIDTH,
+      ...this.operations
+        .filter(({ operation }) => operation.kind !== "measurement")
+        .map(({ operation }) => gateWidth(displayLabel(operation)) + 10)
     );
-    const longest = Math.max(1, ...labels.map((label) => [...label].length));
-    this.width = Math.max(MIN_COLUMN_WIDTH, longest * 8 + 28);
+    this.leftWidth = symmetricWidth / 2;
+    this.rightWidth = Math.max(
+      symmetricWidth / 2,
+      ...this.measurements.map(({ operation }) =>
+        measurementRightWidth(operation.measurementName)
+      )
+    );
   }
 
   get controlledTarget(): Placement | undefined {
@@ -117,7 +133,7 @@ export class CircuitSvg {
     for (const svgStep of this.steps) {
       svgStep.validate();
     }
-    const layout = columnLayout(this.steps);
+    const layout = columnLayout(this.steps, wireLabelWidth(circuit.qubits));
     this.columnCenters = layout.centers;
     const captionWidth =
       this.caption === ""
@@ -132,7 +148,7 @@ export class CircuitSvg {
   render(): string {
     const lines = [
       `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${this.width} ${this.height}" width="${this.width}" height="${this.height}" role="img" aria-label="Quantum circuit">`,
-      `<style>svg{color:${this.theme === "light" ? "#111" : "#fff"}}text{fill:currentColor;font-family:"DejaVu Sans",sans-serif;font-size:14px}.wire,.connection,.gate-box,.meter-box,.meter-mark,.target-mark,.swap-mark{stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.wire,.connection,.meter-mark,.target-mark,.swap-mark{fill:none}.control-dot{fill:currentColor}.label{font-size:13px}.annotation{font-size:11px}</style>`,
+      `<style>svg{color:${this.theme === "light" ? "#111" : "#fff"}}text{fill:currentColor;font-family:"DejaVu Sans",sans-serif;font-size:14px}.wire,.connection,.gate-box,.meter-box,.meter-mark,.target-mark,.swap-mark{stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.wire,.connection,.meter-mark,.target-mark,.swap-mark{fill:none}.control-dot{fill:currentColor}.label{font-size:13px}.annotation{font-size:11px}.measurement-name{font-family:"DejaVu Sans Mono",monospace}</style>`,
       ...this.topCaption,
       ...this.wires,
       ...this.steps.flatMap((step, index) =>
@@ -208,7 +224,7 @@ export class CircuitSvg {
 
   private renderGate(step: number, placement: Placement, x: number): string[] {
     const label = displayLabel(placement.operation);
-    const width = Math.max(38, [...label].length * 8 + 18);
+    const width = gateWidth(label);
     const y = this.y(placement.qubit);
     return [
       `<g data-operation="gate" data-step="${step}" data-qubit="${placement.qubit}">`,
@@ -227,11 +243,20 @@ export class CircuitSvg {
     const name = placement.operation.measurementName;
     return [
       `<g data-operation="measurement" data-step="${step}" data-qubit="${placement.qubit}">`,
-      `<rect class="meter-box" x="${x - 22}" y="${y - 17}" width="44" height="34" rx="3" fill="${this.backgroundColor}"/>`,
+      `<rect class="meter-box" x="${x - MEASUREMENT_BOX_HALF_WIDTH}" y="${y - 17}" width="${MEASUREMENT_BOX_HALF_WIDTH * 2}" height="34" rx="3" fill="${this.backgroundColor}"/>`,
       `<path class="meter-mark" d="M ${x - 12} ${y + 8} A 13 13 0 0 1 ${x + 12} ${y + 8} M ${x} ${y + 5} L ${x + 9} ${y - 7}"/>`,
       ...(name === undefined
         ? []
-        : [this.text(x + 28, y - 12, `>${name}`, undefined, "annotation")]),
+        : [
+            this.text(
+              x + MEASUREMENT_BOX_HALF_WIDTH + MEASUREMENT_LABEL_GAP,
+              y - 12,
+              `>${name}`,
+              undefined,
+              "annotation measurement-name",
+              "start"
+            ),
+          ]),
       "</g>",
     ];
   }
@@ -334,12 +359,13 @@ export class CircuitSvg {
     y: number,
     value: string,
     style?: string,
-    className?: string
+    className?: string,
+    textAnchor: "middle" | "start" = "middle"
   ): string {
     const classAttribute =
       className === undefined ? "" : ` class="${className}"`;
     const styleAttribute = style === undefined ? "" : ` style="${style}"`;
-    return `<text${classAttribute}${styleAttribute} x="${x}" y="${y}" text-anchor="middle">${escapeXml(value)}</text>`;
+    return `<text${classAttribute}${styleAttribute} x="${x}" y="${y}" text-anchor="${textAnchor}">${escapeXml(value)}</text>`;
   }
 
   private get topCaption(): string[] {
@@ -349,7 +375,7 @@ export class CircuitSvg {
   }
 
   private get wires(): string[] {
-    const wireStart = LABEL_WIDTH;
+    const wireStart = wireLabelWidth(this.circuit.qubits);
     const wireEnd = this.width - MARGIN;
     return Array.from({ length: this.circuit.qubits }, (_unused, qubit) => {
       const y = this.y(qubit);
@@ -371,7 +397,10 @@ export class CircuitSvg {
   }
 }
 
-function columnLayout(steps: readonly SvgStep[]): {
+function columnLayout(
+  steps: readonly SvgStep[],
+  labelWidth: number
+): {
   readonly centers: number[];
   readonly width: number;
 } {
@@ -379,13 +408,39 @@ function columnLayout(steps: readonly SvgStep[]): {
     return { centers: [], width: 192 };
   }
 
-  let cursor = LABEL_WIDTH + CIRCUIT_HORIZONTAL_PADDING;
+  let cursor = labelWidth + CIRCUIT_HORIZONTAL_PADDING;
   const centers = steps.map((step) => {
-    const center = cursor + step.width / 2;
-    cursor += step.width;
+    const center = cursor + step.leftWidth;
+    cursor += step.leftWidth + step.rightWidth;
     return center;
   });
   return { centers, width: cursor + CIRCUIT_HORIZONTAL_PADDING + MARGIN };
+}
+
+function gateWidth(label: string): number {
+  return Math.max(38, [...label].length * 8 + 18);
+}
+
+function measurementRightWidth(name: string | undefined): number {
+  if (name === undefined) {
+    return MIN_COLUMN_WIDTH / 2;
+  }
+
+  const annotationWidth = [...`>${name}`].length * ANNOTATION_CHARACTER_WIDTH;
+  return (
+    MEASUREMENT_BOX_HALF_WIDTH +
+    MEASUREMENT_LABEL_GAP +
+    annotationWidth +
+    COLUMN_CONTENT_PADDING
+  );
+}
+
+function wireLabelWidth(qubits: number): number {
+  const widestLabel = `q${Math.max(0, qubits - 1)}`;
+  return Math.max(
+    MIN_LABEL_WIDTH,
+    MARGIN + [...widestLabel].length * WIRE_LABEL_CHARACTER_WIDTH + MARGIN
+  );
 }
 
 function displayLabel(operation: ParsedCircuitOperation): string {

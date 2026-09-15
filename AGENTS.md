@@ -54,3 +54,10 @@ Matt 系スキルの標準 triage 役割は、同名の GitHub label に対応�
 - commit や push の前には、全体チェックを最新状態で通す。
 - 少なくとも `npm run check` を成功させてから commit / push する。
 - 部分的なテストや前回の成功結果ではなく、その時点の作業木に対する最新の実行結果を確認する。
+
+## Maintaining this file
+
+Keep this file for knowledge useful to almost every future agent session in this project.
+Do not repeat what the codebase already shows; point to the authoritative file or command instead.
+Prefer rewriting or pruning existing entries over appending new ones.
+When updating this file, preserve this bar for all agents and keep entries concise.
