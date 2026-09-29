@@ -4,9 +4,9 @@ qni-cli 0.2 系の利用者として
 数式描画の提供元と互換性変更を把握したい
 確認済みの pi-formula を使って Pi で数式を読めるようにするため
 
-## Scenario: qni-cli 0.2.2 は pi-formula 0.1.1 を完全固定する
+## Scenario: qni-cli 0.2.3 は pi-formula 0.1.1 を完全固定する
 
-- Then リポジトリファイル "package.json" は "\"version\": \"0.2.2\"" を含む
+- Then リポジトリファイル "package.json" は "\"version\": \"0.2.3\"" を含む
 
 ## Scenario: pi-formula 更新版の導入方法を案内する
 
