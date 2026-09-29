@@ -1,3 +1,5 @@
 npx lint-staged
+# Git's hook environment must not redirect tests' temporary git repositories to this worktree.
+unset $(git rev-parse --local-env-vars)
 npm run typecheck
 npm run check
