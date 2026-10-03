@@ -36,9 +36,17 @@
 
 - Then リポジトリファイル "skills/qni-cli/SKILL.md" は "説明の中で回路をアスキーアートや Unicode（罫線文字など）で手書きしない" を含む
 
-## Scenario: 回路を再び見せるときは qni の図を使う
+## Scenario: 前に表示した回路図を参照するだけで済ませない
 
-- Then リポジトリファイル "skills/qni-cli/SKILL.md" は "回路を見せたいときは `qni view` を呼び直す（テキスト経路では qni 自身が正しい ASCII 図を出す）か、前に出した図を参照する" を含む
+- Then リポジトリファイル "skills/qni-cli/SKILL.md" は "前に表示した図を「上の回路」のように参照するだけで済ませない" を含む
+
+## Scenario: 説明の中で回路を見せる位置に図を表示する
+
+- Then リポジトリファイル "skills/qni-cli/SKILL.md" は "説明の中で回路を見せる箇所（例: 「3 量子ビットの回路」の節）では、その位置で `qni view` を呼び、回路図をその場に表示する" を含む
+
+## Scenario: 説明文と回路図の表示を交互に進める
+
+- Then リポジトリファイル "skills/qni-cli/SKILL.md" は "説明文と `qni view` の呼び出しを交互に進める（説明を書く → その場で `qni view` → 続きを書く）" を含む
 
 ## Scenario: 作業場所を選んでいない場合は一時作業場所を使う
 
