@@ -12,7 +12,7 @@ qni-cli を実行するときは、専用の `qni` ツールを優先する。
 単独のコマンドは `args` に引数の文字列配列を渡す。
 
 ```json
-{"args":["run","--latex"]}
+{ "args": ["run", "--latex"] }
 ```
 
 `add`、`view`、`run` のように依存するコマンド列は `commands` にまとめ、1回で一括実行する。各コマンドを文字列ではなく、引数の文字列配列にする。
@@ -21,7 +21,18 @@ qni-cli を実行するときは、専用の `qni` ツールを優先する。
 {
   "commands": [
     ["add", "H", "--qubit", "0", "--step", "0"],
-    ["add", "P", "--angle", "π/2", "--control", "1", "--qubit", "0", "--step", "1"],
+    [
+      "add",
+      "P",
+      "--angle",
+      "π/2",
+      "--control",
+      "1",
+      "--qubit",
+      "0",
+      "--step",
+      "1"
+    ],
     ["view"],
     ["run", "--symbolic"]
   ]
@@ -39,7 +50,7 @@ qni-cli を実行するときは、専用の `qni` ツールを優先する。
 ## 基本手順
 
 1. `qni add ...` で回路を作る。初期状態が必要な場合だけ、先に `qni state set "..."` を実行する。
-2. `qni view` で回路を確認して説明する。専用の `qni` ツールでは、pi-formula の画像経路では回路図を PNG で表示し、テキスト経路では ASCII 図へ戻す。画像を得るために `export --png` や LaTeX 処理系を呼ばない。
+2. `qni view` で回路を確認して説明する。専用の `qni` ツールでは、pi-formula の画像経路では回路図を PNG で表示し、テキスト経路では ASCII 図へ戻す。画像を得るために `export --png` や LaTeX 処理系を呼ばない。説明の中で回路をアスキーアートや Unicode（罫線文字など）で手書きしない。回路を見せたいときは `qni view` を呼び直す（テキスト経路では qni 自身が正しい ASCII 図を出す）か、前に出した図を参照する。
 3. `qni run` で実行する。説明用の ket 状態には `--symbolic`、再現可能な測定データには `--shots N --seed N --json` を使う。
 4. 測定値、`qni expect ...`、またはその両方で結果を検証する。根拠と要求が一致しなければ、回路を直して再実行する。
 5. 図が役立つ場合は、外部の LaTeX 処理系が不要な `qni export --svg ...` で回路を描く。PNG が必要なら `qni export --png ...`、1 量子ビットの軌跡なら `qni bloch --png --trajectory ...` を使う。
