@@ -892,8 +892,8 @@ qni benchmark run で最小の合格判定を実行したい。
 
   ```text
   PASS benchmark suite
-  tasks: 34
-  passed: 34, failed: 0, disallowed: 0, error: 0
+  tasks: 41
+  passed: 41, failed: 0, disallowed: 0, error: 0
   - passed basic-gates/basis-change BasisChange
   - passed basic-gates/bell-state-change-1 BellStateChange1
   - passed basic-gates/bell-state-change-2 BellStateChange2
@@ -913,6 +913,13 @@ qni benchmark run で最小の合格判定を実行したい。
   - passed multi-qubit-gates/compound-gate CompoundGate
   - passed multi-qubit-gates/controlled-rotation ControlledRotation
   - passed multi-qubit-gates/preparing-bell-state PreparingBellState
+  - passed preparing-states/controlled-rotation ControlledRotation
+  - passed preparing-states/hardy-state HardyState
+  - passed preparing-states/three-states-two-qubits-phases ThreeStatesTwoQubitsPhases
+  - passed preparing-states/three-states-two-qubits ThreeStatesTwoQubits
+  - passed preparing-states/unequal-superposition UnequalSuperposition
+  - passed preparing-states/wstate-arbitrary WStateArbitrary
+  - passed preparing-states/wstate-power-of-two WStatePowerOfTwo
   - passed single-qubit-gates/amplitude-change AmplitudeChange
   - passed single-qubit-gates/global-phase-i GlobalPhaseI
   - passed single-qubit-gates/prepare-arbitrary-state PrepareArbitraryState
@@ -943,8 +950,8 @@ qni benchmark run で最小の合格判定を実行したい。
       "disallowed": 0,
       "error": 0,
       "failed": 0,
-      "passed": 34,
-      "total": 34
+      "passed": 41,
+      "total": 41
     },
     "results": [
       {
@@ -2174,6 +2181,104 @@ qni benchmark run で最小の合格判定を実行したい。
         ],
         "checks": [{ "type": "run", "status": "passed" }],
         "task": "benchmarks/quantum-katas/multi-qubit-gates/preparing-bell-state.md"
+      },
+      {
+        "taskId": "preparing-states/controlled-rotation",
+        "title": "ControlledRotation",
+        "submission": "benchmarks/solutions/quantum-katas/preparing-states/controlled-rotation.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
+        "task": "benchmarks/quantum-katas/preparing-states/controlled-rotation.md"
+      },
+      {
+        "taskId": "preparing-states/hardy-state",
+        "title": "HardyState",
+        "submission": "benchmarks/solutions/quantum-katas/preparing-states/hardy-state.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
+        "task": "benchmarks/quantum-katas/preparing-states/hardy-state.md"
+      },
+      {
+        "taskId": "preparing-states/three-states-two-qubits-phases",
+        "title": "ThreeStatesTwoQubitsPhases",
+        "submission": "benchmarks/solutions/quantum-katas/preparing-states/three-states-two-qubits-phases.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
+        "task": "benchmarks/quantum-katas/preparing-states/three-states-two-qubits-phases.md"
+      },
+      {
+        "taskId": "preparing-states/three-states-two-qubits",
+        "title": "ThreeStatesTwoQubits",
+        "submission": "benchmarks/solutions/quantum-katas/preparing-states/three-states-two-qubits.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
+        "task": "benchmarks/quantum-katas/preparing-states/three-states-two-qubits.md"
+      },
+      {
+        "taskId": "preparing-states/unequal-superposition",
+        "title": "UnequalSuperposition",
+        "submission": "benchmarks/solutions/quantum-katas/preparing-states/unequal-superposition.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
+        "task": "benchmarks/quantum-katas/preparing-states/unequal-superposition.md"
+      },
+      {
+        "taskId": "preparing-states/wstate-arbitrary",
+        "title": "WStateArbitrary",
+        "submission": "benchmarks/solutions/quantum-katas/preparing-states/wstate-arbitrary.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
+        "task": "benchmarks/quantum-katas/preparing-states/wstate-arbitrary.md"
+      },
+      {
+        "taskId": "preparing-states/wstate-power-of-two",
+        "title": "WStatePowerOfTwo",
+        "submission": "benchmarks/solutions/quantum-katas/preparing-states/wstate-power-of-two.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
+        "task": "benchmarks/quantum-katas/preparing-states/wstate-power-of-two.md"
       },
       {
         "taskId": "single-qubit-gates/amplitude-change",

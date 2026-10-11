@@ -194,6 +194,13 @@ async function prepareQuantumKatasSubmissions(
   status: UnsuccessfulResearchStatus
 ): Promise<void> {
   const relativePaths = [
+    "preparing-states/controlled-rotation.qni",
+    "preparing-states/hardy-state.qni",
+    "preparing-states/three-states-two-qubits.qni",
+    "preparing-states/three-states-two-qubits-phases.qni",
+    "preparing-states/unequal-superposition.qni",
+    "preparing-states/wstate-arbitrary.qni",
+    "preparing-states/wstate-power-of-two.qni",
     "single-qubit-gates/amplitude-change.qni",
     "single-qubit-gates/prepare-rotated-state.qni",
     "single-qubit-gates/prepare-arbitrary-state.qni",
@@ -236,7 +243,16 @@ async function prepareQuantumKatasSubmissions(
     await mkdir(path.dirname(submissionPath), { recursive: true });
     await writeFile(
       submissionPath,
-      quantumKatasSubmissionContent(status, relativePath)
+      relativePath.startsWith("preparing-states/")
+        ? await readFile(
+            path.join(
+              process.cwd(),
+              "benchmarks/solutions/quantum-katas",
+              relativePath
+            ),
+            "utf8"
+          )
+        : quantumKatasSubmissionContent(status, relativePath)
     );
   }
 }
@@ -1020,15 +1036,15 @@ describe("research command TypeScript route", () => {
         );
         assert.equal(metadata.status, gradingCase.status);
         assert.deepStrictEqual(metadata.score, {
-          passed: 33,
-          total: 34,
-          percent: 97.05882352941177,
+          passed: 40,
+          total: 41,
+          percent: 97.5609756097561,
           source: "result.json",
         });
         assert.equal(gradingResult.status, gradingCase.status);
         assert.equal(gradingResult.exitCode, gradingCase.exitCode);
         assert.ok(trialSummary.includes(`- status: ${gradingCase.status}\n`));
-        assert.ok(trialSummary.includes("- score: 97.06%\n"));
+        assert.ok(trialSummary.includes("- score: 97.56%\n"));
         assert.equal(
           (await stat(path.join(trialDir, "submissions"))).isDirectory(),
           true
@@ -1166,8 +1182,8 @@ describe("research command TypeScript route", () => {
         result: "result.json",
         status: "passed",
         score: {
-          passed: 34,
-          total: 34,
+          passed: 41,
+          total: 41,
           percent: 100,
           source: "result.json",
         },
@@ -1178,8 +1194,8 @@ describe("research command TypeScript route", () => {
       );
       assert.equal(gradingResult.status, "passed");
       assert.deepStrictEqual(gradingResult.summary, {
-        total: 34,
-        passed: 34,
+        total: 41,
+        passed: 41,
         failed: 0,
         disallowed: 0,
         error: 0,

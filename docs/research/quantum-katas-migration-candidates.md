@@ -63,9 +63,9 @@
 | ------------------------ | ---: | -------: | -------------: | ---: |
 | Single-Qubit Gates       |   14 |       14 |              4 |    0 |
 | Multi-Qubit Gates        |   10 |       10 |              3 |    0 |
-| Preparing Quantum States |   21 |        7 |              1 |   14 |
+| Preparing Quantum States |   21 |       14 |              4 |    7 |
 | QFT                      |   12 |        0 |              0 |   12 |
-| 合計                     |   57 |       31 |              8 |   26 |
+| 合計                     |   57 |       38 |             11 |   19 |
 
 ### 必要な機能と採点方針
 
@@ -145,13 +145,15 @@ CompoundGate は上流の `CheckOperationsAreEqualStrict` に合わせて厳密�
 | `preparing_states__two_bitstrings`                     | `preparing-states/two-bitstrings`                           | 未移植   | F1                        | 未決定: bits1, bits2    |
 | `preparing_states__four_bitstrings`                    | `preparing-states/four-bitstrings`                          | 未移植   | F1/F4                     | 未決定: 4つのbits       |
 | `preparing_states__parity_bitstrings`                  | `preparing-states/parity-bitstrings`                        | 未移植   | F1                        | 未決定: N, parity       |
-| `preparing_states__unequal_superposition`              | `preparing-states/unequal-superposition`                    | 未移植   | F1/F4                     | 未決定: α               |
-| `preparing_states__controlled_rotation`                | `preparing-states/controlled-rotation`                      | 未移植   | F1/F4 (CH)                | N=2（上流も固定）       |
-| `preparing_states__three_states_two_qubits`            | `preparing-states/three-states-two-qubits`                  | 未移植   | F1/F4                     | パラメータなし          |
-| `preparing_states__three_states_two_qubits_phases`     | `preparing-states/three-states-two-qubits-phases`           | 未移植   | F1/F4                     | パラメータなし          |
-| `preparing_states__hardy_state`                        | `preparing-states/hardy-state`                              | 未移植   | F1/F4                     | パラメータなし          |
-| `preparing_states__wstate_power_of_two`                | `preparing-states/wstate-power-of-two`                      | 未移植   | F1/F4                     | 未決定: N               |
-| `preparing_states__wstate_arbitrary`                   | `preparing-states/wstate-arbitrary`                         | 未移植   | F1/F4                     | 未決定: N               |
+| `preparing_states__unequal_superposition`              | `preparing-states/unequal-superposition`                    | 部分的   | F1/F4 (Ry)                | N=1、α=π/6              |
+| `preparing_states__controlled_rotation`                | `preparing-states/controlled-rotation`                      | 移植済み | F1/F4 (CH)                | N=2（上流も固定）       |
+| `preparing_states__three_states_two_qubits`            | `preparing-states/three-states-two-qubits`                  | 移植済み | F1/F4 (Ry/CH)             | N=2（上流も固定）       |
+| `preparing_states__three_states_two_qubits_phases`     | `preparing-states/three-states-two-qubits-phases`           | 移植済み | F1/F4 (Ry/CH/P)           | N=2、位相=2π/3,4π/3     |
+| `preparing_states__hardy_state`                        | `preparing-states/hardy-state`                              | 移植済み | F1/F4 (Ry/CRy)            | N=2（上流も固定）       |
+| `preparing_states__wstate_power_of_two`                | `preparing-states/wstate-power-of-two`                      | 部分的   | F1/F4 (CRy)               | N=4                     |
+| `preparing_states__wstate_arbitrary`                   | `preparing-states/wstate-arbitrary`                         | 部分的   | F1/F4 (CRy)               | N=3                     |
+
+回転を使う7課題は上流と同じゼロ入力・非Strict比較で採点する。UnequalSuperposition の α と WState の N は固定するため部分的移植とする。ThreeStates の相対位相は 2π/3,4π/3、Hardy の振幅は (3,1,1,1)/sqrt(12) を維持する。WState は制御付き Ry と CNOT で励起を隣へ分配する固定長回路で、測定・補助量子ビット・多重制御回転を必要としない。一般の引数や可変長回路生成は対象外。
 
 ### qft
 
