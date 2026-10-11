@@ -469,6 +469,22 @@ result.json
 
 終了コードは採点状態を表します。`passed` は `0`、`failed` は `1`、`disallowed` は `2`、`error` または入力検証や保存の失敗は `3` です。不合格、不許可、実行エラーの研究試行も保存対象です。
 
+## 中立回路 JSON のゲート語彙
+
+`available_gates` に `Rx(angle, target)`、`Ry(angle, target)`、`Rz(angle, target)`、`CH(control, target)`、`CRx(angle, control, target)`、`CRy(angle, control, target)`、`CRz(angle, control, target)`、`MCX(controls, target)` を指定できます。回転の角度は既存の位相ゲートと同じ有限な π 式文字列で、MCX の制御配列は1個以上の可変長です。
+
+```json
+{
+  "operations": [
+    { "gate": "Ry", "angle": "pi/2", "targets": [0] },
+    { "gate": "CH", "controls": [0], "targets": [1] },
+    { "gate": "MCX", "controls": [0, 1, 2], "targets": [3] }
+  ]
+}
+```
+
+既存の `X`、`CNOT`、`Toffoli` の引数数と許可範囲は変えません。たとえば `Toffoli` の許可だけでは `MCX` を提出できません。未知のゲート、不正な引数数・角度、課題で許可されないゲートは `disallowed` になります。全署名、回転の位相規約、角度の制約は [中立回路 JSON のゲート語彙](neutral-circuit-json.md) を参照してください。
+
 ## 中立 JSON 研究試行を記録する例
 
 外部エージェントや人間が qni-cli を知らずに作った中立回路 JSON 提出を記録する場合は、`--submissions` ではなく `--circuit-json-dir` を使います。提出ディレクトリには、ベンチマーク課題と同じ相対パスで `.json` ファイルを置きます。たとえば `tmp/research-example/benchmark/basic/state-flip.md` への提出は `tmp/research-example/circuit-json/basic/state-flip.json` です。

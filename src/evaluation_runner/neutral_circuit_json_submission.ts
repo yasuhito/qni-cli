@@ -39,7 +39,7 @@ interface NeutralCircuitJsonSubmission {
 
 interface GateDefinition {
   readonly canonicalGate: string;
-  readonly controlCount: number;
+  readonly controlCount: number | "oneOrMore";
   readonly qniGate: string;
   readonly requiresAngle: boolean;
   readonly targetCount: number;
@@ -72,6 +72,27 @@ const TOFFOLI_GATE: GateDefinition = {
 
 const GATE_DEFINITIONS = new Map<string, GateDefinition>([
   ...fixedSingleQubitGateDefinitions(["X", "Y", "Z", "H", "S", "T"]),
+  ...rotationGateDefinitions(),
+  [
+    "CH",
+    {
+      canonicalGate: "CH",
+      controlCount: 1,
+      qniGate: "H",
+      requiresAngle: false,
+      targetCount: 1,
+    },
+  ],
+  [
+    "MCX",
+    {
+      canonicalGate: "MCX",
+      controlCount: "oneOrMore",
+      qniGate: "X",
+      requiresAngle: false,
+      targetCount: 1,
+    },
+  ],
   ["Phase", PHASE_GATE],
   ["P", PHASE_GATE],
   [
@@ -304,6 +325,31 @@ function fixedSingleQubitGateDefinitions(
   );
 }
 
+function rotationGateDefinitions(): Array<readonly [string, GateDefinition]> {
+  return ["Rx", "Ry", "Rz"].flatMap((gate) => [
+    [
+      gate,
+      {
+        canonicalGate: gate,
+        controlCount: 0,
+        qniGate: gate,
+        requiresAngle: true,
+        targetCount: 1,
+      },
+    ] as const,
+    [
+      `C${gate}`,
+      {
+        canonicalGate: `C${gate}`,
+        controlCount: 1,
+        qniGate: gate,
+        requiresAngle: true,
+        targetCount: 1,
+      },
+    ] as const,
+  ]);
+}
+
 function parseNeutralCircuitJsonSubmission(
   submissionText: string
 ): NeutralCircuitJsonSubmission {
@@ -475,9 +521,15 @@ function normalizedAngle(angle: unknown, index: number): string {
   try {
     const expression = new AngleExpression(angle);
 
-    if (!expression.concrete()) {
+    if (!expression.concrete() || !/(?:pi|π)/u.test(compactAngle)) {
       throw new NeutralCircuitJsonSubmissionError(
         `angle at operations[${index}] must use a symbolic pi expression`
+      );
+    }
+
+    if (!Number.isFinite(expression.radians())) {
+      throw new NeutralCircuitJsonSubmissionError(
+        `angle at operations[${index}] must be finite`
       );
     }
 
@@ -501,7 +553,9 @@ function assertArgumentCount(options: {
   readonly targets: readonly number[];
 }): void {
   if (
-    options.controls.length === options.definition.controlCount &&
+    (options.definition.controlCount === "oneOrMore"
+      ? options.controls.length >= 1
+      : options.controls.length === options.definition.controlCount) &&
     options.targets.length === options.definition.targetCount
   ) {
     return;
@@ -513,7 +567,12 @@ function assertArgumentCount(options: {
 }
 
 function argumentExpectation(definition: GateDefinition): string {
-  return `${countExpectation(definition.controlCount, "control")} and ${countExpectation(definition.targetCount, "target")}`;
+  const controls =
+    definition.controlCount === "oneOrMore"
+      ? "at least 1 control"
+      : countExpectation(definition.controlCount, "control");
+
+  return `${controls} and ${countExpectation(definition.targetCount, "target")}`;
 }
 
 function countExpectation(count: number, singularName: string): string {
