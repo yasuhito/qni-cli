@@ -96,7 +96,34 @@ describe("evaluation runner public entrypoints", () => {
           "benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni",
         status: "passed",
         exitCode: 0,
-        checks: [{ type: "run", status: "passed" }],
+        gradingCases: [
+          {
+            caseId: "zero",
+            status: "passed",
+            checks: [{ type: "run", status: "passed" }],
+          },
+          {
+            caseId: "one",
+            status: "passed",
+            checks: [{ type: "run", status: "passed" }],
+          },
+          {
+            caseId: "real-superposition",
+            status: "passed",
+            checks: [{ type: "run", status: "passed" }],
+          },
+          {
+            caseId: "complex-superposition",
+            status: "passed",
+            checks: [{ type: "run", status: "passed" }],
+          },
+        ],
+        checks: [
+          { type: "run", status: "passed" },
+          { type: "run", status: "passed" },
+          { type: "run", status: "passed" },
+          { type: "run", status: "passed" },
+        ],
       });
     });
   });
@@ -178,7 +205,34 @@ describe("evaluation runner public entrypoints", () => {
           "benchmarks/incorrect/quantum-katas/basic-gates/state-flip-wrong.qni",
         status: "failed",
         exitCode: 1,
-        checks: [{ type: "run", status: "failed" }],
+        gradingCases: [
+          {
+            caseId: "zero",
+            status: "failed",
+            checks: [{ type: "run", status: "failed" }],
+          },
+          {
+            caseId: "one",
+            status: "failed",
+            checks: [{ type: "run", status: "failed" }],
+          },
+          {
+            caseId: "real-superposition",
+            status: "failed",
+            checks: [{ type: "run", status: "failed" }],
+          },
+          {
+            caseId: "complex-superposition",
+            status: "failed",
+            checks: [{ type: "run", status: "failed" }],
+          },
+        ],
+        checks: [
+          { type: "run", status: "failed" },
+          { type: "run", status: "failed" },
+          { type: "run", status: "failed" },
+          { type: "run", status: "failed" },
+        ],
       });
     });
   });
@@ -462,12 +516,24 @@ describe("evaluation runner public entrypoints", () => {
         output.humanOutput,
         [
           "FAIL StateFlip",
-          "checks: 1",
+          "checks: 4",
           "failed checks:",
-          "- run #1: state vector did not match expected amplitudes",
+          "- case zero run #1: state vector did not match expected amplitudes",
           "  expected / actual mismatches:",
           "  - |0>: expected 0, actual 0.7071067811865475",
           "  - |1>: expected 1, actual 0.7071067811865475",
+          "- case one run #1: state vector did not match expected amplitudes",
+          "  expected / actual mismatches:",
+          "  - |0>: expected 1, actual 0.7071067811865475",
+          "  - |1>: expected 0, actual -0.7071067811865475",
+          "- case real-superposition run #1: state vector did not match expected amplitudes",
+          "  expected / actual mismatches:",
+          "  - |0>: expected 0.8, actual 0.9899494936611664",
+          "  - |1>: expected 0.6, actual -0.14142135623730953",
+          "- case complex-superposition run #1: state vector did not match expected amplitudes",
+          "  expected / actual mismatches:",
+          "  - |0>: expected 0.8i, actual 0.42426406871192845+0.565685424949238i",
+          "  - |1>: expected 0.6, actual 0.42426406871192845-0.565685424949238i",
           "",
         ].join("\n")
       );
@@ -478,7 +544,34 @@ describe("evaluation runner public entrypoints", () => {
           "benchmarks/incorrect/quantum-katas/basic-gates/state-flip-wrong.qni",
         status: "failed",
         exitCode: 1,
-        checks: [{ type: "run", status: "failed" }],
+        gradingCases: [
+          {
+            caseId: "zero",
+            status: "failed",
+            checks: [{ type: "run", status: "failed" }],
+          },
+          {
+            caseId: "one",
+            status: "failed",
+            checks: [{ type: "run", status: "failed" }],
+          },
+          {
+            caseId: "real-superposition",
+            status: "failed",
+            checks: [{ type: "run", status: "failed" }],
+          },
+          {
+            caseId: "complex-superposition",
+            status: "failed",
+            checks: [{ type: "run", status: "failed" }],
+          },
+        ],
+        checks: [
+          { type: "run", status: "failed" },
+          { type: "run", status: "failed" },
+          { type: "run", status: "failed" },
+          { type: "run", status: "failed" },
+        ],
       });
     });
   });
@@ -709,6 +802,18 @@ describe("evaluation runner public entrypoints", () => {
         submission: submissionPath,
         status: "error",
         exitCode: 3,
+        gradingCases: [
+          "zero",
+          "one",
+          "real-superposition",
+          "complex-superposition",
+        ].map((caseId) => ({
+          caseId,
+          status: "error",
+          checks: [],
+          error:
+            "submission command must start with qni at line 1: echo not-qni",
+        })),
         checks: [],
         error: "submission command must start with qni at line 1: echo not-qni",
       });

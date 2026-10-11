@@ -24,13 +24,13 @@
 
 優先候補は `State Flip`、`Basis Change`、`Sign Flip`、`Phase Shift Gates`、`Amplitude Change` とする。
 
-| 候補                | 旧 `Tasks.qs` の名前       | 分類                                    | `grading_cases` / `setup_commands`                                           | 追加 qni-cli 機能 | 備考                                                                                     |
-| ------------------- | -------------------------- | --------------------------------------- | ---------------------------------------------------------------------------- | ----------------- | ---------------------------------------------------------------------------------------- |
-| `State Flip`        | `StateFlip`                | 現行評価ランナーで追加可能              | 不要。完全な Kata 再現では `\|0>` と `\|1>` などを複数ケース化する余地あり。 | 不要              | `basic-gates/state-flip` はスモーク課題として追加済み。                                  |
-| `Basis Change`      | `BasisChange`              | `grading_cases` / `setup_commands` 前提 | `\|0>` から `\|+>`、`\|1>` から `\|->`、一般状態の写像を分けて採点する。     | 不要              | `H` だけで解けるが、1ケースだけでは基底変換の意図が弱い。                                |
-| `Sign Flip`         | `SignFlip`                 | `grading_cases` / `setup_commands` 前提 | `\|+>` と `\|->`、または `α\|0> + β\|1>` を使う複数ケースが必要。            | 不要              | `Z` による `\|1>` 成分の符号反転を確認する。                                             |
-| `Phase Shift Gates` | `PhaseFlip`, `PhaseChange` | `grading_cases` / `setup_commands` 前提 | `S` 相当の固定位相と、角度付き位相を複数角度で採点する。                     | 不要              | 公式ページのレッスン名に合わせ、旧タスクでは `PhaseFlip` と `PhaseChange` に対応させる。 |
-| `Amplitude Change`  | `AmplitudeChange`          | `grading_cases` / `setup_commands` 前提 | 複数の角度と `\|0>` / `\|1>` の写像を分けて採点する。                        | 原則不要          | 記号角そのものを採点したい場合は、別 issue で角度式の扱いを確認する。                    |
+| 候補                | 旧 `Tasks.qs` の名前       | 分類                                    | `grading_cases` / `setup_commands`                                       | 追加 qni-cli 機能 | 備考                                                                                     |
+| ------------------- | -------------------------- | --------------------------------------- | ------------------------------------------------------------------------ | ----------------- | ---------------------------------------------------------------------------------------- |
+| `State Flip`        | `StateFlip`                | `grading_cases` / `setup_commands` 前提 | `\|0>`、`\|1>`、実数・複素重ね合わせの4入力を厳密比較する。              | 不要              | `basic-gates/state-flip` は採点強化済み。                                                |
+| `Basis Change`      | `BasisChange`              | `grading_cases` / `setup_commands` 前提 | `\|0>` から `\|+>`、`\|1>` から `\|->`、一般状態の写像を分けて採点する。 | 不要              | `H` だけで解けるが、1ケースだけでは基底変換の意図が弱い。                                |
+| `Sign Flip`         | `SignFlip`                 | `grading_cases` / `setup_commands` 前提 | `\|+>` と `\|->`、または `α\|0> + β\|1>` を使う複数ケースが必要。        | 不要              | `Z` による `\|1>` 成分の符号反転を確認する。                                             |
+| `Phase Shift Gates` | `PhaseFlip`, `PhaseChange` | `grading_cases` / `setup_commands` 前提 | `S` 相当の固定位相と、角度付き位相を複数角度で採点する。                 | 不要              | 公式ページのレッスン名に合わせ、旧タスクでは `PhaseFlip` と `PhaseChange` に対応させる。 |
+| `Amplitude Change`  | `AmplitudeChange`          | `grading_cases` / `setup_commands` 前提 | 複数の角度と `\|0>` / `\|1>` の写像を分けて採点する。                    | 原則不要          | 記号角そのものを採点したい場合は、別 issue で角度式の扱いを確認する。                    |
 
 ## Preparing Quantum States
 
@@ -75,43 +75,53 @@
 - F4: 中立JSON語彙に回転ゲート、制御付き回転、多重制御を追加。
 - F5: 測定結果の採点。signal_frequency は逆QFTによる状態準備へ置き換える方針なのでF2を使う。
 
-初回5問は厳密比較で |0>、|1>、|+> を検証する。prepare_minus の上流はゼロ入力のみの厳密比較だが、ここでは X→H の変換全体を指定して3入力で採点する。Preparing の既存7問はF1適用前。state-flip、fredkin-gate、global-phase-change の採点強化は誤答テストを追加する別PRで扱う。
+初回5問は厳密比較で |0>、|1>、|+> を検証する。prepare_minus の上流はゼロ入力のみの厳密比較だが、ここでは X→H の変換全体を指定して3入力で採点する。Preparing の既存7問はF1適用前。state-flip、fredkin-gate、global-phase-change は独立した変更で採点を強化済み（下記）。
 
 追跡: [#441](https://github.com/yasuhito/qni-cli/issues/441)。PR順序: 初回5問 → F1 → F4 → Single残り → Multi残り → PreparingのF4不要分 → F4必要分 → F2 → QFT前半 → QFT後半。採点強化は独立PR。
 
+### 既存3課題の採点強化
+
+課題IDは維持し、グローバル位相も含めた厳密比較を使う。
+
+- `basic-gates/state-flip`: 1入力から4入力へ。全2基底と実数・複素重ね合わせで X の変換を検証する。Z→X（-iY）、X→Z、Y を誤答として検証する。
+- `basic-gates/fredkin-gate`: 2入力から10入力へ。全8基底の振幅を厳密比較するため、上流の `CheckOperationsAreEqualStrict(3, ...)` と同じユニタリ変換を要求する。制御の重ね合わせと複素位相も検証する。
+- `basic-gates/global-phase-change`: 2入力から7入力へ。既存の制御付き2量子ビット課題は維持し、全4基底と対象・制御の重ね合わせを検証する。上流の1量子ビット `-I` そのものとは異なり、その制御付き版を採点する。`available_gates` に CNOT/CZ を追加し、上流の Z→X→Z→X を制御付き Pauli ゲートで構成できるようにした。既存の ControlledGlobalPhase と標準解も維持する。
+
+旧条件で PASS した誤答が FAIL になるほか、GlobalPhaseChange の提出可能なゲートも増える。過去の評価と条件が異なるため、点数を直接比較しない。保存済み `research/runs/*` は [ADR 0019](../adr/0019-research-report-does-not-regrade.md) に従って再採点しない。
+
 ### single_qubit_gates
 
-| 上流 exercise ID                              | qni課題ID（未移植は予定）                    | 状態     | 必要な機能                   | 固定値                                 |
-| --------------------------------------------- | -------------------------------------------- | -------- | ---------------------------- | -------------------------------------- |
-| `single_qubit_gates__state_flip`              | `basic-gates/state-flip`                     | 移植済み | なし                         | パラメータなし                         |
-| `single_qubit_gates__sign_flip`               | `basic-gates/sign-flip`                      | 移植済み | なし                         | パラメータなし                         |
-| `single_qubit_gates__y_gate`                  | `single-qubit-gates/y-gate`                  | 移植済み | なし                         | パラメータなし                         |
-| `single_qubit_gates__sign_flip_on_zero`       | `single-qubit-gates/sign-flip-on-zero`       | 移植済み | なし                         | パラメータなし                         |
-| `single_qubit_gates__global_phase_minusone`   | `basic-gates/global-phase-change`            | 移植済み | なし                         | パラメータなし                         |
-| `single_qubit_gates__global_phase_i`          | `single-qubit-gates/global-phase-i`          | 移植済み | なし                         | パラメータなし                         |
-| `single_qubit_gates__basis_change`            | `basic-gates/basis-change`                   | 移植済み | なし                         | パラメータなし                         |
-| `single_qubit_gates__prepare_minus`           | `single-qubit-gates/prepare-minus`           | 移植済み | なし                         | N=1、X→H変換（上流より入力条件を追加） |
-| `single_qubit_gates__phase_i`                 | `basic-gates/phase-flip`                     | 移植済み | なし                         | パラメータなし                         |
-| `single_qubit_gates__three_quarters_pi_phase` | `single-qubit-gates/three-quarters-pi-phase` | 移植済み | なし                         | 角度=3π/4                              |
-| `single_qubit_gates__complex_phase`           | `basic-gates/phase-change-pi-over-3`         | 部分的   | F3または固定インスタンス追加 | α=π/3                                  |
-| `single_qubit_gates__amplitude_change`        | `single-qubit-gates/amplitude-change`        | 未移植   | F4 (Ry)、一般角度はF3        | 未決定: α                              |
-| `single_qubit_gates__prepare_rotated_state`   | `single-qubit-gates/prepare-rotated-state`   | 未移植   | F4 (Rx)                      | 未決定: α, β                           |
-| `single_qubit_gates__prepare_arbitrary_state` | `single-qubit-gates/prepare-arbitrary-state` | 未移植   | F4 (Ry)                      | 未決定: α, β, θ                        |
+| 上流 exercise ID                              | qni課題ID（未移植は予定）                    | 状態                     | 必要な機能                   | 固定値                                              |
+| --------------------------------------------- | -------------------------------------------- | ------------------------ | ---------------------------- | --------------------------------------------------- |
+| `single_qubit_gates__state_flip`              | `basic-gates/state-flip`                     | 移植済み（採点強化済み） | なし                         | N=1、全2基底と重ね合わせの厳密比較                  |
+| `single_qubit_gates__sign_flip`               | `basic-gates/sign-flip`                      | 移植済み                 | なし                         | パラメータなし                                      |
+| `single_qubit_gates__y_gate`                  | `single-qubit-gates/y-gate`                  | 移植済み                 | なし                         | パラメータなし                                      |
+| `single_qubit_gates__sign_flip_on_zero`       | `single-qubit-gates/sign-flip-on-zero`       | 移植済み                 | なし                         | パラメータなし                                      |
+| `single_qubit_gates__global_phase_minusone`   | `basic-gates/global-phase-change`            | 移植済み（採点強化済み） | なし                         | N=2、制御付き -I（上流から拡張）、全4基底の厳密比較 |
+| `single_qubit_gates__global_phase_i`          | `single-qubit-gates/global-phase-i`          | 移植済み                 | なし                         | パラメータなし                                      |
+| `single_qubit_gates__basis_change`            | `basic-gates/basis-change`                   | 移植済み                 | なし                         | パラメータなし                                      |
+| `single_qubit_gates__prepare_minus`           | `single-qubit-gates/prepare-minus`           | 移植済み                 | なし                         | N=1、X→H変換（上流より入力条件を追加）              |
+| `single_qubit_gates__phase_i`                 | `basic-gates/phase-flip`                     | 移植済み                 | なし                         | パラメータなし                                      |
+| `single_qubit_gates__three_quarters_pi_phase` | `single-qubit-gates/three-quarters-pi-phase` | 移植済み                 | なし                         | 角度=3π/4                                           |
+| `single_qubit_gates__complex_phase`           | `basic-gates/phase-change-pi-over-3`         | 部分的                   | F3または固定インスタンス追加 | α=π/3                                               |
+| `single_qubit_gates__amplitude_change`        | `single-qubit-gates/amplitude-change`        | 未移植                   | F4 (Ry)、一般角度はF3        | 未決定: α                                           |
+| `single_qubit_gates__prepare_rotated_state`   | `single-qubit-gates/prepare-rotated-state`   | 未移植                   | F4 (Rx)                      | 未決定: α, β                                        |
+| `single_qubit_gates__prepare_arbitrary_state` | `single-qubit-gates/prepare-arbitrary-state` | 未移植                   | F4 (Ry)                      | 未決定: α, β, θ                                     |
 
 ### multi_qubit_gates
 
-| 上流 exercise ID                             | qni課題ID（未移植は予定）                | 状態     | 必要な機能           | 固定値                  |
-| -------------------------------------------- | ---------------------------------------- | -------- | -------------------- | ----------------------- |
-| `multi_qubit_gates__compound_gate`           | `multi-qubit-gates/compound-gate`        | 未移植   | なし（F2推奨）       | パラメータなし          |
-| `multi_qubit_gates__entangle_qubits`         | `basic-gates/two-qubit-gate-1`           | 移植済み | なし                 | パラメータなし          |
-| `multi_qubit_gates__preparing_bell_state`    | `multi-qubit-gates/preparing-bell-state` | 未移植   | F1                   | パラメータなし          |
-| `multi_qubit_gates__relative_phase_minusone` | `basic-gates/two-qubit-gate-2`           | 移植済み | なし                 | パラメータなし          |
-| `multi_qubit_gates__qubit_swap`              | `basic-gates/two-qubit-gate-3`           | 部分的   | 固定インスタンス追加 | N=2, index1=0, index2=1 |
-| `multi_qubit_gates__fredkin_gate`            | `basic-gates/fredkin-gate`               | 移植済み | なし                 | パラメータなし          |
-| `multi_qubit_gates__controlled_rotation`     | `multi-qubit-gates/controlled-rotation`  | 未移植   | F1/F4 (CRx)、F2推奨  | 未決定: θ               |
-| `multi_qubit_gates__toffoli_gate`            | `basic-gates/toffoli-gate`               | 移植済み | なし                 | パラメータなし          |
-| `multi_qubit_gates__anti_controlled_gate`    | `basic-gates/two-qubit-gate-4`           | 移植済み | なし                 | パラメータなし          |
-| `multi_qubit_gates__arbitrary_controls`      | `multi-qubit-gates/arbitrary-controls`   | 未移植   | F1/F4 (MCX)、F2推奨  | 未決定: N, controlBits  |
+| 上流 exercise ID                             | qni課題ID（未移植は予定）                | 状態                     | 必要な機能           | 固定値                             |
+| -------------------------------------------- | ---------------------------------------- | ------------------------ | -------------------- | ---------------------------------- |
+| `multi_qubit_gates__compound_gate`           | `multi-qubit-gates/compound-gate`        | 未移植                   | なし（F2推奨）       | パラメータなし                     |
+| `multi_qubit_gates__entangle_qubits`         | `basic-gates/two-qubit-gate-1`           | 移植済み                 | なし                 | パラメータなし                     |
+| `multi_qubit_gates__preparing_bell_state`    | `multi-qubit-gates/preparing-bell-state` | 未移植                   | F1                   | パラメータなし                     |
+| `multi_qubit_gates__relative_phase_minusone` | `basic-gates/two-qubit-gate-2`           | 移植済み                 | なし                 | パラメータなし                     |
+| `multi_qubit_gates__qubit_swap`              | `basic-gates/two-qubit-gate-3`           | 部分的                   | 固定インスタンス追加 | N=2, index1=0, index2=1            |
+| `multi_qubit_gates__fredkin_gate`            | `basic-gates/fredkin-gate`               | 移植済み（採点強化済み） | なし                 | N=3、全8基底と重ね合わせの厳密比較 |
+| `multi_qubit_gates__controlled_rotation`     | `multi-qubit-gates/controlled-rotation`  | 未移植                   | F1/F4 (CRx)、F2推奨  | 未決定: θ                          |
+| `multi_qubit_gates__toffoli_gate`            | `basic-gates/toffoli-gate`               | 移植済み                 | なし                 | パラメータなし                     |
+| `multi_qubit_gates__anti_controlled_gate`    | `basic-gates/two-qubit-gate-4`           | 移植済み                 | なし                 | パラメータなし                     |
+| `multi_qubit_gates__arbitrary_controls`      | `multi-qubit-gates/arbitrary-controls`   | 未移植                   | F1/F4 (MCX)、F2推奨  | 未決定: N, controlBits             |
 
 ### preparing_states
 
