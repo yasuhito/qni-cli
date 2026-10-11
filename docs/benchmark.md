@@ -448,6 +448,10 @@ passed: 34, failed: 0, disallowed: 0, error: 0
 - passed basic-gates/two-qubit-gate-2 TwoQubitGate2
 - passed basic-gates/two-qubit-gate-3 TwoQubitGate3
 - passed basic-gates/two-qubit-gate-4 TwoQubitGate4
+- passed multi-qubit-gates/arbitrary-controls ArbitraryControls
+- passed multi-qubit-gates/compound-gate CompoundGate
+- passed multi-qubit-gates/controlled-rotation ControlledRotation
+- passed multi-qubit-gates/preparing-bell-state PreparingBellState
 - passed single-qubit-gates/amplitude-change AmplitudeChange
 - passed single-qubit-gates/global-phase-i GlobalPhaseI
 - passed single-qubit-gates/prepare-arbitrary-state PrepareArbitraryState
