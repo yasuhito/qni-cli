@@ -25,34 +25,57 @@ qni research record が採点結果から課題単位の score を保存して�
 
   ```json
   {
-    "passed": 22,
-    "total": 22,
+    "passed": 27,
+    "total": 27,
     "percent": 100,
     "source": "result.json"
   }
   ```
 
-## Scenario Outline: 不成功の研究試行のメタデータにも score を保存する
+## Scenario: 不合格の研究試行のメタデータにも score を保存する
 
-- Given 作業ディレクトリに採点状態 "<status>" の Quantum Katas 提出物群 "submissions" を作る
-- When "qni research record --collaborator claude-sonnet-4 --benchmark benchmarks/quantum-katas --submissions submissions --prompt prompt.md --response response.md --slug <status>-claude" を実行
+- Given 作業ディレクトリに採点状態 "failed" の Quantum Katas 提出物群 "submissions" を作る
+- When "qni research record --collaborator claude-sonnet-4 --benchmark benchmarks/quantum-katas --submissions submissions --prompt prompt.md --response response.md --slug failed-claude" を実行
 - Then 研究試行 JSON ファイル "metadata.json" の "score" は次の JSON と一致する:
 
   ```json
   {
-    "passed": 21,
-    "total": 22,
-    "percent": 95.45454545454545,
+    "passed": 26,
+    "total": 27,
+    "percent": 96.29629629629629,
     "source": "result.json"
   }
   ```
 
-### Examples:
+## Scenario: 禁止コマンドを含む研究試行のメタデータにも score を保存する
 
-  | status     |
-  | failed     |
-  | disallowed |
-  | error      |
+- Given 作業ディレクトリに採点状態 "disallowed" の Quantum Katas 提出物群 "submissions" を作る
+- When "qni research record --collaborator claude-sonnet-4 --benchmark benchmarks/quantum-katas --submissions submissions --prompt prompt.md --response response.md --slug disallowed-claude" を実行
+- Then 研究試行 JSON ファイル "metadata.json" の "score" は次の JSON と一致する:
+
+  ```json
+  {
+    "passed": 26,
+    "total": 27,
+    "percent": 96.29629629629629,
+    "source": "result.json"
+  }
+  ```
+
+## Scenario: 実行エラーを含む研究試行のメタデータにも score を保存する
+
+- Given 作業ディレクトリに採点状態 "error" の Quantum Katas 提出物群 "submissions" を作る
+- When "qni research record --collaborator claude-sonnet-4 --benchmark benchmarks/quantum-katas --submissions submissions --prompt prompt.md --response response.md --slug error-claude" を実行
+- Then 研究試行 JSON ファイル "metadata.json" の "score" は次の JSON と一致する:
+
+  ```json
+  {
+    "passed": 26,
+    "total": 27,
+    "percent": 96.29629629629629,
+    "source": "result.json"
+  }
+  ```
 
 ## Scenario: 研究試行要約に score の浅い要約を表示する
 

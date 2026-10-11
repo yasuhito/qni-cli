@@ -252,6 +252,23 @@ function writeCircuitJson(scenarioDir, data) {
 
 function quantumKatasSubmissionContent(status, relativePath) {
   const passedSubmissions = new Map([
+    [
+      "single-qubit-gates/global-phase-i.qni",
+      "qni add Z --qubit 0 --step 0\nqni add Y --qubit 0 --step 1\nqni add X --qubit 0 --step 2\n",
+    ],
+    [
+      "single-qubit-gates/prepare-minus.qni",
+      "qni add X --qubit 0 --step 0\nqni add H --qubit 0 --step 1\n",
+    ],
+    [
+      "single-qubit-gates/sign-flip-on-zero.qni",
+      "qni add X --qubit 0 --step 0\nqni add Z --qubit 0 --step 1\nqni add X --qubit 0 --step 2\n",
+    ],
+    [
+      "single-qubit-gates/three-quarters-pi-phase.qni",
+      "qni add S --qubit 0 --step 0\nqni add T --qubit 0 --step 1\n",
+    ],
+    ["single-qubit-gates/y-gate.qni", "qni add Y --qubit 0 --step 0\n"],
     ["basic-gates/basis-change.qni", "qni add H --qubit 0 --step 0\n"],
     ["basic-gates/bell-state-change-1.qni", "qni add Z --qubit 0 --step 0\n"],
     ["basic-gates/bell-state-change-2.qni", "qni add X --qubit 0 --step 0\n"],
@@ -359,6 +376,11 @@ function writeQuantumKatasSubmissions(scenarioDir, status, submissionsDir) {
     "basic-gates/two-qubit-gate-2.qni",
     "basic-gates/two-qubit-gate-3.qni",
     "basic-gates/two-qubit-gate-4.qni",
+    "single-qubit-gates/global-phase-i.qni",
+    "single-qubit-gates/prepare-minus.qni",
+    "single-qubit-gates/sign-flip-on-zero.qni",
+    "single-qubit-gates/three-quarters-pi-phase.qni",
+    "single-qubit-gates/y-gate.qni",
     "superposition/all-basis-vector-with-phase-flip-two-qubits.qni",
     "superposition/all-basis-vectors-two-qubits.qni",
     "superposition/all-basis-vectors-with-phases-two-qubits.qni",
@@ -554,7 +576,7 @@ function quantumKatasTaskEntries() {
 function assertQuantumKatasTaskFailures(buildFailures) {
   const taskEntries = quantumKatasTaskEntries();
 
-  assert.equal(taskEntries.length, 22, "expected Quantum Katas task count");
+  assert.equal(taskEntries.length, 27, "expected Quantum Katas task count");
   assert.deepEqual(taskEntries.flatMap(buildFailures), []);
 }
 

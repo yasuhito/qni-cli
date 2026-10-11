@@ -1169,8 +1169,8 @@ describe("benchmark command TypeScript route", () => {
       assert.equal(captured.value.status, "passed");
       assert.equal(captured.value.exitCode, 0);
       assert.deepStrictEqual(captured.value.summary, {
-        total: 22,
-        passed: 22,
+        total: 27,
+        passed: 27,
         failed: 0,
         disallowed: 0,
         error: 0,
@@ -1315,6 +1315,21 @@ describe("benchmark command TypeScript route", () => {
               { type: "run", status: "passed" },
             ],
           },
+          ...[
+            "global-phase-i",
+            "prepare-minus",
+            "sign-flip-on-zero",
+            "three-quarters-pi-phase",
+            "y-gate",
+          ].map((slug) => ({
+            taskId: `single-qubit-gates/${slug}`,
+            status: "passed",
+            exitCode: 0,
+            checks: Array.from({ length: 3 }, () => ({
+              type: "run",
+              status: "passed",
+            })),
+          })),
           {
             taskId: "superposition/all-basis-vector-with-phase-flip-two-qubits",
             status: "passed",
@@ -1376,8 +1391,8 @@ describe("benchmark command TypeScript route", () => {
         result.stdout,
         [
           "PASS benchmark suite",
-          "tasks: 22",
-          "passed: 22, failed: 0, disallowed: 0, error: 0",
+          "tasks: 27",
+          "passed: 27, failed: 0, disallowed: 0, error: 0",
           "- passed basic-gates/basis-change BasisChange",
           "- passed basic-gates/bell-state-change-1 BellStateChange1",
           "- passed basic-gates/bell-state-change-2 BellStateChange2",
@@ -1393,6 +1408,11 @@ describe("benchmark command TypeScript route", () => {
           "- passed basic-gates/two-qubit-gate-2 TwoQubitGate2",
           "- passed basic-gates/two-qubit-gate-3 TwoQubitGate3",
           "- passed basic-gates/two-qubit-gate-4 TwoQubitGate4",
+          "- passed single-qubit-gates/global-phase-i GlobalPhaseI",
+          "- passed single-qubit-gates/prepare-minus PrepareMinus",
+          "- passed single-qubit-gates/sign-flip-on-zero SignFlipOnZero",
+          "- passed single-qubit-gates/three-quarters-pi-phase ThreeQuartersPiPhase",
+          "- passed single-qubit-gates/y-gate YGate",
           "- passed superposition/all-basis-vector-with-phase-flip-two-qubits AllBasisVectorWithPhaseFlip_TwoQubits",
           "- passed superposition/all-basis-vectors-two-qubits AllBasisVectors_TwoQubits",
           "- passed superposition/all-basis-vectors-with-phases-two-qubits AllBasisVectorsWithPhases_TwoQubits",
@@ -1429,8 +1449,8 @@ describe("benchmark command TypeScript route", () => {
     "disallowed": 0,
     "error": 0,
     "failed": 0,
-    "passed": 22,
-    "total": 22
+    "passed": 27,
+    "total": 27
   },
   "results": [
     {
@@ -2091,6 +2111,11 @@ describe("benchmark command TypeScript route", () => {
       ],
       "task": "benchmarks/quantum-katas/basic-gates/two-qubit-gate-4.md"
     },
+    {"taskId":"single-qubit-gates/global-phase-i","title":"GlobalPhaseI","submission":"benchmarks/solutions/quantum-katas/single-qubit-gates/global-phase-i.qni","status":"passed","exitCode":0,"gradingCases":[{"caseId":"zero-input","status":"passed","checks":[{"type":"run","status":"passed"}]},{"caseId":"one-input","status":"passed","checks":[{"type":"run","status":"passed"}]},{"caseId":"plus-input","status":"passed","checks":[{"type":"run","status":"passed"}]}],"checks":[{"type":"run","status":"passed"},{"type":"run","status":"passed"},{"type":"run","status":"passed"}],"task":"benchmarks/quantum-katas/single-qubit-gates/global-phase-i.md"},
+    {"taskId":"single-qubit-gates/prepare-minus","title":"PrepareMinus","submission":"benchmarks/solutions/quantum-katas/single-qubit-gates/prepare-minus.qni","status":"passed","exitCode":0,"gradingCases":[{"caseId":"zero-input","status":"passed","checks":[{"type":"run","status":"passed"}]},{"caseId":"one-input","status":"passed","checks":[{"type":"run","status":"passed"}]},{"caseId":"plus-input","status":"passed","checks":[{"type":"run","status":"passed"}]}],"checks":[{"type":"run","status":"passed"},{"type":"run","status":"passed"},{"type":"run","status":"passed"}],"task":"benchmarks/quantum-katas/single-qubit-gates/prepare-minus.md"},
+    {"taskId":"single-qubit-gates/sign-flip-on-zero","title":"SignFlipOnZero","submission":"benchmarks/solutions/quantum-katas/single-qubit-gates/sign-flip-on-zero.qni","status":"passed","exitCode":0,"gradingCases":[{"caseId":"zero-input","status":"passed","checks":[{"type":"run","status":"passed"}]},{"caseId":"one-input","status":"passed","checks":[{"type":"run","status":"passed"}]},{"caseId":"plus-input","status":"passed","checks":[{"type":"run","status":"passed"}]}],"checks":[{"type":"run","status":"passed"},{"type":"run","status":"passed"},{"type":"run","status":"passed"}],"task":"benchmarks/quantum-katas/single-qubit-gates/sign-flip-on-zero.md"},
+    {"taskId":"single-qubit-gates/three-quarters-pi-phase","title":"ThreeQuartersPiPhase","submission":"benchmarks/solutions/quantum-katas/single-qubit-gates/three-quarters-pi-phase.qni","status":"passed","exitCode":0,"gradingCases":[{"caseId":"zero-input","status":"passed","checks":[{"type":"run","status":"passed"}]},{"caseId":"one-input","status":"passed","checks":[{"type":"run","status":"passed"}]},{"caseId":"plus-input","status":"passed","checks":[{"type":"run","status":"passed"}]}],"checks":[{"type":"run","status":"passed"},{"type":"run","status":"passed"},{"type":"run","status":"passed"}],"task":"benchmarks/quantum-katas/single-qubit-gates/three-quarters-pi-phase.md"},
+    {"taskId":"single-qubit-gates/y-gate","title":"YGate","submission":"benchmarks/solutions/quantum-katas/single-qubit-gates/y-gate.qni","status":"passed","exitCode":0,"gradingCases":[{"caseId":"zero-input","status":"passed","checks":[{"type":"run","status":"passed"}]},{"caseId":"one-input","status":"passed","checks":[{"type":"run","status":"passed"}]},{"caseId":"plus-input","status":"passed","checks":[{"type":"run","status":"passed"}]}],"checks":[{"type":"run","status":"passed"},{"type":"run","status":"passed"},{"type":"run","status":"passed"}],"task":"benchmarks/quantum-katas/single-qubit-gates/y-gate.md"},
     {
       "taskId": "superposition/all-basis-vector-with-phase-flip-two-qubits",
       "title": "AllBasisVectorWithPhaseFlip_TwoQubits",

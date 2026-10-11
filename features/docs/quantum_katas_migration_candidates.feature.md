@@ -27,3 +27,11 @@ Quantum Katas 由来タスクの移植候補と必要な評価基盤を確認し
 ## Scenario: 文書は移植に必要な評価基盤を分類する
 
 - Then リポジトリファイル "docs/research/quantum-katas-migration-candidates.md" は "分類は「現行評価ランナーで追加可能」「`grading_cases` / `setup_commands` 前提」「追加 qni-cli 機能が必要」の3段階に分ける。" を含む
+
+## Scenario: 新しい4 Katas の57問対応表を示す
+
+- Then リポジトリファイル "docs/research/quantum-katas-migration-candidates.md" は "新 Kata 57問の対応表" を含む
+
+## Scenario: 固定値は各PRで決めて記録する
+
+- Then リポジトリファイル "docs/research/quantum-katas-migration-candidates.md" は "固定値は各PRで決定し、この対応表に記録する" を含む

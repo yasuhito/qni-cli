@@ -28,7 +28,7 @@ Pi 経由で `qni research solve` を実行し、`qni research plot` で cost pe
 
 提出物には回路を作るコマンドだけを書きます。`qni run` や `qni expect` などの検証コマンドは書きません。
 
-## 22問の標準解を実行する
+## 27問の標準解を実行する
 
 ### StateFlip
 
@@ -348,12 +348,12 @@ grading_cases:
 qni benchmark run-all benchmarks/quantum-katas benchmarks/solutions/quantum-katas
 ```
 
-期待される結果は、22問すべてが `passed` になり、終了コードが `0` になることです。
+期待される結果は、27問すべてが `passed` になり、終了コードが `0` になることです。
 
 ```text
 PASS benchmark suite
-tasks: 22
-passed: 22, failed: 0, disallowed: 0, error: 0
+tasks: 27
+passed: 27, failed: 0, disallowed: 0, error: 0
 - passed basic-gates/basis-change BasisChange
 - passed basic-gates/bell-state-change-1 BellStateChange1
 - passed basic-gates/bell-state-change-2 BellStateChange2
@@ -369,6 +369,11 @@ passed: 22, failed: 0, disallowed: 0, error: 0
 - passed basic-gates/two-qubit-gate-2 TwoQubitGate2
 - passed basic-gates/two-qubit-gate-3 TwoQubitGate3
 - passed basic-gates/two-qubit-gate-4 TwoQubitGate4
+- passed single-qubit-gates/global-phase-i GlobalPhaseI
+- passed single-qubit-gates/prepare-minus PrepareMinus
+- passed single-qubit-gates/sign-flip-on-zero SignFlipOnZero
+- passed single-qubit-gates/three-quarters-pi-phase ThreeQuartersPiPhase
+- passed single-qubit-gates/y-gate YGate
 - passed superposition/all-basis-vector-with-phase-flip-two-qubits AllBasisVectorWithPhaseFlip_TwoQubits
 - passed superposition/all-basis-vectors-two-qubits AllBasisVectors_TwoQubits
 - passed superposition/all-basis-vectors-with-phases-two-qubits AllBasisVectorsWithPhases_TwoQubits

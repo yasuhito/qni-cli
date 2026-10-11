@@ -209,6 +209,11 @@ async function prepareQuantumKatasSubmissions(
     "basic-gates/two-qubit-gate-2.qni",
     "basic-gates/two-qubit-gate-3.qni",
     "basic-gates/two-qubit-gate-4.qni",
+    "single-qubit-gates/global-phase-i.qni",
+    "single-qubit-gates/prepare-minus.qni",
+    "single-qubit-gates/sign-flip-on-zero.qni",
+    "single-qubit-gates/three-quarters-pi-phase.qni",
+    "single-qubit-gates/y-gate.qni",
     "superposition/all-basis-vector-with-phase-flip-two-qubits.qni",
     "superposition/all-basis-vectors-two-qubits.qni",
     "superposition/all-basis-vectors-with-phases-two-qubits.qni",
@@ -234,6 +239,23 @@ function quantumKatasSubmissionContent(
   relativePath: string
 ): string {
   const passedSubmissions = new Map<string, string>([
+    [
+      "single-qubit-gates/global-phase-i.qni",
+      "qni add Z --qubit 0 --step 0\nqni add Y --qubit 0 --step 1\nqni add X --qubit 0 --step 2\n",
+    ],
+    [
+      "single-qubit-gates/prepare-minus.qni",
+      "qni add X --qubit 0 --step 0\nqni add H --qubit 0 --step 1\n",
+    ],
+    [
+      "single-qubit-gates/sign-flip-on-zero.qni",
+      "qni add X --qubit 0 --step 0\nqni add Z --qubit 0 --step 1\nqni add X --qubit 0 --step 2\n",
+    ],
+    [
+      "single-qubit-gates/three-quarters-pi-phase.qni",
+      "qni add S --qubit 0 --step 0\nqni add T --qubit 0 --step 1\n",
+    ],
+    ["single-qubit-gates/y-gate.qni", "qni add Y --qubit 0 --step 0\n"],
     ["basic-gates/basis-change.qni", "qni add H --qubit 0 --step 0\n"],
     ["basic-gates/bell-state-change-1.qni", "qni add Z --qubit 0 --step 0\n"],
     ["basic-gates/bell-state-change-2.qni", "qni add X --qubit 0 --step 0\n"],
@@ -963,15 +985,15 @@ describe("research command TypeScript route", () => {
         );
         assert.equal(metadata.status, gradingCase.status);
         assert.deepStrictEqual(metadata.score, {
-          passed: 21,
-          total: 22,
-          percent: 95.45454545454545,
+          passed: 26,
+          total: 27,
+          percent: 96.29629629629629,
           source: "result.json",
         });
         assert.equal(gradingResult.status, gradingCase.status);
         assert.equal(gradingResult.exitCode, gradingCase.exitCode);
         assert.ok(trialSummary.includes(`- status: ${gradingCase.status}\n`));
-        assert.ok(trialSummary.includes("- score: 95.45%\n"));
+        assert.ok(trialSummary.includes("- score: 96.30%\n"));
         assert.equal(
           (await stat(path.join(trialDir, "submissions"))).isDirectory(),
           true
@@ -1109,8 +1131,8 @@ describe("research command TypeScript route", () => {
         result: "result.json",
         status: "passed",
         score: {
-          passed: 22,
-          total: 22,
+          passed: 27,
+          total: 27,
           percent: 100,
           source: "result.json",
         },
@@ -1121,8 +1143,8 @@ describe("research command TypeScript route", () => {
       );
       assert.equal(gradingResult.status, "passed");
       assert.deepStrictEqual(gradingResult.summary, {
-        total: 22,
-        passed: 22,
+        total: 27,
+        passed: 27,
         failed: 0,
         disallowed: 0,
         error: 0,
