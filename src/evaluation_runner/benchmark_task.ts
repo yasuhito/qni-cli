@@ -44,6 +44,7 @@ export type BenchmarkCheck = ExpectCheck | RunCheck;
 export interface RunCheck {
   readonly expected: readonly ExpectedAmplitude[];
   readonly type: "run";
+  readonly upToGlobalPhase?: boolean;
 }
 
 export interface ExpectCheck {
@@ -301,12 +302,35 @@ function parseCheckItem(item: unknown): BenchmarkCheck {
 
   switch (type) {
     case "expect":
+      if (hasValue(check, "up_to_global_phase")) {
+        throw new BenchmarkTaskError(
+          "up_to_global_phase is only supported for run checks"
+        );
+      }
       return { expected: parseExpectedExpectations(check), type: "expect" };
     case "run":
-      return { expected: parseExpectedAmplitudes(check), type: "run" };
+      return {
+        expected: parseExpectedAmplitudes(check),
+        type: "run",
+        ...parseGlobalPhaseOption(check),
+      };
     default:
       throw new BenchmarkTaskError(`unsupported check type: ${type}`);
   }
+}
+
+function parseGlobalPhaseOption(
+  check: FrontmatterRecord
+): Pick<RunCheck, "upToGlobalPhase"> {
+  if (!hasValue(check, "up_to_global_phase")) {
+    return {};
+  }
+
+  if (typeof check.up_to_global_phase !== "boolean") {
+    throw new BenchmarkTaskError("up_to_global_phase must be a boolean");
+  }
+
+  return { upToGlobalPhase: check.up_to_global_phase };
 }
 
 function parseExpectedAmplitudes(

@@ -389,6 +389,42 @@ passed: 27, failed: 0, disallowed: 0, error: 0
 qni benchmark run-all benchmarks/quantum-katas benchmarks/solutions/quantum-katas --json
 ```
 
+## 状態準備のグローバル位相
+
+`run` 検証は既定で実部・虚部を `checks.tolerance` 以内で比較します。各検証に `up_to_global_phase: true` を付けた場合だけ、状態全体に共通する単位位相の違いを許容します。省略または `false` は厳密比較です。`grading_cases` 内の `run` にも指定でき、`expect` には指定できません。
+
+```yaml
+checks:
+  tolerance: 1e-9
+  items:
+    - type: run
+      up_to_global_phase: true
+      expected:
+        - basis: "|0>"
+          amplitude:
+            real: 0.7071067811865476
+            imaginary: 0
+        - basis: "|1>"
+          amplitude:
+            real: 0.7071067811865476
+            imaginary: 0
+```
+
+期待ベクトルの最大振幅を基準に単位位相だけを補正して比較します。相対位相、振幅の大きさ、余分な基底成分の誤りは許容せず、不一致の表示も補正後の期待値を使います。
+
+既存の PlusState、MinusState、AllBasisVectors_TwoQubits、AllBasisVectorWithPhaseFlip_TwoQubits、AllBasisVectorsWithPhases_TwoQubits、BellState、GHZState の7状態準備課題で有効です。BellState の検証は `expect` からこの `run` へ統一しました。basic-gates と single-qubit-gates の位相を含む変換要件は引き続き厳密に検証します。
+
+```bash
+# -|+> は状態準備として正解
+qni benchmark run benchmarks/quantum-katas/superposition/plus-state.md benchmarks/solutions/quantum-katas/superposition/plus-state-global-phase.qni
+# 相対位相の異なる |-> は不正解
+qni benchmark run benchmarks/quantum-katas/superposition/plus-state.md benchmarks/incorrect/quantum-katas/superposition/plus-state-relative-phase.qni
+# -|1> は厳密な StateFlip 課題では不正解
+qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/incorrect/quantum-katas/basic-gates/state-flip-global-phase.qni
+```
+
+この7課題の比較条件は過去の評価時点から変わっています。過去の研究試行は再採点せず、保存済み結果も変更しません ([ADR 0019](adr/0019-research-report-does-not-regrade.md))。変更前後の点数を同一条件として単純比較しないでください。判断の背景は [ADR 0026](adr/0026-opt-in-to-global-phase-insensitive-state-checks.md) を参照してください。
+
 ## benchmark と research の責務
 
 `benchmark` は提出物を採点し、`research` は研究ログを保存します。`qni benchmark run` と `qni benchmark run-all` は `.qni` 提出物を評価し、結果を標準出力へ出します。`qni research record` は、1つのベンチマークスイートに対する外部共同研究者の1回の研究試行を `research/runs/<timestamp>-<slug>/` に保存します。保存時には `qni benchmark run-all --json` 相当の採点を実行し、その結果も同じ研究試行ディレクトリに残します。

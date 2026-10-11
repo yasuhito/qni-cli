@@ -12,6 +12,8 @@
 
 Pi の道具、セッション、`AGENTS.md`、スキル、拡張機能、プロンプトテンプレートは読み込みません。qni-cli のコマンド、許可コマンド、採点条件、標準解もモデルへ渡しません。道具を使う共同研究者評価や自己修正は別の評価であり、`solve` には含みません。
 
+既存7状態準備課題は `up_to_global_phase: true` により共通のグローバル位相を無視します。basic-gates と single-qubit-gates は厳密比較のままです。この7課題は過去の評価時点から比較条件が変わっているため、変更前後の score を同一条件として単純比較しないでください。過去の研究試行は再採点・書き換えしません ([ADR 0019](adr/0019-research-report-does-not-regrade.md))。対象課題と仕様は [benchmark の説明](benchmark.md#状態準備のグローバル位相)、判断の背景は [ADR 0026](adr/0026-opt-in-to-global-phase-insensitive-state-checks.md) を参照してください。
+
 ## 準備
 
 Pi をインストールし、利用するモデルの認証を済ませます。

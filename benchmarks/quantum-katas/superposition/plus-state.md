@@ -11,6 +11,7 @@ checks:
   tolerance: 1e-15
   items:
     - type: run
+      up_to_global_phase: true
       expected:
         - basis: "|0>"
           amplitude:

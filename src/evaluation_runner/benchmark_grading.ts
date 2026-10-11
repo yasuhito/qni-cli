@@ -744,7 +744,8 @@ function runRunCheck(
   const mismatches = stateVectorMismatchSummary(
     actual,
     expected,
-    checkContext.checks.tolerance
+    checkContext.checks.tolerance,
+    check.upToGlobalPhase
   );
 
   return {
@@ -810,15 +811,22 @@ function expectedStateVector(
 function stateVectorMismatchSummary(
   actual: readonly ComplexAmplitude[],
   expected: ExpectedStateVector,
-  tolerance: number
+  tolerance: number,
+  upToGlobalPhase = false
 ): MismatchSummary {
   const displayed: AmplitudeMismatch[] = [];
   let mismatchCount = 0;
   const vectorLength = Math.max(actual.length, expected.vectorLength);
+  const phase = upToGlobalPhase
+    ? globalPhase(actual, expected)
+    : { real: 1, imaginary: 0 };
 
   for (let index = 0; index < vectorLength; index += 1) {
     const amplitude = actual[index] ?? ZERO_AMPLITUDE;
-    const expectedAmplitude = expected.amplitudes.get(index) ?? ZERO_AMPLITUDE;
+    const expectedAmplitude = multiplyAmplitudes(
+      expected.amplitudes.get(index) ?? ZERO_AMPLITUDE,
+      phase
+    );
 
     if (amplitudesClose(amplitude, expectedAmplitude, tolerance)) {
       continue;
@@ -838,6 +846,58 @@ function stateVectorMismatchSummary(
   return {
     displayed,
     omittedCount: mismatchCount - displayed.length,
+  };
+}
+
+// The largest expected amplitude gives a stable phase reference, even for sparse vectors.
+// Only a unit phase is removed: magnitude errors and relative phases still fail.
+function globalPhase(
+  actual: readonly ComplexAmplitude[],
+  expected: ExpectedStateVector
+): ComplexAmplitude {
+  let referenceIndex = 0;
+  let reference = ZERO_AMPLITUDE;
+  let largestMagnitude = 0;
+
+  for (const [index, amplitude] of expected.amplitudes) {
+    const magnitude = Math.hypot(amplitude.real, amplitude.imaginary);
+
+    if (magnitude > largestMagnitude) {
+      referenceIndex = index;
+      reference = amplitude;
+      largestMagnitude = magnitude;
+    }
+  }
+
+  const actualReference = actual[referenceIndex] ?? ZERO_AMPLITUDE;
+  const actualMagnitude = Math.hypot(
+    actualReference.real,
+    actualReference.imaginary
+  );
+
+  if (largestMagnitude === 0 || actualMagnitude === 0) {
+    return { real: 1, imaginary: 0 };
+  }
+
+  return multiplyAmplitudes(
+    {
+      real: actualReference.real / actualMagnitude,
+      imaginary: actualReference.imaginary / actualMagnitude,
+    },
+    {
+      real: reference.real / largestMagnitude,
+      imaginary: -reference.imaginary / largestMagnitude,
+    }
+  );
+}
+
+function multiplyAmplitudes(
+  left: ComplexAmplitude,
+  right: ComplexAmplitude
+): ComplexAmplitude {
+  return {
+    real: left.real * right.real - left.imaginary * right.imaginary,
+    imaginary: left.real * right.imaginary + left.imaginary * right.real,
   };
 }
 
