@@ -28,7 +28,7 @@ Pi 経由で `qni research solve` を実行し、`qni research plot` で cost pe
 
 提出物には回路を作るコマンドだけを書きます。`qni run` や `qni expect` などの検証コマンドは書きません。
 
-## 41問の標準解を実行する
+## 51問の標準解を実行する
 
 ### StateFlip
 
@@ -427,12 +427,12 @@ grading_cases:
 qni benchmark run-all benchmarks/quantum-katas benchmarks/solutions/quantum-katas
 ```
 
-期待される結果は、41問すべてが `passed` になり、終了コードが `0` になることです。
+期待される結果は、51問すべてが `passed` になり、終了コードが `0` になることです。
 
 ```text
 PASS benchmark suite
-tasks: 41
-passed: 41, failed: 0, disallowed: 0, error: 0
+tasks: 51
+passed: 51, failed: 0, disallowed: 0, error: 0
 - passed basic-gates/basis-change BasisChange
 - passed basic-gates/bell-state-change-1 BellStateChange1
 - passed basic-gates/bell-state-change-2 BellStateChange2
@@ -452,13 +452,23 @@ passed: 41, failed: 0, disallowed: 0, error: 0
 - passed multi-qubit-gates/compound-gate CompoundGate
 - passed multi-qubit-gates/controlled-rotation ControlledRotation
 - passed multi-qubit-gates/preparing-bell-state PreparingBellState
+- passed preparing-states/all-basis-vectors AllBasisVectors
+- passed preparing-states/all-bell-states-0 AllBellStates0
+- passed preparing-states/all-bell-states-1 AllBellStates1
+- passed preparing-states/all-bell-states-2 AllBellStates2
+- passed preparing-states/all-bell-states-3 AllBellStates3
 - passed preparing-states/controlled-rotation ControlledRotation
+- passed preparing-states/even-odd EvenOdd
+- passed preparing-states/four-bitstrings FourBitstrings
 - passed preparing-states/hardy-state HardyState
+- passed preparing-states/parity-bitstrings ParityBitstrings
 - passed preparing-states/three-states-two-qubits-phases ThreeStatesTwoQubitsPhases
 - passed preparing-states/three-states-two-qubits ThreeStatesTwoQubits
+- passed preparing-states/two-bitstrings TwoBitstrings
 - passed preparing-states/unequal-superposition UnequalSuperposition
 - passed preparing-states/wstate-arbitrary WStateArbitrary
 - passed preparing-states/wstate-power-of-two WStatePowerOfTwo
+- passed preparing-states/zero-and-bitstring ZeroAndBitstring
 - passed single-qubit-gates/amplitude-change AmplitudeChange
 - passed single-qubit-gates/global-phase-i GlobalPhaseI
 - passed single-qubit-gates/prepare-arbitrary-state PrepareArbitraryState

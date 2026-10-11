@@ -892,8 +892,8 @@ qni benchmark run で最小の合格判定を実行したい。
 
   ```text
   PASS benchmark suite
-  tasks: 41
-  passed: 41, failed: 0, disallowed: 0, error: 0
+  tasks: 51
+  passed: 51, failed: 0, disallowed: 0, error: 0
   - passed basic-gates/basis-change BasisChange
   - passed basic-gates/bell-state-change-1 BellStateChange1
   - passed basic-gates/bell-state-change-2 BellStateChange2
@@ -913,13 +913,23 @@ qni benchmark run で最小の合格判定を実行したい。
   - passed multi-qubit-gates/compound-gate CompoundGate
   - passed multi-qubit-gates/controlled-rotation ControlledRotation
   - passed multi-qubit-gates/preparing-bell-state PreparingBellState
+  - passed preparing-states/all-basis-vectors AllBasisVectors
+  - passed preparing-states/all-bell-states-0 AllBellStates0
+  - passed preparing-states/all-bell-states-1 AllBellStates1
+  - passed preparing-states/all-bell-states-2 AllBellStates2
+  - passed preparing-states/all-bell-states-3 AllBellStates3
   - passed preparing-states/controlled-rotation ControlledRotation
+  - passed preparing-states/even-odd EvenOdd
+  - passed preparing-states/four-bitstrings FourBitstrings
   - passed preparing-states/hardy-state HardyState
+  - passed preparing-states/parity-bitstrings ParityBitstrings
   - passed preparing-states/three-states-two-qubits-phases ThreeStatesTwoQubitsPhases
   - passed preparing-states/three-states-two-qubits ThreeStatesTwoQubits
+  - passed preparing-states/two-bitstrings TwoBitstrings
   - passed preparing-states/unequal-superposition UnequalSuperposition
   - passed preparing-states/wstate-arbitrary WStateArbitrary
   - passed preparing-states/wstate-power-of-two WStatePowerOfTwo
+  - passed preparing-states/zero-and-bitstring ZeroAndBitstring
   - passed single-qubit-gates/amplitude-change AmplitudeChange
   - passed single-qubit-gates/global-phase-i GlobalPhaseI
   - passed single-qubit-gates/prepare-arbitrary-state PrepareArbitraryState
@@ -950,8 +960,8 @@ qni benchmark run で最小の合格判定を実行したい。
       "disallowed": 0,
       "error": 0,
       "failed": 0,
-      "passed": 41,
-      "total": 41
+      "passed": 51,
+      "total": 51
     },
     "results": [
       {
@@ -1858,203 +1868,467 @@ qni benchmark run で最小の合格判定を実行したい。
           {
             "caseId": "basis-00000",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-00001",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-00010",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-00011",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-00100",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-00101",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-00110",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-00111",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-01000",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-01001",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-01010",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-01011",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-01100",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-01101",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-01110",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-01111",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-10000",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-10001",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-10010",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-10011",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-10100",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-10101",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-10110",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-10111",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-11000",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-11001",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-11010",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-11011",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-11100",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-11101",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-11110",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-11111",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "complex-superposition",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           }
         ],
         "checks": [
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" }
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          }
         ],
         "task": "benchmarks/quantum-katas/multi-qubit-gates/arbitrary-controls.md"
       },
@@ -2068,59 +2342,131 @@ qni benchmark run で最小の合格判定を実行したい。
           {
             "caseId": "basis-000",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-001",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-010",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-011",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-100",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-101",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-110",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-111",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "complex-superposition",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           }
         ],
         "checks": [
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" }
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          }
         ],
         "task": "benchmarks/quantum-katas/multi-qubit-gates/compound-gate.md"
       },
@@ -2134,35 +2480,75 @@ qni benchmark run で最小の合格判定を実行したい。
           {
             "caseId": "basis-00",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-01",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-10",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "basis-11",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "complex-superposition",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           }
         ],
         "checks": [
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" }
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          }
         ],
         "task": "benchmarks/quantum-katas/multi-qubit-gates/controlled-rotation.md"
       },
@@ -2176,11 +2562,91 @@ qni benchmark run で最小の合格判定を実行したい。
           {
             "caseId": "zero-input",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           }
         ],
-        "checks": [{ "type": "run", "status": "passed" }],
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
         "task": "benchmarks/quantum-katas/multi-qubit-gates/preparing-bell-state.md"
+      },
+      {
+        "taskId": "preparing-states/all-basis-vectors",
+        "title": "AllBasisVectors",
+        "submission": "benchmarks/solutions/quantum-katas/preparing-states/all-basis-vectors.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
+        "task": "benchmarks/quantum-katas/preparing-states/all-basis-vectors.md"
+      },
+      {
+        "taskId": "preparing-states/all-bell-states-0",
+        "title": "AllBellStates0",
+        "submission": "benchmarks/solutions/quantum-katas/preparing-states/all-bell-states-0.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
+        "task": "benchmarks/quantum-katas/preparing-states/all-bell-states-0.md"
+      },
+      {
+        "taskId": "preparing-states/all-bell-states-1",
+        "title": "AllBellStates1",
+        "submission": "benchmarks/solutions/quantum-katas/preparing-states/all-bell-states-1.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
+        "task": "benchmarks/quantum-katas/preparing-states/all-bell-states-1.md"
+      },
+      {
+        "taskId": "preparing-states/all-bell-states-2",
+        "title": "AllBellStates2",
+        "submission": "benchmarks/solutions/quantum-katas/preparing-states/all-bell-states-2.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
+        "task": "benchmarks/quantum-katas/preparing-states/all-bell-states-2.md"
+      },
+      {
+        "taskId": "preparing-states/all-bell-states-3",
+        "title": "AllBellStates3",
+        "submission": "benchmarks/solutions/quantum-katas/preparing-states/all-bell-states-3.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
+        "task": "benchmarks/quantum-katas/preparing-states/all-bell-states-3.md"
       },
       {
         "taskId": "preparing-states/controlled-rotation",
@@ -2197,6 +2663,34 @@ qni benchmark run で最小の合格判定を実行したい。
         "task": "benchmarks/quantum-katas/preparing-states/controlled-rotation.md"
       },
       {
+        "taskId": "preparing-states/even-odd",
+        "title": "EvenOdd",
+        "submission": "benchmarks/solutions/quantum-katas/preparing-states/even-odd.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
+        "task": "benchmarks/quantum-katas/preparing-states/even-odd.md"
+      },
+      {
+        "taskId": "preparing-states/four-bitstrings",
+        "title": "FourBitstrings",
+        "submission": "benchmarks/solutions/quantum-katas/preparing-states/four-bitstrings.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
+        "task": "benchmarks/quantum-katas/preparing-states/four-bitstrings.md"
+      },
+      {
         "taskId": "preparing-states/hardy-state",
         "title": "HardyState",
         "submission": "benchmarks/solutions/quantum-katas/preparing-states/hardy-state.qni",
@@ -2209,6 +2703,20 @@ qni benchmark run で最小の合格判定を実行したい。
           }
         ],
         "task": "benchmarks/quantum-katas/preparing-states/hardy-state.md"
+      },
+      {
+        "taskId": "preparing-states/parity-bitstrings",
+        "title": "ParityBitstrings",
+        "submission": "benchmarks/solutions/quantum-katas/preparing-states/parity-bitstrings.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
+        "task": "benchmarks/quantum-katas/preparing-states/parity-bitstrings.md"
       },
       {
         "taskId": "preparing-states/three-states-two-qubits-phases",
@@ -2237,6 +2745,20 @@ qni benchmark run で最小の合格判定を実行したい。
           }
         ],
         "task": "benchmarks/quantum-katas/preparing-states/three-states-two-qubits.md"
+      },
+      {
+        "taskId": "preparing-states/two-bitstrings",
+        "title": "TwoBitstrings",
+        "submission": "benchmarks/solutions/quantum-katas/preparing-states/two-bitstrings.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
+        "task": "benchmarks/quantum-katas/preparing-states/two-bitstrings.md"
       },
       {
         "taskId": "preparing-states/unequal-superposition",
@@ -2281,6 +2803,20 @@ qni benchmark run で最小の合格判定を実行したい。
         "task": "benchmarks/quantum-katas/preparing-states/wstate-power-of-two.md"
       },
       {
+        "taskId": "preparing-states/zero-and-bitstring",
+        "title": "ZeroAndBitstring",
+        "submission": "benchmarks/solutions/quantum-katas/preparing-states/zero-and-bitstring.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
+        "task": "benchmarks/quantum-katas/preparing-states/zero-and-bitstring.md"
+      },
+      {
         "taskId": "single-qubit-gates/amplitude-change",
         "title": "AmplitudeChange",
         "submission": "benchmarks/solutions/quantum-katas/single-qubit-gates/amplitude-change.qni",
@@ -2290,23 +2826,47 @@ qni benchmark run で最小の合格判定を実行したい。
           {
             "caseId": "zero-input",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "one-input",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           },
           {
             "caseId": "plus-input",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           }
         ],
         "checks": [
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" },
-          { "type": "run", "status": "passed" }
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          }
         ],
         "task": "benchmarks/quantum-katas/single-qubit-gates/amplitude-change.md"
       },
@@ -2374,10 +2934,20 @@ qni benchmark run で最小の合格判定を実行したい。
           {
             "caseId": "zero-input",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           }
         ],
-        "checks": [{ "type": "run", "status": "passed" }],
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
         "task": "benchmarks/quantum-katas/single-qubit-gates/prepare-arbitrary-state.md"
       },
       {
@@ -2444,10 +3014,20 @@ qni benchmark run で最小の合格判定を実行したい。
           {
             "caseId": "zero-input",
             "status": "passed",
-            "checks": [{ "type": "run", "status": "passed" }]
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           }
         ],
-        "checks": [{ "type": "run", "status": "passed" }],
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ],
         "task": "benchmarks/quantum-katas/single-qubit-gates/prepare-rotated-state.md"
       },
       {

@@ -1,0 +1,6 @@
+qni add H --qubit 0 --step 0
+qni add H --qubit 1 --step 1
+qni add H --qubit 2 --step 2
+qni add X --control 0 --qubit 3 --step 3
+qni add X --control 1 --qubit 3 --step 4
+qni add X --control 2 --qubit 3 --step 5

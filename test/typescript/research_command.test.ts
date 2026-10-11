@@ -223,6 +223,16 @@ async function prepareQuantumKatasSubmissions(
     "basic-gates/two-qubit-gate-2.qni",
     "basic-gates/two-qubit-gate-3.qni",
     "basic-gates/two-qubit-gate-4.qni",
+    "preparing-states/all-basis-vectors.qni",
+    "preparing-states/all-bell-states-0.qni",
+    "preparing-states/all-bell-states-1.qni",
+    "preparing-states/all-bell-states-2.qni",
+    "preparing-states/all-bell-states-3.qni",
+    "preparing-states/even-odd.qni",
+    "preparing-states/four-bitstrings.qni",
+    "preparing-states/parity-bitstrings.qni",
+    "preparing-states/two-bitstrings.qni",
+    "preparing-states/zero-and-bitstring.qni",
     "single-qubit-gates/global-phase-i.qni",
     "single-qubit-gates/prepare-minus.qni",
     "single-qubit-gates/sign-flip-on-zero.qni",
@@ -1036,15 +1046,15 @@ describe("research command TypeScript route", () => {
         );
         assert.equal(metadata.status, gradingCase.status);
         assert.deepStrictEqual(metadata.score, {
-          passed: 40,
-          total: 41,
-          percent: 97.5609756097561,
+          passed: 50,
+          total: 51,
+          percent: 98.0392156862745,
           source: "result.json",
         });
         assert.equal(gradingResult.status, gradingCase.status);
         assert.equal(gradingResult.exitCode, gradingCase.exitCode);
         assert.ok(trialSummary.includes(`- status: ${gradingCase.status}\n`));
-        assert.ok(trialSummary.includes("- score: 97.56%\n"));
+        assert.ok(trialSummary.includes("- score: 98.04%\n"));
         assert.equal(
           (await stat(path.join(trialDir, "submissions"))).isDirectory(),
           true
@@ -1182,8 +1192,8 @@ describe("research command TypeScript route", () => {
         result: "result.json",
         status: "passed",
         score: {
-          passed: 41,
-          total: 41,
+          passed: 51,
+          total: 51,
           percent: 100,
           source: "result.json",
         },
@@ -1194,8 +1204,8 @@ describe("research command TypeScript route", () => {
       );
       assert.equal(gradingResult.status, "passed");
       assert.deepStrictEqual(gradingResult.summary, {
-        total: 41,
-        passed: 41,
+        total: 51,
+        passed: 51,
         failed: 0,
         disallowed: 0,
         error: 0,
