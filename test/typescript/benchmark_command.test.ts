@@ -651,7 +651,7 @@ describe("benchmark command TypeScript route", () => {
     });
   });
 
-  it("passes the BellState solution using an expect check", async () => {
+  it("passes the BellState solution using a run check", async () => {
     await withTempDir(async (dir) => {
       const result = captureDispatcherRun(dir, [
         "benchmark",
@@ -666,7 +666,7 @@ describe("benchmark command TypeScript route", () => {
     });
   });
 
-  it("writes JSON expect check status for the BellState solution", async () => {
+  it("writes JSON run check status for the BellState solution", async () => {
     await withTempDir(async (dir) => {
       const result = captureDispatcherRun(dir, [
         "benchmark",
@@ -685,7 +685,7 @@ describe("benchmark command TypeScript route", () => {
           "benchmarks/solutions/quantum-katas/superposition/bell-state.qni",
         status: "passed",
         exitCode: 0,
-        checks: [{ type: "expect", status: "passed" }],
+        checks: [{ type: "run", status: "passed" }],
       });
       assert.equal(result.stderr, "");
     });
@@ -1352,7 +1352,7 @@ describe("benchmark command TypeScript route", () => {
             taskId: "superposition/bell-state",
             status: "passed",
             exitCode: 0,
-            checks: [{ type: "expect", status: "passed" }],
+            checks: [{ type: "run", status: "passed" }],
           },
           {
             taskId: "superposition/ghz-state",
@@ -2166,7 +2166,7 @@ describe("benchmark command TypeScript route", () => {
       "exitCode": 0,
       "checks": [
         {
-          "type": "expect",
+          "type": "run",
           "status": "passed"
         }
       ],

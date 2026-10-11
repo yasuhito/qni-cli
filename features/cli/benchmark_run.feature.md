@@ -341,13 +341,13 @@ qni benchmark run で最小の合格判定を実行したい。
   PASS BellState
   ```
 
-## Scenario: BellState 標準解の JSON は expect 検証を含む
+## Scenario: BellState 標準解の JSON は run 検証を含む
 
 - When "qni benchmark run benchmarks/quantum-katas/superposition/bell-state.md benchmarks/solutions/quantum-katas/superposition/bell-state.qni --json" を実行
 - Then 標準出力に次を含む:
 
   ```text
-  "type": "expect"
+  "type": "run"
   ```
 
 ## Scenario: AllBasisVectorWithPhaseFlip_TwoQubits 課題ファイルがある
@@ -1810,7 +1810,7 @@ qni benchmark run で最小の合格判定を実行したい。
         "exitCode": 0,
         "checks": [
           {
-            "type": "expect",
+            "type": "run",
             "status": "passed"
           }
         ],

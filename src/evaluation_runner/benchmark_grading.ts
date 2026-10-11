@@ -1,12 +1,18 @@
-import { existsSync, mkdtempSync, readdirSync, rmSync, statSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import path = require('node:path');
+import {
+  existsSync,
+  mkdtempSync,
+  readdirSync,
+  rmSync,
+  statSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import path = require("node:path");
 
-import type { CommandHandler, CommandHandlerContext } from '../dispatcher';
-import { runAddCommand } from '../commands/add_command';
-import { runExpectCommand } from '../commands/expect_command';
-import { runRunCommand } from '../commands/run_command';
-import { runStateCommand } from '../commands/state_command';
+import type { CommandHandler, CommandHandlerContext } from "../dispatcher";
+import { runAddCommand } from "../commands/add_command";
+import { runExpectCommand } from "../commands/expect_command";
+import { runRunCommand } from "../commands/run_command";
+import { runStateCommand } from "../commands/state_command";
 import {
   loadBenchmarkTask,
   type BenchmarkCheck,
@@ -18,13 +24,13 @@ import {
   type ExpectedAmplitude,
   type ExpectedExpectation,
   type ExpectCheck,
-  type RunCheck
-} from './benchmark_task';
+  type RunCheck,
+} from "./benchmark_task";
 import {
   readBenchmarkSubmission,
   type DisallowedSubmission,
-  type SubmissionCommand
-} from './benchmark_submission';
+  type SubmissionCommand,
+} from "./benchmark_submission";
 
 interface ExpectedStateVector {
   readonly amplitudes: ReadonlyMap<number, ComplexAmplitude>;
@@ -47,8 +53,8 @@ interface QniCommandResult {
   readonly stdout: string;
 }
 
-export type BenchmarkStatus = 'passed' | 'failed' | 'disallowed' | 'error';
-export type BenchmarkGradingCaseStatus = 'passed' | 'failed' | 'error';
+export type BenchmarkStatus = "passed" | "failed" | "disallowed" | "error";
+export type BenchmarkGradingCaseStatus = "passed" | "failed" | "error";
 
 export interface BenchmarkTaskGradingRequest {
   readonly submissionFile: string;
@@ -61,8 +67,8 @@ export interface BenchmarkSuiteGradingRequest {
 }
 
 export interface BenchmarkCheckSummary {
-  readonly status: 'failed' | 'passed';
-  readonly type: 'expect' | 'run';
+  readonly status: "failed" | "passed";
+  readonly type: "expect" | "run";
 }
 
 export interface BenchmarkGradingCaseSummary {
@@ -150,14 +156,14 @@ export interface BenchmarkGradingCaseResult {
 
 export interface RunCheckResult {
   readonly mismatches: MismatchSummary;
-  readonly status: 'passed' | 'failed';
-  readonly type: 'run';
+  readonly status: "passed" | "failed";
+  readonly type: "run";
 }
 
 export interface ExpectCheckResult {
   readonly mismatches: ExpectationMismatchSummary;
-  readonly status: 'passed' | 'failed';
-  readonly type: 'expect';
+  readonly status: "passed" | "failed";
+  readonly type: "expect";
 }
 
 export interface MismatchSummary {
@@ -185,10 +191,10 @@ export interface ExpectationMismatch {
 class BenchmarkError extends Error {}
 
 const QNI_COMMAND_HANDLERS = new Map<string, CommandHandler>([
-  ['add', runAddCommand],
-  ['expect', runExpectCommand],
-  ['run', runRunCommand],
-  ['state', runStateCommand]
+  ["add", runAddCommand],
+  ["expect", runExpectCommand],
+  ["run", runRunCommand],
+  ["state", runStateCommand],
 ]);
 const MAX_FAILED_AMPLITUDE_DETAILS = 16;
 const MAX_FAILED_EXPECTATION_DETAILS = 16;
@@ -233,25 +239,33 @@ export function gradeBenchmarkTaskForReport(
     const result = evaluateBenchmark({
       context,
       submissionPath,
-      task
+      task,
     });
 
     return {
-      gradingResult: benchmarkResultPayload(task, request.submissionFile, result),
+      gradingResult: benchmarkResultPayload(
+        task,
+        request.submissionFile,
+        result
+      ),
       result,
-      task
+      task,
     };
   } catch (error) {
     const result: BenchmarkResult = {
       checks: [],
       errorMessage: errorMessage(error),
-      status: 'error'
+      status: "error",
     };
 
     return {
-      gradingResult: benchmarkResultPayload(task, request.submissionFile, result),
+      gradingResult: benchmarkResultPayload(
+        task,
+        request.submissionFile,
+        result
+      ),
       result,
-      task
+      task,
     };
   }
 }
@@ -267,23 +281,25 @@ function evaluateBenchmarkSuite(
       benchmarkDir: request.benchmarkDir,
       benchmarkDirPath,
       solutionsDir: request.solutionsDir,
-      solutionsDirPath
+      solutionsDirPath,
     });
 
-    return benchmarkSuiteResult(entries.map((entry) => evaluateBenchmarkSuiteEntry(entry, context)));
+    return benchmarkSuiteResult(
+      entries.map((entry) => evaluateBenchmarkSuiteEntry(entry, context))
+    );
   } catch (error) {
     return {
       errorMessage: errorMessage(error),
       exitCode: 3,
       results: [],
-      status: 'error',
+      status: "error",
       summary: {
         disallowed: 0,
         error: 1,
         failed: 0,
         passed: 0,
-        total: 0
-      }
+        total: 0,
+      },
     };
   }
 }
@@ -302,33 +318,37 @@ function evaluateBenchmark(options: {
   try {
     submission = readBenchmarkSubmission({
       allowedCommands: options.task.allowedCommands,
-      submissionPath: options.submissionPath
+      submissionPath: options.submissionPath,
     });
   } catch (error) {
     return benchmarkErrorResultForTask(options.task, errorMessage(error));
   }
 
-  if (submission.kind === 'disallowed') {
+  if (submission.kind === "disallowed") {
     return {
       checks: [],
       disallowedSubmission: submission.disallowedSubmission,
-      status: 'disallowed'
+      status: "disallowed",
     };
   }
 
-  const gradingCases = options.task.gradingCases.map((gradingCase) => evaluateGradingCase({
-    context: options.context,
-    gradingCase,
-    submissionCommands: submission.commands,
-    task: options.task
-  }));
+  const gradingCases = options.task.gradingCases.map((gradingCase) =>
+    evaluateGradingCase({
+      context: options.context,
+      gradingCase,
+      submissionCommands: submission.commands,
+      task: options.task,
+    })
+  );
   const checks = gradingCases.flatMap((gradingCase) => gradingCase.checks);
 
   return {
     checks,
     ...explicitGradingCasesResult(options.task, gradingCases),
-    ...optionalErrorMessage(firstGradingCaseErrorMessage(options.task, gradingCases)),
-    status: benchmarkStatusForGradingCases(gradingCases)
+    ...optionalErrorMessage(
+      firstGradingCaseErrorMessage(options.task, gradingCases)
+    ),
+    status: benchmarkStatusForGradingCases(gradingCases),
   };
 }
 
@@ -338,7 +358,7 @@ function evaluateGradingCase(options: {
   readonly submissionCommands: readonly SubmissionCommand[];
   readonly task: BenchmarkTask;
 }): BenchmarkGradingCaseResult {
-  const workDir = mkdtempSync(path.join(tmpdir(), 'qni-benchmark-'));
+  const workDir = mkdtempSync(path.join(tmpdir(), "qni-benchmark-"));
 
   try {
     runSetupCommands(options.gradingCase, workDir, options.context);
@@ -346,21 +366,28 @@ function evaluateGradingCase(options: {
 
     const checkContext: BenchmarkCheckContext = {
       checks: options.gradingCase.checks,
-      taskId: options.task.id
+      taskId: options.task.id,
     };
-    const checks = runBenchmarkChecks(options.gradingCase.checks.items, checkContext, workDir, options.context);
+    const checks = runBenchmarkChecks(
+      options.gradingCase.checks.items,
+      checkContext,
+      workDir,
+      options.context
+    );
 
     return {
       caseId: options.gradingCase.id,
       checks,
-      status: checks.every((check) => check.status === 'passed') ? 'passed' : 'failed'
+      status: checks.every((check) => check.status === "passed")
+        ? "passed"
+        : "failed",
     };
   } catch (error) {
     return {
       caseId: options.gradingCase.id,
       checks: [],
       errorMessage: errorMessage(error),
-      status: 'error'
+      status: "error",
     };
   } finally {
     rmSync(workDir, { force: true, recursive: true });
@@ -373,33 +400,40 @@ function runBenchmarkChecks(
   workDir: string,
   context: CommandHandlerContext
 ): BenchmarkCheckResult[] {
-  return checks.map((check) => runBenchmarkCheck(check, checkContext, workDir, context));
+  return checks.map((check) =>
+    runBenchmarkCheck(check, checkContext, workDir, context)
+  );
 }
 
-function benchmarkErrorResultForTask(task: BenchmarkTask, error: string): BenchmarkResult {
+function benchmarkErrorResultForTask(
+  task: BenchmarkTask,
+  error: string
+): BenchmarkResult {
   const gradingCases = task.gradingCases.map((gradingCase) => ({
     caseId: gradingCase.id,
     checks: [],
     errorMessage: error,
-    status: 'error' as const
+    status: "error" as const,
   }));
 
   return {
     checks: [],
     ...explicitGradingCasesResult(task, gradingCases),
     errorMessage: error,
-    status: 'error'
+    status: "error",
   };
 }
 
 function explicitGradingCasesResult(
   task: BenchmarkTask,
   gradingCases: readonly BenchmarkGradingCaseResult[]
-): Pick<BenchmarkResult, 'gradingCases'> {
+): Pick<BenchmarkResult, "gradingCases"> {
   return task.hasExplicitGradingCases ? { gradingCases } : {};
 }
 
-function optionalErrorMessage(errorMessage: string | undefined): Pick<BenchmarkResult, 'errorMessage'> {
+function optionalErrorMessage(
+  errorMessage: string | undefined
+): Pick<BenchmarkResult, "errorMessage"> {
   return errorMessage === undefined ? {} : { errorMessage };
 }
 
@@ -407,7 +441,9 @@ function firstGradingCaseErrorMessage(
   task: BenchmarkTask,
   gradingCases: readonly BenchmarkGradingCaseResult[]
 ): string | undefined {
-  const gradingCase = gradingCases.find((item) => item.status === 'error' && item.errorMessage !== undefined);
+  const gradingCase = gradingCases.find(
+    (item) => item.status === "error" && item.errorMessage !== undefined
+  );
 
   if (!gradingCase?.errorMessage) {
     return undefined;
@@ -420,16 +456,18 @@ function firstGradingCaseErrorMessage(
   return `case ${gradingCase.caseId} error: ${gradingCase.errorMessage}`;
 }
 
-function benchmarkStatusForGradingCases(gradingCases: readonly BenchmarkGradingCaseResult[]): BenchmarkStatus {
-  if (gradingCases.some((gradingCase) => gradingCase.status === 'error')) {
-    return 'error';
+function benchmarkStatusForGradingCases(
+  gradingCases: readonly BenchmarkGradingCaseResult[]
+): BenchmarkStatus {
+  if (gradingCases.some((gradingCase) => gradingCase.status === "error")) {
+    return "error";
   }
 
-  if (gradingCases.some((gradingCase) => gradingCase.status === 'failed')) {
-    return 'failed';
+  if (gradingCases.some((gradingCase) => gradingCase.status === "failed")) {
+    return "failed";
   }
 
-  return 'passed';
+  return "passed";
 }
 
 function benchmarkSuiteEntries(options: {
@@ -441,17 +479,25 @@ function benchmarkSuiteEntries(options: {
   const relativeTaskFiles = markdownFilesInDirectory(options.benchmarkDirPath);
 
   if (relativeTaskFiles.length === 0) {
-    throw new BenchmarkError(`benchmark directory contains no task files: ${options.benchmarkDir}`);
+    throw new BenchmarkError(
+      `benchmark directory contains no task files: ${options.benchmarkDir}`
+    );
   }
 
   return relativeTaskFiles.map((relativeTaskFile) => {
-    const relativeSubmissionFile = relativeTaskFile.replace(/\.md$/u, '.qni');
+    const relativeSubmissionFile = relativeTaskFile.replace(/\.md$/u, ".qni");
 
     return {
-      submission: displayChildPath(options.solutionsDir, relativeSubmissionFile),
-      submissionPath: path.join(options.solutionsDirPath, relativeSubmissionFile),
+      submission: displayChildPath(
+        options.solutionsDir,
+        relativeSubmissionFile
+      ),
+      submissionPath: path.join(
+        options.solutionsDirPath,
+        relativeSubmissionFile
+      ),
       taskFile: displayChildPath(options.benchmarkDir, relativeTaskFile),
-      taskPath: path.join(options.benchmarkDirPath, relativeTaskFile)
+      taskPath: path.join(options.benchmarkDirPath, relativeTaskFile),
     };
   });
 }
@@ -465,12 +511,17 @@ function markdownFilesInDirectory(dir: string): string[] {
     throw new BenchmarkError(`benchmark path is not a directory: ${dir}`);
   }
 
-  return markdownFilesInDirectoryEntries(dir, '').sort();
+  return markdownFilesInDirectoryEntries(dir, "").sort();
 }
 
-function markdownFilesInDirectoryEntries(root: string, relativeDir: string): string[] {
+function markdownFilesInDirectoryEntries(
+  root: string,
+  relativeDir: string
+): string[] {
   const dir = path.join(root, relativeDir);
-  const entries = readdirSync(dir, { withFileTypes: true }).sort((left, right) => left.name.localeCompare(right.name));
+  const entries = readdirSync(dir, { withFileTypes: true }).sort(
+    (left, right) => left.name.localeCompare(right.name)
+  );
   const files: string[] = [];
 
   for (const entry of entries) {
@@ -478,7 +529,7 @@ function markdownFilesInDirectoryEntries(root: string, relativeDir: string): str
 
     if (entry.isDirectory()) {
       files.push(...markdownFilesInDirectoryEntries(root, relativePath));
-    } else if (entry.isFile() && entry.name.endsWith('.md')) {
+    } else if (entry.isFile() && entry.name.endsWith(".md")) {
       files.push(relativePath);
     }
   }
@@ -491,114 +542,141 @@ function displayChildPath(root: string, relativeFile: string): string {
 }
 
 function toPosixPath(filePath: string): string {
-  return filePath.split(path.sep).join('/');
+  return filePath.split(path.sep).join("/");
 }
 
-function evaluateBenchmarkSuiteEntry(entry: BenchmarkSuiteEntry, context: CommandHandlerContext): BenchmarkSuiteTaskResult {
+function evaluateBenchmarkSuiteEntry(
+  entry: BenchmarkSuiteEntry,
+  context: CommandHandlerContext
+): BenchmarkSuiteTaskResult {
   let task: BenchmarkTask | undefined;
 
   try {
     task = loadBenchmarkTask(entry.taskPath);
 
     if (!existsSync(entry.submissionPath)) {
-      throw new BenchmarkError(`submission file does not exist: ${entry.submission}`);
+      throw new BenchmarkError(
+        `submission file does not exist: ${entry.submission}`
+      );
     }
 
     return {
       result: evaluateBenchmark({
         context,
         submissionPath: entry.submissionPath,
-        task
+        task,
       }),
       submission: entry.submission,
       task,
-      taskFile: entry.taskFile
+      taskFile: entry.taskFile,
     };
   } catch (error) {
     return {
       result: {
         checks: [],
         errorMessage: errorMessage(error),
-        status: 'error'
+        status: "error",
       },
       submission: entry.submission,
       task,
-      taskFile: entry.taskFile
+      taskFile: entry.taskFile,
     };
   }
 }
 
-function benchmarkSuiteResult(results: readonly BenchmarkSuiteTaskResult[]): BenchmarkSuiteResult {
+function benchmarkSuiteResult(
+  results: readonly BenchmarkSuiteTaskResult[]
+): BenchmarkSuiteResult {
   const summary = benchmarkSuiteSummary(results);
-  const exitCode = Math.max(0, ...results.map((item) => exitCodeForResult(item.result)));
+  const exitCode = Math.max(
+    0,
+    ...results.map((item) => exitCodeForResult(item.result))
+  );
 
   return {
     exitCode,
     results,
     status: benchmarkSuiteStatus(exitCode),
-    summary
+    summary,
   };
 }
 
-function benchmarkSuiteSummary(results: readonly BenchmarkSuiteTaskResult[]): BenchmarkSuiteSummary {
+function benchmarkSuiteSummary(
+  results: readonly BenchmarkSuiteTaskResult[]
+): BenchmarkSuiteSummary {
   return {
-    disallowed: results.filter((item) => item.result.status === 'disallowed').length,
-    error: results.filter((item) => item.result.status === 'error').length,
-    failed: results.filter((item) => item.result.status === 'failed').length,
-    passed: results.filter((item) => item.result.status === 'passed').length,
-    total: results.length
+    disallowed: results.filter((item) => item.result.status === "disallowed")
+      .length,
+    error: results.filter((item) => item.result.status === "error").length,
+    failed: results.filter((item) => item.result.status === "failed").length,
+    passed: results.filter((item) => item.result.status === "passed").length,
+    total: results.length,
   };
 }
 
 function benchmarkSuiteStatus(exitCode: number): BenchmarkStatus {
   switch (exitCode) {
     case 0:
-      return 'passed';
+      return "passed";
     case 1:
-      return 'failed';
+      return "failed";
     case 2:
-      return 'disallowed';
+      return "disallowed";
     case 3:
-      return 'error';
+      return "error";
     default:
-      throw new BenchmarkError(`unsupported benchmark suite exit code: ${exitCode}`);
+      throw new BenchmarkError(
+        `unsupported benchmark suite exit code: ${exitCode}`
+      );
   }
 }
 
-function benchmarkSuiteGradingResult(suite: BenchmarkSuiteResult): BenchmarkSuiteGradingResult {
+function benchmarkSuiteGradingResult(
+  suite: BenchmarkSuiteResult
+): BenchmarkSuiteGradingResult {
   const payload: BenchmarkSuiteGradingResult = {
     status: suite.status,
     exitCode: suite.exitCode,
     summary: suite.summary,
-    results: suite.results.map(benchmarkSuiteTaskGradingResult)
+    results: suite.results.map(benchmarkSuiteTaskGradingResult),
   };
 
   if (suite.errorMessage) {
     return {
       ...payload,
-      error: suite.errorMessage
+      error: suite.errorMessage,
     };
   }
 
   return payload;
 }
 
-function benchmarkSuiteTaskGradingResult(item: BenchmarkSuiteTaskResult): BenchmarkSuiteTaskGradingResult {
+function benchmarkSuiteTaskGradingResult(
+  item: BenchmarkSuiteTaskResult
+): BenchmarkSuiteTaskGradingResult {
   return {
     ...benchmarkResultPayload(item.task, item.submission, item.result),
-    task: item.taskFile
+    task: item.taskFile,
   };
 }
 
-function runSubmission(commands: readonly SubmissionCommand[], workDir: string, context: CommandHandlerContext): void {
+function runSubmission(
+  commands: readonly SubmissionCommand[],
+  workDir: string,
+  context: CommandHandlerContext
+): void {
   for (const command of commands) {
     const result = runQni(command.argv, workDir, context);
 
     if (result.exitStatus !== 0) {
-      throw new BenchmarkError([
-        `submission command failed at line ${command.lineNumber}: ${command.source}`,
-        result.stderr.trimEnd()
-      ].filter(Boolean).join('\n'));
+      throw new BenchmarkError(
+        [
+          `submission command failed at line ${command.lineNumber}: ${command.source}`,
+          result.stderr.trimEnd(),
+        ]
+          .filter(Boolean)
+          .join("\n")
+      );
     }
   }
 }
@@ -622,10 +700,14 @@ function runSetupCommand(
   const result = runQni(command.argv, workDir, context);
 
   if (result.exitStatus !== 0) {
-    throw new BenchmarkError([
-      `setup command failed in grading case ${gradingCase.id}: ${command.source}`,
-      result.stderr.trimEnd()
-    ].filter(Boolean).join('\n'));
+    throw new BenchmarkError(
+      [
+        `setup command failed in grading case ${gradingCase.id}: ${command.source}`,
+        result.stderr.trimEnd(),
+      ]
+        .filter(Boolean)
+        .join("\n")
+    );
   }
 }
 
@@ -636,9 +718,9 @@ function runBenchmarkCheck(
   context: CommandHandlerContext
 ): BenchmarkCheckResult {
   switch (check.type) {
-    case 'expect':
+    case "expect":
       return runExpectCheck(check, checkContext, workDir, context);
-    case 'run':
+    case "run":
       return runRunCheck(check, checkContext, workDir, context);
   }
 }
@@ -649,20 +731,30 @@ function runRunCheck(
   workDir: string,
   context: CommandHandlerContext
 ): RunCheckResult {
-  const result = runQni(['run'], workDir, context);
+  const result = runQni(["run"], workDir, context);
 
   if (result.exitStatus !== 0) {
-    throw new BenchmarkError(`run check failed to execute for ${checkContext.taskId}: ${result.stderr.trimEnd()}`);
+    throw new BenchmarkError(
+      `run check failed to execute for ${checkContext.taskId}: ${result.stderr.trimEnd()}`
+    );
   }
 
   const actual = parseStateVector(result.stdout);
   const expected = expectedStateVector(check.expected);
-  const mismatches = stateVectorMismatchSummary(actual, expected, checkContext.checks.tolerance);
+  const mismatches = stateVectorMismatchSummary(
+    actual,
+    expected,
+    checkContext.checks.tolerance,
+    check.upToGlobalPhase
+  );
 
   return {
     mismatches,
-    status: mismatches.displayed.length === 0 && mismatches.omittedCount === 0 ? 'passed' : 'failed',
-    type: 'run'
+    status:
+      mismatches.displayed.length === 0 && mismatches.omittedCount === 0
+        ? "passed"
+        : "failed",
+    type: "run",
   };
 }
 
@@ -672,23 +764,38 @@ function runExpectCheck(
   workDir: string,
   context: CommandHandlerContext
 ): ExpectCheckResult {
-  const result = runQni(['expect', ...check.expected.map((item) => item.pauli)], workDir, context);
+  const result = runQni(
+    ["expect", ...check.expected.map((item) => item.pauli)],
+    workDir,
+    context
+  );
 
   if (result.exitStatus !== 0) {
-    throw new BenchmarkError(`expect check failed to execute for ${checkContext.taskId}: ${result.stderr.trimEnd()}`);
+    throw new BenchmarkError(
+      `expect check failed to execute for ${checkContext.taskId}: ${result.stderr.trimEnd()}`
+    );
   }
 
   const actual = parseExpectationValues(result.stdout);
-  const mismatches = expectationMismatchSummary(actual, check.expected, checkContext.checks.tolerance);
+  const mismatches = expectationMismatchSummary(
+    actual,
+    check.expected,
+    checkContext.checks.tolerance
+  );
 
   return {
     mismatches,
-    status: mismatches.displayed.length === 0 && mismatches.omittedCount === 0 ? 'passed' : 'failed',
-    type: 'expect'
+    status:
+      mismatches.displayed.length === 0 && mismatches.omittedCount === 0
+        ? "passed"
+        : "failed",
+    type: "expect",
   };
 }
 
-function expectedStateVector(expectedAmplitudes: readonly ExpectedAmplitude[]): ExpectedStateVector {
+function expectedStateVector(
+  expectedAmplitudes: readonly ExpectedAmplitude[]
+): ExpectedStateVector {
   const amplitudes = new Map<number, ComplexAmplitude>();
   let vectorLength = 1;
 
@@ -704,15 +811,22 @@ function expectedStateVector(expectedAmplitudes: readonly ExpectedAmplitude[]): 
 function stateVectorMismatchSummary(
   actual: readonly ComplexAmplitude[],
   expected: ExpectedStateVector,
-  tolerance: number
+  tolerance: number,
+  upToGlobalPhase = false
 ): MismatchSummary {
   const displayed: AmplitudeMismatch[] = [];
   let mismatchCount = 0;
   const vectorLength = Math.max(actual.length, expected.vectorLength);
+  const phase = upToGlobalPhase
+    ? globalPhase(actual, expected)
+    : { real: 1, imaginary: 0 };
 
   for (let index = 0; index < vectorLength; index += 1) {
     const amplitude = actual[index] ?? ZERO_AMPLITUDE;
-    const expectedAmplitude = expected.amplitudes.get(index) ?? ZERO_AMPLITUDE;
+    const expectedAmplitude = multiplyAmplitudes(
+      expected.amplitudes.get(index) ?? ZERO_AMPLITUDE,
+      phase
+    );
 
     if (amplitudesClose(amplitude, expectedAmplitude, tolerance)) {
       continue;
@@ -724,20 +838,78 @@ function stateVectorMismatchSummary(
       displayed.push({
         actual: amplitude,
         basis: basisLabel(index, vectorLength),
-        expected: expectedAmplitude
+        expected: expectedAmplitude,
       });
     }
   }
 
   return {
     displayed,
-    omittedCount: mismatchCount - displayed.length
+    omittedCount: mismatchCount - displayed.length,
   };
 }
 
-function amplitudesClose(actual: ComplexAmplitude, expected: ComplexAmplitude, tolerance: number): boolean {
-  return Math.abs(actual.real - expected.real) <= tolerance &&
-    Math.abs(actual.imaginary - expected.imaginary) <= tolerance;
+// The largest expected amplitude gives a stable phase reference, even for sparse vectors.
+// Only a unit phase is removed: magnitude errors and relative phases still fail.
+function globalPhase(
+  actual: readonly ComplexAmplitude[],
+  expected: ExpectedStateVector
+): ComplexAmplitude {
+  let referenceIndex = 0;
+  let reference = ZERO_AMPLITUDE;
+  let largestMagnitude = 0;
+
+  for (const [index, amplitude] of expected.amplitudes) {
+    const magnitude = Math.hypot(amplitude.real, amplitude.imaginary);
+
+    if (magnitude > largestMagnitude) {
+      referenceIndex = index;
+      reference = amplitude;
+      largestMagnitude = magnitude;
+    }
+  }
+
+  const actualReference = actual[referenceIndex] ?? ZERO_AMPLITUDE;
+  const actualMagnitude = Math.hypot(
+    actualReference.real,
+    actualReference.imaginary
+  );
+
+  if (largestMagnitude === 0 || actualMagnitude === 0) {
+    return { real: 1, imaginary: 0 };
+  }
+
+  return multiplyAmplitudes(
+    {
+      real: actualReference.real / actualMagnitude,
+      imaginary: actualReference.imaginary / actualMagnitude,
+    },
+    {
+      real: reference.real / largestMagnitude,
+      imaginary: -reference.imaginary / largestMagnitude,
+    }
+  );
+}
+
+function multiplyAmplitudes(
+  left: ComplexAmplitude,
+  right: ComplexAmplitude
+): ComplexAmplitude {
+  return {
+    real: left.real * right.real - left.imaginary * right.imaginary,
+    imaginary: left.real * right.imaginary + left.imaginary * right.real,
+  };
+}
+
+function amplitudesClose(
+  actual: ComplexAmplitude,
+  expected: ComplexAmplitude,
+  tolerance: number
+): boolean {
+  return (
+    Math.abs(actual.real - expected.real) <= tolerance &&
+    Math.abs(actual.imaginary - expected.imaginary) <= tolerance
+  );
 }
 
 function expectationMismatchSummary(
@@ -761,26 +933,35 @@ function expectationMismatchSummary(
       displayed.push({
         actual: actualValue,
         expected: item.value,
-        pauli: item.pauli
+        pauli: item.pauli,
       });
     }
   }
 
   return {
     displayed,
-    omittedCount: mismatchCount - displayed.length
+    omittedCount: mismatchCount - displayed.length,
   };
 }
 
-function expectationClose(actual: ComplexAmplitude, expected: number, tolerance: number): boolean {
-  return Math.abs(actual.real - expected) <= tolerance && Math.abs(actual.imaginary) <= tolerance;
+function expectationClose(
+  actual: ComplexAmplitude,
+  expected: number,
+  tolerance: number
+): boolean {
+  return (
+    Math.abs(actual.real - expected) <= tolerance &&
+    Math.abs(actual.imaginary) <= tolerance
+  );
 }
 
-function parseExpectationValues(stdout: string): ReadonlyMap<string, ComplexAmplitude> {
+function parseExpectationValues(
+  stdout: string
+): ReadonlyMap<string, ComplexAmplitude> {
   const text = stdout.trim();
 
   if (text.length === 0) {
-    throw new BenchmarkError('qni expect produced empty expectation output');
+    throw new BenchmarkError("qni expect produced empty expectation output");
   }
 
   return new Map(text.split(/\r?\n/u).map(parseExpectationValueLine));
@@ -800,14 +981,14 @@ function parseStateVector(stdout: string): ComplexAmplitude[] {
   const text = stdout.trim();
 
   if (text.length === 0) {
-    throw new BenchmarkError('qni run produced empty state vector output');
+    throw new BenchmarkError("qni run produced empty state vector output");
   }
 
-  return text.split(',').map(parseComplexAmplitude);
+  return text.split(",").map(parseComplexAmplitude);
 }
 
 function parseComplexAmplitude(text: string): ComplexAmplitude {
-  if (!text.endsWith('i')) {
+  if (!text.endsWith("i")) {
     return { imaginary: 0, real: parseNumber(text) };
   }
 
@@ -820,13 +1001,16 @@ function parseComplexAmplitude(text: string): ComplexAmplitude {
 
   return {
     imaginary: parseNumber(body.slice(splitIndex)),
-    real: parseNumber(body.slice(0, splitIndex))
+    real: parseNumber(body.slice(0, splitIndex)),
   };
 }
 
 function lastSignIndex(value: string): number {
   for (let index = value.length - 1; index > 0; index -= 1) {
-    if ((value[index] === '+' || value[index] === '-') && !exponentSign(value, index)) {
+    if (
+      (value[index] === "+" || value[index] === "-") &&
+      !exponentSign(value, index)
+    ) {
       return index;
     }
   }
@@ -835,7 +1019,7 @@ function lastSignIndex(value: string): number {
 }
 
 function exponentSign(value: string, index: number): boolean {
-  return value[index - 1] === 'e' || value[index - 1] === 'E';
+  return value[index - 1] === "e" || value[index - 1] === "E";
 }
 
 function basisMetadata(basis: string): BasisMetadata {
@@ -847,24 +1031,30 @@ function basisMetadata(basis: string): BasisMetadata {
 
   return {
     index: Number.parseInt(match.groups.bits, 2),
-    vectorLength: 2 ** match.groups.bits.length
+    vectorLength: 2 ** match.groups.bits.length,
   };
 }
 
-function runQni(argv: readonly string[], cwd: string, context: CommandHandlerContext): QniCommandResult {
-  const command = argv[0] ?? '';
+function runQni(
+  argv: readonly string[],
+  cwd: string,
+  context: CommandHandlerContext
+): QniCommandResult {
+  const command = argv[0] ?? "";
   const handler = QNI_COMMAND_HANDLERS.get(command);
 
   if (!handler) {
-    throw new BenchmarkError(`unsupported qni command in benchmark runner: qni ${argv.join(' ')}`);
+    throw new BenchmarkError(
+      `unsupported qni command in benchmark runner: qni ${argv.join(" ")}`
+    );
   }
 
   return captureCommandRun(() => handler([...argv], { ...context, cwd }));
 }
 
 function captureCommandRun(callback: () => number): QniCommandResult {
-  let stdout = '';
-  let stderr = '';
+  let stdout = "";
+  let stderr = "";
   const originalStdoutWrite = process.stdout.write;
   const originalStderrWrite = process.stderr.write;
 
@@ -874,7 +1064,7 @@ function captureCommandRun(callback: () => number): QniCommandResult {
     callback?: (error?: Error | null) => void
   ): boolean => {
     stdout += streamChunkText(chunk);
-    if (typeof encodingOrCallback === 'function') {
+    if (typeof encodingOrCallback === "function") {
       encodingOrCallback();
     }
     if (callback) {
@@ -889,10 +1079,10 @@ function captureCommandRun(callback: () => number): QniCommandResult {
     callback?: BufferEncoding | ((error?: Error | null) => void)
   ): boolean => {
     stderr += streamChunkText(chunk);
-    if (typeof encodingOrCallback === 'function') {
+    if (typeof encodingOrCallback === "function") {
       encodingOrCallback();
     }
-    if (typeof callback === 'function') {
+    if (typeof callback === "function") {
       callback();
     }
     return true;
@@ -902,7 +1092,7 @@ function captureCommandRun(callback: () => number): QniCommandResult {
     return {
       exitStatus: callback(),
       stderr,
-      stdout
+      stdout,
     };
   } finally {
     process.stdout.write = originalStdoutWrite;
@@ -911,11 +1101,13 @@ function captureCommandRun(callback: () => number): QniCommandResult {
 }
 
 function streamChunkText(chunk: string | Uint8Array): string {
-  return typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf8');
+  return typeof chunk === "string"
+    ? chunk
+    : Buffer.from(chunk).toString("utf8");
 }
 
 function parseNumber(value: unknown): number {
-  const result = typeof value === 'number' ? value : Number(String(value));
+  const result = typeof value === "number" ? value : Number(String(value));
 
   if (Number.isNaN(result)) {
     throw new BenchmarkError(`invalid number: ${String(value)}`);
@@ -924,7 +1116,10 @@ function parseNumber(value: unknown): number {
   return result;
 }
 
-function resolveInputPath(filePath: string, context: CommandHandlerContext): string {
+function resolveInputPath(
+  filePath: string,
+  context: CommandHandlerContext
+): string {
   if (path.isAbsolute(filePath)) {
     return filePath;
   }
@@ -952,14 +1147,14 @@ function benchmarkResultPayload(
     ...explicitGradingCasesPayload(task, result.gradingCases),
     checks: result.checks.map((check) => ({
       type: check.type,
-      status: check.status
-    }))
+      status: check.status,
+    })),
   };
 
   if (result.errorMessage) {
     return {
       ...payload,
-      error: result.errorMessage
+      error: result.errorMessage,
     };
   }
 
@@ -969,7 +1164,7 @@ function benchmarkResultPayload(
 function explicitGradingCasesPayload(
   task: BenchmarkTask | undefined,
   gradingCases: readonly BenchmarkGradingCaseResult[] | undefined
-): Pick<BenchmarkTaskGradingResult, 'gradingCases'> {
+): Pick<BenchmarkTaskGradingResult, "gradingCases"> {
   if (!task?.hasExplicitGradingCases || !gradingCases) {
     return {};
   }
@@ -980,14 +1175,16 @@ function explicitGradingCasesPayload(
       status: gradingCase.status,
       checks: gradingCase.checks.map((check) => ({
         type: check.type,
-        status: check.status
+        status: check.status,
       })),
-      ...optionalCaseError(gradingCase.errorMessage)
-    }))
+      ...optionalCaseError(gradingCase.errorMessage),
+    })),
   };
 }
 
-function optionalCaseError(error: string | undefined): Pick<BenchmarkGradingCaseSummary, 'error'> {
+function optionalCaseError(
+  error: string | undefined
+): Pick<BenchmarkGradingCaseSummary, "error"> {
   return error === undefined ? {} : { error };
 }
 
@@ -997,13 +1194,13 @@ function exitCodeForResult(result: BenchmarkResult): number {
 
 export function exitCodeForBenchmarkStatus(status: BenchmarkStatus): number {
   switch (status) {
-    case 'passed':
+    case "passed":
       return 0;
-    case 'failed':
+    case "failed":
       return 1;
-    case 'disallowed':
+    case "disallowed":
       return 2;
-    case 'error':
+    case "error":
       return 3;
   }
 }
@@ -1012,8 +1209,10 @@ function basisLabel(index: number, vectorLength: number): string {
   const width = Math.log2(vectorLength);
 
   if (!Number.isInteger(width)) {
-    throw new BenchmarkError(`state vector length is not a power of two: ${vectorLength}`);
+    throw new BenchmarkError(
+      `state vector length is not a power of two: ${vectorLength}`
+    );
   }
 
-  return `|${index.toString(2).padStart(width, '0')}>`;
+  return `|${index.toString(2).padStart(width, "0")}>`;
 }

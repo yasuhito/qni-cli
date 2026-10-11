@@ -103,10 +103,30 @@ describe("evaluation runner public entrypoints", () => {
 
   it("grades expect checks through the evaluation runner seam", async () => {
     await withTempDir(async (dir) => {
+      await writeFile(
+        path.join(dir, "expect-task.md"),
+        [
+          "---",
+          "id: superposition/bell-state",
+          "title: BellState",
+          "available_gates: [H, X]",
+          "allowed_commands: [qni add]",
+          "checks:",
+          "  tolerance: 1e-9",
+          "  items:",
+          "    - type: expect",
+          "      expected:",
+          "        - pauli: ZZ",
+          "          value: 1",
+          "        - pauli: XX",
+          "          value: 1",
+          "---",
+        ].join("\n")
+      );
       const captured = captureProcessWrites(() =>
         gradeBenchmarkTask(
           {
-            taskFile: "benchmarks/quantum-katas/superposition/bell-state.md",
+            taskFile: "expect-task.md",
             submissionFile:
               "benchmarks/solutions/quantum-katas/superposition/bell-state.qni",
           },

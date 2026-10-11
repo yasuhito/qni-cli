@@ -11,12 +11,17 @@ allowed_commands:
 checks:
   tolerance: 1e-9
   items:
-    - type: expect
+    - type: run
+      up_to_global_phase: true
       expected:
-        - pauli: ZZ
-          value: 1
-        - pauli: XX
-          value: 1
+        - basis: "|00>"
+          amplitude:
+            real: 0.7071067811865476
+            imaginary: 0
+        - basis: "|11>"
+          amplitude:
+            real: 0.7071067811865476
+            imaginary: 0
 ---
 
 2量子ビットを `|00>` から Bell 状態 `|Φ+>` に変える量子回路を設計してください。
