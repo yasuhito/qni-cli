@@ -431,8 +431,8 @@ qni benchmark run-all benchmarks/quantum-katas benchmarks/solutions/quantum-kata
 
 ```text
 PASS benchmark suite
-tasks: 30
-passed: 30, failed: 0, disallowed: 0, error: 0
+tasks: 40
+passed: 40, failed: 0, disallowed: 0, error: 0
 - passed basic-gates/basis-change BasisChange
 - passed basic-gates/bell-state-change-1 BellStateChange1
 - passed basic-gates/bell-state-change-2 BellStateChange2

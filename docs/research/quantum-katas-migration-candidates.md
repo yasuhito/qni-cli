@@ -63,9 +63,9 @@
 | ------------------------ | ---: | -------: | -------------: | ---: |
 | Single-Qubit Gates       |   14 |       14 |              4 |    0 |
 | Multi-Qubit Gates        |   10 |        6 |              1 |    4 |
-| Preparing Quantum States |   21 |        7 |              1 |   14 |
+| Preparing Quantum States |   21 |       14 |              8 |    7 |
 | QFT                      |   12 |        0 |              0 |   12 |
-| 合計                     |   57 |       27 |              6 |   30 |
+| 合計                     |   57 |       34 |             13 |   23 |
 
 ### 必要な機能と採点方針
 
@@ -127,29 +127,31 @@
 
 ### preparing_states
 
-| 上流 exercise ID                                       | qni課題ID（未移植は予定）                                   | 状態     | 必要な機能                | 固定値                  |
-| ------------------------------------------------------ | ----------------------------------------------------------- | -------- | ------------------------- | ----------------------- |
-| `preparing_states__plus_state`                         | `superposition/plus-state`                                  | 移植済み | F1（既存7問にも適用予定） | パラメータなし          |
-| `preparing_states__minus_state`                        | `superposition/minus-state`                                 | 移植済み | F1（既存7問にも適用予定） | パラメータなし          |
-| `preparing_states__even_sup_two_qubits`                | `superposition/all-basis-vectors-two-qubits`                | 移植済み | F1（既存7問にも適用予定） | N=2（上流も固定）       |
-| `preparing_states__even_sup_two_qubits_phase_flip`     | `superposition/all-basis-vector-with-phase-flip-two-qubits` | 移植済み | F1（既存7問にも適用予定） | N=2（上流も固定）       |
-| `preparing_states__even_sup_two_qubits_complex_phases` | `superposition/all-basis-vectors-with-phases-two-qubits`    | 移植済み | F1（既存7問にも適用予定） | N=2（上流も固定）       |
-| `preparing_states__bell_state`                         | `superposition/bell-state`                                  | 移植済み | F1（既存7問にも適用予定） | パラメータなし          |
-| `preparing_states__all_bell_states`                    | `preparing-states/all-bell-states`                          | 未移植   | F1                        | 未決定: 4状態に分割予定 |
-| `preparing_states__ghz_state`                          | `superposition/ghz-state`                                   | 部分的   | F1、固定インスタンス追加  | N=3                     |
-| `preparing_states__all_basis_vectors`                  | `preparing-states/all-basis-vectors`                        | 未移植   | F1                        | 未決定: N               |
-| `preparing_states__even_odd`                           | `preparing-states/even-odd`                                 | 未移植   | F1                        | 未決定: N, isEven       |
-| `preparing_states__zero_and_bitstring`                 | `preparing-states/zero-and-bitstring`                       | 未移植   | F1                        | 未決定: bits            |
-| `preparing_states__two_bitstrings`                     | `preparing-states/two-bitstrings`                           | 未移植   | F1                        | 未決定: bits1, bits2    |
-| `preparing_states__four_bitstrings`                    | `preparing-states/four-bitstrings`                          | 未移植   | F1/F4                     | 未決定: 4つのbits       |
-| `preparing_states__parity_bitstrings`                  | `preparing-states/parity-bitstrings`                        | 未移植   | F1                        | 未決定: N, parity       |
-| `preparing_states__unequal_superposition`              | `preparing-states/unequal-superposition`                    | 未移植   | F1/F4                     | 未決定: α               |
-| `preparing_states__controlled_rotation`                | `preparing-states/controlled-rotation`                      | 未移植   | F1/F4 (CH)                | N=2（上流も固定）       |
-| `preparing_states__three_states_two_qubits`            | `preparing-states/three-states-two-qubits`                  | 未移植   | F1/F4                     | パラメータなし          |
-| `preparing_states__three_states_two_qubits_phases`     | `preparing-states/three-states-two-qubits-phases`           | 未移植   | F1/F4                     | パラメータなし          |
-| `preparing_states__hardy_state`                        | `preparing-states/hardy-state`                              | 未移植   | F1/F4                     | パラメータなし          |
-| `preparing_states__wstate_power_of_two`                | `preparing-states/wstate-power-of-two`                      | 未移植   | F1/F4                     | 未決定: N               |
-| `preparing_states__wstate_arbitrary`                   | `preparing-states/wstate-arbitrary`                         | 未移植   | F1/F4                     | 未決定: N               |
+| 上流 exercise ID                                       | qni課題ID（未移植は予定）                                   | 状態     | 必要な機能                | 固定値                                                      |
+| ------------------------------------------------------ | ----------------------------------------------------------- | -------- | ------------------------- | ----------------------------------------------------------- |
+| `preparing_states__plus_state`                         | `superposition/plus-state`                                  | 移植済み | F1（既存7問にも適用予定） | パラメータなし                                              |
+| `preparing_states__minus_state`                        | `superposition/minus-state`                                 | 移植済み | F1（既存7問にも適用予定） | パラメータなし                                              |
+| `preparing_states__even_sup_two_qubits`                | `superposition/all-basis-vectors-two-qubits`                | 移植済み | F1（既存7問にも適用予定） | N=2（上流も固定）                                           |
+| `preparing_states__even_sup_two_qubits_phase_flip`     | `superposition/all-basis-vector-with-phase-flip-two-qubits` | 移植済み | F1（既存7問にも適用予定） | N=2（上流も固定）                                           |
+| `preparing_states__even_sup_two_qubits_complex_phases` | `superposition/all-basis-vectors-with-phases-two-qubits`    | 移植済み | F1（既存7問にも適用予定） | N=2（上流も固定）                                           |
+| `preparing_states__bell_state`                         | `superposition/bell-state`                                  | 移植済み | F1（既存7問にも適用予定） | パラメータなし                                              |
+| `preparing_states__all_bell_states`                    | `preparing-states/all-bell-states-0..3`                     | 部分的   | F1                        | N=2、index=0,1,2,3（4固定課題）                             |
+| `preparing_states__ghz_state`                          | `superposition/ghz-state`                                   | 部分的   | F1、固定インスタンス追加  | N=3                                                         |
+| `preparing_states__all_basis_vectors`                  | `preparing-states/all-basis-vectors`                        | 部分的   | F1                        | N=3                                                         |
+| `preparing_states__even_odd`                           | `preparing-states/even-odd`                                 | 部分的   | F1                        | N=3、isEven=false                                           |
+| `preparing_states__zero_and_bitstring`                 | `preparing-states/zero-and-bitstring`                       | 部分的   | F1                        | bits=[true,false,true]（101）                               |
+| `preparing_states__two_bitstrings`                     | `preparing-states/two-bitstrings`                           | 部分的   | F1                        | bits1=[false,true,false]、bits2=[true,true,true]（010,111） |
+| `preparing_states__four_bitstrings`                    | `preparing-states/four-bitstrings`                          | 部分的   | F1                        | N=3、bits=001,011,100,110（回転不要）                       |
+| `preparing_states__parity_bitstrings`                  | `preparing-states/parity-bitstrings`                        | 部分的   | F1                        | N=4、parity=1                                               |
+| `preparing_states__unequal_superposition`              | `preparing-states/unequal-superposition`                    | 未移植   | F1/F4                     | 未決定: α                                                   |
+| `preparing_states__controlled_rotation`                | `preparing-states/controlled-rotation`                      | 未移植   | F1/F4 (CH)                | N=2（上流も固定）                                           |
+| `preparing_states__three_states_two_qubits`            | `preparing-states/three-states-two-qubits`                  | 未移植   | F1/F4                     | パラメータなし                                              |
+| `preparing_states__three_states_two_qubits_phases`     | `preparing-states/three-states-two-qubits-phases`           | 未移植   | F1/F4                     | パラメータなし                                              |
+| `preparing_states__hardy_state`                        | `preparing-states/hardy-state`                              | 未移植   | F1/F4                     | パラメータなし                                              |
+| `preparing_states__wstate_power_of_two`                | `preparing-states/wstate-power-of-two`                      | 未移植   | F1/F4                     | 未決定: N                                                   |
+| `preparing_states__wstate_arbitrary`                   | `preparing-states/wstate-arbitrary`                         | 未移植   | F1/F4                     | 未決定: N                                                   |
+
+回転不要分は7つの上流課題を10個の固定課題へ移植した。AllBellStates は index ごとに分割し、他の可変引数も固定したため「部分的」とする。全て上流と同じゼロ入力・非Strict比較で採点する。q0 は配列先頭かつ表示基底の左端。EvenOdd の奇数は末尾ビット1、Parity は1の個数の奇偶を指す。FourBitstrings の選定値は H/X/CNOT だけで準備できる。上流コードは複製せず日本語で課題を記述した。
 
 ### qft
 
