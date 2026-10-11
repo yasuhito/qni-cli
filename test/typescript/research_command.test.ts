@@ -194,6 +194,13 @@ async function prepareQuantumKatasSubmissions(
   status: UnsuccessfulResearchStatus
 ): Promise<void> {
   const relativePaths = [
+    "preparing-states/controlled-rotation.qni",
+    "preparing-states/hardy-state.qni",
+    "preparing-states/three-states-two-qubits.qni",
+    "preparing-states/three-states-two-qubits-phases.qni",
+    "preparing-states/unequal-superposition.qni",
+    "preparing-states/wstate-arbitrary.qni",
+    "preparing-states/wstate-power-of-two.qni",
     "single-qubit-gates/amplitude-change.qni",
     "single-qubit-gates/prepare-rotated-state.qni",
     "single-qubit-gates/prepare-arbitrary-state.qni",
@@ -1039,15 +1046,15 @@ describe("research command TypeScript route", () => {
         );
         assert.equal(metadata.status, gradingCase.status);
         assert.deepStrictEqual(metadata.score, {
-          passed: 43,
-          total: 44,
-          percent: 97.72727272727273,
+          passed: 50,
+          total: 51,
+          percent: 98.0392156862745,
           source: "result.json",
         });
         assert.equal(gradingResult.status, gradingCase.status);
         assert.equal(gradingResult.exitCode, gradingCase.exitCode);
         assert.ok(trialSummary.includes(`- status: ${gradingCase.status}\n`));
-        assert.ok(trialSummary.includes("- score: 97.73%\n"));
+        assert.ok(trialSummary.includes("- score: 98.04%\n"));
         assert.equal(
           (await stat(path.join(trialDir, "submissions"))).isDirectory(),
           true
@@ -1185,8 +1192,8 @@ describe("research command TypeScript route", () => {
         result: "result.json",
         status: "passed",
         score: {
-          passed: 44,
-          total: 44,
+          passed: 51,
+          total: 51,
           percent: 100,
           source: "result.json",
         },
@@ -1197,8 +1204,8 @@ describe("research command TypeScript route", () => {
       );
       assert.equal(gradingResult.status, "passed");
       assert.deepStrictEqual(gradingResult.summary, {
-        total: 44,
-        passed: 44,
+        total: 51,
+        passed: 51,
         failed: 0,
         disallowed: 0,
         error: 0,

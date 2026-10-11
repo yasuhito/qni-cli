@@ -398,6 +398,13 @@ function quantumKatasSubmissionContent(status, relativePath) {
 
 function writeQuantumKatasSubmissions(scenarioDir, status, submissionsDir) {
   const relativePaths = [
+    "preparing-states/controlled-rotation.qni",
+    "preparing-states/hardy-state.qni",
+    "preparing-states/three-states-two-qubits.qni",
+    "preparing-states/three-states-two-qubits-phases.qni",
+    "preparing-states/unequal-superposition.qni",
+    "preparing-states/wstate-arbitrary.qni",
+    "preparing-states/wstate-power-of-two.qni",
     "single-qubit-gates/amplitude-change.qni",
     "single-qubit-gates/prepare-rotated-state.qni",
     "single-qubit-gates/prepare-arbitrary-state.qni",
@@ -630,7 +637,7 @@ function quantumKatasTaskEntries() {
 function assertQuantumKatasTaskFailures(buildFailures) {
   const taskEntries = quantumKatasTaskEntries();
 
-  assert.equal(taskEntries.length, 44, "expected Quantum Katas task count");
+  assert.equal(taskEntries.length, 51, "expected Quantum Katas task count");
   assert.deepEqual(taskEntries.flatMap(buildFailures), []);
 }
 
