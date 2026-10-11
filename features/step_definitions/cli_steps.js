@@ -1,34 +1,40 @@
-const fs = require('node:fs');
-const os = require('node:os');
-const path = require('node:path');
-const { execFileSync, spawn } = require('node:child_process');
-const assert = require('node:assert/strict');
+const fs = require("node:fs");
+const os = require("node:os");
+const path = require("node:path");
+const { execFileSync, spawn } = require("node:child_process");
+const assert = require("node:assert/strict");
 
-const { Given, Then, When } = require('@cucumber/cucumber');
-const { parseDocument } = require('yaml');
+const { Given, Then, When } = require("@cucumber/cucumber");
+const { parseDocument } = require("yaml");
 
-const PROJECT_ROOT = path.resolve(__dirname, '../..');
-const NODE_QNI_BIN = path.join(PROJECT_ROOT, 'dist', 'bin', 'qni.js');
-const PYTHON_SYMBOLIC = path.join(PROJECT_ROOT, '.python-symbolic', 'bin', 'python');
-const MPLCONFIGDIR = process.env.MPLCONFIGDIR || path.join(os.tmpdir(), 'qni-cli-matplotlib');
+const PROJECT_ROOT = path.resolve(__dirname, "../..");
+const NODE_QNI_BIN = path.join(PROJECT_ROOT, "dist", "bin", "qni.js");
+const PYTHON_SYMBOLIC = path.join(
+  PROJECT_ROOT,
+  ".python-symbolic",
+  "bin",
+  "python"
+);
+const MPLCONFIGDIR =
+  process.env.MPLCONFIGDIR || path.join(os.tmpdir(), "qni-cli-matplotlib");
 const ONE_QUBIT_INITIAL_STATE_COLS = new Map([
-  ['|0>', [[1]]],
-  ['|1>', [['X']]],
-  ['0.6|0> + 0.8|1>', [['Ry(1.8545904360032246)']]],
-  ['cos(theta/2)|0> + sin(theta/2)|1>', [['Ry(theta)']]],
-  ['cos(θ/2)|0> + sin(θ/2)|1>', [['Ry(theta)']]]
+  ["|0>", [[1]]],
+  ["|1>", [["X"]]],
+  ["0.6|0> + 0.8|1>", [["Ry(1.8545904360032246)"]]],
+  ["cos(theta/2)|0> + sin(theta/2)|1>", [["Ry(theta)"]]],
+  ["cos(θ/2)|0> + sin(θ/2)|1>", [["Ry(theta)"]]],
 ]);
 const TWO_QUBIT_INITIAL_STATE_COLS = new Map([
-  ['|00>', [[1, 1]]],
-  ['|01>', [[1, 'X']]],
-  ['|10>', [['X', 1]]],
-  ['|11>', [['X', 'X']]],
-  ['0.6|00> + 0.8|01>', [[1, 'Ry(1.8545904360032246)']]]
+  ["|00>", [[1, 1]]],
+  ["|01>", [[1, "X"]]],
+  ["|10>", [["X", 1]]],
+  ["|11>", [["X", "X"]]],
+  ["0.6|00> + 0.8|01>", [[1, "Ry(1.8545904360032246)"]]],
 ]);
 
 function splitCommand(command) {
   const words = [];
-  let current = '';
+  let current = "";
   let quote = null;
   let escaping = false;
   let tokenStarted = false;
@@ -41,7 +47,7 @@ function splitCommand(command) {
       continue;
     }
 
-    if (char === '\\' && quote !== "'") {
+    if (char === "\\" && quote !== "'") {
       escaping = true;
       continue;
     }
@@ -64,7 +70,7 @@ function splitCommand(command) {
     if (/\s/.test(char)) {
       if (tokenStarted) {
         words.push(current);
-        current = '';
+        current = "";
         tokenStarted = false;
       }
       continue;
@@ -75,7 +81,7 @@ function splitCommand(command) {
   }
 
   if (escaping) {
-    current += '\\';
+    current += "\\";
     tokenStarted = true;
   }
 
@@ -94,7 +100,7 @@ function scenarioEnv(extraEnv = {}) {
   return {
     ...process.env,
     ...extraEnv,
-    MPLCONFIGDIR
+    MPLCONFIGDIR,
   };
 }
 
@@ -109,34 +115,32 @@ function runNodeDispatcherCommand(scenarioDir, command, extraEnv = {}) {
 function runNodeDispatcherWithoutSymbolicRuntime(scenarioDir, command) {
   const argv = splitCommand(command);
 
-  if (argv[0] !== 'qni') {
+  if (argv[0] !== "qni") {
     throw new Error(`command must start with qni: ${command}`);
   }
 
   const script = [
     "const { createDispatcher } = require(process.argv[1]);",
-    'const status = createDispatcher({',
-    '  cwd: process.argv[2],',
+    "const status = createDispatcher({",
+    "  cwd: process.argv[2],",
     "  env: { ...process.env, PATH: '' },",
-    '  projectRoot: process.argv[2]',
-    '}).run(JSON.parse(process.argv[3]));',
-    'process.exitCode = status;'
-  ].join('\n');
-  const dispatcherPath = path.join(PROJECT_ROOT, 'dist', 'dispatcher.js');
+    "  projectRoot: process.argv[2]",
+    "}).run(JSON.parse(process.argv[3]));",
+    "process.exitCode = status;",
+  ].join("\n");
+  const dispatcherPath = path.join(PROJECT_ROOT, "dist", "dispatcher.js");
 
-  return captureSpawn(process.execPath, [
-    '-e',
-    script,
-    dispatcherPath,
-    scenarioDir,
-    JSON.stringify(argv.slice(1))
-  ], scenarioDir);
+  return captureSpawn(
+    process.execPath,
+    ["-e", script, dispatcherPath, scenarioDir, JSON.stringify(argv.slice(1))],
+    scenarioDir
+  );
 }
 
 function runNodeQniCommand(scenarioDir, command, extraEnv = {}) {
   const argv = splitCommand(command);
 
-  if (argv[0] !== 'qni') {
+  if (argv[0] !== "qni") {
     throw new Error(`command must start with qni: ${command}`);
   }
 
@@ -154,15 +158,15 @@ function captureSpawn(command, args, cwd, env = process.env) {
     const stdout = [];
     const stderr = [];
 
-    child.stdout.on('data', (chunk) => stdout.push(chunk));
-    child.stderr.on('data', (chunk) => stderr.push(chunk));
-    child.on('error', reject);
-    child.on('close', (code, signal) => {
+    child.stdout.on("data", (chunk) => stdout.push(chunk));
+    child.stderr.on("data", (chunk) => stderr.push(chunk));
+    child.on("error", reject);
+    child.on("close", (code, signal) => {
       resolve({
         code,
         signal,
-        stdout: Buffer.concat(stdout).toString('utf8'),
-        stderr: Buffer.concat(stderr).toString('utf8')
+        stdout: Buffer.concat(stdout).toString("utf8"),
+        stderr: Buffer.concat(stderr).toString("utf8"),
       });
     });
   });
@@ -175,32 +179,32 @@ function shellQuote(value) {
 function runQniCommandInTty(scenarioDir, command, extraEnv = {}) {
   const argv = splitCommand(command);
 
-  if (argv[0] !== 'qni') {
+  if (argv[0] !== "qni") {
     throw new Error(`command must start with qni: ${command}`);
   }
 
   const ttyCommand = [process.execPath, NODE_QNI_BIN, ...argv.slice(1)]
     .map(shellQuote)
-    .join(' ');
+    .join(" ");
 
   return new Promise((resolve, reject) => {
-    const child = spawn('script', ['-qfec', ttyCommand, '/dev/null'], {
+    const child = spawn("script", ["-qfec", ttyCommand, "/dev/null"], {
       cwd: scenarioDir,
-      env: scenarioEnv(extraEnv)
+      env: scenarioEnv(extraEnv),
     });
 
     const stdout = [];
     const stderr = [];
 
-    child.stdout.on('data', (chunk) => stdout.push(chunk));
-    child.stderr.on('data', (chunk) => stderr.push(chunk));
-    child.on('error', reject);
-    child.on('close', (code, signal) => {
+    child.stdout.on("data", (chunk) => stdout.push(chunk));
+    child.stderr.on("data", (chunk) => stderr.push(chunk));
+    child.on("error", reject);
+    child.on("close", (code, signal) => {
       resolve({
         code,
         signal,
-        stdout: Buffer.concat(stdout).toString('utf8').replace(/\r\n/gu, '\n'),
-        stderr: Buffer.concat(stderr).toString('utf8')
+        stdout: Buffer.concat(stdout).toString("utf8").replace(/\r\n/gu, "\n"),
+        stderr: Buffer.concat(stderr).toString("utf8"),
       });
     });
   });
@@ -208,90 +212,120 @@ function runQniCommandInTty(scenarioDir, command, extraEnv = {}) {
 
 function normalizeMultilineText(value) {
   return value
-    .replace(/\n+$/u, '')
-    .split('\n')
-    .map((line) => line.replace(/\s+$/u, ''))
-    .join('\n');
+    .replace(/\n+$/u, "")
+    .split("\n")
+    .map((line) => line.replace(/\s+$/u, ""))
+    .join("\n");
 }
 
 function docStringContent(docString) {
-  return typeof docString === 'string' ? docString : docString.content;
+  return typeof docString === "string" ? docString : docString.content;
 }
 
 function commandFailureMessage(result) {
   return [
-    'expected command to succeed, but it failed',
+    "expected command to succeed, but it failed",
     `exit status: ${result.code}`,
-    'stdout:',
+    "stdout:",
     result.stdout,
-    'stderr:',
-    result.stderr
-  ].join('\n');
+    "stderr:",
+    result.stderr,
+  ].join("\n");
 }
 
 function commandSuccessMessage(result) {
   return [
-    'expected command to fail, but it succeeded',
-    'stdout:',
+    "expected command to fail, but it succeeded",
+    "stdout:",
     result.stdout,
-    'stderr:',
-    result.stderr
-  ].join('\n');
+    "stderr:",
+    result.stderr,
+  ].join("\n");
 }
 
 function writeCircuitJson(scenarioDir, data) {
   fs.writeFileSync(
-    path.join(scenarioDir, 'circuit.json'),
+    path.join(scenarioDir, "circuit.json"),
     `${JSON.stringify(data, null, 2)}\n`
   );
 }
 
 function quantumKatasSubmissionContent(status, relativePath) {
   const passedSubmissions = new Map([
-    ['basic-gates/basis-change.qni', 'qni add H --qubit 0 --step 0\n'],
-    ['basic-gates/bell-state-change-1.qni', 'qni add Z --qubit 0 --step 0\n'],
-    ['basic-gates/bell-state-change-2.qni', 'qni add X --qubit 0 --step 0\n'],
-    ['basic-gates/bell-state-change-3.qni', 'qni add X --qubit 0 --step 0\nqni add Z --qubit 0 --step 1\n'],
-    ['basic-gates/fredkin-gate.qni', 'qni add SWAP --control 0 --qubit 1,2 --step 0\n'],
+    ["basic-gates/basis-change.qni", "qni add H --qubit 0 --step 0\n"],
+    ["basic-gates/bell-state-change-1.qni", "qni add Z --qubit 0 --step 0\n"],
+    ["basic-gates/bell-state-change-2.qni", "qni add X --qubit 0 --step 0\n"],
     [
-      'basic-gates/global-phase-change.qni',
-      'qni add GlobalPhase --angle 2π --control 0 --qubit 1 --step 0\n'
-    ],
-    ['basic-gates/phase-change-pi-over-3.qni', 'qni add P --angle pi/3 --qubit 0 --step 0\n'],
-    ['basic-gates/phase-flip.qni', 'qni add S --qubit 0 --step 0\n'],
-    ['basic-gates/sign-flip.qni', 'qni add Z --qubit 0 --step 0\n'],
-    ['basic-gates/state-flip.qni', 'qni add X --qubit 0 --step 0\n'],
-    ['basic-gates/toffoli-gate.qni', 'qni add X --control 0,1 --qubit 2 --step 0\n'],
-    ['basic-gates/two-qubit-gate-1.qni', 'qni add X --control 0 --qubit 1 --step 0\n'],
-    ['basic-gates/two-qubit-gate-2.qni', 'qni add Z --control 0 --qubit 1 --step 0\n'],
-    ['basic-gates/two-qubit-gate-3.qni', 'qni add SWAP --qubit 0,1 --step 0\n'],
-    [
-      'basic-gates/two-qubit-gate-4.qni',
-      'qni add X --control 0 --qubit 1 --step 0\nqni add X --qubit 1 --step 1\n'
+      "basic-gates/bell-state-change-3.qni",
+      "qni add X --qubit 0 --step 0\nqni add Z --qubit 0 --step 1\n",
     ],
     [
-      'superposition/all-basis-vector-with-phase-flip-two-qubits.qni',
-      'qni add H --qubit 0 --step 0\nqni add H --qubit 1 --step 0\nqni add Z --control 0 --qubit 1 --step 1\n'
+      "basic-gates/fredkin-gate.qni",
+      "qni add SWAP --control 0 --qubit 1,2 --step 0\n",
     ],
-    ['superposition/all-basis-vectors-two-qubits.qni', 'qni add H --qubit 0 --step 0\nqni add H --qubit 1 --step 0\n'],
     [
-      'superposition/all-basis-vectors-with-phases-two-qubits.qni',
-      'qni add H --qubit 0 --step 0\nqni add H --qubit 1 --step 0\nqni add Z --qubit 0 --step 1\nqni add S --qubit 1 --step 1\n'
+      "basic-gates/global-phase-change.qni",
+      "qni add GlobalPhase --angle 2π --control 0 --qubit 1 --step 0\n",
     ],
-    ['superposition/bell-state.qni', 'qni add H --qubit 0 --step 0\nqni add X --control 0 --qubit 1 --step 1\n'],
-    ['superposition/ghz-state.qni', 'qni add H --qubit 0 --step 0\nqni add X --control 0 --qubit 1 --step 1\nqni add X --control 0 --qubit 2 --step 2\n'],
-    ['superposition/minus-state.qni', 'qni add X --qubit 0 --step 0\nqni add H --qubit 0 --step 1\n'],
-    ['superposition/plus-state.qni', 'qni add H --qubit 0 --step 0\n']
+    [
+      "basic-gates/phase-change-pi-over-3.qni",
+      "qni add P --angle pi/3 --qubit 0 --step 0\n",
+    ],
+    ["basic-gates/phase-flip.qni", "qni add S --qubit 0 --step 0\n"],
+    ["basic-gates/sign-flip.qni", "qni add Z --qubit 0 --step 0\n"],
+    ["basic-gates/state-flip.qni", "qni add X --qubit 0 --step 0\n"],
+    [
+      "basic-gates/toffoli-gate.qni",
+      "qni add X --control 0,1 --qubit 2 --step 0\n",
+    ],
+    [
+      "basic-gates/two-qubit-gate-1.qni",
+      "qni add X --control 0 --qubit 1 --step 0\n",
+    ],
+    [
+      "basic-gates/two-qubit-gate-2.qni",
+      "qni add Z --control 0 --qubit 1 --step 0\n",
+    ],
+    ["basic-gates/two-qubit-gate-3.qni", "qni add SWAP --qubit 0,1 --step 0\n"],
+    [
+      "basic-gates/two-qubit-gate-4.qni",
+      "qni add X --control 0 --qubit 1 --step 0\nqni add X --qubit 1 --step 1\n",
+    ],
+    [
+      "superposition/all-basis-vector-with-phase-flip-two-qubits.qni",
+      "qni add H --qubit 0 --step 0\nqni add H --qubit 1 --step 0\nqni add Z --control 0 --qubit 1 --step 1\n",
+    ],
+    [
+      "superposition/all-basis-vectors-two-qubits.qni",
+      "qni add H --qubit 0 --step 0\nqni add H --qubit 1 --step 0\n",
+    ],
+    [
+      "superposition/all-basis-vectors-with-phases-two-qubits.qni",
+      "qni add H --qubit 0 --step 0\nqni add H --qubit 1 --step 0\nqni add Z --qubit 0 --step 1\nqni add S --qubit 1 --step 1\n",
+    ],
+    [
+      "superposition/bell-state.qni",
+      "qni add H --qubit 0 --step 0\nqni add X --control 0 --qubit 1 --step 1\n",
+    ],
+    [
+      "superposition/ghz-state.qni",
+      "qni add H --qubit 0 --step 0\nqni add X --control 0 --qubit 1 --step 1\nqni add X --control 0 --qubit 2 --step 2\n",
+    ],
+    [
+      "superposition/minus-state.qni",
+      "qni add X --qubit 0 --step 0\nqni add H --qubit 0 --step 1\n",
+    ],
+    ["superposition/plus-state.qni", "qni add H --qubit 0 --step 0\n"],
   ]);
 
-  if (relativePath === 'basic-gates/state-flip.qni') {
+  if (relativePath === "basic-gates/state-flip.qni") {
     switch (status) {
-      case 'failed':
-        return 'qni add H --qubit 0 --step 0\n';
-      case 'disallowed':
-        return 'qni run\n';
-      case 'error':
-        return 'qni add X --qubit nope --step 0\n';
+      case "failed":
+        return "qni add H --qubit 0 --step 0\n";
+      case "disallowed":
+        return "qni run\n";
+      case "error":
+        return "qni add X --qubit nope --step 0\n";
       default:
         break;
     }
@@ -300,7 +334,9 @@ function quantumKatasSubmissionContent(status, relativePath) {
   const content = passedSubmissions.get(relativePath);
 
   if (!content) {
-    throw new Error(`unsupported Quantum Katas submission path: ${relativePath}`);
+    throw new Error(
+      `unsupported Quantum Katas submission path: ${relativePath}`
+    );
   }
 
   return content;
@@ -308,46 +344,49 @@ function quantumKatasSubmissionContent(status, relativePath) {
 
 function writeQuantumKatasSubmissions(scenarioDir, status, submissionsDir) {
   const relativePaths = [
-    'basic-gates/basis-change.qni',
-    'basic-gates/bell-state-change-1.qni',
-    'basic-gates/bell-state-change-2.qni',
-    'basic-gates/bell-state-change-3.qni',
-    'basic-gates/fredkin-gate.qni',
-    'basic-gates/global-phase-change.qni',
-    'basic-gates/phase-change-pi-over-3.qni',
-    'basic-gates/phase-flip.qni',
-    'basic-gates/sign-flip.qni',
-    'basic-gates/state-flip.qni',
-    'basic-gates/toffoli-gate.qni',
-    'basic-gates/two-qubit-gate-1.qni',
-    'basic-gates/two-qubit-gate-2.qni',
-    'basic-gates/two-qubit-gate-3.qni',
-    'basic-gates/two-qubit-gate-4.qni',
-    'superposition/all-basis-vector-with-phase-flip-two-qubits.qni',
-    'superposition/all-basis-vectors-two-qubits.qni',
-    'superposition/all-basis-vectors-with-phases-two-qubits.qni',
-    'superposition/bell-state.qni',
-    'superposition/ghz-state.qni',
-    'superposition/minus-state.qni',
-    'superposition/plus-state.qni'
+    "basic-gates/basis-change.qni",
+    "basic-gates/bell-state-change-1.qni",
+    "basic-gates/bell-state-change-2.qni",
+    "basic-gates/bell-state-change-3.qni",
+    "basic-gates/fredkin-gate.qni",
+    "basic-gates/global-phase-change.qni",
+    "basic-gates/phase-change-pi-over-3.qni",
+    "basic-gates/phase-flip.qni",
+    "basic-gates/sign-flip.qni",
+    "basic-gates/state-flip.qni",
+    "basic-gates/toffoli-gate.qni",
+    "basic-gates/two-qubit-gate-1.qni",
+    "basic-gates/two-qubit-gate-2.qni",
+    "basic-gates/two-qubit-gate-3.qni",
+    "basic-gates/two-qubit-gate-4.qni",
+    "superposition/all-basis-vector-with-phase-flip-two-qubits.qni",
+    "superposition/all-basis-vectors-two-qubits.qni",
+    "superposition/all-basis-vectors-with-phases-two-qubits.qni",
+    "superposition/bell-state.qni",
+    "superposition/ghz-state.qni",
+    "superposition/minus-state.qni",
+    "superposition/plus-state.qni",
   ];
 
   for (const relativePath of relativePaths) {
     const actualPath = path.join(scenarioDir, submissionsDir, relativePath);
 
     fs.mkdirSync(path.dirname(actualPath), { recursive: true });
-    fs.writeFileSync(actualPath, quantumKatasSubmissionContent(status, relativePath));
+    fs.writeFileSync(
+      actualPath,
+      quantumKatasSubmissionContent(status, relativePath)
+    );
   }
 }
 
 function writeMinimalSolveBenchmark(scenarioDir, benchmarkDir) {
   writeSolveBenchmarkTask({
     benchmarkDir,
-    fileName: 'state-flip.md',
-    marker: 'smoke-state-flip',
+    fileName: "state-flip.md",
+    marker: "smoke-state-flip",
     scenarioDir,
-    taskId: 'smoke/state-flip',
-    title: 'Smoke State Flip'
+    taskId: "smoke/state-flip",
+    title: "Smoke State Flip",
   });
 }
 
@@ -355,66 +394,85 @@ function writeTwoTaskSolveBenchmark(scenarioDir, benchmarkDir) {
   writeMinimalSolveBenchmark(scenarioDir, benchmarkDir);
   writeSolveBenchmarkTask({
     benchmarkDir,
-    fileName: 'state-return.md',
-    marker: 'smoke-state-return',
+    fileName: "state-return.md",
+    marker: "smoke-state-return",
     scenarioDir,
-    taskId: 'smoke/state-return',
-    title: 'Smoke State Return'
+    taskId: "smoke/state-return",
+    title: "Smoke State Return",
   });
 }
 
 function writeSolveBenchmarkTask(options) {
-  const taskPath = path.join(options.scenarioDir, options.benchmarkDir, options.fileName);
+  const taskPath = path.join(
+    options.scenarioDir,
+    options.benchmarkDir,
+    options.fileName
+  );
 
   fs.mkdirSync(path.dirname(taskPath), { recursive: true });
-  fs.writeFileSync(taskPath, [
-    '---',
-    `id: ${options.taskId}`,
-    `title: ${options.title}`,
-    'source: qni-cli cucumber',
-    'difficulty: smoke',
-    'available_gates:',
-    '  - H(target)',
-    'allowed_commands:',
-    '  - qni add',
-    'grading_cases:',
-    '  - id: hidden-input',
-    '    setup_commands:',
-    '      - qni state set "|0>"',
-    '    checks:',
-    '      tolerance: 1e-9',
-    '      items:',
-    '        - type: run',
-    '          expected:',
-    '            - basis: "|0>"',
-    '              amplitude:',
-    '                real: 0.7071067811865475',
-    '                imaginary: 0',
-    '            - basis: "|1>"',
-    '              amplitude:',
-    '                real: 0.7071067811865475',
-    '                imaginary: 0',
-    '---',
-    '',
-    `課題本文の目印: ${options.marker}`,
-    '',
-    '1量子ビットを |0> から均等な重ね合わせ状態へ変える量子回路を設計してください。',
-    ''
-  ].join('\n'));
+  fs.writeFileSync(
+    taskPath,
+    [
+      "---",
+      `id: ${options.taskId}`,
+      `title: ${options.title}`,
+      "source: qni-cli cucumber",
+      "difficulty: smoke",
+      "available_gates:",
+      "  - H(target)",
+      "allowed_commands:",
+      "  - qni add",
+      "grading_cases:",
+      "  - id: hidden-input",
+      "    setup_commands:",
+      '      - qni state set "|0>"',
+      "    checks:",
+      "      tolerance: 1e-9",
+      "      items:",
+      "        - type: run",
+      "          expected:",
+      '            - basis: "|0>"',
+      "              amplitude:",
+      "                real: 0.7071067811865475",
+      "                imaginary: 0",
+      '            - basis: "|1>"',
+      "              amplitude:",
+      "                real: 0.7071067811865475",
+      "                imaginary: 0",
+      "---",
+      "",
+      `課題本文の目印: ${options.marker}`,
+      "",
+      "1量子ビットを |0> から均等な重ね合わせ状態へ変える量子回路を設計してください。",
+      "",
+    ].join("\n")
+  );
 }
 
 function assertJsonContains(actual, expected) {
   if (Array.isArray(expected)) {
-    assert.ok(Array.isArray(actual), `expected JSON array, got ${JSON.stringify(actual)}`);
-    assert.ok(actual.length >= expected.length, `expected JSON array length at least ${expected.length}, got ${actual.length}`);
+    assert.ok(
+      Array.isArray(actual),
+      `expected JSON array, got ${JSON.stringify(actual)}`
+    );
+    assert.ok(
+      actual.length >= expected.length,
+      `expected JSON array length at least ${expected.length}, got ${actual.length}`
+    );
     expected.forEach((item, index) => assertJsonContains(actual[index], item));
     return;
   }
 
-  if (expected && typeof expected === 'object') {
-    assert.ok(actual && typeof actual === 'object' && !Array.isArray(actual), `expected JSON object, got ${JSON.stringify(actual)}`);
+  if (expected && typeof expected === "object") {
+    assert.ok(
+      actual && typeof actual === "object" && !Array.isArray(actual),
+      `expected JSON object, got ${JSON.stringify(actual)}`
+    );
     for (const [key, value] of Object.entries(expected)) {
-      assert.ok(Object.hasOwn(actual, key), `expected JSON object to have key: ${key}`);
+      assert.ok(
+        Object.hasOwn(actual, key),
+        `expected JSON object to have key: ${key}`
+      );
       assertJsonContains(actual[key], value);
     }
     return;
@@ -446,13 +504,16 @@ function projectFilePath(filePath) {
 }
 
 function quantumKatasTaskFiles() {
-  return filesUnder(projectFilePath('benchmarks/quantum-katas'))
-    .filter((filePath) => filePath.endsWith('.md'))
+  return filesUnder(projectFilePath("benchmarks/quantum-katas"))
+    .filter((filePath) => filePath.endsWith(".md"))
     .sort();
 }
 
 function markdownFrontmatterAndBody(markdown, filePath) {
-  const match = /^---\r?\n(?<frontmatter>[\s\S]*?)\r?\n---(?:\r?\n|$)(?<body>[\s\S]*)$/u.exec(markdown);
+  const match =
+    /^---\r?\n(?<frontmatter>[\s\S]*?)\r?\n---(?:\r?\n|$)(?<body>[\s\S]*)$/u.exec(
+      markdown
+    );
 
   assert.ok(match?.groups, `expected Markdown frontmatter in ${filePath}`);
   return match.groups;
@@ -462,23 +523,30 @@ function markdownFrontmatterRecord(markdown, filePath) {
   const { frontmatter } = markdownFrontmatterAndBody(markdown, filePath);
   const document = parseDocument(frontmatter);
 
-  assert.equal(document.errors.length, 0, `expected valid YAML frontmatter in ${filePath}`);
+  assert.equal(
+    document.errors.length,
+    0,
+    `expected valid YAML frontmatter in ${filePath}`
+  );
   const value = document.toJS();
 
-  assert.ok(value && typeof value === 'object' && !Array.isArray(value), `expected frontmatter mapping in ${filePath}`);
+  assert.ok(
+    value && typeof value === "object" && !Array.isArray(value),
+    `expected frontmatter mapping in ${filePath}`
+  );
   return value;
 }
 
 function quantumKatasTaskEntries() {
   return quantumKatasTaskFiles().map((taskFile) => {
     const relativePath = path.relative(PROJECT_ROOT, taskFile);
-    const markdown = fs.readFileSync(taskFile, 'utf8');
+    const markdown = fs.readFileSync(taskFile, "utf8");
     const { body } = markdownFrontmatterAndBody(markdown, relativePath);
 
     return {
       body,
       frontmatter: markdownFrontmatterRecord(markdown, relativePath),
-      relativePath
+      relativePath,
     };
   });
 }
@@ -486,12 +554,12 @@ function quantumKatasTaskEntries() {
 function assertQuantumKatasTaskFailures(buildFailures) {
   const taskEntries = quantumKatasTaskEntries();
 
-  assert.equal(taskEntries.length, 22, 'expected Quantum Katas task count');
+  assert.equal(taskEntries.length, 22, "expected Quantum Katas task count");
   assert.deepEqual(taskEntries.flatMap(buildFailures), []);
 }
 
 function researchRunsDir(scenarioDir) {
-  return path.join(scenarioDir, 'research', 'runs');
+  return path.join(scenarioDir, "research", "runs");
 }
 
 function researchTrialDirs(scenarioDir) {
@@ -501,7 +569,8 @@ function researchTrialDirs(scenarioDir) {
     return [];
   }
 
-  return fs.readdirSync(runsDir, { withFileTypes: true })
+  return fs
+    .readdirSync(runsDir, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => path.join(runsDir, entry.name))
     .sort();
@@ -539,7 +608,7 @@ function researchReportCreatedAtForId(id) {
   const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2})(\d{2})(\d{2})Z/u.exec(id);
 
   if (!match) {
-    return '2026-06-30T12:34:56.000Z';
+    return "2026-06-30T12:34:56.000Z";
   }
 
   return `${match[1]}-${match[2]}-${match[3]}T${match[4]}:${match[5]}:${match[6]}.000Z`;
@@ -551,115 +620,124 @@ function writeResearchReportJsonFile(filePath, value) {
 
 function writeResearchReportTrial(scenarioDir, id, options = {}) {
   const trialDir = path.join(researchRunsDir(scenarioDir), id);
-  const status = options.status || 'passed';
+  const status = options.status || "passed";
 
   fs.mkdirSync(trialDir, { recursive: true });
-  writeResearchReportJsonFile(path.join(trialDir, 'metadata.json'), {
+  writeResearchReportJsonFile(path.join(trialDir, "metadata.json"), {
     schemaVersion: 1,
     id,
     createdAt: researchReportCreatedAtForId(id),
-    collaborator: 'claude-sonnet-4',
-    benchmark: 'benchmarks/quantum-katas',
-    submissions: 'submissions',
-    prompt: 'prompt.md',
-    response: 'response.md',
-    result: 'result.json',
+    collaborator: "claude-sonnet-4",
+    benchmark: "benchmarks/quantum-katas",
+    submissions: "submissions",
+    prompt: "prompt.md",
+    response: "response.md",
+    result: "result.json",
     status,
-    ...researchReportScoreMetadata(options.includeScore, status)
+    ...researchReportScoreMetadata(options.includeScore, status),
   });
-  writeResearchReportJsonFile(path.join(trialDir, 'result.json'), {
+  writeResearchReportJsonFile(path.join(trialDir, "result.json"), {
     status,
     exitCode: researchReportStatusExitCode(status),
     summary: {
       total: 1,
-      passed: status === 'passed' ? 1 : 0,
-      failed: status === 'failed' ? 1 : 0,
-      disallowed: status === 'disallowed' ? 1 : 0,
-      error: status === 'error' ? 1 : 0
+      passed: status === "passed" ? 1 : 0,
+      failed: status === "failed" ? 1 : 0,
+      disallowed: status === "disallowed" ? 1 : 0,
+      error: status === "error" ? 1 : 0,
     },
     results: [
       {
-        task: 'basic-gates/state-flip.md',
-        taskId: 'basic-gates/state-flip',
-        title: 'StateFlip',
-        submission: 'submissions/basic-gates/state-flip.qni',
+        task: "basic-gates/state-flip.md",
+        taskId: "basic-gates/state-flip",
+        title: "StateFlip",
+        submission: "submissions/basic-gates/state-flip.qni",
         status,
         exitCode: researchReportStatusExitCode(status),
-        checks: [{ type: 'run', status: status === 'passed' ? 'passed' : 'failed' }]
-      }
-    ]
+        checks: [
+          { type: "run", status: status === "passed" ? "passed" : "failed" },
+        ],
+      },
+    ],
   });
 }
 
 function writeResearchPlotTrial(scenarioDir, id, options) {
   const trialDir = path.join(researchRunsDir(scenarioDir), id);
-  const status = options.status || 'passed';
+  const status = options.status || "passed";
   const score = options.score || {
-    passed: status === 'passed' ? 1 : 0,
+    passed: status === "passed" ? 1 : 0,
     total: 1,
-    percent: status === 'passed' ? 100 : 0,
-    source: 'result.json'
+    percent: status === "passed" ? 100 : 0,
+    source: "result.json",
   };
 
   fs.mkdirSync(trialDir, { recursive: true });
-  writeResearchReportJsonFile(path.join(trialDir, 'metadata.json'), {
+  writeResearchReportJsonFile(path.join(trialDir, "metadata.json"), {
     schemaVersion: 1,
     id,
     createdAt: researchReportCreatedAtForId(id),
-    collaborator: options.collaborator || 'claude-sonnet-4',
-    benchmark: options.benchmark || 'benchmarks/quantum-katas',
-    submissions: 'submissions',
-    prompt: 'prompt.md',
-    response: 'response.md',
-    result: 'result.json',
+    collaborator: options.collaborator || "claude-sonnet-4",
+    benchmark: options.benchmark || "benchmarks/quantum-katas",
+    submissions: "submissions",
+    prompt: "prompt.md",
+    response: "response.md",
+    result: "result.json",
     status,
-    ...(Object.hasOwn(options, 'score') ? { score: options.score } : {}),
-    ...(Object.hasOwn(options, 'model') ? { model: options.model } : {}),
-    ...(Object.hasOwn(options, 'tokens') ? { tokens: options.tokens } : {}),
-    ...(Object.hasOwn(options, 'cost') ? { cost: options.cost } : {}),
-    ...(Object.hasOwn(options, 'submissionProtocol') ? { submissionProtocol: options.submissionProtocol } : {})
+    ...(Object.hasOwn(options, "score") ? { score: options.score } : {}),
+    ...(Object.hasOwn(options, "model") ? { model: options.model } : {}),
+    ...(Object.hasOwn(options, "tokens") ? { tokens: options.tokens } : {}),
+    ...(Object.hasOwn(options, "cost") ? { cost: options.cost } : {}),
+    ...(Object.hasOwn(options, "submissionProtocol")
+      ? { submissionProtocol: options.submissionProtocol }
+      : {}),
   });
-  writeResearchReportJsonFile(path.join(trialDir, 'result.json'), researchPlotResult(status, score));
+  writeResearchReportJsonFile(
+    path.join(trialDir, "result.json"),
+    researchPlotResult(status, score)
+  );
 }
 
 function writeResearchCompareInvalidResultDetailsTrial(scenarioDir, id) {
   const trialDir = path.join(researchRunsDir(scenarioDir), id);
 
   fs.mkdirSync(trialDir, { recursive: true });
-  writeResearchReportJsonFile(path.join(trialDir, 'metadata.json'), {
+  writeResearchReportJsonFile(path.join(trialDir, "metadata.json"), {
     schemaVersion: 1,
     id,
     createdAt: researchReportCreatedAtForId(id),
-    collaborator: 'bad-result-agent',
-    benchmark: 'benchmarks/quantum-katas',
-    submissions: 'submissions',
-    prompt: 'prompt.md',
-    response: 'response.md',
-    result: 'result.json',
-    status: 'passed'
+    collaborator: "bad-result-agent",
+    benchmark: "benchmarks/quantum-katas",
+    submissions: "submissions",
+    prompt: "prompt.md",
+    response: "response.md",
+    result: "result.json",
+    status: "passed",
   });
-  writeResearchReportJsonFile(path.join(trialDir, 'result.json'), {
-    status: 'passed',
+  writeResearchReportJsonFile(path.join(trialDir, "result.json"), {
+    status: "passed",
     exitCode: 0,
     summary: {
       total: 1,
       passed: 1,
       failed: 0,
       disallowed: 0,
-      error: 0
+      error: 0,
     },
     results: [
       {
-        title: 'Task without id',
-        status: 'passed'
-      }
-    ]
+        title: "Task without id",
+        status: "passed",
+      },
+    ],
   });
 }
 
 function researchPlotResult(status, score) {
-  const total = Number.isInteger(score.total) && score.total >= 0 ? score.total : 1;
-  const passed = Number.isInteger(score.passed) && score.passed >= 0 ? score.passed : 0;
+  const total =
+    Number.isInteger(score.total) && score.total >= 0 ? score.total : 1;
+  const passed =
+    Number.isInteger(score.passed) && score.passed >= 0 ? score.passed : 0;
   const unsuccessful = Math.max(0, total - passed);
 
   return {
@@ -668,19 +746,19 @@ function researchPlotResult(status, score) {
     summary: {
       total,
       passed,
-      failed: status === 'failed' ? unsuccessful : 0,
-      disallowed: status === 'disallowed' ? unsuccessful : 0,
-      error: status === 'error' ? unsuccessful : 0
+      failed: status === "failed" ? unsuccessful : 0,
+      disallowed: status === "disallowed" ? unsuccessful : 0,
+      error: status === "error" ? unsuccessful : 0,
     },
     results: Array.from({ length: total }, (_, index) => ({
       task: `task-${index + 1}.md`,
       taskId: `task-${index + 1}`,
       title: `Task ${index + 1}`,
       submission: `submissions/task-${index + 1}.qni`,
-      status: index < passed ? 'passed' : status,
+      status: index < passed ? "passed" : status,
       exitCode: index < passed ? 0 : researchReportStatusExitCode(status),
-      checks: [{ type: 'run', status: index < passed ? 'passed' : 'failed' }]
-    }))
+      checks: [{ type: "run", status: index < passed ? "passed" : "failed" }],
+    })),
   };
 }
 
@@ -692,13 +770,14 @@ function snapshotResearchRuns(scenarioDir) {
     return snapshot;
   }
 
-  addDirectorySnapshot(snapshot, runsDir, '');
+  addDirectorySnapshot(snapshot, runsDir, "");
   return snapshot;
 }
 
 function addDirectorySnapshot(snapshot, root, relativeDir) {
   const absoluteDir = path.join(root, relativeDir);
-  const entries = fs.readdirSync(absoluteDir, { withFileTypes: true })
+  const entries = fs
+    .readdirSync(absoluteDir, { withFileTypes: true })
     .sort((left, right) => left.name.localeCompare(right.name));
 
   for (const entry of entries) {
@@ -706,10 +785,10 @@ function addDirectorySnapshot(snapshot, root, relativeDir) {
     const absolutePath = path.join(root, relativePath);
 
     if (entry.isDirectory()) {
-      snapshot.set(`${relativePath}/`, '<dir>');
+      snapshot.set(`${relativePath}/`, "<dir>");
       addDirectorySnapshot(snapshot, root, relativePath);
     } else if (entry.isFile()) {
-      snapshot.set(relativePath, fs.readFileSync(absolutePath, 'utf8'));
+      snapshot.set(relativePath, fs.readFileSync(absolutePath, "utf8"));
     }
   }
 }
@@ -719,27 +798,27 @@ function researchReportScoreMetadata(includeScore, status) {
     return {};
   }
 
-  const passed = status === 'passed' ? 1 : 0;
+  const passed = status === "passed" ? 1 : 0;
 
   return {
     score: {
       passed,
       total: 1,
       percent: passed * 100,
-      source: 'result.json'
-    }
+      source: "result.json",
+    },
   };
 }
 
 function researchReportStatusExitCode(status) {
   switch (status) {
-    case 'passed':
+    case "passed":
       return 0;
-    case 'failed':
+    case "failed":
       return 1;
-    case 'disallowed':
+    case "disallowed":
       return 2;
-    case 'error':
+    case "error":
       return 3;
     default:
       throw new Error(`unsupported research report trial status: ${status}`);
@@ -747,13 +826,17 @@ function researchReportStatusExitCode(status) {
 }
 
 function readResearchReportTrials(scenarioDir) {
-  const { readResearchTrials } = require(path.join(PROJECT_ROOT, 'dist', 'research_report'));
+  const { readResearchTrials } = require(
+    path.join(PROJECT_ROOT, "dist", "research_report")
+  );
 
   return readResearchTrials({ cwd: scenarioDir });
 }
 
 function readCircuitJson(scenarioDir) {
-  return JSON.parse(fs.readFileSync(path.join(scenarioDir, 'circuit.json'), 'utf8'));
+  return JSON.parse(
+    fs.readFileSync(path.join(scenarioDir, "circuit.json"), "utf8")
+  );
 }
 
 function appendCircuitJson(scenarioDir, data) {
@@ -762,12 +845,14 @@ function appendCircuitJson(scenarioDir, data) {
   const appendedQubits = data.qubits;
 
   if (actualQubits !== appendedQubits) {
-    throw new Error(`qubit count mismatch: ${actualQubits} != ${appendedQubits}`);
+    throw new Error(
+      `qubit count mismatch: ${actualQubits} != ${appendedQubits}`
+    );
   }
 
   writeCircuitJson(scenarioDir, {
     ...actual,
-    cols: [...actual.cols, ...data.cols]
+    cols: [...actual.cols, ...data.cols],
   });
 }
 
@@ -778,28 +863,26 @@ function parseAsciiCircuit(asciiArt) {
     'process.stdin.setEncoding("utf8");',
     'process.stdin.on("data", (chunk) => { input += chunk; });',
     'process.stdin.on("end", () => {',
-    '  try {',
-    '    process.stdout.write(JSON.stringify({ ok: true, circuit: parseAsciiCircuit(input) }));',
-    '  } catch (error) {',
-    '    if (error instanceof AsciiCircuitParserError) {',
-    '      process.stdout.write(JSON.stringify({ ok: false, error: error.message }));',
-    '    } else {',
-    '      throw error;',
-    '    }',
-    '  }',
-    '});'
-  ].join('\n');
+    "  try {",
+    "    process.stdout.write(JSON.stringify({ ok: true, circuit: parseAsciiCircuit(input) }));",
+    "  } catch (error) {",
+    "    if (error instanceof AsciiCircuitParserError) {",
+    "      process.stdout.write(JSON.stringify({ ok: false, error: error.message }));",
+    "    } else {",
+    "      throw error;",
+    "    }",
+    "  }",
+    "});",
+  ].join("\n");
 
-  return JSON.parse(execFileSync(
-    'node',
-    ['-e', script],
-    {
+  return JSON.parse(
+    execFileSync("node", ["-e", script], {
       cwd: PROJECT_ROOT,
       env: scenarioEnv(),
       input: asciiArt,
-      encoding: 'utf8'
-    }
-  ));
+      encoding: "utf8",
+    })
+  );
 }
 
 function writeAsciiCircuitJson(scenarioDir, asciiArt) {
@@ -826,8 +909,8 @@ function directInitialState(state) {
   const {
     InitialStateError,
     initialStateQubitCount,
-    parseInitialState
-  } = require(path.join(PROJECT_ROOT, 'dist', 'initial_state.js'));
+    parseInitialState,
+  } = require(path.join(PROJECT_ROOT, "dist", "initial_state.js"));
 
   try {
     const parsedState = parseInitialState(state);
@@ -835,7 +918,7 @@ function directInitialState(state) {
     return {
       ok: true,
       qubits: initialStateQubitCount(parsedState),
-      state: parsedState
+      state: parsedState,
     };
   } catch (error) {
     if (error instanceof InitialStateError) {
@@ -847,7 +930,10 @@ function directInitialState(state) {
 }
 
 function initialStateVectorCols(state) {
-  for (const supportedStates of [ONE_QUBIT_INITIAL_STATE_COLS, TWO_QUBIT_INITIAL_STATE_COLS]) {
+  for (const supportedStates of [
+    ONE_QUBIT_INITIAL_STATE_COLS,
+    TWO_QUBIT_INITIAL_STATE_COLS,
+  ]) {
     const cols = supportedStates.get(state);
 
     if (cols) {
@@ -866,7 +952,7 @@ function writeInitialStateVector(scenarioDir, docString) {
     writeCircuitJson(scenarioDir, {
       qubits: initialState.qubits,
       initial_state: initialState.state,
-      cols: [Array(initialState.qubits).fill(1)]
+      cols: [Array(initialState.qubits).fill(1)],
     });
     return;
   }
@@ -875,69 +961,67 @@ function writeInitialStateVector(scenarioDir, docString) {
 
   writeCircuitJson(scenarioDir, {
     qubits: cols[0].length,
-    cols
+    cols,
   });
 }
 
 function compactUnitCoefficients(text) {
   return text
-    .replace(/^1(?:\.0+)?(?=\|)/u, '')
-    .replace(/^1(?:\.0+)?i(?=\|)/u, 'i')
-    .replace(/(?<= \+ )1(?:\.0+)?(?=\|)/gu, '')
-    .replace(/(?<= \+ )1(?:\.0+)?i(?=\|)/gu, 'i')
-    .replace(/(?<= - )1(?:\.0+)?(?=\|)/gu, '')
-    .replace(/(?<= - )1(?:\.0+)?i(?=\|)/gu, 'i')
-    .replace(/^-1(?:\.0+)?(?=\|)/u, '-')
-    .replace(/(?<= \+ )-1(?:\.0+)?(?=\|)/gu, '-')
-    .replace(/^-1(?:\.0+)?i(?=\|)/u, '-i')
-    .replace(/(?<= \+ )-1(?:\.0+)?i(?=\|)/gu, '-i');
+    .replace(/^1(?:\.0+)?(?=\|)/u, "")
+    .replace(/^1(?:\.0+)?i(?=\|)/u, "i")
+    .replace(/(?<= \+ )1(?:\.0+)?(?=\|)/gu, "")
+    .replace(/(?<= \+ )1(?:\.0+)?i(?=\|)/gu, "i")
+    .replace(/(?<= - )1(?:\.0+)?(?=\|)/gu, "")
+    .replace(/(?<= - )1(?:\.0+)?i(?=\|)/gu, "i")
+    .replace(/^-1(?:\.0+)?(?=\|)/u, "-")
+    .replace(/(?<= \+ )-1(?:\.0+)?(?=\|)/gu, "-")
+    .replace(/^-1(?:\.0+)?i(?=\|)/u, "-i")
+    .replace(/(?<= \+ )-1(?:\.0+)?i(?=\|)/gu, "-i");
 }
 
 function trimTrailingDecimalZeros(text) {
-  return text.replace(/-?\d+\.\d+/gu, (number) => number
-    .replace(/(\.\d*?[1-9])0+$/u, '$1')
-    .replace(/\.0+$/u, ''));
+  return text.replace(/-?\d+\.\d+/gu, (number) =>
+    number.replace(/(\.\d*?[1-9])0+$/u, "$1").replace(/\.0+$/u, "")
+  );
 }
 
 function normalizeImaginaryUnit(text) {
   return text
-    .replaceAll('*I', 'i')
-    .replace(/\bI\b/gu, 'i')
-    .replace(/\bi\*(?=[a-zA-Z_])/gu, 'i')
-    .replace(/\b-i\*(?=[a-zA-Z_])/gu, '-i');
+    .replaceAll("*I", "i")
+    .replace(/\bI\b/gu, "i")
+    .replace(/\bi\*(?=[a-zA-Z_])/gu, "i")
+    .replace(/\b-i\*(?=[a-zA-Z_])/gu, "-i");
 }
 
 function normalizeSymbolicShorthand(text) {
   return text
-    .replaceAll('|+>', 'sqrt(2)/2|0> + sqrt(2)/2|1>')
-    .replaceAll('|->', 'sqrt(2)/2|0> - sqrt(2)/2|1>');
+    .replaceAll("|+>", "sqrt(2)/2|0> + sqrt(2)/2|1>")
+    .replaceAll("|->", "sqrt(2)/2|0> - sqrt(2)/2|1>");
 }
 
 function normalizeSymbolicAliases(text) {
   return text
-    .replaceAll('θ', 'theta')
-    .replaceAll('α', 'alpha')
-    .replaceAll('β', 'beta')
-    .replaceAll('π', 'pi')
-    .replaceAll('√2', 'sqrt(2)')
-    .replace(/(\d(?:\.\d+)?)(?=sqrt\(2\))/gu, '$1*');
+    .replaceAll("θ", "theta")
+    .replaceAll("α", "alpha")
+    .replaceAll("β", "beta")
+    .replaceAll("π", "pi")
+    .replaceAll("√2", "sqrt(2)")
+    .replace(/(\d(?:\.\d+)?)(?=sqrt\(2\))/gu, "$1*");
 }
 
 function normalizePhaseFactorOrder(text) {
-  return text.replace(/exp\(([^)]+)\)([a-zA-Z_][a-zA-Z0-9_]*)/gu, '$2*exp($1)');
+  return text.replace(/exp\(([^)]+)\)([a-zA-Z_][a-zA-Z0-9_]*)/gu, "$2*exp($1)");
 }
 
 function normalizeSymbolicStateVector(stdout) {
-  return compactUnitCoefficients(stdout.replace(/\n+$/u, ''));
+  return compactUnitCoefficients(stdout.replace(/\n+$/u, ""));
 }
 
 function canonicalSymbolicNotation(text) {
   return trimTrailingDecimalZeros(
     normalizePhaseFactorOrder(
       normalizeSymbolicAliases(
-        normalizeImaginaryUnit(
-          normalizeSymbolicShorthand(text)
-        )
+        normalizeImaginaryUnit(normalizeSymbolicShorthand(text))
       )
     )
   );
@@ -946,39 +1030,51 @@ function canonicalSymbolicNotation(text) {
 function canonicalNamedBasisNotation(text) {
   return trimTrailingDecimalZeros(
     text
-      .replaceAll('θ', 'theta')
-      .replaceAll('α', 'alpha')
-      .replaceAll('β', 'beta')
-      .replaceAll('π', 'pi')
-      .replaceAll('√2', 'sqrt(2)')
-      .replace(/(\d(?:\.\d+)?)(?=sqrt\(2\))/gu, '$1*')
+      .replaceAll("θ", "theta")
+      .replaceAll("α", "alpha")
+      .replaceAll("β", "beta")
+      .replaceAll("π", "pi")
+      .replaceAll("√2", "sqrt(2)")
+      .replace(/(\d(?:\.\d+)?)(?=sqrt\(2\))/gu, "$1*")
   );
 }
 
 function assertSymbolicStateMatches(stdout, docString) {
-  const actual = canonicalSymbolicNotation(normalizeSymbolicStateVector(stdout));
+  const actual = canonicalSymbolicNotation(
+    normalizeSymbolicStateVector(stdout)
+  );
   const expected = canonicalSymbolicNotation(docString);
 
-  assert.equal(actual, expected, [
-    'expected symbolic state vector to match',
-    'expected:',
+  assert.equal(
+    actual,
     expected,
-    'actual:',
-    actual
-  ].join('\n'));
+    [
+      "expected symbolic state vector to match",
+      "expected:",
+      expected,
+      "actual:",
+      actual,
+    ].join("\n")
+  );
 }
 
 function assertNamedBasisStateMatches(stdout, docString) {
-  const actual = canonicalNamedBasisNotation(normalizeSymbolicStateVector(stdout));
+  const actual = canonicalNamedBasisNotation(
+    normalizeSymbolicStateVector(stdout)
+  );
   const expected = canonicalNamedBasisNotation(docString);
 
-  assert.equal(actual, expected, [
-    'expected named-basis state vector to match',
-    'expected:',
+  assert.equal(
+    actual,
     expected,
-    'actual:',
-    actual
-  ].join('\n'));
+    [
+      "expected named-basis state vector to match",
+      "expected:",
+      expected,
+      "actual:",
+      actual,
+    ].join("\n")
+  );
 }
 
 function twoQubitInitialCols(state) {
@@ -992,21 +1088,27 @@ function twoQubitInitialCols(state) {
 }
 
 function pythonJson(script, args = []) {
-  const output = execFileSync(PYTHON_SYMBOLIC, ['-c', script, ...args], {
+  const output = execFileSync(PYTHON_SYMBOLIC, ["-c", script, ...args], {
     cwd: PROJECT_ROOT,
     env: {
       ...process.env,
-      MPLCONFIGDIR
+      MPLCONFIGDIR,
     },
-    encoding: 'utf8'
+    encoding: "utf8",
   });
   return JSON.parse(output);
 }
 
 function assertPngSignature(actualPath, filePath) {
   const signature = fs.readFileSync(actualPath).subarray(0, 8);
-  const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-  assert.deepEqual(signature, pngSignature, `expected file to be a PNG image: ${filePath}`);
+  const pngSignature = Buffer.from([
+    0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+  ]);
+  assert.deepEqual(
+    signature,
+    pngSignature,
+    `expected file to be a PNG image: ${filePath}`
+  );
 }
 
 function pngChunks(actualPath, filePath) {
@@ -1018,7 +1120,7 @@ function pngChunks(actualPath, filePath) {
 
   while (offset + 8 <= png.length) {
     const length = png.readUInt32BE(offset);
-    const type = png.toString('ascii', offset + 4, offset + 8);
+    const type = png.toString("ascii", offset + 4, offset + 8);
     const dataStart = offset + 8;
     const dataEnd = dataStart + length;
 
@@ -1030,7 +1132,7 @@ function pngChunks(actualPath, filePath) {
     chunks.push({ type, dataStart, length });
     offset = dataEnd + 4;
 
-    if (type === 'IEND') {
+    if (type === "IEND") {
       break;
     }
   }
@@ -1040,14 +1142,14 @@ function pngChunks(actualPath, filePath) {
 
 function apngMetadata(actualPath, filePath) {
   const { png, chunks } = pngChunks(actualPath, filePath);
-  const animationControl = chunks.find((chunk) => chunk.type === 'acTL');
-  const frameChunks = chunks.filter((chunk) => chunk.type === 'fcTL');
+  const animationControl = chunks.find((chunk) => chunk.type === "acTL");
+  const frameChunks = chunks.filter((chunk) => chunk.type === "fcTL");
 
   return {
     animated: animationControl !== undefined,
     frameCount: animationControl
       ? png.readUInt32BE(animationControl.dataStart)
-      : frameChunks.length
+      : frameChunks.length,
   };
 }
 
@@ -1071,7 +1173,7 @@ print(json.dumps({
 }
 
 function imageIncludesColor(actualPath, hexColor) {
-  const color = hexColor.replace(/^#/, '');
+  const color = hexColor.replace(/^#/, "");
   const script = `
 from PIL import Image
 import json
@@ -1151,7 +1253,11 @@ print(json.dumps({
     "center_dot_visible": center_dot_visible
 }))
 `;
-  const helperPath = path.join(PROJECT_ROOT, 'libexec', 'qni_circle_notation_render.py');
+  const helperPath = path.join(
+    PROJECT_ROOT,
+    "libexec",
+    "qni_circle_notation_render.py"
+  );
   return pythonJson(script, [helperPath, String(real), String(imag)]);
 }
 
@@ -1197,7 +1303,11 @@ print(json.dumps({
     "outline_inner_edge": outer.get_radius() - half_linewidth_data
 }))
 `;
-  const helperPath = path.join(PROJECT_ROOT, 'libexec', 'qni_circle_notation_render.py');
+  const helperPath = path.join(
+    PROJECT_ROOT,
+    "libexec",
+    "qni_circle_notation_render.py"
+  );
   return pythonJson(script, [helperPath]);
 }
 
@@ -1212,43 +1322,53 @@ module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
 print(json.dumps(module.label_metrics()))
 `;
-  const helperPath = path.join(PROJECT_ROOT, 'libexec', 'qni_bloch_render.py');
+  const helperPath = path.join(PROJECT_ROOT, "libexec", "qni_bloch_render.py");
   return pythonJson(script, [helperPath]);
 }
 
-Given('作業ディレクトリに {string} を作る:', function (filePath, docString) {
+Given("作業ディレクトリに {string} を作る:", function (filePath, docString) {
   const actualPath = path.join(this.scenarioDir, filePath);
 
   fs.mkdirSync(path.dirname(actualPath), { recursive: true });
   fs.writeFileSync(actualPath, docStringContent(docString));
 });
 
-Given('作業ディレクトリに solve 用の最小ベンチマークスイート {string} を作る', function (benchmarkDir) {
-  writeMinimalSolveBenchmark(this.scenarioDir, benchmarkDir);
-});
+Given(
+  "作業ディレクトリに solve 用の最小ベンチマークスイート {string} を作る",
+  function (benchmarkDir) {
+    writeMinimalSolveBenchmark(this.scenarioDir, benchmarkDir);
+  }
+);
 
-Given('作業ディレクトリに solve 用の2課題ベンチマークスイート {string} を作る', function (benchmarkDir) {
-  writeTwoTaskSolveBenchmark(this.scenarioDir, benchmarkDir);
-});
+Given(
+  "作業ディレクトリに solve 用の2課題ベンチマークスイート {string} を作る",
+  function (benchmarkDir) {
+    writeTwoTaskSolveBenchmark(this.scenarioDir, benchmarkDir);
+  }
+);
 
 function installFakePi(world, options = {}) {
-  const binDir = path.join(world.scenarioDir, 'fake-pi-bin');
-  const configPath = path.join(world.scenarioDir, 'fake-pi-config.json');
-  const logPath = path.join(world.scenarioDir, 'fake-pi-log.jsonl');
+  const binDir = path.join(world.scenarioDir, "fake-pi-bin");
+  const configPath = path.join(world.scenarioDir, "fake-pi-config.json");
+  const logPath = path.join(world.scenarioDir, "fake-pi-log.jsonl");
   fs.mkdirSync(binDir, { recursive: true });
-  const existing = fs.existsSync(configPath) ? JSON.parse(fs.readFileSync(configPath, 'utf8')) : {};
+  const existing = fs.existsSync(configPath)
+    ? JSON.parse(fs.readFileSync(configPath, "utf8"))
+    : {};
   const config = {
-    model: 'fake-qni',
+    model: "fake-qni",
     available: true,
     content: '{"operations":[{"gate":"H","targets":[0]}]}',
     failFirst: false,
     responseModel: null,
     ...existing,
-    ...options
+    ...options,
   };
   fs.writeFileSync(configPath, JSON.stringify(config));
-  const scriptPath = path.join(binDir, 'pi');
-  fs.writeFileSync(scriptPath, `#!/usr/bin/env node
+  const scriptPath = path.join(binDir, "pi");
+  fs.writeFileSync(
+    scriptPath,
+    `#!/usr/bin/env node
 const fs=require('node:fs');
 const path=require('node:path');
 const config=JSON.parse(fs.readFileSync(${JSON.stringify(configPath)},'utf8'));
@@ -1270,132 +1390,158 @@ if(config.failFirst&&calls===0){console.error('fake Pi failure');process.exit(1)
 const message={role:'assistant',content:[{type:'thinking',thinking:'not saved'},{type:'text',text:config.content}],provider:'fake-provider',model:config.responseModel||config.model,usage:{input:100,output:20,cacheRead:5,cacheWrite:0,totalTokens:125,cost:{input:0.00005,output:0.00007,cacheRead:0,cacheWrite:0,total:0.00012}},stopReason:'stop',timestamp:Date.now()};
 console.log(JSON.stringify({type:'session',version:3,id:'fake',timestamp:new Date().toISOString(),cwd:process.cwd()}));
 console.log(JSON.stringify({type:'message_end',message}));
-`);
+`
+  );
   fs.chmodSync(scriptPath, 0o755);
   world.fakePiConfigPath = configPath;
   world.fakePiLogPath = logPath;
-  world.commandEnv = { ...(world.commandEnv || {}), PATH: `${binDir}${path.delimiter}${process.env.PATH || ''}` };
+  world.commandEnv = {
+    ...(world.commandEnv || {}),
+    PATH: `${binDir}${path.delimiter}${process.env.PATH || ""}`,
+  };
 }
 
-Given('偽 Pi はモデル {string} を利用可能として報告する', function (model) {
+Given("偽 Pi はモデル {string} を利用可能として報告する", function (model) {
   installFakePi(this, { model, available: true });
 });
 
-Given('偽 Pi はモデル {string} を利用不可として報告する', function (model) {
+Given("偽 Pi はモデル {string} を利用不可として報告する", function (model) {
   installFakePi(this, { model, available: false });
 });
 
-Given('偽 Pi は次の最終回答を返す:', function (docString) {
+Given("偽 Pi は次の最終回答を返す:", function (docString) {
   installFakePi(this, { content: docStringContent(docString) });
 });
 
-Given('偽 Pi は最終回答 {string} を返す', function (content) {
+Given("偽 Pi は最終回答 {string} を返す", function (content) {
   installFakePi(this, { content });
 });
 
-Given('偽 Pi は1回目の課題呼び出しだけ失敗する', function () {
+Given("偽 Pi は1回目の課題呼び出しだけ失敗する", function () {
   installFakePi(this, { failFirst: true });
 });
 
-Given('偽 Pi は応答モデル {string} を返す', function (model) {
+Given("偽 Pi は応答モデル {string} を返す", function (model) {
   installFakePi(this, { responseModel: model });
 });
 
-Given('作業ディレクトリに採点状態 {string} の Quantum Katas 提出物群 {string} を作る', function (status, submissionsDir) {
-  writeQuantumKatasSubmissions(this.scenarioDir, status, submissionsDir);
-});
+Given(
+  "作業ディレクトリに採点状態 {string} の Quantum Katas 提出物群 {string} を作る",
+  function (status, submissionsDir) {
+    writeQuantumKatasSubmissions(this.scenarioDir, status, submissionsDir);
+  }
+);
 
 Given(/^空の 1 (?:qubit |量子ビット)回路がある$/, function () {
   writeCircuitJson(this.scenarioDir, {
     qubits: 1,
-    cols: [[1]]
+    cols: [[1]],
   });
 });
 
 Given(/^空の 2 (?:qubit |量子ビット)回路がある$/, function () {
   writeCircuitJson(this.scenarioDir, {
     qubits: 2,
-    cols: [[1, 1]]
+    cols: [[1, 1]],
   });
 });
 
-Given(/^2 (?:qubit |量子ビット)の初期状態が "([^"]*)" である$/, function (state) {
-  writeCircuitJson(this.scenarioDir, {
-    qubits: 2,
-    cols: twoQubitInitialCols(state)
-  });
-});
+Given(
+  /^2 (?:qubit |量子ビット)の初期状態が "([^"]*)" である$/,
+  function (state) {
+    writeCircuitJson(this.scenarioDir, {
+      qubits: 2,
+      cols: twoQubitInitialCols(state),
+    });
+  }
+);
 
-Given('初期状態ベクトルは:', function (docString) {
+Given("初期状態ベクトルは:", function (docString) {
   writeInitialStateVector(this.scenarioDir, docStringContent(docString));
 });
 
 Given(/^空の 3 (?:qubit 回路|量子ビット回路)がある$/, function () {
   writeCircuitJson(this.scenarioDir, {
     qubits: 3,
-    cols: [[1, 1, 1]]
+    cols: [[1, 1, 1]],
   });
 });
 
-Given('空の 31 量子ビット回路がある', function () {
+Given("空の 31 量子ビット回路がある", function () {
   writeCircuitJson(this.scenarioDir, {
     qubits: 31,
-    cols: [Array(31).fill(1)]
+    cols: [Array(31).fill(1)],
   });
 });
 
-Given('1項の記号出力上限を超える巨大な回路がある', function () {
+Given("1項の記号出力上限を超える巨大な回路がある", function () {
   writeCircuitJson(this.scenarioDir, {
     qubits: 1_000_000_000,
-    cols: []
+    cols: [],
   });
 });
 
-Given('全量子ビットに H がある 17 量子ビット回路がある', function () {
+Given("全量子ビットに H がある 17 量子ビット回路がある", function () {
   const qubits = 17;
   writeCircuitJson(this.scenarioDir, {
     qubits,
     cols: Array.from({ length: qubits }, (_, target) =>
-      Array.from({ length: qubits }, (_, qubit) => (qubit === target ? 'H' : 1))
-    )
+      Array.from({ length: qubits }, (_, qubit) => (qubit === target ? "H" : 1))
+    ),
   });
 });
 
-Given('厳密値の非ゼロ項上限を超える 30 量子ビット回路がある', function () {
+Given("厳密値の非ゼロ項上限を超える 30 量子ビット回路がある", function () {
   const qubits = 30;
   writeCircuitJson(this.scenarioDir, {
     qubits,
     cols: Array.from({ length: 17 }, (_, target) =>
-      Array.from({ length: qubits }, (_, qubit) => (qubit === target ? 'H' : 1))
-    )
+      Array.from({ length: qubits }, (_, qubit) => (qubit === target ? "H" : 1))
+    ),
   });
 });
 
-Given('リポジトリの qni コマンド列 {string} を実行', async function (filePath) {
-  const commands = fs.readFileSync(projectFilePath(filePath), 'utf8')
-    .split('\n')
-    .filter((line) => line.trim() !== '');
+Given("リポジトリの qni コマンド列 {string} を実行", async function (filePath) {
+  const commands = fs
+    .readFileSync(projectFilePath(filePath), "utf8")
+    .split("\n")
+    .filter((line) => line.trim() !== "");
 
   for (const command of commands) {
-    this.lastCommand = await runQniCommand(this.scenarioDir, command, this.commandEnv);
-    assert.equal(this.lastCommand.code, 0, commandFailureMessage(this.lastCommand));
+    this.lastCommand = await runQniCommand(
+      this.scenarioDir,
+      command,
+      this.commandEnv
+    );
+    assert.equal(
+      this.lastCommand.code,
+      0,
+      commandFailureMessage(this.lastCommand)
+    );
   }
 });
 
-When('{string} を実行', async function (command) {
+When("{string} を実行", async function (command) {
   this.lastCommandText = command;
-  this.lastCommand = await runQniCommand(this.scenarioDir, command, this.commandEnv);
+  this.lastCommand = await runQniCommand(
+    this.scenarioDir,
+    command,
+    this.commandEnv
+  );
 });
 
-When('{string} を記号実行環境なしで実行', async function (command) {
+When("{string} を記号実行環境なしで実行", async function (command) {
   this.lastCommandText = command;
-  this.lastCommand = await runNodeDispatcherWithoutSymbolicRuntime(this.scenarioDir, command);
+  this.lastCommand = await runNodeDispatcherWithoutSymbolicRuntime(
+    this.scenarioDir,
+    command
+  );
 });
 
-When('{string} を2回正常に実行', async function (command) {
+When("{string} を2回正常に実行", async function (command) {
   this.repeatedCommandResults = [
     await runQniCommand(this.scenarioDir, command, this.commandEnv),
-    await runQniCommand(this.scenarioDir, command, this.commandEnv)
+    await runQniCommand(this.scenarioDir, command, this.commandEnv),
   ];
   this.repeatedCommandResults.forEach((result, index) => {
     if (result.code !== 0) {
@@ -1406,49 +1552,57 @@ When('{string} を2回正常に実行', async function (command) {
   });
 });
 
-Given('標準出力を {string} として受け取った', function (stdout) {
-  this.lastCommand = { code: 0, signal: null, stderr: '', stdout };
+Given("標準出力を {string} として受け取った", function (stdout) {
+  this.lastCommand = { code: 0, signal: null, stderr: "", stdout };
 });
 
-When('Node dispatcher で {string} を実行', async function (command) {
-  this.lastCommand = await runNodeDispatcherCommand(this.scenarioDir, command, this.commandEnv);
+When("Node dispatcher で {string} を実行", async function (command) {
+  this.lastCommand = await runNodeDispatcherCommand(
+    this.scenarioDir,
+    command,
+    this.commandEnv
+  );
 });
 
-Given('次の circuit.json がある:', function (docString) {
+Given("次の circuit.json がある:", function (docString) {
   fs.writeFileSync(
-    path.join(this.scenarioDir, 'circuit.json'),
+    path.join(this.scenarioDir, "circuit.json"),
     `${JSON.stringify(JSON.parse(docStringContent(docString)), null, 2)}\n`
   );
 });
 
-Given('次の回路図がある:', function (docString) {
+Given("次の回路図がある:", function (docString) {
   writeAsciiCircuitJson(this.scenarioDir, docStringContent(docString));
 });
 
-When('次の回路図を読み込もうとする:', function (docString) {
+When("次の回路図を読み込もうとする:", function (docString) {
   this.lastAsciiParse = parseAsciiCircuit(docStringContent(docString));
 });
 
-When('次の回路図を適用:', function (docString) {
+When("次の回路図を適用:", function (docString) {
   appendAsciiCircuitJson(this.scenarioDir, docStringContent(docString));
 });
 
-When('次の回路を適用:', function (docString) {
+When("次の回路を適用:", function (docString) {
   appendAsciiCircuitJson(this.scenarioDir, docStringContent(docString));
 });
 
-Given('{string} は存在しない', function (filePath) {
+Given("{string} は存在しない", function (filePath) {
   const actualPath = path.join(this.scenarioDir, filePath);
 
-  assert.equal(fs.existsSync(actualPath), false, `expected file not to exist: ${filePath}`);
+  assert.equal(
+    fs.existsSync(actualPath),
+    false,
+    `expected file not to exist: ${filePath}`
+  );
 });
 
-Given('環境変数 {string} を {string} に設定する', function (name, value) {
+Given("環境変数 {string} を {string} に設定する", function (name, value) {
   this.commandEnv ||= {};
   this.commandEnv[name] = value;
 });
 
-Given('slug {string} の保存先候補に既存の研究試行がある', function (slug) {
+Given("slug {string} の保存先候補に既存の研究試行がある", function (slug) {
   const runsDir = researchRunsDir(this.scenarioDir);
   const baseTimeMs = Math.floor(Date.now() / 1000) * 1000;
 
@@ -1458,254 +1612,340 @@ Given('slug {string} の保存先候補に既存の研究試行がある', funct
     const trialDir = path.join(runsDir, trialId);
 
     fs.mkdirSync(trialDir, { recursive: true });
-    fs.writeFileSync(path.join(trialDir, 'trial.md'), `existing trial: ${trialId}\n`);
+    fs.writeFileSync(
+      path.join(trialDir, "trial.md"),
+      `existing trial: ${trialId}\n`
+    );
   }
 
   this.researchTrialDirsBeforeCommand = researchTrialDirs(this.scenarioDir);
 });
 
-Given('有効な研究試行 {string} を研究ログに保存済み', function (id) {
+Given("有効な研究試行 {string} を研究ログに保存済み", function (id) {
   writeResearchReportTrial(this.scenarioDir, id);
 });
 
-Given('score を持つ有効な研究試行 {string} を研究ログに保存済み', function (id) {
-  writeResearchReportTrial(this.scenarioDir, id, { includeScore: true });
-});
+Given(
+  "score を持つ有効な研究試行 {string} を研究ログに保存済み",
+  function (id) {
+    writeResearchReportTrial(this.scenarioDir, id, { includeScore: true });
+  }
+);
 
-Given('cost 指標を持つ有効な研究試行 {string} を研究ログに保存済み:', function (id, docString) {
-  writeResearchPlotTrial(this.scenarioDir, id, JSON.parse(docStringContent(docString)));
-});
+Given(
+  "cost 指標を持つ有効な研究試行 {string} を研究ログに保存済み:",
+  function (id, docString) {
+    writeResearchPlotTrial(
+      this.scenarioDir,
+      id,
+      JSON.parse(docStringContent(docString))
+    );
+  }
+);
 
-Given('cost 指標が不正な研究試行 {string} を研究ログに保存済み', function (id) {
+Given("cost 指標が不正な研究試行 {string} を研究ログに保存済み", function (id) {
   writeResearchPlotTrial(this.scenarioDir, id, {
-    collaborator: 'missing-cost-model',
-    benchmark: 'benchmarks/quantum-katas',
-    status: 'passed',
-    score: { passed: 1, total: 1, percent: 100, source: 'result.json' },
-    tokens: { inputTokens: 1, outputTokens: 1, totalTokens: 2, source: 'provider_usage' },
-    cost: {}
+    collaborator: "missing-cost-model",
+    benchmark: "benchmarks/quantum-katas",
+    status: "passed",
+    score: { passed: 1, total: 1, percent: 100, source: "result.json" },
+    tokens: {
+      inputTokens: 1,
+      outputTokens: 1,
+      totalTokens: 2,
+      source: "provider_usage",
+    },
+    cost: {},
   });
 });
 
-Given('比較に必要な結果が不正な研究試行 {string} を研究ログに保存済み', function (id) {
-  writeResearchCompareInvalidResultDetailsTrial(this.scenarioDir, id);
-});
+Given(
+  "比較に必要な結果が不正な研究試行 {string} を研究ログに保存済み",
+  function (id) {
+    writeResearchCompareInvalidResultDetailsTrial(this.scenarioDir, id);
+  }
+);
 
-Given('研究ログの現在の内容を記録する', function () {
+Given("研究ログの現在の内容を記録する", function () {
   this.researchRunsSnapshot = snapshotResearchRuns(this.scenarioDir);
 });
 
-Given('無効な研究試行候補 {string} を研究ログに保存済み', function (id) {
+Given("無効な研究試行候補 {string} を研究ログに保存済み", function (id) {
   writeResearchReportTrial(this.scenarioDir, id);
 });
 
-When('{string} を TTY で実行', async function (command) {
-  this.lastCommand = await runQniCommandInTty(this.scenarioDir, command, this.commandEnv);
+When("{string} を TTY で実行", async function (command) {
+  this.lastCommand = await runQniCommandInTty(
+    this.scenarioDir,
+    command,
+    this.commandEnv
+  );
 });
 
-When('研究試行レポート reader で研究試行を読み取る', function () {
+When("研究試行レポート reader で研究試行を読み取る", function () {
   this.lastResearchTrials = readResearchReportTrials(this.scenarioDir);
 });
 
-Then('コマンドは成功', function () {
-  assert.equal(this.lastCommand.code, 0, commandFailureMessage(this.lastCommand));
+Then("コマンドは成功", function () {
+  assert.equal(
+    this.lastCommand.code,
+    0,
+    commandFailureMessage(this.lastCommand)
+  );
 });
 
-Then('コマンドは失敗', function () {
-  assert.notEqual(this.lastCommand.code, 0, commandSuccessMessage(this.lastCommand));
+Then("コマンドは失敗", function () {
+  assert.notEqual(
+    this.lastCommand.code,
+    0,
+    commandSuccessMessage(this.lastCommand)
+  );
 });
 
-Then('終了コードは {int}', function (expectedCode) {
+Then("終了コードは {int}", function (expectedCode) {
   assert.equal(
     this.lastCommand.code,
     expectedCode,
     [
       `expected exit status: ${expectedCode}`,
       `actual exit status: ${this.lastCommand.code}`,
-      'stdout:',
+      "stdout:",
       this.lastCommand.stdout,
-      'stderr:',
-      this.lastCommand.stderr
-    ].join('\n')
+      "stderr:",
+      this.lastCommand.stderr,
+    ].join("\n")
   );
 });
 
-Then('標準出力は空', function () {
-  assert.equal(this.lastCommand.stdout, '');
+Then("標準出力は空", function () {
+  assert.equal(this.lastCommand.stdout, "");
 });
 
-Then('量子ビット {int} の2回の測定値は異なる', function (qubit) {
+Then("量子ビット {int} の2回の測定値は異なる", function (qubit) {
   const values = this.lastCommand.stdout
     .trim()
-    .split('\n')
-    .map((line) => new RegExp(`^q${qubit}=([01])$`, 'u').exec(line)?.[1])
+    .split("\n")
+    .map((line) => new RegExp(`^q${qubit}=([01])$`, "u").exec(line)?.[1])
     .filter((value) => value !== undefined);
 
-  assert.equal(values.length, 2, `expected exactly two q${qubit} measurement values`);
-  assert.notEqual(values[0], values[1], `expected q${qubit} measurement values to differ`);
+  assert.equal(
+    values.length,
+    2,
+    `expected exactly two q${qubit} measurement values`
+  );
+  assert.notEqual(
+    values[0],
+    values[1],
+    `expected q${qubit} measurement values to differ`
+  );
 });
 
-Then('状態ベクトルは:', async function (docString) {
-  const result = await runQniCommand(this.scenarioDir, 'qni run --symbolic');
+Then("状態ベクトルは:", async function (docString) {
+  const result = await runQniCommand(this.scenarioDir, "qni run --symbolic");
 
   assert.equal(result.code, 0, commandFailureMessage(result));
   assertSymbolicStateMatches(result.stdout, docStringContent(docString));
 });
 
-Then('計算基底での状態ベクトルは:', async function (docString) {
-  const result = await runQniCommand(this.scenarioDir, 'qni run --symbolic');
+Then("計算基底での状態ベクトルは:", async function (docString) {
+  const result = await runQniCommand(this.scenarioDir, "qni run --symbolic");
 
   assert.equal(result.code, 0, commandFailureMessage(result));
   assertSymbolicStateMatches(result.stdout, docStringContent(docString));
 });
 
-Then('|+>, |-> 基底での状態ベクトルは:', async function (docString) {
-  const result = await runQniCommand(this.scenarioDir, 'qni run --symbolic --basis x');
+Then("|+>, |-> 基底での状態ベクトルは:", async function (docString) {
+  const result = await runQniCommand(
+    this.scenarioDir,
+    "qni run --symbolic --basis x"
+  );
 
   assert.equal(result.code, 0, commandFailureMessage(result));
   assertNamedBasisStateMatches(result.stdout, docStringContent(docString));
 });
 
-Then('|+i>, |-i> 基底での状態ベクトルは:', async function (docString) {
-  const result = await runQniCommand(this.scenarioDir, 'qni run --symbolic --basis y');
+Then("|+i>, |-i> 基底での状態ベクトルは:", async function (docString) {
+  const result = await runQniCommand(
+    this.scenarioDir,
+    "qni run --symbolic --basis y"
+  );
 
   assert.equal(result.code, 0, commandFailureMessage(result));
   assertNamedBasisStateMatches(result.stdout, docStringContent(docString));
 });
 
-Then('Bell 基底での状態ベクトルは:', async function (docString) {
-  const result = await runQniCommand(this.scenarioDir, 'qni run --symbolic --basis bell');
+Then("Bell 基底での状態ベクトルは:", async function (docString) {
+  const result = await runQniCommand(
+    this.scenarioDir,
+    "qni run --symbolic --basis bell"
+  );
 
   assert.equal(result.code, 0, commandFailureMessage(result));
   assertNamedBasisStateMatches(result.stdout, docStringContent(docString));
 });
 
-Then('標準出力に次を含む:', function (docString) {
+Then("標準出力に次を含む:", function (docString) {
   const expected = docStringContent(docString);
 
   assert.ok(
     this.lastCommand.stdout.includes(expected),
     [
-      'expected stdout to include',
-      'expected:',
+      "expected stdout to include",
+      "expected:",
       expected,
-      'actual:',
-      this.lastCommand.stdout
-    ].join('\n')
+      "actual:",
+      this.lastCommand.stdout,
+    ].join("\n")
   );
 });
 
-Then('標準エラーに次を含む:', function (docString) {
+Then("標準エラーに次を含む:", function (docString) {
   const expected = docStringContent(docString);
 
   assert.ok(
     this.lastCommand.stderr.includes(expected),
     [
-      'expected stderr to include',
-      'expected:',
+      "expected stderr to include",
+      "expected:",
       expected,
-      'actual:',
-      this.lastCommand.stderr
-    ].join('\n')
+      "actual:",
+      this.lastCommand.stderr,
+    ].join("\n")
   );
 });
 
-Then('標準出力に次を含まない:', function (docString) {
+Then("標準出力に次を含まない:", function (docString) {
   const unexpected = docStringContent(docString);
 
   assert.ok(
     !this.lastCommand.stdout.includes(unexpected),
     [
-      'expected stdout not to include',
-      'unexpected:',
+      "expected stdout not to include",
+      "unexpected:",
       unexpected,
-      'actual:',
-      this.lastCommand.stdout
-    ].join('\n')
+      "actual:",
+      this.lastCommand.stdout,
+    ].join("\n")
   );
 });
 
-Then('標準出力は Kitty graphics escape sequence を含む', function () {
+Then("標準出力は Kitty graphics escape sequence を含む", function () {
   assert.ok(
-    this.lastCommand.stdout.includes('\u001b_G'),
+    this.lastCommand.stdout.includes("\u001b_G"),
     [
-      'expected stdout to include Kitty graphics escape sequence',
-      `actual: ${JSON.stringify(this.lastCommand.stdout)}`
-    ].join('\n')
+      "expected stdout to include Kitty graphics escape sequence",
+      `actual: ${JSON.stringify(this.lastCommand.stdout)}`,
+    ].join("\n")
   );
 });
 
-Then('標準出力は {int} 個以上の Kitty graphics escape sequence を含む', function (minimumCount) {
-  const actualCount = [...this.lastCommand.stdout.matchAll(/\u001b_G/gu)].length;
+Then(
+  "標準出力は {int} 個以上の Kitty graphics escape sequence を含む",
+  function (minimumCount) {
+    const actualCount = [...this.lastCommand.stdout.matchAll(/\u001b_G/gu)]
+      .length;
 
-  assert.ok(
-    actualCount >= minimumCount,
-    [
-      `expected stdout to include at least ${minimumCount} Kitty graphics escape sequences`,
-      `actual: ${actualCount}`
-    ].join('\n')
-  );
-});
-
-Then('{string} の内容:', function (filePath, docString) {
-  assert.equal(this.lastCommand.code, 0, commandFailureMessage(this.lastCommand));
-
-  const actualPath = path.join(this.scenarioDir, filePath);
-  assert.ok(fs.existsSync(actualPath), `expected file to exist: ${filePath}`);
-
-  const actual = JSON.parse(fs.readFileSync(actualPath, 'utf8'));
-  const expected = JSON.parse(docStringContent(docString));
-  assert.deepEqual(actual, expected);
-});
-
-Then('{string} の JSON 内容:', function (filePath, docString) {
-  const actualPath = path.join(this.scenarioDir, filePath);
-  assert.ok(fs.existsSync(actualPath), `expected file to exist: ${filePath}`);
-
-  const actual = JSON.parse(fs.readFileSync(actualPath, 'utf8'));
-  const expected = JSON.parse(docStringContent(docString));
-  assert.deepEqual(actual, expected);
-});
-
-Then('回路図:', function (docString) {
-  assert.equal(this.lastCommand.code, 0, commandFailureMessage(this.lastCommand));
-
-  assert.equal(
-    normalizeMultilineText(this.lastCommand.stdout),
-    normalizeMultilineText(docStringContent(docString))
-  );
-});
-
-Then('標準出力:', function (docString) {
-  assert.equal(this.lastCommand.code, 0, commandFailureMessage(this.lastCommand));
-
-  assert.equal(
-    normalizeMultilineText(this.lastCommand.stdout),
-    normalizeMultilineText(docStringContent(docString))
-  );
-});
-
-Then('2回の標準出力は一致する', function () {
-  if (!Array.isArray(this.repeatedCommandResults) || this.repeatedCommandResults.length !== 2) {
-    throw new Error('expected exactly two repeated command results');
+    assert.ok(
+      actualCount >= minimumCount,
+      [
+        `expected stdout to include at least ${minimumCount} Kitty graphics escape sequences`,
+        `actual: ${actualCount}`,
+      ].join("\n")
+    );
   }
-  assert.equal(this.repeatedCommandResults[1].stdout, this.repeatedCommandResults[0].stdout);
+);
+
+Then("{string} の内容:", function (filePath, docString) {
+  assert.equal(
+    this.lastCommand.code,
+    0,
+    commandFailureMessage(this.lastCommand)
+  );
+
+  const actualPath = path.join(this.scenarioDir, filePath);
+  assert.ok(fs.existsSync(actualPath), `expected file to exist: ${filePath}`);
+
+  const actual = JSON.parse(fs.readFileSync(actualPath, "utf8"));
+  const expected = JSON.parse(docStringContent(docString));
+  assert.deepEqual(actual, expected);
 });
 
-Then('expect の標準出力の seed は符号なし32ビット整数', function () {
-  const match = /^shots=\d+ seed=(\d+) settings=/mu.exec(this.lastCommand.stdout);
-  assert.notEqual(match, null, `unexpected expect summary: ${this.lastCommand.stdout}`);
+Then("{string} の JSON 内容:", function (filePath, docString) {
+  const actualPath = path.join(this.scenarioDir, filePath);
+  assert.ok(fs.existsSync(actualPath), `expected file to exist: ${filePath}`);
+
+  const actual = JSON.parse(fs.readFileSync(actualPath, "utf8"));
+  const expected = JSON.parse(docStringContent(docString));
+  assert.deepEqual(actual, expected);
+});
+
+Then("回路図:", function (docString) {
+  assert.equal(
+    this.lastCommand.code,
+    0,
+    commandFailureMessage(this.lastCommand)
+  );
+
+  assert.equal(
+    normalizeMultilineText(this.lastCommand.stdout),
+    normalizeMultilineText(docStringContent(docString))
+  );
+});
+
+Then("標準出力:", function (docString) {
+  assert.equal(
+    this.lastCommand.code,
+    0,
+    commandFailureMessage(this.lastCommand)
+  );
+
+  assert.equal(
+    normalizeMultilineText(this.lastCommand.stdout),
+    normalizeMultilineText(docStringContent(docString))
+  );
+});
+
+Then("2回の標準出力は一致する", function () {
+  if (
+    !Array.isArray(this.repeatedCommandResults) ||
+    this.repeatedCommandResults.length !== 2
+  ) {
+    throw new Error("expected exactly two repeated command results");
+  }
+  assert.equal(
+    this.repeatedCommandResults[1].stdout,
+    this.repeatedCommandResults[0].stdout
+  );
+});
+
+Then("expect の標準出力の seed は符号なし32ビット整数", function () {
+  const match = /^shots=\d+ seed=(\d+) settings=/mu.exec(
+    this.lastCommand.stdout
+  );
+  assert.notEqual(
+    match,
+    null,
+    `unexpected expect summary: ${this.lastCommand.stdout}`
+  );
   const seed = Number(match[1]);
 
   assert.ok(Number.isInteger(seed) && seed >= 0 && seed <= 0xffffffff);
 });
 
-Then('生成された seed で expect の標準出力全体を再現できる', async function () {
-  assert.equal(this.lastCommand.code, 0, commandFailureMessage(this.lastCommand));
+Then("生成された seed で expect の標準出力全体を再現できる", async function () {
+  assert.equal(
+    this.lastCommand.code,
+    0,
+    commandFailureMessage(this.lastCommand)
+  );
   const originalStdout = this.lastCommand.stdout;
   const match = /^shots=\d+ seed=(\d+) settings=/mu.exec(originalStdout);
   assert.notEqual(match, null, `unexpected expect summary: ${originalStdout}`);
-  assert.equal(typeof this.lastCommandText, 'string', 'expected the original expect command');
+  assert.equal(
+    typeof this.lastCommandText,
+    "string",
+    "expected the original expect command"
+  );
 
   const replay = await runQniCommand(
     this.scenarioDir,
@@ -1716,40 +1956,59 @@ Then('生成された seed で expect の標準出力全体を再現できる', 
   assert.equal(replay.stdout, originalStdout);
 });
 
-Then('標準出力の shots は {int}', function (expectedShots) {
+Then("標準出力の shots は {int}", function (expectedShots) {
   const match = /^shots=(\d+) /mu.exec(this.lastCommand.stdout);
-  assert.notEqual(match, null, `unexpected measurement summary: ${this.lastCommand.stdout}`);
+  assert.notEqual(
+    match,
+    null,
+    `unexpected measurement summary: ${this.lastCommand.stdout}`
+  );
   const shots = Number(match[1]);
 
   assert.equal(shots, expectedShots);
 });
 
-Then('標準出力の seed は {int}', function (expectedSeed) {
+Then("標準出力の seed は {int}", function (expectedSeed) {
   const match = / seed=(\d+)$/mu.exec(this.lastCommand.stdout);
-  assert.notEqual(match, null, `unexpected measurement summary: ${this.lastCommand.stdout}`);
+  assert.notEqual(
+    match,
+    null,
+    `unexpected measurement summary: ${this.lastCommand.stdout}`
+  );
   const seed = Number(match[1]);
 
   assert.equal(seed, expectedSeed);
 });
 
-Then('標準出力の seed は符号なし32ビット整数', function () {
+Then("標準出力の seed は符号なし32ビット整数", function () {
   const match = / seed=(\d+)$/mu.exec(this.lastCommand.stdout);
-  assert.notEqual(match, null, `unexpected measurement summary: ${this.lastCommand.stdout}`);
+  assert.notEqual(
+    match,
+    null,
+    `unexpected measurement summary: ${this.lastCommand.stdout}`
+  );
   const seed = Number(match[1]);
 
   assert.ok(Number.isInteger(seed) && seed >= 0 && seed <= 0xffffffff);
 });
 
-Then('標準出力の表:', function (docString) {
-  const table = normalizeMultilineText(this.lastCommand.stdout).split('\n').slice(1).join('\n');
+Then("標準出力の表:", function (docString) {
+  const table = normalizeMultilineText(this.lastCommand.stdout)
+    .split("\n")
+    .slice(1)
+    .join("\n");
 
   assert.equal(table, normalizeMultilineText(docStringContent(docString)));
 });
 
-Then('生成したシード値を指定すると通常の標準出力が一致する', async function () {
+Then("生成したシード値を指定すると通常の標準出力が一致する", async function () {
   const originalStdout = this.lastCommand.stdout;
   const match = /^shots=(\d+) seed=(\d+)$/mu.exec(originalStdout);
-  assert.notEqual(match, null, `unexpected measurement summary: ${originalStdout}`);
+  assert.notEqual(
+    match,
+    null,
+    `unexpected measurement summary: ${originalStdout}`
+  );
   const replay = await runQniCommand(
     this.scenarioDir,
     `qni run --shots ${match[1]} --seed ${match[2]}`,
@@ -1759,79 +2018,85 @@ Then('生成したシード値を指定すると通常の標準出力が一致�
   assert.equal(replay.stdout, originalStdout);
 });
 
-Then('JSON 出力の shots は {int}', function (expectedShots) {
+Then("JSON 出力の shots は {int}", function (expectedShots) {
   assert.equal(JSON.parse(this.lastCommand.stdout).shots, expectedShots);
 });
 
-Then('JSON 出力の seed は {int}', function (expectedSeed) {
+Then("JSON 出力の seed は {int}", function (expectedSeed) {
   assert.equal(JSON.parse(this.lastCommand.stdout).seed, expectedSeed);
 });
 
-Then('JSON 出力の seed は符号なし32ビット整数', function () {
+Then("JSON 出力の seed は符号なし32ビット整数", function () {
   const seed = JSON.parse(this.lastCommand.stdout).seed;
 
   assert.ok(Number.isInteger(seed) && seed >= 0 && seed <= 0xffffffff);
 });
 
-Then('JSON 出力の測定分布:', function (docString) {
+Then("JSON 出力の測定分布:", function (docString) {
   const { classicalBits, results } = JSON.parse(this.lastCommand.stdout);
 
-  assert.deepEqual({ classicalBits, results }, JSON.parse(docStringContent(docString)));
-});
-
-Then('生成したシード値を指定すると JSON の標準出力が一致する', async function () {
-  const originalStdout = this.lastCommand.stdout;
-  const output = JSON.parse(originalStdout);
-  const replay = await runQniCommand(
-    this.scenarioDir,
-    `qni run --shots ${output.shots} --seed ${output.seed} --json`,
-    this.commandEnv
+  assert.deepEqual(
+    { classicalBits, results },
+    JSON.parse(docStringContent(docString))
   );
-
-  assert.equal(replay.stdout, originalStdout);
 });
 
-Then('標準出力の内容:', function (docString) {
+Then(
+  "生成したシード値を指定すると JSON の標準出力が一致する",
+  async function () {
+    const originalStdout = this.lastCommand.stdout;
+    const output = JSON.parse(originalStdout);
+    const replay = await runQniCommand(
+      this.scenarioDir,
+      `qni run --shots ${output.shots} --seed ${output.seed} --json`,
+      this.commandEnv
+    );
+
+    assert.equal(replay.stdout, originalStdout);
+  }
+);
+
+Then("標準出力の内容:", function (docString) {
   assert.equal(
     normalizeMultilineText(this.lastCommand.stdout),
     normalizeMultilineText(docStringContent(docString))
   );
 });
 
-Then('標準出力は次の JSON と一致する:', function (docString) {
+Then("標準出力は次の JSON と一致する:", function (docString) {
   const actual = JSON.parse(this.lastCommand.stdout);
   const expected = JSON.parse(docStringContent(docString));
 
   assert.deepStrictEqual(actual, expected);
 });
 
-Then('標準エラー:', function (docString) {
+Then("標準エラー:", function (docString) {
   assert.equal(
     normalizeMultilineText(this.lastCommand.stderr),
     normalizeMultilineText(docStringContent(docString))
   );
 });
 
-Then('標準エラーは {string} の1行だけ', function (expected) {
+Then("標準エラーは {string} の1行だけ", function (expected) {
   assert.equal(this.lastCommand.stderr, `${expected}\n`);
 });
 
-Then('標準エラーは次の1行だけ:', function (docString) {
+Then("標準エラーは次の1行だけ:", function (docString) {
   assert.equal(this.lastCommand.stderr, `${docStringContent(docString)}\n`);
 });
 
-Then('読み込みは成功', function () {
+Then("読み込みは成功", function () {
   assert.equal(this.lastAsciiParse.ok, true, this.lastAsciiParse.error);
 });
 
-Then('リポジトリファイル {string} は存在する', function (filePath) {
+Then("リポジトリファイル {string} は存在する", function (filePath) {
   assert.ok(
     fs.existsSync(projectFilePath(filePath)),
     `expected repository file to exist: ${filePath}`
   );
 });
 
-Then('Quantum Katas 課題はすべて available_gates を持つ', function () {
+Then("Quantum Katas 課題はすべて available_gates を持つ", function () {
   assertQuantumKatasTaskFailures(({ frontmatter, relativePath }) => {
     const availableGates = frontmatter.available_gates;
 
@@ -1839,337 +2104,498 @@ Then('Quantum Katas 課題はすべて available_gates を持つ', function () {
       return [`${relativePath}: available_gates must list at least one gate`];
     }
 
-    return availableGates.flatMap((gate, index) => (
-      typeof gate === 'string' && gate.trim().length > 0
+    return availableGates.flatMap((gate, index) =>
+      typeof gate === "string" && gate.trim().length > 0
         ? []
-        : [`${relativePath}: available_gates[${index}] must be a non-empty string`]
-    ));
+        : [
+            `${relativePath}: available_gates[${index}] must be a non-empty string`,
+          ]
+    );
   });
 });
 
-Then('Quantum Katas 課題本文は qni-cli 固有表現を含まない', function () {
-  const forbiddenTerms = ['qni', '.qni', 'qni add', 'allowed_commands', 'setup_commands'];
+Then("Quantum Katas 課題本文は qni-cli 固有表現を含まない", function () {
+  const forbiddenTerms = [
+    "qni",
+    ".qni",
+    "qni add",
+    "allowed_commands",
+    "setup_commands",
+  ];
 
-  assertQuantumKatasTaskFailures(({ body, relativePath }) => forbiddenTerms.flatMap((term) => (
-    body.includes(term) ? [`${relativePath}: body contains ${term}`] : []
-  )));
+  assertQuantumKatasTaskFailures(({ body, relativePath }) =>
+    forbiddenTerms.flatMap((term) =>
+      body.includes(term) ? [`${relativePath}: body contains ${term}`] : []
+    )
+  );
 });
 
-Then('UTC秒精度タイムスタンプと slug {string} の研究試行ディレクトリが作られる', function (slug) {
-  const trialDir = singleResearchTrialDir(this.scenarioDir);
-  const trialId = path.basename(trialDir);
+Then(
+  "UTC秒精度タイムスタンプと slug {string} の研究試行ディレクトリが作られる",
+  function (slug) {
+    const trialDir = singleResearchTrialDir(this.scenarioDir);
+    const trialId = path.basename(trialDir);
 
-  assert.match(trialId, new RegExp(`^\\d{4}-\\d{2}-\\d{2}T\\d{6}Z-${slug}$`, 'u'));
-});
+    assert.match(
+      trialId,
+      new RegExp(`^\\d{4}-\\d{2}-\\d{2}T\\d{6}Z-${slug}$`, "u")
+    );
+  }
+);
 
-Then('研究試行ファイル {string} が作られる', function (filePath) {
+Then("研究試行ファイル {string} が作られる", function (filePath) {
   const actualPath = researchTrialPath(this.scenarioDir, filePath);
 
-  assert.ok(fs.statSync(actualPath).isFile(), `expected research trial file to exist: ${filePath}`);
+  assert.ok(
+    fs.statSync(actualPath).isFile(),
+    `expected research trial file to exist: ${filePath}`
+  );
 });
 
-Then('研究試行ディレクトリは作られない', function () {
+Then("研究試行ディレクトリは作られない", function () {
   assert.deepEqual(researchTrialDirs(this.scenarioDir), []);
 });
 
-Then('研究試行ディレクトリ一覧は変わらない', function () {
-  assert.deepEqual(researchTrialDirs(this.scenarioDir), this.researchTrialDirsBeforeCommand);
+Then("研究試行ディレクトリ一覧は変わらない", function () {
+  assert.deepEqual(
+    researchTrialDirs(this.scenarioDir),
+    this.researchTrialDirsBeforeCommand
+  );
 });
 
-Then('研究試行ディレクトリ {string} が作られる', function (filePath) {
+Then("研究試行ディレクトリ {string} が作られる", function (filePath) {
   const actualPath = researchTrialPath(this.scenarioDir, filePath);
 
-  assert.ok(fs.statSync(actualPath).isDirectory(), `expected research trial directory to exist: ${filePath}`);
+  assert.ok(
+    fs.statSync(actualPath).isDirectory(),
+    `expected research trial directory to exist: ${filePath}`
+  );
 });
 
-Then('研究試行ファイル {string} は {string} を含む', function (filePath, text) {
+Then("研究試行ファイル {string} は {string} を含む", function (filePath, text) {
   const actualPath = researchTrialPath(this.scenarioDir, filePath);
-  const actual = fs.readFileSync(actualPath, 'utf8');
+  const actual = fs.readFileSync(actualPath, "utf8");
 
   assert.ok(
     actual.includes(text),
     [
-      'expected research trial file to include text',
+      "expected research trial file to include text",
       `file: ${filePath}`,
-      `expected: ${text}`
-    ].join('\n')
+      `expected: ${text}`,
+    ].join("\n")
   );
 });
 
-Then('研究試行ファイル {string} は次をすべて含む:', function (filePath, docString) {
-  const actualPath = researchTrialPath(this.scenarioDir, filePath);
-  const actual = fs.readFileSync(actualPath, 'utf8');
-  const expectedItems = docStringContent(docString).split(/\r?\n/u).filter((line) => line.length > 0);
+Then(
+  "研究試行ファイル {string} は次をすべて含む:",
+  function (filePath, docString) {
+    const actualPath = researchTrialPath(this.scenarioDir, filePath);
+    const actual = fs.readFileSync(actualPath, "utf8");
+    const expectedItems = docStringContent(docString)
+      .split(/\r?\n/u)
+      .filter((line) => line.length > 0);
 
-  for (const expected of expectedItems) {
-    assert.ok(
-      actual.includes(expected),
-      [
-        'expected research trial file to include text',
-        `file: ${filePath}`,
-        `expected: ${expected}`,
-        'actual:',
-        actual
-      ].join('\n')
-    );
+    for (const expected of expectedItems) {
+      assert.ok(
+        actual.includes(expected),
+        [
+          "expected research trial file to include text",
+          `file: ${filePath}`,
+          `expected: ${expected}`,
+          "actual:",
+          actual,
+        ].join("\n")
+      );
+    }
   }
-});
+);
 
-Then('偽 Pi の課題呼び出しは隔離オプションをすべて含む', function () {
-  const records = fs.readFileSync(this.fakePiLogPath, 'utf8').trim().split(/\r?\n/u).filter(Boolean).map(JSON.parse);
+Then("偽 Pi の課題呼び出しは隔離オプションをすべて含む", function () {
+  const records = fs
+    .readFileSync(this.fakePiLogPath, "utf8")
+    .trim()
+    .split(/\r?\n/u)
+    .filter(Boolean)
+    .map(JSON.parse);
   assert.equal(records.length, 1);
   const args = records[0].args;
-  for (const option of ['--mode', 'json', '--model', 'fake-qni', '--thinking', 'max', '--no-session', '--no-tools', '--no-context-files', '--no-skills', '--no-extensions', '--no-prompt-templates', '--system-prompt']) {
+  for (const option of [
+    "--mode",
+    "json",
+    "--model",
+    "fake-qni",
+    "--thinking",
+    "max",
+    "--no-session",
+    "--no-tools",
+    "--no-context-files",
+    "--no-skills",
+    "--no-extensions",
+    "--no-prompt-templates",
+    "--system-prompt",
+  ]) {
     assert.ok(args.includes(option), `missing Pi option: ${option}`);
   }
   assert.notEqual(records[0].cwd, this.scenarioDir);
   assert.equal(fs.existsSync(records[0].cwd), false);
 });
 
-Then('研究試行ファイル {string} は次をすべて含まない:', function (filePath, docString) {
-  const actualPath = researchTrialPath(this.scenarioDir, filePath);
-  const actual = fs.readFileSync(actualPath, 'utf8');
-  const unexpectedItems = docStringContent(docString).split(/\r?\n/u).filter((line) => line.length > 0);
+Then(
+  "研究試行ファイル {string} は次をすべて含まない:",
+  function (filePath, docString) {
+    const actualPath = researchTrialPath(this.scenarioDir, filePath);
+    const actual = fs.readFileSync(actualPath, "utf8");
+    const unexpectedItems = docStringContent(docString)
+      .split(/\r?\n/u)
+      .filter((line) => line.length > 0);
 
-  for (const unexpected of unexpectedItems) {
-    assert.ok(
-      !actual.includes(unexpected),
-      [
-        'expected research trial file not to include text',
-        `file: ${filePath}`,
-        `unexpected: ${unexpected}`,
-        'actual:',
-        actual
-      ].join('\n')
-    );
+    for (const unexpected of unexpectedItems) {
+      assert.ok(
+        !actual.includes(unexpected),
+        [
+          "expected research trial file not to include text",
+          `file: ${filePath}`,
+          `unexpected: ${unexpected}`,
+          "actual:",
+          actual,
+        ].join("\n")
+      );
+    }
   }
-});
+);
 
-Then('研究試行ファイル {string} の内容は:', function (filePath, docString) {
+Then("研究試行ファイル {string} の内容は:", function (filePath, docString) {
   const actualPath = researchTrialPath(this.scenarioDir, filePath);
-  const actual = fs.readFileSync(actualPath, 'utf8');
+  const actual = fs.readFileSync(actualPath, "utf8");
 
   assert.equal(actual, docStringContent(docString));
 });
 
-Then('研究試行ファイル群は {string} を含まない', function (text) {
+Then("研究試行ファイル群は {string} を含まない", function (text) {
   const trialDir = singleResearchTrialDir(this.scenarioDir);
-  const matchingFiles = filesUnder(trialDir).filter((filePath) => fs.readFileSync(filePath, 'utf8').includes(text));
-
-  assert.deepEqual(matchingFiles.map((filePath) => path.relative(trialDir, filePath)).sort(), []);
-});
-
-Then('研究試行 JSON ファイル {string} は次の部分 JSON を含む:', function (filePath, docString) {
-  const actualPath = researchTrialPath(this.scenarioDir, filePath);
-  const actual = JSON.parse(fs.readFileSync(actualPath, 'utf8'));
-  const expected = JSON.parse(docStringContent(docString));
-
-  assertJsonContains(actual, expected);
-});
-
-Then('研究試行の calls 件数は {int}', function (expectedTotal) {
-  assert.equal(this.lastCommand.code, 0, commandFailureMessage(this.lastCommand));
-  const trialDir = singleResearchTrialDir(this.scenarioDir);
-  const calls = JSON.parse(fs.readFileSync(path.join(trialDir, 'calls.json'), 'utf8'));
-
-  assert.equal(calls.calls.length, expectedTotal);
-});
-
-Then('研究試行の score 分母は {int}', function (expectedTotal) {
-  assert.equal(this.lastCommand.code, 0, commandFailureMessage(this.lastCommand));
-  const trialDir = singleResearchTrialDir(this.scenarioDir);
-  const metadata = JSON.parse(fs.readFileSync(path.join(trialDir, 'metadata.json'), 'utf8'));
-
-  assert.equal(metadata.score.total, expectedTotal);
-});
-
-Then('研究試行 JSON ファイル {string} の {string} は {string}', function (filePath, key, value) {
-  const actualPath = researchTrialPath(this.scenarioDir, filePath);
-  const actual = JSON.parse(fs.readFileSync(actualPath, 'utf8'));
-
-  assert.equal(actual[key], value);
-});
-
-Then('研究試行 JSON ファイル {string} の {string} は次の JSON と一致する:', function (filePath, key, docString) {
-  const actualPath = researchTrialPath(this.scenarioDir, filePath);
-  const actual = JSON.parse(fs.readFileSync(actualPath, 'utf8'));
-  const expected = JSON.parse(docStringContent(docString));
-
-  assert.deepStrictEqual(actual[key], expected);
-});
-
-Then('研究試行 {string} のメタデータ JSON は {string} を含まない', function (id, key) {
-  const actualPath = path.join(researchRunsDir(this.scenarioDir), id, 'metadata.json');
-  const actual = JSON.parse(fs.readFileSync(actualPath, 'utf8'));
-
-  assert.equal(Object.hasOwn(actual, key), false);
-});
-
-Then('読み取った研究試行数は {int}', function (expectedCount) {
-  assert.equal(this.lastResearchTrials.length, expectedCount);
-});
-
-Then('読み取った研究試行ID一覧は:', function (docString) {
-  assert.equal(
-    this.lastResearchTrials.map((trial) => trial.id).join('\n'),
-    normalizeMultilineText(docStringContent(docString))
+  const matchingFiles = filesUnder(trialDir).filter((filePath) =>
+    fs.readFileSync(filePath, "utf8").includes(text)
   );
-});
 
-Then('読み取った研究試行 {string} の status は {string}', function (id, expectedStatus) {
-  const trial = this.lastResearchTrials.find((item) => item.id === id);
-
-  assert.ok(trial, `expected research trial to be read: ${id}`);
-  assert.equal(trial.status, expectedStatus);
-});
-
-Then('読み取った研究試行 {string} の invalidReason は {string} を含む', function (id, expectedReason) {
-  const trial = this.lastResearchTrials.find((item) => item.id === id);
-
-  assert.ok(trial, `expected research trial to be read: ${id}`);
-  assert.equal(trial.kind, 'invalid');
-  assert.ok(
-    trial.invalidReason.some((reason) => reason.includes(expectedReason)),
-    [
-      'expected invalid reason to include text',
-      `trial: ${id}`,
-      `expected: ${expectedReason}`,
-      `actual: ${JSON.stringify(trial.invalidReason)}`
-    ].join('\n')
-  );
-});
-
-Then('作業ディレクトリのファイル {string} は {string} を含む', function (filePath, text) {
-  const actualPath = path.join(this.scenarioDir, filePath);
-  assert.ok(fs.existsSync(actualPath), `expected workspace file to exist: ${filePath}`);
-
-  const actual = fs.readFileSync(actualPath, 'utf8');
-  assert.ok(
-    actual.includes(text),
-    [
-      'expected workspace file to include text',
-      `file: ${filePath}`,
-      `expected: ${text}`
-    ].join('\n')
-  );
-});
-
-Then('作業ディレクトリのファイル {string} は次を含む:', function (filePath, docString) {
-  const actualPath = path.join(this.scenarioDir, filePath);
-  assert.ok(fs.existsSync(actualPath), `expected workspace file to exist: ${filePath}`);
-
-  const actual = fs.readFileSync(actualPath, 'utf8');
-  const expected = docStringContent(docString);
-
-  assert.ok(
-    actual.includes(expected),
-    [
-      'expected workspace file to include text',
-      `file: ${filePath}`,
-      'expected:',
-      expected,
-      'actual:',
-      actual
-    ].join('\n')
-  );
-});
-
-Then('作業ディレクトリのファイル {string} は {string} を含まない', function (filePath, text) {
-  const actualPath = path.join(this.scenarioDir, filePath);
-  assert.ok(fs.existsSync(actualPath), `expected workspace file to exist: ${filePath}`);
-
-  const actual = fs.readFileSync(actualPath, 'utf8');
-  assert.ok(
-    !actual.includes(text),
-    [
-      'expected workspace file not to include text',
-      `file: ${filePath}`,
-      `unexpected: ${text}`
-    ].join('\n')
-  );
-});
-
-Then('作業ディレクトリのファイル {string} は自己完結 HTML の研究散布図である', function (filePath) {
-  const actualPath = path.join(this.scenarioDir, filePath);
-  assert.ok(fs.existsSync(actualPath), `expected workspace file to exist: ${filePath}`);
-
-  const actual = fs.readFileSync(actualPath, 'utf8');
-  assert.ok(actual.startsWith('<!doctype html>'), `expected self-contained HTML doctype: ${filePath}`);
-  assert.ok(actual.includes('<svg'), `expected inline SVG scatter plot: ${filePath}`);
-  assert.ok(!actual.includes('<script src='), `expected no external script: ${filePath}`);
-  assert.ok(!actual.includes('https://'), `expected no external HTTPS reference: ${filePath}`);
-  assert.ok(!actual.includes('http://'), `expected no external HTTP reference: ${filePath}`);
-});
-
-Then('研究ログの内容は記録時点と一致する', function () {
-  assert.deepEqual(snapshotResearchRuns(this.scenarioDir), this.researchRunsSnapshot);
-});
-
-Then('リポジトリファイル {string} は {string} を含む', function (filePath, text) {
-  const actualPath = projectFilePath(filePath);
-  assert.ok(fs.existsSync(actualPath), `expected repository file to exist: ${filePath}`);
-
-  const actual = fs.readFileSync(actualPath, 'utf8');
-  assert.ok(
-    actual.includes(text),
-    [
-      'expected repository file to include text',
-      `file: ${filePath}`,
-      `expected: ${text}`
-    ].join('\n')
+  assert.deepEqual(
+    matchingFiles.map((filePath) => path.relative(trialDir, filePath)).sort(),
+    []
   );
 });
 
 Then(
-  'リポジトリファイル {string} の frontmatter description は {string} を含む',
-  function (filePath, text) {
-    const actualPath = projectFilePath(filePath);
-    assert.ok(fs.existsSync(actualPath), `expected repository file to exist: ${filePath}`);
+  "研究試行 JSON ファイル {string} は次の部分 JSON を含む:",
+  function (filePath, docString) {
+    const actualPath = researchTrialPath(this.scenarioDir, filePath);
+    const actual = JSON.parse(fs.readFileSync(actualPath, "utf8"));
+    const expected = JSON.parse(docStringContent(docString));
 
-    const markdown = fs.readFileSync(actualPath, 'utf8');
-    const { description } = markdownFrontmatterRecord(markdown, filePath);
+    assertJsonContains(actual, expected);
+  }
+);
 
-    assert.equal(typeof description, 'string', `expected frontmatter description in ${filePath}`);
+Then("研究試行の calls 件数は {int}", function (expectedTotal) {
+  assert.equal(
+    this.lastCommand.code,
+    0,
+    commandFailureMessage(this.lastCommand)
+  );
+  const trialDir = singleResearchTrialDir(this.scenarioDir);
+  const calls = JSON.parse(
+    fs.readFileSync(path.join(trialDir, "calls.json"), "utf8")
+  );
+
+  assert.equal(calls.calls.length, expectedTotal);
+});
+
+Then("研究試行の score 分母は {int}", function (expectedTotal) {
+  assert.equal(
+    this.lastCommand.code,
+    0,
+    commandFailureMessage(this.lastCommand)
+  );
+  const trialDir = singleResearchTrialDir(this.scenarioDir);
+  const metadata = JSON.parse(
+    fs.readFileSync(path.join(trialDir, "metadata.json"), "utf8")
+  );
+
+  assert.equal(metadata.score.total, expectedTotal);
+});
+
+Then(
+  "研究試行 JSON ファイル {string} の {string} は {string}",
+  function (filePath, key, value) {
+    const actualPath = researchTrialPath(this.scenarioDir, filePath);
+    const actual = JSON.parse(fs.readFileSync(actualPath, "utf8"));
+
+    assert.equal(actual[key], value);
+  }
+);
+
+Then(
+  "研究試行 JSON ファイル {string} の {string} は次の JSON と一致する:",
+  function (filePath, key, docString) {
+    const actualPath = researchTrialPath(this.scenarioDir, filePath);
+    const actual = JSON.parse(fs.readFileSync(actualPath, "utf8"));
+    const expected = JSON.parse(docStringContent(docString));
+
+    assert.deepStrictEqual(actual[key], expected);
+  }
+);
+
+Then(
+  "研究試行 {string} のメタデータ JSON は {string} を含まない",
+  function (id, key) {
+    const actualPath = path.join(
+      researchRunsDir(this.scenarioDir),
+      id,
+      "metadata.json"
+    );
+    const actual = JSON.parse(fs.readFileSync(actualPath, "utf8"));
+
+    assert.equal(Object.hasOwn(actual, key), false);
+  }
+);
+
+Then("読み取った研究試行数は {int}", function (expectedCount) {
+  assert.equal(this.lastResearchTrials.length, expectedCount);
+});
+
+Then("読み取った研究試行ID一覧は:", function (docString) {
+  assert.equal(
+    this.lastResearchTrials.map((trial) => trial.id).join("\n"),
+    normalizeMultilineText(docStringContent(docString))
+  );
+});
+
+Then(
+  "読み取った研究試行 {string} の status は {string}",
+  function (id, expectedStatus) {
+    const trial = this.lastResearchTrials.find((item) => item.id === id);
+
+    assert.ok(trial, `expected research trial to be read: ${id}`);
+    assert.equal(trial.status, expectedStatus);
+  }
+);
+
+Then(
+  "読み取った研究試行 {string} の invalidReason は {string} を含む",
+  function (id, expectedReason) {
+    const trial = this.lastResearchTrials.find((item) => item.id === id);
+
+    assert.ok(trial, `expected research trial to be read: ${id}`);
+    assert.equal(trial.kind, "invalid");
     assert.ok(
-      description.includes(text),
+      trial.invalidReason.some((reason) => reason.includes(expectedReason)),
       [
-        'expected frontmatter description to include text',
-        `file: ${filePath}`,
-        `expected: ${text}`
-      ].join('\n')
+        "expected invalid reason to include text",
+        `trial: ${id}`,
+        `expected: ${expectedReason}`,
+        `actual: ${JSON.stringify(trial.invalidReason)}`,
+      ].join("\n")
     );
   }
 );
 
-Then('リポジトリファイル {string} の最初の行は {string} である', function (filePath, text) {
-  const actualPath = projectFilePath(filePath);
-  assert.ok(fs.existsSync(actualPath), `expected repository file to exist: ${filePath}`);
+Then(
+  "作業ディレクトリのファイル {string} は {string} を含む",
+  function (filePath, text) {
+    const actualPath = path.join(this.scenarioDir, filePath);
+    assert.ok(
+      fs.existsSync(actualPath),
+      `expected workspace file to exist: ${filePath}`
+    );
 
-  const [firstLine] = fs.readFileSync(actualPath, 'utf8').split(/\r?\n/u);
-  assert.equal(firstLine, text);
+    const actual = fs.readFileSync(actualPath, "utf8");
+    assert.ok(
+      actual.includes(text),
+      [
+        "expected workspace file to include text",
+        `file: ${filePath}`,
+        `expected: ${text}`,
+      ].join("\n")
+    );
+  }
+);
+
+Then(
+  "作業ディレクトリのファイル {string} は次を含む:",
+  function (filePath, docString) {
+    const actualPath = path.join(this.scenarioDir, filePath);
+    assert.ok(
+      fs.existsSync(actualPath),
+      `expected workspace file to exist: ${filePath}`
+    );
+
+    const actual = fs.readFileSync(actualPath, "utf8");
+    const expected = docStringContent(docString);
+
+    assert.ok(
+      actual.includes(expected),
+      [
+        "expected workspace file to include text",
+        `file: ${filePath}`,
+        "expected:",
+        expected,
+        "actual:",
+        actual,
+      ].join("\n")
+    );
+  }
+);
+
+Then(
+  "作業ディレクトリのファイル {string} は {string} を含まない",
+  function (filePath, text) {
+    const actualPath = path.join(this.scenarioDir, filePath);
+    assert.ok(
+      fs.existsSync(actualPath),
+      `expected workspace file to exist: ${filePath}`
+    );
+
+    const actual = fs.readFileSync(actualPath, "utf8");
+    assert.ok(
+      !actual.includes(text),
+      [
+        "expected workspace file not to include text",
+        `file: ${filePath}`,
+        `unexpected: ${text}`,
+      ].join("\n")
+    );
+  }
+);
+
+Then(
+  "作業ディレクトリのファイル {string} は自己完結 HTML の研究散布図である",
+  function (filePath) {
+    const actualPath = path.join(this.scenarioDir, filePath);
+    assert.ok(
+      fs.existsSync(actualPath),
+      `expected workspace file to exist: ${filePath}`
+    );
+
+    const actual = fs.readFileSync(actualPath, "utf8");
+    assert.ok(
+      actual.startsWith("<!doctype html>"),
+      `expected self-contained HTML doctype: ${filePath}`
+    );
+    assert.ok(
+      actual.includes("<svg"),
+      `expected inline SVG scatter plot: ${filePath}`
+    );
+    assert.ok(
+      !actual.includes("<script src="),
+      `expected no external script: ${filePath}`
+    );
+    assert.ok(
+      !actual.includes("https://"),
+      `expected no external HTTPS reference: ${filePath}`
+    );
+    assert.ok(
+      !actual.includes("http://"),
+      `expected no external HTTP reference: ${filePath}`
+    );
+  }
+);
+
+Then("研究ログの内容は記録時点と一致する", function () {
+  assert.deepEqual(
+    snapshotResearchRuns(this.scenarioDir),
+    this.researchRunsSnapshot
+  );
 });
 
-Then('標準出力に淡色修飾付きラベル {string} を含む', function (label) {
+Then(
+  "リポジトリファイル {string} は {string} を含む",
+  function (filePath, text) {
+    const actualPath = projectFilePath(filePath);
+    assert.ok(
+      fs.existsSync(actualPath),
+      `expected repository file to exist: ${filePath}`
+    );
+
+    const actual = fs.readFileSync(actualPath, "utf8");
+    assert.ok(
+      actual.includes(text),
+      [
+        "expected repository file to include text",
+        `file: ${filePath}`,
+        `expected: ${text}`,
+      ].join("\n")
+    );
+  }
+);
+
+Then(
+  "リポジトリファイル {string} の frontmatter description は {string} を含む",
+  function (filePath, text) {
+    const actualPath = projectFilePath(filePath);
+    assert.ok(
+      fs.existsSync(actualPath),
+      `expected repository file to exist: ${filePath}`
+    );
+
+    const markdown = fs.readFileSync(actualPath, "utf8");
+    const { description } = markdownFrontmatterRecord(markdown, filePath);
+
+    assert.equal(
+      typeof description,
+      "string",
+      `expected frontmatter description in ${filePath}`
+    );
+    assert.ok(
+      description.includes(text),
+      [
+        "expected frontmatter description to include text",
+        `file: ${filePath}`,
+        `expected: ${text}`,
+      ].join("\n")
+    );
+  }
+);
+
+Then(
+  "リポジトリファイル {string} の最初の行は {string} である",
+  function (filePath, text) {
+    const actualPath = projectFilePath(filePath);
+    assert.ok(
+      fs.existsSync(actualPath),
+      `expected repository file to exist: ${filePath}`
+    );
+
+    const [firstLine] = fs.readFileSync(actualPath, "utf8").split(/\r?\n/u);
+    assert.equal(firstLine, text);
+  }
+);
+
+Then("標準出力に淡色修飾付きラベル {string} を含む", function (label) {
   const chars = [...label];
 
-  assert.ok(chars.length >= 2, `label must have at least 2 characters: ${label}`);
+  assert.ok(
+    chars.length >= 2,
+    `label must have at least 2 characters: ${label}`
+  );
 
-  const base = chars.slice(0, -1).join('');
+  const base = chars.slice(0, -1).join("");
   const suffix = chars.at(-1);
   const expected = `${base}\u001b[37;2m${suffix}\u001b[0m`;
 
   assert.ok(
     this.lastCommand.stdout.includes(expected),
     [
-      'expected stdout to include dim-decorated label',
+      "expected stdout to include dim-decorated label",
       `expected: ${JSON.stringify(expected)}`,
-      `actual: ${JSON.stringify(this.lastCommand.stdout)}`
-    ].join('\n')
+      `actual: ${JSON.stringify(this.lastCommand.stdout)}`,
+    ].join("\n")
   );
 });
 
-Then('コマンドは失敗して標準エラー:', function (docString) {
-  assert.notEqual(this.lastCommand.code, 0, commandSuccessMessage(this.lastCommand));
+Then("コマンドは失敗して標準エラー:", function (docString) {
+  assert.notEqual(
+    this.lastCommand.code,
+    0,
+    commandSuccessMessage(this.lastCommand)
+  );
 
   assert.equal(
     normalizeMultilineText(this.lastCommand.stderr),
@@ -2177,31 +2603,34 @@ Then('コマンドは失敗して標準エラー:', function (docString) {
   );
 });
 
-Then('{string} は PNG 画像である', function (filePath) {
+Then("{string} は PNG 画像である", function (filePath) {
   const actualPath = path.join(this.scenarioDir, filePath);
 
   assert.ok(fs.existsSync(actualPath), `expected file to exist: ${filePath}`);
   assertPngSignature(actualPath, filePath);
 });
 
-Then('{string} は APNG 画像である', function (filePath) {
+Then("{string} は APNG 画像である", function (filePath) {
   const actualPath = path.join(this.scenarioDir, filePath);
 
   assert.ok(fs.existsSync(actualPath), `expected file to exist: ${filePath}`);
   assert.equal(apngMetadata(actualPath, filePath).animated, true);
 });
 
-Then('{string} は {int} フレーム以上の APNG 画像である', function (filePath, minimumFrames) {
-  const actualPath = path.join(this.scenarioDir, filePath);
+Then(
+  "{string} は {int} フレーム以上の APNG 画像である",
+  function (filePath, minimumFrames) {
+    const actualPath = path.join(this.scenarioDir, filePath);
 
-  assert.ok(fs.existsSync(actualPath), `expected file to exist: ${filePath}`);
-  assert.ok(
-    apngMetadata(actualPath, filePath).frameCount >= minimumFrames,
-    `expected APNG frame count to be at least ${minimumFrames}: ${filePath}`
-  );
-});
+    assert.ok(fs.existsSync(actualPath), `expected file to exist: ${filePath}`);
+    assert.ok(
+      apngMetadata(actualPath, filePath).frameCount >= minimumFrames,
+      `expected APNG frame count to be at least ${minimumFrames}: ${filePath}`
+    );
+  }
+);
 
-Then('{string} は透過 PNG 画像である', function (filePath) {
+Then("{string} は透過 PNG 画像である", function (filePath) {
   const actualPath = path.join(this.scenarioDir, filePath);
 
   assert.ok(fs.existsSync(actualPath), `expected file to exist: ${filePath}`);
@@ -2209,7 +2638,7 @@ Then('{string} は透過 PNG 画像である', function (filePath) {
   assert.equal(pngMetadata(actualPath).transparent, true);
 });
 
-Then('{string} は不透過 PNG 画像である', function (filePath) {
+Then("{string} は不透過 PNG 画像である", function (filePath) {
   const actualPath = path.join(this.scenarioDir, filePath);
 
   assert.ok(fs.existsSync(actualPath), `expected file to exist: ${filePath}`);
@@ -2217,16 +2646,19 @@ Then('{string} は不透過 PNG 画像である', function (filePath) {
   assert.equal(pngMetadata(actualPath).transparent, false);
 });
 
-Then('{string} の画像サイズは {int}x{int} である', function (filePath, width, height) {
-  const actualPath = path.join(this.scenarioDir, filePath);
+Then(
+  "{string} の画像サイズは {int}x{int} である",
+  function (filePath, width, height) {
+    const actualPath = path.join(this.scenarioDir, filePath);
 
-  assert.ok(fs.existsSync(actualPath), `expected file to exist: ${filePath}`);
-  const metadata = pngMetadata(actualPath);
+    assert.ok(fs.existsSync(actualPath), `expected file to exist: ${filePath}`);
+    const metadata = pngMetadata(actualPath);
 
-  assert.deepEqual([metadata.width, metadata.height], [width, height]);
-});
+    assert.deepEqual([metadata.width, metadata.height], [width, height]);
+  }
+);
 
-Then('{string} は色 {string} のピクセルを含む', function (filePath, hexColor) {
+Then("{string} は色 {string} のピクセルを含む", function (filePath, hexColor) {
   const actualPath = path.join(this.scenarioDir, filePath);
 
   assert.ok(fs.existsSync(actualPath), `expected file to exist: ${filePath}`);
@@ -2236,142 +2668,188 @@ Then('{string} は色 {string} のピクセルを含む', function (filePath, he
   );
 });
 
-Then('{string} と {string} は異なるファイル内容である', function (lhsPath, rhsPath) {
-  const actualLhsPath = path.join(this.scenarioDir, lhsPath);
-  const actualRhsPath = path.join(this.scenarioDir, rhsPath);
+Then(
+  "{string} と {string} は異なるファイル内容である",
+  function (lhsPath, rhsPath) {
+    const actualLhsPath = path.join(this.scenarioDir, lhsPath);
+    const actualRhsPath = path.join(this.scenarioDir, rhsPath);
 
-  assert.ok(fs.existsSync(actualLhsPath), `expected file to exist: ${lhsPath}`);
-  assert.ok(fs.existsSync(actualRhsPath), `expected file to exist: ${rhsPath}`);
-  assert.notDeepEqual(fs.readFileSync(actualLhsPath), fs.readFileSync(actualRhsPath));
-});
+    assert.ok(
+      fs.existsSync(actualLhsPath),
+      `expected file to exist: ${lhsPath}`
+    );
+    assert.ok(
+      fs.existsSync(actualRhsPath),
+      `expected file to exist: ${rhsPath}`
+    );
+    assert.notDeepEqual(
+      fs.readFileSync(actualLhsPath),
+      fs.readFileSync(actualRhsPath)
+    );
+  }
+);
 
-Then(/^(?:circle notation renderer では|circle notation の描画処理では)振幅 (\d+(?:\.\d+)?) の位相針の長さは外円の半径に等しい$/, function (real) {
-  const metrics = circleNotationPhaseMetrics(real, 0.0);
-  const actual = metrics.needle_length;
-  const expected = metrics.outer_radius;
+Then(
+  /^(?:circle notation renderer では|circle notation の描画処理では)振幅 (\d+(?:\.\d+)?) の位相針の長さは外円の半径に等しい$/,
+  function (real) {
+    const metrics = circleNotationPhaseMetrics(real, 0.0);
+    const actual = metrics.needle_length;
+    const expected = metrics.outer_radius;
 
-  assert.ok(
-    metrics.phase_visible && Math.abs(actual - expected) <= 0.001,
-    [
-      'expected phase needle length to equal the outer radius for nonzero amplitudes',
-      `actual: ${actual}`,
-      `expected: ${expected}`
-    ].join('\n')
-  );
-});
+    assert.ok(
+      metrics.phase_visible && Math.abs(actual - expected) <= 0.001,
+      [
+        "expected phase needle length to equal the outer radius for nonzero amplitudes",
+        `actual: ${actual}`,
+        `expected: ${expected}`,
+      ].join("\n")
+    );
+  }
+);
 
-Then(/^(?:circle notation renderer では|circle notation の描画処理では)外円の輪郭線は内側へ食い込まない$/, function () {
-  const metrics = circleNotationOutlineMetrics();
-  const actual = metrics.outline_inner_edge;
-  const expected = metrics.intended_radius;
+Then(
+  /^(?:circle notation renderer では|circle notation の描画処理では)外円の輪郭線は内側へ食い込まない$/,
+  function () {
+    const metrics = circleNotationOutlineMetrics();
+    const actual = metrics.outline_inner_edge;
+    const expected = metrics.intended_radius;
 
-  assert.ok(
-    actual >= expected - 0.001,
-    [
-      'expected outline stroke not to intrude inside the intended outer radius',
-      `actual: ${actual}`,
-      `expected: ${expected}`
-    ].join('\n')
-  );
-});
+    assert.ok(
+      actual >= expected - 0.001,
+      [
+        "expected outline stroke not to intrude inside the intended outer radius",
+        `actual: ${actual}`,
+        `expected: ${expected}`,
+      ].join("\n")
+    );
+  }
+);
 
-Then(/^(?:circle notation renderer では|circle notation の描画処理では)正の実数振幅の位相針は上を向く$/, function () {
-  const metrics = circleNotationPhaseMetrics(1.0, 0.0);
+Then(
+  /^(?:circle notation renderer では|circle notation の描画処理では)正の実数振幅の位相針は上を向く$/,
+  function () {
+    const metrics = circleNotationPhaseMetrics(1.0, 0.0);
 
-  assert.ok(
-    metrics.phase_visible && Math.abs(metrics.needle_dx) <= 0.001 && metrics.needle_dy > 0.0,
-    [
-      'expected positive real amplitude to point upward',
-      `actual: ${JSON.stringify(metrics)}`
-    ].join('\n')
-  );
-});
+    assert.ok(
+      metrics.phase_visible &&
+        Math.abs(metrics.needle_dx) <= 0.001 &&
+        metrics.needle_dy > 0.0,
+      [
+        "expected positive real amplitude to point upward",
+        `actual: ${JSON.stringify(metrics)}`,
+      ].join("\n")
+    );
+  }
+);
 
-Then(/^(?:circle notation renderer では|circle notation の描画処理では)正の虚数振幅の位相針は左を向く$/, function () {
-  const metrics = circleNotationPhaseMetrics(0.0, 1.0);
+Then(
+  /^(?:circle notation renderer では|circle notation の描画処理では)正の虚数振幅の位相針は左を向く$/,
+  function () {
+    const metrics = circleNotationPhaseMetrics(0.0, 1.0);
 
-  assert.ok(
-    metrics.phase_visible && metrics.needle_dx < 0.0 && Math.abs(metrics.needle_dy) <= 0.001,
-    [
-      'expected positive imaginary amplitude to point leftward',
-      `actual: ${JSON.stringify(metrics)}`
-    ].join('\n')
-  );
-});
+    assert.ok(
+      metrics.phase_visible &&
+        metrics.needle_dx < 0.0 &&
+        Math.abs(metrics.needle_dy) <= 0.001,
+      [
+        "expected positive imaginary amplitude to point leftward",
+        `actual: ${JSON.stringify(metrics)}`,
+      ].join("\n")
+    );
+  }
+);
 
-Then(/^(?:circle notation renderer では|circle notation の描画処理では)振幅 0 のとき位相針は描画されない$/, function () {
-  const metrics = circleNotationPhaseMetrics(0.0, 0.0);
+Then(
+  /^(?:circle notation renderer では|circle notation の描画処理では)振幅 0 のとき位相針は描画されない$/,
+  function () {
+    const metrics = circleNotationPhaseMetrics(0.0, 0.0);
 
-  assert.equal(metrics.phase_visible, false);
-});
+    assert.equal(metrics.phase_visible, false);
+  }
+);
 
-Then(/^(?:circle notation renderer では|circle notation の描画処理では)振幅 0 のとき中心ドットも描画されない$/, function () {
-  const metrics = circleNotationPhaseMetrics(0.0, 0.0);
+Then(
+  /^(?:circle notation renderer では|circle notation の描画処理では)振幅 0 のとき中心ドットも描画されない$/,
+  function () {
+    const metrics = circleNotationPhaseMetrics(0.0, 0.0);
 
-  assert.equal(metrics.center_dot_visible, false);
-});
+    assert.equal(metrics.center_dot_visible, false);
+  }
+);
 
-Then('ブロッホ球のラベル {string} の表示は z 軸の先端より上にある', function (label) {
-  const metrics = blochLabelMetrics();
-  const labelBox = metrics.labels[label].bbox;
-  const axisTip = metrics.axis_tips.z;
+Then(
+  "ブロッホ球のラベル {string} の表示は z 軸の先端より上にある",
+  function (label) {
+    const metrics = blochLabelMetrics();
+    const labelBox = metrics.labels[label].bbox;
+    const axisTip = metrics.axis_tips.z;
 
-  assert.ok(
-    labelBox.bottom > axisTip.y,
-    [
-      `expected ${label} to render above the z-axis tip`,
-      `bbox: ${JSON.stringify(labelBox)}`,
-      `axis_tip: ${JSON.stringify(axisTip)}`
-    ].join('\n')
-  );
-});
+    assert.ok(
+      labelBox.bottom > axisTip.y,
+      [
+        `expected ${label} to render above the z-axis tip`,
+        `bbox: ${JSON.stringify(labelBox)}`,
+        `axis_tip: ${JSON.stringify(axisTip)}`,
+      ].join("\n")
+    );
+  }
+);
 
-Then('ブロッホ球のラベル {string} の表示は x 軸の先端より右にある', function (label) {
-  const metrics = blochLabelMetrics();
-  const labelBox = metrics.labels[label].bbox;
-  const axisTip = metrics.axis_tips.x;
+Then(
+  "ブロッホ球のラベル {string} の表示は x 軸の先端より右にある",
+  function (label) {
+    const metrics = blochLabelMetrics();
+    const labelBox = metrics.labels[label].bbox;
+    const axisTip = metrics.axis_tips.x;
 
-  assert.ok(
-    labelBox.left > axisTip.x,
-    [
-      `expected ${label} to render to the right of the x-axis tip`,
-      `bbox: ${JSON.stringify(labelBox)}`,
-      `axis_tip: ${JSON.stringify(axisTip)}`
-    ].join('\n')
-  );
-});
+    assert.ok(
+      labelBox.left > axisTip.x,
+      [
+        `expected ${label} to render to the right of the x-axis tip`,
+        `bbox: ${JSON.stringify(labelBox)}`,
+        `axis_tip: ${JSON.stringify(axisTip)}`,
+      ].join("\n")
+    );
+  }
+);
 
-Then('ブロッホ球のラベル {string} の表示は y 軸の先端より右にある', function (label) {
-  const metrics = blochLabelMetrics();
-  const labelBox = metrics.labels[label].bbox;
-  const axisTip = metrics.axis_tips.y;
+Then(
+  "ブロッホ球のラベル {string} の表示は y 軸の先端より右にある",
+  function (label) {
+    const metrics = blochLabelMetrics();
+    const labelBox = metrics.labels[label].bbox;
+    const axisTip = metrics.axis_tips.y;
 
-  assert.ok(
-    labelBox.left > axisTip.x,
-    [
-      `expected ${label} to render to the right of the y-axis tip`,
-      `bbox: ${JSON.stringify(labelBox)}`,
-      `axis_tip: ${JSON.stringify(axisTip)}`
-    ].join('\n')
-  );
-});
+    assert.ok(
+      labelBox.left > axisTip.x,
+      [
+        `expected ${label} to render to the right of the y-axis tip`,
+        `bbox: ${JSON.stringify(labelBox)}`,
+        `axis_tip: ${JSON.stringify(axisTip)}`,
+      ].join("\n")
+    );
+  }
+);
 
-Then('ブロッホ球のラベル {string} の表示は y 軸の先端より上にある', function (label) {
-  const metrics = blochLabelMetrics();
-  const labelBox = metrics.labels[label].bbox;
-  const axisTip = metrics.axis_tips.y;
+Then(
+  "ブロッホ球のラベル {string} の表示は y 軸の先端より上にある",
+  function (label) {
+    const metrics = blochLabelMetrics();
+    const labelBox = metrics.labels[label].bbox;
+    const axisTip = metrics.axis_tips.y;
 
-  assert.ok(
-    labelBox.bottom > axisTip.y,
-    [
-      `expected ${label} to render above the y-axis tip`,
-      `bbox: ${JSON.stringify(labelBox)}`,
-      `axis_tip: ${JSON.stringify(axisTip)}`
-    ].join('\n')
-  );
-});
+    assert.ok(
+      labelBox.bottom > axisTip.y,
+      [
+        `expected ${label} to render above the y-axis tip`,
+        `bbox: ${JSON.stringify(labelBox)}`,
+        `axis_tip: ${JSON.stringify(axisTip)}`,
+      ].join("\n")
+    );
+  }
+);
 
-Then('ブロッホ球のラベル {string} が表示される', function (label) {
+Then("ブロッホ球のラベル {string} が表示される", function (label) {
   const metrics = blochLabelMetrics();
 
   assert.ok(
@@ -2380,21 +2858,25 @@ Then('ブロッホ球のラベル {string} が表示される', function (label)
   );
 });
 
-Then('ブロッホ球のラベル {string} と {string} の表示領域は重ならない', function (firstLabel, secondLabel) {
-  const metrics = blochLabelMetrics().labels;
-  const first = metrics[firstLabel].bbox;
-  const second = metrics[secondLabel].bbox;
-  const overlap = first.left < second.right &&
-    first.right > second.left &&
-    first.bottom < second.top &&
-    first.top > second.bottom;
+Then(
+  "ブロッホ球のラベル {string} と {string} の表示領域は重ならない",
+  function (firstLabel, secondLabel) {
+    const metrics = blochLabelMetrics().labels;
+    const first = metrics[firstLabel].bbox;
+    const second = metrics[secondLabel].bbox;
+    const overlap =
+      first.left < second.right &&
+      first.right > second.left &&
+      first.bottom < second.top &&
+      first.top > second.bottom;
 
-  assert.ok(
-    !overlap,
-    [
-      'expected rendered label boxes not to overlap',
-      `${firstLabel}: ${JSON.stringify(first)}`,
-      `${secondLabel}: ${JSON.stringify(second)}`
-    ].join('\n')
-  );
-});
+    assert.ok(
+      !overlap,
+      [
+        "expected rendered label boxes not to overlap",
+        `${firstLabel}: ${JSON.stringify(first)}`,
+        `${secondLabel}: ${JSON.stringify(second)}`,
+      ].join("\n")
+    );
+  }
+);
