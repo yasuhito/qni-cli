@@ -28,7 +28,7 @@ Pi 経由で `qni research solve` を実行し、`qni research plot` で cost pe
 
 提出物には回路を作るコマンドだけを書きます。`qni run` や `qni expect` などの検証コマンドは書きません。
 
-## 30問の標準解を実行する
+## 34問の標準解を実行する
 
 ### StateFlip
 
@@ -427,12 +427,12 @@ grading_cases:
 qni benchmark run-all benchmarks/quantum-katas benchmarks/solutions/quantum-katas
 ```
 
-期待される結果は、30問すべてが `passed` になり、終了コードが `0` になることです。
+期待される結果は、34問すべてが `passed` になり、終了コードが `0` になることです。
 
 ```text
 PASS benchmark suite
-tasks: 30
-passed: 30, failed: 0, disallowed: 0, error: 0
+tasks: 34
+passed: 34, failed: 0, disallowed: 0, error: 0
 - passed basic-gates/basis-change BasisChange
 - passed basic-gates/bell-state-change-1 BellStateChange1
 - passed basic-gates/bell-state-change-2 BellStateChange2

@@ -892,8 +892,8 @@ qni benchmark run で最小の合格判定を実行したい。
 
   ```text
   PASS benchmark suite
-  tasks: 30
-  passed: 30, failed: 0, disallowed: 0, error: 0
+  tasks: 34
+  passed: 34, failed: 0, disallowed: 0, error: 0
   - passed basic-gates/basis-change BasisChange
   - passed basic-gates/bell-state-change-1 BellStateChange1
   - passed basic-gates/bell-state-change-2 BellStateChange2
@@ -909,6 +909,10 @@ qni benchmark run で最小の合格判定を実行したい。
   - passed basic-gates/two-qubit-gate-2 TwoQubitGate2
   - passed basic-gates/two-qubit-gate-3 TwoQubitGate3
   - passed basic-gates/two-qubit-gate-4 TwoQubitGate4
+  - passed multi-qubit-gates/arbitrary-controls ArbitraryControls
+  - passed multi-qubit-gates/compound-gate CompoundGate
+  - passed multi-qubit-gates/controlled-rotation ControlledRotation
+  - passed multi-qubit-gates/preparing-bell-state PreparingBellState
   - passed single-qubit-gates/amplitude-change AmplitudeChange
   - passed single-qubit-gates/global-phase-i GlobalPhaseI
   - passed single-qubit-gates/prepare-arbitrary-state PrepareArbitraryState
@@ -939,8 +943,8 @@ qni benchmark run で最小の合格判定を実行したい。
       "disallowed": 0,
       "error": 0,
       "failed": 0,
-      "passed": 30,
-      "total": 30
+      "passed": 34,
+      "total": 34
     },
     "results": [
       {
@@ -1836,6 +1840,340 @@ qni benchmark run で最小の合格判定を実行したい。
           }
         ],
         "task": "benchmarks/quantum-katas/basic-gates/two-qubit-gate-4.md"
+      },
+      {
+        "taskId": "multi-qubit-gates/arbitrary-controls",
+        "title": "ArbitraryControls",
+        "submission": "benchmarks/solutions/quantum-katas/multi-qubit-gates/arbitrary-controls.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "gradingCases": [
+          {
+            "caseId": "basis-00000",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-00001",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-00010",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-00011",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-00100",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-00101",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-00110",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-00111",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-01000",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-01001",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-01010",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-01011",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-01100",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-01101",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-01110",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-01111",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-10000",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-10001",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-10010",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-10011",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-10100",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-10101",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-10110",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-10111",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-11000",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-11001",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-11010",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-11011",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-11100",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-11101",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-11110",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-11111",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "complex-superposition",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          }
+        ],
+        "checks": [
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" }
+        ],
+        "task": "benchmarks/quantum-katas/multi-qubit-gates/arbitrary-controls.md"
+      },
+      {
+        "taskId": "multi-qubit-gates/compound-gate",
+        "title": "CompoundGate",
+        "submission": "benchmarks/solutions/quantum-katas/multi-qubit-gates/compound-gate.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "gradingCases": [
+          {
+            "caseId": "basis-000",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-001",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-010",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-011",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-100",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-101",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-110",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-111",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "complex-superposition",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          }
+        ],
+        "checks": [
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" }
+        ],
+        "task": "benchmarks/quantum-katas/multi-qubit-gates/compound-gate.md"
+      },
+      {
+        "taskId": "multi-qubit-gates/controlled-rotation",
+        "title": "ControlledRotation",
+        "submission": "benchmarks/solutions/quantum-katas/multi-qubit-gates/controlled-rotation.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "gradingCases": [
+          {
+            "caseId": "basis-00",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-01",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-10",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "basis-11",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "complex-superposition",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          }
+        ],
+        "checks": [
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" }
+        ],
+        "task": "benchmarks/quantum-katas/multi-qubit-gates/controlled-rotation.md"
+      },
+      {
+        "taskId": "multi-qubit-gates/preparing-bell-state",
+        "title": "PreparingBellState",
+        "submission": "benchmarks/solutions/quantum-katas/multi-qubit-gates/preparing-bell-state.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "gradingCases": [
+          {
+            "caseId": "zero-input",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          }
+        ],
+        "checks": [{ "type": "run", "status": "passed" }],
+        "task": "benchmarks/quantum-katas/multi-qubit-gates/preparing-bell-state.md"
       },
       {
         "taskId": "single-qubit-gates/amplitude-change",

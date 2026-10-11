@@ -194,6 +194,13 @@ async function prepareQuantumKatasSubmissions(
   status: UnsuccessfulResearchStatus
 ): Promise<void> {
   const relativePaths = [
+    "single-qubit-gates/amplitude-change.qni",
+    "single-qubit-gates/prepare-rotated-state.qni",
+    "single-qubit-gates/prepare-arbitrary-state.qni",
+    "multi-qubit-gates/compound-gate.qni",
+    "multi-qubit-gates/preparing-bell-state.qni",
+    "multi-qubit-gates/controlled-rotation.qni",
+    "multi-qubit-gates/arbitrary-controls.qni",
     "basic-gates/basis-change.qni",
     "basic-gates/bell-state-change-1.qni",
     "basic-gates/bell-state-change-2.qni",
@@ -209,11 +216,8 @@ async function prepareQuantumKatasSubmissions(
     "basic-gates/two-qubit-gate-2.qni",
     "basic-gates/two-qubit-gate-3.qni",
     "basic-gates/two-qubit-gate-4.qni",
-    "single-qubit-gates/amplitude-change.qni",
     "single-qubit-gates/global-phase-i.qni",
-    "single-qubit-gates/prepare-arbitrary-state.qni",
     "single-qubit-gates/prepare-minus.qni",
-    "single-qubit-gates/prepare-rotated-state.qni",
     "single-qubit-gates/sign-flip-on-zero.qni",
     "single-qubit-gates/three-quarters-pi-phase.qni",
     "single-qubit-gates/y-gate.qni",
@@ -253,6 +257,22 @@ function quantumKatasSubmissionContent(
     [
       "single-qubit-gates/prepare-arbitrary-state.qni",
       "qni add Ry --angle 2*pi/3 --qubit 0 --step 0\nqni add P --angle pi/3 --qubit 0 --step 1\n",
+    ],
+    [
+      "multi-qubit-gates/compound-gate.qni",
+      "qni add S --qubit 0 --step 0\nqni add Y --qubit 2 --step 0\n",
+    ],
+    [
+      "multi-qubit-gates/preparing-bell-state.qni",
+      "qni add H --qubit 0 --step 0\nqni add X --control 0 --qubit 1 --step 1\n",
+    ],
+    [
+      "multi-qubit-gates/controlled-rotation.qni",
+      "qni add Rx --angle pi/3 --control 0 --qubit 1 --step 0\n",
+    ],
+    [
+      "multi-qubit-gates/arbitrary-controls.qni",
+      "qni add X --qubit 1 --step 0\nqni add X --qubit 3 --step 0\nqni add X --control 0,1,2,3 --qubit 4 --step 1\nqni add X --qubit 1 --step 2\nqni add X --qubit 3 --step 2\n",
     ],
     [
       "single-qubit-gates/global-phase-i.qni",
@@ -1000,15 +1020,15 @@ describe("research command TypeScript route", () => {
         );
         assert.equal(metadata.status, gradingCase.status);
         assert.deepStrictEqual(metadata.score, {
-          passed: 29,
-          total: 30,
-          percent: 96.66666666666667,
+          passed: 33,
+          total: 34,
+          percent: 97.05882352941177,
           source: "result.json",
         });
         assert.equal(gradingResult.status, gradingCase.status);
         assert.equal(gradingResult.exitCode, gradingCase.exitCode);
         assert.ok(trialSummary.includes(`- status: ${gradingCase.status}\n`));
-        assert.ok(trialSummary.includes("- score: 96.67%\n"));
+        assert.ok(trialSummary.includes("- score: 97.06%\n"));
         assert.equal(
           (await stat(path.join(trialDir, "submissions"))).isDirectory(),
           true
@@ -1146,8 +1166,8 @@ describe("research command TypeScript route", () => {
         result: "result.json",
         status: "passed",
         score: {
-          passed: 30,
-          total: 30,
+          passed: 34,
+          total: 34,
           percent: 100,
           source: "result.json",
         },
@@ -1158,8 +1178,8 @@ describe("research command TypeScript route", () => {
       );
       assert.equal(gradingResult.status, "passed");
       assert.deepStrictEqual(gradingResult.summary, {
-        total: 30,
-        passed: 30,
+        total: 34,
+        passed: 34,
         failed: 0,
         disallowed: 0,
         error: 0,
