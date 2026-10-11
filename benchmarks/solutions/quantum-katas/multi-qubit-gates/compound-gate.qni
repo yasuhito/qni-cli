@@ -1,0 +1,2 @@
+qni add S --qubit 0 --step 0
+qni add Y --qubit 2 --step 0

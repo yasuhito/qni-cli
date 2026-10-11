@@ -62,10 +62,10 @@
 | Kata                     | 総数 | 移植済み | 部分的（内数） | 残り |
 | ------------------------ | ---: | -------: | -------------: | ---: |
 | Single-Qubit Gates       |   14 |       11 |              1 |    3 |
-| Multi-Qubit Gates        |   10 |        6 |              1 |    4 |
+| Multi-Qubit Gates        |   10 |       10 |              3 |    0 |
 | Preparing Quantum States |   21 |        7 |              1 |   14 |
 | QFT                      |   12 |        0 |              0 |   12 |
-| 合計                     |   57 |       24 |              3 |   33 |
+| 合計                     |   57 |       28 |              5 |   29 |
 
 ### 必要な機能と採点方針
 
@@ -110,18 +110,20 @@
 
 ### multi_qubit_gates
 
-| 上流 exercise ID                             | qni課題ID（未移植は予定）                | 状態                     | 必要な機能           | 固定値                             |
-| -------------------------------------------- | ---------------------------------------- | ------------------------ | -------------------- | ---------------------------------- |
-| `multi_qubit_gates__compound_gate`           | `multi-qubit-gates/compound-gate`        | 未移植                   | なし（F2推奨）       | パラメータなし                     |
-| `multi_qubit_gates__entangle_qubits`         | `basic-gates/two-qubit-gate-1`           | 移植済み                 | なし                 | パラメータなし                     |
-| `multi_qubit_gates__preparing_bell_state`    | `multi-qubit-gates/preparing-bell-state` | 未移植                   | F1                   | パラメータなし                     |
-| `multi_qubit_gates__relative_phase_minusone` | `basic-gates/two-qubit-gate-2`           | 移植済み                 | なし                 | パラメータなし                     |
-| `multi_qubit_gates__qubit_swap`              | `basic-gates/two-qubit-gate-3`           | 部分的                   | 固定インスタンス追加 | N=2, index1=0, index2=1            |
-| `multi_qubit_gates__fredkin_gate`            | `basic-gates/fredkin-gate`               | 移植済み（採点強化済み） | なし                 | N=3、全8基底と重ね合わせの厳密比較 |
-| `multi_qubit_gates__controlled_rotation`     | `multi-qubit-gates/controlled-rotation`  | 未移植                   | F1/F4 (CRx)、F2推奨  | 未決定: θ                          |
-| `multi_qubit_gates__toffoli_gate`            | `basic-gates/toffoli-gate`               | 移植済み                 | なし                 | パラメータなし                     |
-| `multi_qubit_gates__anti_controlled_gate`    | `basic-gates/two-qubit-gate-4`           | 移植済み                 | なし                 | パラメータなし                     |
-| `multi_qubit_gates__arbitrary_controls`      | `multi-qubit-gates/arbitrary-controls`   | 未移植                   | F1/F4 (MCX)、F2推奨  | 未決定: N, controlBits             |
+| 上流 exercise ID                             | qni課題ID（未移植は予定）                | 状態                     | 必要な機能                | 固定値                                                                                               |
+| -------------------------------------------- | ---------------------------------------- | ------------------------ | ------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `multi_qubit_gates__compound_gate`           | `multi-qubit-gates/compound-gate`        | 移植済み                 | なし                      | N=3、パラメータなし、全8基底と複素重ね合わせの厳密比較                                               |
+| `multi_qubit_gates__entangle_qubits`         | `basic-gates/two-qubit-gate-1`           | 移植済み                 | なし                      | パラメータなし                                                                                       |
+| `multi_qubit_gates__preparing_bell_state`    | `multi-qubit-gates/preparing-bell-state` | 移植済み                 | F1                        | N=2、パラメータなし、ゼロ入力のみ                                                                    |
+| `multi_qubit_gates__relative_phase_minusone` | `basic-gates/two-qubit-gate-2`           | 移植済み                 | なし                      | パラメータなし                                                                                       |
+| `multi_qubit_gates__qubit_swap`              | `basic-gates/two-qubit-gate-3`           | 部分的                   | 固定インスタンス追加      | N=2, index1=0, index2=1                                                                              |
+| `multi_qubit_gates__fredkin_gate`            | `basic-gates/fredkin-gate`               | 移植済み（採点強化済み） | なし                      | N=3、全8基底と重ね合わせの厳密比較                                                                   |
+| `multi_qubit_gates__controlled_rotation`     | `multi-qubit-gates/controlled-rotation`  | 部分的                   | F1/F4 (CRx)、一般角度はF3 | N=2、θ=π/3、制御0・対象1、全4基底と複素重ね合わせ                                                    |
+| `multi_qubit_gates__toffoli_gate`            | `basic-gates/toffoli-gate`               | 移植済み                 | なし                      | パラメータなし                                                                                       |
+| `multi_qubit_gates__anti_controlled_gate`    | `basic-gates/two-qubit-gate-4`           | 移植済み                 | なし                      | パラメータなし                                                                                       |
+| `multi_qubit_gates__arbitrary_controls`      | `multi-qubit-gates/arbitrary-controls`   | 部分的                   | F1/F4 (MCX)               | N=4（制御数、全体5）、controlBits=[true,false,true,false]、制御0..3・対象4、全32基底と複素重ね合わせ |
+
+CompoundGate は上流の `CheckOperationsAreEqualStrict` に合わせて厳密比較する。残3問のみ `up_to_global_phase` を使う。ControlledRotation と ArbitraryControls は基底入力に加えて全基底に非ゼロ振幅を持つ複素重ね合わせを採点し、入力ごとに異なる位相を付ける誤答を防ぐ。上流の複数角度・全制御パターンは固定インスタンスへ縮小するため部分的移植として数える。
 
 ### preparing_states
 
