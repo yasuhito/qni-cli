@@ -145,7 +145,7 @@ describe("benchmark command TypeScript route", () => {
         result.stdout,
         [
           "ERROR StateFlip",
-          "error: submission command failed at line 1: qni add X --qubit nope --step 0",
+          "error: case zero error: submission command failed at line 1: qni add X --qubit nope --step 0",
           "qubit must be an integer",
           "",
         ].join("\n")
@@ -254,7 +254,34 @@ describe("benchmark command TypeScript route", () => {
           "benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni",
         status: "passed",
         exitCode: 0,
-        checks: [{ type: "run", status: "passed" }],
+        gradingCases: [
+          {
+            caseId: "zero",
+            status: "passed",
+            checks: [{ type: "run", status: "passed" }],
+          },
+          {
+            caseId: "one",
+            status: "passed",
+            checks: [{ type: "run", status: "passed" }],
+          },
+          {
+            caseId: "real-superposition",
+            status: "passed",
+            checks: [{ type: "run", status: "passed" }],
+          },
+          {
+            caseId: "complex-superposition",
+            status: "passed",
+            checks: [{ type: "run", status: "passed" }],
+          },
+        ],
+        checks: [
+          { type: "run", status: "passed" },
+          { type: "run", status: "passed" },
+          { type: "run", status: "passed" },
+          { type: "run", status: "passed" },
+        ],
       });
       assert.equal(result.stderr, "");
     });
@@ -279,7 +306,34 @@ describe("benchmark command TypeScript route", () => {
           "benchmarks/incorrect/quantum-katas/basic-gates/state-flip-wrong.qni",
         status: "failed",
         exitCode: 1,
-        checks: [{ type: "run", status: "failed" }],
+        gradingCases: [
+          {
+            caseId: "zero",
+            status: "failed",
+            checks: [{ type: "run", status: "failed" }],
+          },
+          {
+            caseId: "one",
+            status: "failed",
+            checks: [{ type: "run", status: "failed" }],
+          },
+          {
+            caseId: "real-superposition",
+            status: "failed",
+            checks: [{ type: "run", status: "failed" }],
+          },
+          {
+            caseId: "complex-superposition",
+            status: "failed",
+            checks: [{ type: "run", status: "failed" }],
+          },
+        ],
+        checks: [
+          { type: "run", status: "failed" },
+          { type: "run", status: "failed" },
+          { type: "run", status: "failed" },
+          { type: "run", status: "failed" },
+        ],
       });
       assert.equal(result.stderr, "");
     });
@@ -553,7 +607,7 @@ describe("benchmark command TypeScript route", () => {
       ]);
 
       assert.equal(result.exitStatus, 0, result.stderr);
-      assert.equal(result.stdout, "PASS FredkinGate\nchecks: 2\n");
+      assert.equal(result.stdout, "PASS FredkinGate\nchecks: 10\n");
       assert.equal(result.stderr, "");
     });
   });
@@ -568,7 +622,7 @@ describe("benchmark command TypeScript route", () => {
       ]);
 
       assert.equal(result.exitStatus, 0, result.stderr);
-      assert.equal(result.stdout, "PASS GlobalPhaseChange\nchecks: 2\n");
+      assert.equal(result.stdout, "PASS GlobalPhaseChange\nchecks: 7\n");
       assert.equal(result.stderr, "");
     });
   });
@@ -800,12 +854,24 @@ describe("benchmark command TypeScript route", () => {
         result.stdout,
         [
           "FAIL StateFlip",
-          "checks: 1",
+          "checks: 4",
           "failed checks:",
-          "- run #1: state vector did not match expected amplitudes",
+          "- case zero run #1: state vector did not match expected amplitudes",
           "  expected / actual mismatches:",
           "  - |0>: expected 0, actual 0.7071067811865475",
           "  - |1>: expected 1, actual 0.7071067811865475",
+          "- case one run #1: state vector did not match expected amplitudes",
+          "  expected / actual mismatches:",
+          "  - |0>: expected 1, actual 0.7071067811865475",
+          "  - |1>: expected 0, actual -0.7071067811865475",
+          "- case real-superposition run #1: state vector did not match expected amplitudes",
+          "  expected / actual mismatches:",
+          "  - |0>: expected 0.8, actual 0.9899494936611664",
+          "  - |1>: expected 0.6, actual -0.14142135623730953",
+          "- case complex-superposition run #1: state vector did not match expected amplitudes",
+          "  expected / actual mismatches:",
+          "  - |0>: expected 0.8i, actual 0.42426406871192845+0.565685424949238i",
+          "  - |1>: expected 0.6, actual 0.42426406871192845-0.565685424949238i",
           "",
         ].join("\n")
       );
@@ -866,7 +932,7 @@ describe("benchmark command TypeScript route", () => {
     });
   });
 
-  it("fails the FredkinGate unconditional SWAP incorrect sample in the control-zero grading case", async () => {
+  it("fails the FredkinGate unconditional SWAP incorrect sample on basis and superposition inputs", async () => {
     await withTempDir(async (dir) => {
       const result = captureDispatcherRun(dir, [
         "benchmark",
@@ -880,12 +946,20 @@ describe("benchmark command TypeScript route", () => {
         result.stdout,
         [
           "FAIL FredkinGate",
-          "checks: 2",
+          "checks: 10",
           "failed checks:",
+          "- case basis-010 run #1: state vector did not match expected amplitudes",
+          "  expected / actual mismatches:",
+          "  - |001>: expected 0, actual 1",
+          "  - |010>: expected 1, actual 0",
           "- case control-zero run #1: state vector did not match expected amplitudes",
           "  expected / actual mismatches:",
           "  - |001>: expected 1, actual 0",
           "  - |010>: expected 0, actual 1",
+          "- case control-superposition run #1: state vector did not match expected amplitudes",
+          "  expected / actual mismatches:",
+          "  - |001>: expected 0.6, actual 0",
+          "  - |010>: expected 0, actual 0.6",
           "",
         ].join("\n")
       );
@@ -893,7 +967,7 @@ describe("benchmark command TypeScript route", () => {
     });
   });
 
-  it("fails the GlobalPhaseChange no-phase incorrect sample in both grading cases", async () => {
+  it("fails the GlobalPhaseChange no-phase incorrect sample on controlled basis and superposition inputs", async () => {
     await withTempDir(async (dir) => {
       const result = captureDispatcherRun(dir, [
         "benchmark",
@@ -907,14 +981,24 @@ describe("benchmark command TypeScript route", () => {
         result.stdout,
         [
           "FAIL GlobalPhaseChange",
-          "checks: 2",
+          "checks: 7",
           "failed checks:",
+          "- case basis-10 run #1: state vector did not match expected amplitudes",
+          "  expected / actual mismatches:",
+          "  - |10>: expected -1, actual 1",
+          "- case basis-11 run #1: state vector did not match expected amplitudes",
+          "  expected / actual mismatches:",
+          "  - |11>: expected -1, actual 1",
           "- case target-zero run #1: state vector did not match expected amplitudes",
           "  expected / actual mismatches:",
           "  - |10>: expected -0.7071067811865476, actual 0.7071067811865476",
           "- case target-one run #1: state vector did not match expected amplitudes",
           "  expected / actual mismatches:",
           "  - |11>: expected -0.7071067811865476, actual 0.7071067811865476",
+          "- case complex-superposition run #1: state vector did not match expected amplitudes",
+          "  expected / actual mismatches:",
+          "  - |10>: expected -0.5, actual 0.5",
+          "  - |11>: expected -0.5i, actual 0.5i",
           "",
         ].join("\n")
       );
@@ -1214,19 +1298,19 @@ describe("benchmark command TypeScript route", () => {
             taskId: "basic-gates/fredkin-gate",
             status: "passed",
             exitCode: 0,
-            checks: [
-              { type: "run", status: "passed" },
-              { type: "run", status: "passed" },
-            ],
+            checks: Array.from({ length: 10 }, () => ({
+              type: "run",
+              status: "passed",
+            })),
           },
           {
             taskId: "basic-gates/global-phase-change",
             status: "passed",
             exitCode: 0,
-            checks: [
-              { type: "run", status: "passed" },
-              { type: "run", status: "passed" },
-            ],
+            checks: Array.from({ length: 7 }, () => ({
+              type: "run",
+              status: "passed",
+            })),
           },
           {
             taskId: "basic-gates/phase-change-pi-over-3",
@@ -1259,7 +1343,10 @@ describe("benchmark command TypeScript route", () => {
             taskId: "basic-gates/state-flip",
             status: "passed",
             exitCode: 0,
-            checks: [{ type: "run", status: "passed" }],
+            checks: Array.from({ length: 4 }, () => ({
+              type: "run",
+              status: "passed",
+            })),
           },
           {
             taskId: "basic-gates/toffoli-gate",
@@ -1579,6 +1666,66 @@ describe("benchmark command TypeScript route", () => {
       "exitCode": 0,
       "gradingCases": [
         {
+          "caseId": "basis-000",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-010",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-011",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-100",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-110",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-111",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
           "caseId": "control-zero",
           "status": "passed",
           "checks": [
@@ -1597,9 +1744,61 @@ describe("benchmark command TypeScript route", () => {
               "status": "passed"
             }
           ]
+        },
+        {
+          "caseId": "control-superposition",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "complex-superposition",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
         }
       ],
       "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
         {
           "type": "run",
           "status": "passed"
@@ -1619,6 +1818,46 @@ describe("benchmark command TypeScript route", () => {
       "exitCode": 0,
       "gradingCases": [
         {
+          "caseId": "basis-00",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-01",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-10",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-11",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
           "caseId": "target-zero",
           "status": "passed",
           "checks": [
@@ -1637,9 +1876,39 @@ describe("benchmark command TypeScript route", () => {
               "status": "passed"
             }
           ]
+        },
+        {
+          "caseId": "complex-superposition",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
         }
       ],
       "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
         {
           "type": "run",
           "status": "passed"
@@ -1777,7 +2046,61 @@ describe("benchmark command TypeScript route", () => {
       "submission": "benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni",
       "status": "passed",
       "exitCode": 0,
+      "gradingCases": [
+        {
+          "caseId": "zero",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "one",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "real-superposition",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "complex-superposition",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        }
+      ],
       "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
         {
           "type": "run",
           "status": "passed"

@@ -36,7 +36,7 @@ Pi 経由で `qni research solve` を実行し、`qni research plot` で cost pe
 qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni
 ```
 
-期待される結果は `PASS StateFlip` です。
+期待される結果は `PASS StateFlip` です。全2基底と実数・複素重ね合わせの4入力で、X の変換をグローバル位相も含めて厳密に検証します。
 
 ### BasisChange
 
@@ -116,7 +116,7 @@ qni benchmark run benchmarks/quantum-katas/basic-gates/bell-state-change-3.md be
 qni benchmark run benchmarks/quantum-katas/basic-gates/fredkin-gate.md benchmarks/solutions/quantum-katas/basic-gates/fredkin-gate.qni
 ```
 
-期待される結果は `PASS FredkinGate` です。FredkinGate は複数の採点ケースを持ち、制御量子ビットが `|0>` の入力と `|1>` の入力を別々に検証します。
+期待される結果は `PASS FredkinGate` です。全8基底と2つの重ね合わせの計10入力を厳密比較し、上流のユニタリ検証と同じ変換を要求します。
 
 ### GlobalPhaseChange
 
@@ -124,7 +124,19 @@ qni benchmark run benchmarks/quantum-katas/basic-gates/fredkin-gate.md benchmark
 qni benchmark run benchmarks/quantum-katas/basic-gates/global-phase-change.md benchmarks/solutions/quantum-katas/basic-gates/global-phase-change.qni
 ```
 
-期待される結果は `PASS GlobalPhaseChange` です。GlobalPhaseChange は、単独では観測不能なグローバル位相を、制御量子ビットの重ね合わせに対する相対位相として採点します。
+期待される結果は `PASS GlobalPhaseChange` です。全4基底と3つの重ね合わせの計7入力を厳密比較します。単独では観測不能なグローバル位相を、制御量子ビットの重ね合わせに対する相対位相としても採点します。
+
+上流の1量子ビット `-I` を制御付きにした既存の2量子ビット契約は維持します。`available_gates` は ControlledGlobalPhase に加えて CNOT/CZ を提供します。上流の Z→X→Z→X を制御付きで構成する標準解も実行できます。
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/global-phase-change.md benchmarks/solutions/quantum-katas/basic-gates/global-phase-change-pauli.qni
+```
+
+### 過去の評価との違い
+
+上記3課題はIDを変えずに採点条件を強化しました（入力数はそれぞれ1→4、2→10、2→7）。StateFlip の Z→X や FredkinGate の未検証基底・余計な位相を含む誤答は、旧条件の PASS から FAIL に変わります。GlobalPhaseChange では提出可能なゲートも増えています。
+
+保存済み `research/runs/*` は [ADR 0019](adr/0019-research-report-does-not-regrade.md) に従って再採点しません。過去の研究試行と現在の点数は採点・提出条件が異なるため直接比較しないでください。
 
 ### SignFlip
 
@@ -216,6 +228,19 @@ qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/
 
 期待される結果は `FAIL StateFlip` です。
 
+`|0>` 入力だけなら合う Z→X も、追加した `|1>` と重ね合わせ入力で不合格になります。
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/incorrect/quantum-katas/basic-gates/state-flip-z-then-x.qni
+```
+
+FredkinGate には、旧2入力では PASS した未検証基底・余計な位相の誤答もあります。どちらも現在は `FAIL FredkinGate`、終了コード `1` です。
+
+```bash
+qni benchmark run benchmarks/quantum-katas/basic-gates/fredkin-gate.md benchmarks/incorrect/quantum-katas/basic-gates/fredkin-gate-untested-basis.qni
+qni benchmark run benchmarks/quantum-katas/basic-gates/fredkin-gate.md benchmarks/incorrect/quantum-katas/basic-gates/fredkin-gate-extra-phase.qni
+```
+
 BasisChange には、`|0>` 入力だけに合う不正解サンプルがあります。`|1>` 入力の採点ケースで失敗するため、終了コードは `1` です。
 
 ```bash
@@ -291,7 +316,61 @@ qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/
   "submission": "benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni",
   "status": "passed",
   "exitCode": 0,
+  "gradingCases": [
+    {
+      "caseId": "zero",
+      "status": "passed",
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "caseId": "one",
+      "status": "passed",
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "caseId": "real-superposition",
+      "status": "passed",
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "caseId": "complex-superposition",
+      "status": "passed",
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ]
+    }
+  ],
   "checks": [
+    {
+      "type": "run",
+      "status": "passed"
+    },
+    {
+      "type": "run",
+      "status": "passed"
+    },
+    {
+      "type": "run",
+      "status": "passed"
+    },
     {
       "type": "run",
       "status": "passed"

@@ -54,7 +54,61 @@ qni benchmark run で最小の合格判定を実行したい。
     "submission": "benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni",
     "status": "passed",
     "exitCode": 0,
+    "gradingCases": [
+      {
+        "caseId": "zero",
+        "status": "passed",
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "caseId": "one",
+        "status": "passed",
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "caseId": "real-superposition",
+        "status": "passed",
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "caseId": "complex-superposition",
+        "status": "passed",
+        "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          }
+        ]
+      }
+    ],
     "checks": [
+      {
+        "type": "run",
+        "status": "passed"
+      },
+      {
+        "type": "run",
+        "status": "passed"
+      },
+      {
+        "type": "run",
+        "status": "passed"
+      },
       {
         "type": "run",
         "status": "passed"
@@ -490,9 +544,9 @@ qni benchmark run で最小の合格判定を実行したい。
 
   ```text
   FAIL StateFlip
-  checks: 1
+  checks: 4
   failed checks:
-  - run #1: state vector did not match expected amplitudes
+  - case zero run #1: state vector did not match expected amplitudes
     expected / actual mismatches:
     - |0>: expected 0, actual 0.7071067811865475
   ```
@@ -527,7 +581,61 @@ qni benchmark run で最小の合格判定を実行したい。
     "submission": "benchmarks/incorrect/quantum-katas/basic-gates/state-flip-wrong.qni",
     "status": "failed",
     "exitCode": 1,
+    "gradingCases": [
+      {
+        "caseId": "zero",
+        "status": "failed",
+        "checks": [
+          {
+            "type": "run",
+            "status": "failed"
+          }
+        ]
+      },
+      {
+        "caseId": "one",
+        "status": "failed",
+        "checks": [
+          {
+            "type": "run",
+            "status": "failed"
+          }
+        ]
+      },
+      {
+        "caseId": "real-superposition",
+        "status": "failed",
+        "checks": [
+          {
+            "type": "run",
+            "status": "failed"
+          }
+        ]
+      },
+      {
+        "caseId": "complex-superposition",
+        "status": "failed",
+        "checks": [
+          {
+            "type": "run",
+            "status": "failed"
+          }
+        ]
+      }
+    ],
     "checks": [
+      {
+        "type": "run",
+        "status": "failed"
+      },
+      {
+        "type": "run",
+        "status": "failed"
+      },
+      {
+        "type": "run",
+        "status": "failed"
+      },
       {
         "type": "run",
         "status": "failed"
@@ -663,7 +771,7 @@ qni benchmark run で最小の合格判定を実行したい。
 
   ```text
   ERROR StateFlip
-  error: submission command failed at line 1: qni add X --qubit nope --step 0
+  error: case zero error: submission command failed at line 1: qni add X --qubit nope --step 0
   ```
 
 ## Scenario: qni 実行失敗の JSON は error を含む
@@ -958,6 +1066,66 @@ qni benchmark run で最小の合格判定を実行したい。
         "exitCode": 0,
         "gradingCases": [
           {
+            "caseId": "basis-000",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "basis-010",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "basis-011",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "basis-100",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "basis-110",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "basis-111",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
             "caseId": "control-zero",
             "status": "passed",
             "checks": [
@@ -976,9 +1144,61 @@ qni benchmark run で最小の合格判定を実行したい。
                 "status": "passed"
               }
             ]
+          },
+          {
+            "caseId": "control-superposition",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "complex-superposition",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           }
         ],
         "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
           {
             "type": "run",
             "status": "passed"
@@ -998,6 +1218,46 @@ qni benchmark run で最小の合格判定を実行したい。
         "exitCode": 0,
         "gradingCases": [
           {
+            "caseId": "basis-00",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "basis-01",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "basis-10",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "basis-11",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
             "caseId": "target-zero",
             "status": "passed",
             "checks": [
@@ -1016,9 +1276,39 @@ qni benchmark run で最小の合格判定を実行したい。
                 "status": "passed"
               }
             ]
+          },
+          {
+            "caseId": "complex-superposition",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
           }
         ],
         "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
           {
             "type": "run",
             "status": "passed"
@@ -1156,7 +1446,61 @@ qni benchmark run で最小の合格判定を実行したい。
         "submission": "benchmarks/solutions/quantum-katas/basic-gates/state-flip.qni",
         "status": "passed",
         "exitCode": 0,
+        "gradingCases": [
+          {
+            "caseId": "zero",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "one",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "real-superposition",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          },
+          {
+            "caseId": "complex-superposition",
+            "status": "passed",
+            "checks": [
+              {
+                "type": "run",
+                "status": "passed"
+              }
+            ]
+          }
+        ],
         "checks": [
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
+          {
+            "type": "run",
+            "status": "passed"
+          },
           {
             "type": "run",
             "status": "passed"
