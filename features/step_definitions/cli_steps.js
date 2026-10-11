@@ -376,7 +376,16 @@ function quantumKatasSubmissionContent(status, relativePath) {
     }
   }
 
-  const content = passedSubmissions.get(relativePath);
+  const content = relativePath.startsWith("preparing-states/")
+    ? fs.readFileSync(
+        path.join(
+          PROJECT_ROOT,
+          "benchmarks/solutions/quantum-katas",
+          relativePath
+        ),
+        "utf8"
+      )
+    : passedSubmissions.get(relativePath);
 
   if (!content) {
     throw new Error(
@@ -411,6 +420,16 @@ function writeQuantumKatasSubmissions(scenarioDir, status, submissionsDir) {
     "basic-gates/two-qubit-gate-2.qni",
     "basic-gates/two-qubit-gate-3.qni",
     "basic-gates/two-qubit-gate-4.qni",
+    "preparing-states/all-bell-states-0.qni",
+    "preparing-states/all-bell-states-1.qni",
+    "preparing-states/all-bell-states-2.qni",
+    "preparing-states/all-bell-states-3.qni",
+    "preparing-states/all-basis-vectors.qni",
+    "preparing-states/even-odd.qni",
+    "preparing-states/zero-and-bitstring.qni",
+    "preparing-states/two-bitstrings.qni",
+    "preparing-states/four-bitstrings.qni",
+    "preparing-states/parity-bitstrings.qni",
     "single-qubit-gates/global-phase-i.qni",
     "single-qubit-gates/prepare-minus.qni",
     "single-qubit-gates/sign-flip-on-zero.qni",
@@ -611,7 +630,7 @@ function quantumKatasTaskEntries() {
 function assertQuantumKatasTaskFailures(buildFailures) {
   const taskEntries = quantumKatasTaskEntries();
 
-  assert.equal(taskEntries.length, 34, "expected Quantum Katas task count");
+  assert.equal(taskEntries.length, 44, "expected Quantum Katas task count");
   assert.deepEqual(taskEntries.flatMap(buildFailures), []);
 }
 

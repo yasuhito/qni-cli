@@ -25,8 +25,8 @@ qni research record が採点結果から課題単位の score を保存して�
 
   ```json
   {
-    "passed": 34,
-    "total": 34,
+    "passed": 44,
+    "total": 44,
     "percent": 100,
     "source": "result.json"
   }
@@ -40,9 +40,9 @@ qni research record が採点結果から課題単位の score を保存して�
 
   ```json
   {
-    "passed": 33,
-    "total": 34,
-    "percent": 97.05882352941177,
+    "passed": 43,
+    "total": 44,
+    "percent": 97.72727272727273,
     "source": "result.json"
   }
   ```
@@ -55,9 +55,9 @@ qni research record が採点結果から課題単位の score を保存して�
 
   ```json
   {
-    "passed": 33,
-    "total": 34,
-    "percent": 97.05882352941177,
+    "passed": 43,
+    "total": 44,
+    "percent": 97.72727272727273,
     "source": "result.json"
   }
   ```
@@ -70,9 +70,9 @@ qni research record が採点結果から課題単位の score を保存して�
 
   ```json
   {
-    "passed": 33,
-    "total": 34,
-    "percent": 97.05882352941177,
+    "passed": 43,
+    "total": 44,
+    "percent": 97.72727272727273,
     "source": "result.json"
   }
   ```

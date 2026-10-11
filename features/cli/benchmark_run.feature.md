@@ -892,8 +892,8 @@ qni benchmark run で最小の合格判定を実行したい。
 
   ```text
   PASS benchmark suite
-  tasks: 34
-  passed: 34, failed: 0, disallowed: 0, error: 0
+  tasks: 44
+  passed: 44, failed: 0, disallowed: 0, error: 0
   - passed basic-gates/basis-change BasisChange
   - passed basic-gates/bell-state-change-1 BellStateChange1
   - passed basic-gates/bell-state-change-2 BellStateChange2
@@ -913,6 +913,16 @@ qni benchmark run で最小の合格判定を実行したい。
   - passed multi-qubit-gates/compound-gate CompoundGate
   - passed multi-qubit-gates/controlled-rotation ControlledRotation
   - passed multi-qubit-gates/preparing-bell-state PreparingBellState
+  - passed preparing-states/all-basis-vectors AllBasisVectors
+  - passed preparing-states/all-bell-states-0 AllBellStates0
+  - passed preparing-states/all-bell-states-1 AllBellStates1
+  - passed preparing-states/all-bell-states-2 AllBellStates2
+  - passed preparing-states/all-bell-states-3 AllBellStates3
+  - passed preparing-states/even-odd EvenOdd
+  - passed preparing-states/four-bitstrings FourBitstrings
+  - passed preparing-states/parity-bitstrings ParityBitstrings
+  - passed preparing-states/two-bitstrings TwoBitstrings
+  - passed preparing-states/zero-and-bitstring ZeroAndBitstring
   - passed single-qubit-gates/amplitude-change AmplitudeChange
   - passed single-qubit-gates/global-phase-i GlobalPhaseI
   - passed single-qubit-gates/prepare-arbitrary-state PrepareArbitraryState
@@ -943,8 +953,8 @@ qni benchmark run で最小の合格判定を実行したい。
       "disallowed": 0,
       "error": 0,
       "failed": 0,
-      "passed": 34,
-      "total": 34
+      "passed": 44,
+      "total": 44
     },
     "results": [
       {
@@ -2174,6 +2184,96 @@ qni benchmark run で最小の合格判定を実行したい。
         ],
         "checks": [{ "type": "run", "status": "passed" }],
         "task": "benchmarks/quantum-katas/multi-qubit-gates/preparing-bell-state.md"
+      },
+      {
+        "taskId": "preparing-states/all-basis-vectors",
+        "title": "AllBasisVectors",
+        "submission": "benchmarks/solutions/quantum-katas/preparing-states/all-basis-vectors.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "checks": [{ "type": "run", "status": "passed" }],
+        "task": "benchmarks/quantum-katas/preparing-states/all-basis-vectors.md"
+      },
+      {
+        "taskId": "preparing-states/all-bell-states-0",
+        "title": "AllBellStates0",
+        "submission": "benchmarks/solutions/quantum-katas/preparing-states/all-bell-states-0.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "checks": [{ "type": "run", "status": "passed" }],
+        "task": "benchmarks/quantum-katas/preparing-states/all-bell-states-0.md"
+      },
+      {
+        "taskId": "preparing-states/all-bell-states-1",
+        "title": "AllBellStates1",
+        "submission": "benchmarks/solutions/quantum-katas/preparing-states/all-bell-states-1.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "checks": [{ "type": "run", "status": "passed" }],
+        "task": "benchmarks/quantum-katas/preparing-states/all-bell-states-1.md"
+      },
+      {
+        "taskId": "preparing-states/all-bell-states-2",
+        "title": "AllBellStates2",
+        "submission": "benchmarks/solutions/quantum-katas/preparing-states/all-bell-states-2.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "checks": [{ "type": "run", "status": "passed" }],
+        "task": "benchmarks/quantum-katas/preparing-states/all-bell-states-2.md"
+      },
+      {
+        "taskId": "preparing-states/all-bell-states-3",
+        "title": "AllBellStates3",
+        "submission": "benchmarks/solutions/quantum-katas/preparing-states/all-bell-states-3.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "checks": [{ "type": "run", "status": "passed" }],
+        "task": "benchmarks/quantum-katas/preparing-states/all-bell-states-3.md"
+      },
+      {
+        "taskId": "preparing-states/even-odd",
+        "title": "EvenOdd",
+        "submission": "benchmarks/solutions/quantum-katas/preparing-states/even-odd.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "checks": [{ "type": "run", "status": "passed" }],
+        "task": "benchmarks/quantum-katas/preparing-states/even-odd.md"
+      },
+      {
+        "taskId": "preparing-states/four-bitstrings",
+        "title": "FourBitstrings",
+        "submission": "benchmarks/solutions/quantum-katas/preparing-states/four-bitstrings.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "checks": [{ "type": "run", "status": "passed" }],
+        "task": "benchmarks/quantum-katas/preparing-states/four-bitstrings.md"
+      },
+      {
+        "taskId": "preparing-states/parity-bitstrings",
+        "title": "ParityBitstrings",
+        "submission": "benchmarks/solutions/quantum-katas/preparing-states/parity-bitstrings.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "checks": [{ "type": "run", "status": "passed" }],
+        "task": "benchmarks/quantum-katas/preparing-states/parity-bitstrings.md"
+      },
+      {
+        "taskId": "preparing-states/two-bitstrings",
+        "title": "TwoBitstrings",
+        "submission": "benchmarks/solutions/quantum-katas/preparing-states/two-bitstrings.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "checks": [{ "type": "run", "status": "passed" }],
+        "task": "benchmarks/quantum-katas/preparing-states/two-bitstrings.md"
+      },
+      {
+        "taskId": "preparing-states/zero-and-bitstring",
+        "title": "ZeroAndBitstring",
+        "submission": "benchmarks/solutions/quantum-katas/preparing-states/zero-and-bitstring.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "checks": [{ "type": "run", "status": "passed" }],
+        "task": "benchmarks/quantum-katas/preparing-states/zero-and-bitstring.md"
       },
       {
         "taskId": "single-qubit-gates/amplitude-change",
