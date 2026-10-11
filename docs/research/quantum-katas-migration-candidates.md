@@ -61,11 +61,11 @@
 
 | Kata                     | 総数 | 移植済み | 部分的（内数） | 残り |
 | ------------------------ | ---: | -------: | -------------: | ---: |
-| Single-Qubit Gates       |   14 |       11 |              1 |    3 |
+| Single-Qubit Gates       |   14 |       14 |              4 |    0 |
 | Multi-Qubit Gates        |   10 |       10 |              3 |    0 |
 | Preparing Quantum States |   21 |        7 |              1 |   14 |
 | QFT                      |   12 |        0 |              0 |   12 |
-| 合計                     |   57 |       28 |              5 |   29 |
+| 合計                     |   57 |       31 |              8 |   26 |
 
 ### 必要な機能と採点方針
 
@@ -104,9 +104,11 @@
 | `single_qubit_gates__phase_i`                 | `basic-gates/phase-flip`                     | 移植済み                 | なし                         | パラメータなし                                      |
 | `single_qubit_gates__three_quarters_pi_phase` | `single-qubit-gates/three-quarters-pi-phase` | 移植済み                 | なし                         | 角度=3π/4                                           |
 | `single_qubit_gates__complex_phase`           | `basic-gates/phase-change-pi-over-3`         | 部分的                   | F3または固定インスタンス追加 | α=π/3                                               |
-| `single_qubit_gates__amplitude_change`        | `single-qubit-gates/amplitude-change`        | 未移植                   | F4 (Ry)、一般角度はF3        | 未決定: α                                           |
-| `single_qubit_gates__prepare_rotated_state`   | `single-qubit-gates/prepare-rotated-state`   | 未移植                   | F4 (Rx)                      | 未決定: α, β                                        |
-| `single_qubit_gates__prepare_arbitrary_state` | `single-qubit-gates/prepare-arbitrary-state` | 未移植                   | F4 (Ry)                      | 未決定: α, β, θ                                     |
+| `single_qubit_gates__amplitude_change`        | `single-qubit-gates/amplitude-change`        | 部分的                   | F4 (Ry)、一般角度はF3        | α=π/6                                               |
+| `single_qubit_gates__prepare_rotated_state`   | `single-qubit-gates/prepare-rotated-state`   | 部分的                   | F4 (Rx)、一般値はF3          | α=-√3/2, β=1/2                                      |
+| `single_qubit_gates__prepare_arbitrary_state` | `single-qubit-gates/prepare-arbitrary-state` | 部分的                   | F4 (Ry)、一般値はF3          | α=1/2, β=√3/2, θ=π/3                                |
+
+残り3問は固定インスタンスとして追加済み（一般引数の対応は未実装なので「部分的」）。上流 `Verification.qs` は3問とも Strict 比較であり、グローバル位相を無視しない。AmplitudeChange は Ry(π/3) の変換を |0>、|1>、|+> で検証する。PrepareRotatedState は Rx(5π/3)、PrepareArbitraryState は Ry(2π/3)→P(π/3) で、上流と同じゼロ入力のみを検証する。
 
 ### multi_qubit_gates
 

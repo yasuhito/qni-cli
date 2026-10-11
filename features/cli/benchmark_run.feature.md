@@ -892,8 +892,8 @@ qni benchmark run で最小の合格判定を実行したい。
 
   ```text
   PASS benchmark suite
-  tasks: 31
-  passed: 31, failed: 0, disallowed: 0, error: 0
+  tasks: 34
+  passed: 34, failed: 0, disallowed: 0, error: 0
   - passed basic-gates/basis-change BasisChange
   - passed basic-gates/bell-state-change-1 BellStateChange1
   - passed basic-gates/bell-state-change-2 BellStateChange2
@@ -913,8 +913,11 @@ qni benchmark run で最小の合格判定を実行したい。
   - passed multi-qubit-gates/compound-gate CompoundGate
   - passed multi-qubit-gates/controlled-rotation ControlledRotation
   - passed multi-qubit-gates/preparing-bell-state PreparingBellState
+  - passed single-qubit-gates/amplitude-change AmplitudeChange
   - passed single-qubit-gates/global-phase-i GlobalPhaseI
+  - passed single-qubit-gates/prepare-arbitrary-state PrepareArbitraryState
   - passed single-qubit-gates/prepare-minus PrepareMinus
+  - passed single-qubit-gates/prepare-rotated-state PrepareRotatedState
   - passed single-qubit-gates/sign-flip-on-zero SignFlipOnZero
   - passed single-qubit-gates/three-quarters-pi-phase ThreeQuartersPiPhase
   - passed single-qubit-gates/y-gate YGate
@@ -940,8 +943,8 @@ qni benchmark run で最小の合格判定を実行したい。
       "disallowed": 0,
       "error": 0,
       "failed": 0,
-      "passed": 31,
-      "total": 31
+      "passed": 34,
+      "total": 34
     },
     "results": [
       {
@@ -2173,6 +2176,36 @@ qni benchmark run で最小の合格判定を実行したい。
         "task": "benchmarks/quantum-katas/multi-qubit-gates/preparing-bell-state.md"
       },
       {
+        "taskId": "single-qubit-gates/amplitude-change",
+        "title": "AmplitudeChange",
+        "submission": "benchmarks/solutions/quantum-katas/single-qubit-gates/amplitude-change.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "gradingCases": [
+          {
+            "caseId": "zero-input",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "one-input",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          },
+          {
+            "caseId": "plus-input",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          }
+        ],
+        "checks": [
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" },
+          { "type": "run", "status": "passed" }
+        ],
+        "task": "benchmarks/quantum-katas/single-qubit-gates/amplitude-change.md"
+      },
+      {
         "taskId": "single-qubit-gates/global-phase-i",
         "title": "GlobalPhaseI",
         "submission": "benchmarks/solutions/quantum-katas/single-qubit-gates/global-phase-i.qni",
@@ -2227,6 +2260,22 @@ qni benchmark run で最小の合格判定を実行したい。
         "task": "benchmarks/quantum-katas/single-qubit-gates/global-phase-i.md"
       },
       {
+        "taskId": "single-qubit-gates/prepare-arbitrary-state",
+        "title": "PrepareArbitraryState",
+        "submission": "benchmarks/solutions/quantum-katas/single-qubit-gates/prepare-arbitrary-state.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "gradingCases": [
+          {
+            "caseId": "zero-input",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          }
+        ],
+        "checks": [{ "type": "run", "status": "passed" }],
+        "task": "benchmarks/quantum-katas/single-qubit-gates/prepare-arbitrary-state.md"
+      },
+      {
         "taskId": "single-qubit-gates/prepare-minus",
         "title": "PrepareMinus",
         "submission": "benchmarks/solutions/quantum-katas/single-qubit-gates/prepare-minus.qni",
@@ -2279,6 +2328,22 @@ qni benchmark run で最小の合格判定を実行したい。
           }
         ],
         "task": "benchmarks/quantum-katas/single-qubit-gates/prepare-minus.md"
+      },
+      {
+        "taskId": "single-qubit-gates/prepare-rotated-state",
+        "title": "PrepareRotatedState",
+        "submission": "benchmarks/solutions/quantum-katas/single-qubit-gates/prepare-rotated-state.qni",
+        "status": "passed",
+        "exitCode": 0,
+        "gradingCases": [
+          {
+            "caseId": "zero-input",
+            "status": "passed",
+            "checks": [{ "type": "run", "status": "passed" }]
+          }
+        ],
+        "checks": [{ "type": "run", "status": "passed" }],
+        "task": "benchmarks/quantum-katas/single-qubit-gates/prepare-rotated-state.md"
       },
       {
         "taskId": "single-qubit-gates/sign-flip-on-zero",
