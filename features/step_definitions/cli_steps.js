@@ -253,6 +253,18 @@ function writeCircuitJson(scenarioDir, data) {
 function quantumKatasSubmissionContent(status, relativePath) {
   const passedSubmissions = new Map([
     [
+      "single-qubit-gates/amplitude-change.qni",
+      "qni add Ry --angle pi/3 --qubit 0 --step 0\n",
+    ],
+    [
+      "single-qubit-gates/prepare-rotated-state.qni",
+      "qni add Rx --angle 5*pi/3 --qubit 0 --step 0\n",
+    ],
+    [
+      "single-qubit-gates/prepare-arbitrary-state.qni",
+      "qni add Ry --angle 2*pi/3 --qubit 0 --step 0\nqni add P --angle pi/3 --qubit 0 --step 1\n",
+    ],
+    [
       "single-qubit-gates/global-phase-i.qni",
       "qni add Z --qubit 0 --step 0\nqni add Y --qubit 0 --step 1\nqni add X --qubit 0 --step 2\n",
     ],
@@ -376,8 +388,11 @@ function writeQuantumKatasSubmissions(scenarioDir, status, submissionsDir) {
     "basic-gates/two-qubit-gate-2.qni",
     "basic-gates/two-qubit-gate-3.qni",
     "basic-gates/two-qubit-gate-4.qni",
+    "single-qubit-gates/amplitude-change.qni",
     "single-qubit-gates/global-phase-i.qni",
+    "single-qubit-gates/prepare-arbitrary-state.qni",
     "single-qubit-gates/prepare-minus.qni",
+    "single-qubit-gates/prepare-rotated-state.qni",
     "single-qubit-gates/sign-flip-on-zero.qni",
     "single-qubit-gates/three-quarters-pi-phase.qni",
     "single-qubit-gates/y-gate.qni",
@@ -576,7 +591,7 @@ function quantumKatasTaskEntries() {
 function assertQuantumKatasTaskFailures(buildFailures) {
   const taskEntries = quantumKatasTaskEntries();
 
-  assert.equal(taskEntries.length, 27, "expected Quantum Katas task count");
+  assert.equal(taskEntries.length, 30, "expected Quantum Katas task count");
   assert.deepEqual(taskEntries.flatMap(buildFailures), []);
 }
 

@@ -28,7 +28,7 @@ Pi 経由で `qni research solve` を実行し、`qni research plot` で cost pe
 
 提出物には回路を作るコマンドだけを書きます。`qni run` や `qni expect` などの検証コマンドは書きません。
 
-## 27問の標準解を実行する
+## 30問の標準解を実行する
 
 ### StateFlip
 
@@ -427,12 +427,12 @@ grading_cases:
 qni benchmark run-all benchmarks/quantum-katas benchmarks/solutions/quantum-katas
 ```
 
-期待される結果は、27問すべてが `passed` になり、終了コードが `0` になることです。
+期待される結果は、30問すべてが `passed` になり、終了コードが `0` になることです。
 
 ```text
 PASS benchmark suite
-tasks: 27
-passed: 27, failed: 0, disallowed: 0, error: 0
+tasks: 30
+passed: 30, failed: 0, disallowed: 0, error: 0
 - passed basic-gates/basis-change BasisChange
 - passed basic-gates/bell-state-change-1 BellStateChange1
 - passed basic-gates/bell-state-change-2 BellStateChange2
@@ -448,8 +448,11 @@ passed: 27, failed: 0, disallowed: 0, error: 0
 - passed basic-gates/two-qubit-gate-2 TwoQubitGate2
 - passed basic-gates/two-qubit-gate-3 TwoQubitGate3
 - passed basic-gates/two-qubit-gate-4 TwoQubitGate4
+- passed single-qubit-gates/amplitude-change AmplitudeChange
 - passed single-qubit-gates/global-phase-i GlobalPhaseI
+- passed single-qubit-gates/prepare-arbitrary-state PrepareArbitraryState
 - passed single-qubit-gates/prepare-minus PrepareMinus
+- passed single-qubit-gates/prepare-rotated-state PrepareRotatedState
 - passed single-qubit-gates/sign-flip-on-zero SignFlipOnZero
 - passed single-qubit-gates/three-quarters-pi-phase ThreeQuartersPiPhase
 - passed single-qubit-gates/y-gate YGate
@@ -492,6 +495,8 @@ checks:
 期待ベクトルの最大振幅を基準に単位位相だけを補正して比較します。相対位相、振幅の大きさ、余分な基底成分の誤りは許容せず、不一致の表示も補正後の期待値を使います。
 
 既存の PlusState、MinusState、AllBasisVectors_TwoQubits、AllBasisVectorWithPhaseFlip_TwoQubits、AllBasisVectorsWithPhases_TwoQubits、BellState、GHZState の7状態準備課題で有効です。BellState の検証は `expect` からこの `run` へ統一しました。basic-gates と single-qubit-gates の位相を含む変換要件は引き続き厳密に検証します。
+
+Single-Qubit Gates の固定課題3問も上流の Strict 比較に従います。AmplitudeChange は α=π/6 で3入力を検証します。PrepareRotatedState は α=-√3/2、β=1/2、PrepareArbitraryState は α=1/2、β=√3/2、θ=π/3 とし、準備2問は上流と同じゼロ入力だけを検証します。いずれもグローバル位相の違う提出物は不合格です。
 
 ```bash
 # -|+> は状態準備として正解
