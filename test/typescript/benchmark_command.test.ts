@@ -10,6 +10,39 @@ import {
   withTempDir,
 } from "./helpers/command";
 
+function multiQubitExpectedResults() {
+  return [
+    { slug: "arbitrary-controls", title: "ArbitraryControls", n: 5 },
+    { slug: "compound-gate", title: "CompoundGate", n: 3 },
+    { slug: "controlled-rotation", title: "ControlledRotation", n: 2 },
+    { slug: "preparing-bell-state", title: "PreparingBellState", n: 0 },
+  ].map(({ slug, title, n }) => {
+    const caseIds =
+      n === 0
+        ? ["zero-input"]
+        : [
+            ...Array.from(
+              { length: 2 ** n },
+              (_, i) => `basis-${i.toString(2).padStart(n, "0")}`
+            ),
+            "complex-superposition",
+          ];
+    return {
+      taskId: `multi-qubit-gates/${slug}`,
+      title,
+      submission: `benchmarks/solutions/quantum-katas/multi-qubit-gates/${slug}.qni`,
+      status: "passed",
+      exitCode: 0,
+      gradingCases: caseIds.map((caseId) => ({
+        caseId,
+        status: "passed",
+        checks: [{ type: "run", status: "passed" }],
+      })),
+      checks: caseIds.map(() => ({ type: "run", status: "passed" })),
+      task: `benchmarks/quantum-katas/multi-qubit-gates/${slug}.md`,
+    };
+  });
+}
 const preparingStateResults = [
   ["all-basis-vectors", "AllBasisVectors"],
   ["all-bell-states-0", "AllBellStates0"],
@@ -1274,8 +1307,8 @@ describe("benchmark command TypeScript route", () => {
       assert.equal(captured.value.status, "passed");
       assert.equal(captured.value.exitCode, 0);
       assert.deepStrictEqual(captured.value.summary, {
-        total: 40,
-        passed: 40,
+        total: 44,
+        passed: 44,
         failed: 0,
         disallowed: 0,
         error: 0,
@@ -1423,7 +1456,7 @@ describe("benchmark command TypeScript route", () => {
               { type: "run", status: "passed" },
             ],
           },
-          ...preparingStateResults.map(
+          ...[...multiQubitExpectedResults(), ...preparingStateResults].map(
             ({ taskId, status, exitCode, checks }) => ({
               taskId,
               status,
@@ -1526,8 +1559,8 @@ describe("benchmark command TypeScript route", () => {
         result.stdout,
         [
           "PASS benchmark suite",
-          "tasks: 40",
-          "passed: 40, failed: 0, disallowed: 0, error: 0",
+          "tasks: 44",
+          "passed: 44, failed: 0, disallowed: 0, error: 0",
           "- passed basic-gates/basis-change BasisChange",
           "- passed basic-gates/bell-state-change-1 BellStateChange1",
           "- passed basic-gates/bell-state-change-2 BellStateChange2",
@@ -1543,6 +1576,10 @@ describe("benchmark command TypeScript route", () => {
           "- passed basic-gates/two-qubit-gate-2 TwoQubitGate2",
           "- passed basic-gates/two-qubit-gate-3 TwoQubitGate3",
           "- passed basic-gates/two-qubit-gate-4 TwoQubitGate4",
+          "- passed multi-qubit-gates/arbitrary-controls ArbitraryControls",
+          "- passed multi-qubit-gates/compound-gate CompoundGate",
+          "- passed multi-qubit-gates/controlled-rotation ControlledRotation",
+          "- passed multi-qubit-gates/preparing-bell-state PreparingBellState",
           ...preparingStateResults.map(
             ({ taskId, title }) => `- passed ${taskId} ${title}`
           ),
@@ -1590,8 +1627,8 @@ describe("benchmark command TypeScript route", () => {
     "disallowed": 0,
     "error": 0,
     "failed": 0,
-    "passed": 40,
-    "total": 40
+    "passed": 44,
+    "total": 44
   },
   "results": [
     {
@@ -2488,6 +2525,9 @@ describe("benchmark command TypeScript route", () => {
       ],
       "task": "benchmarks/quantum-katas/basic-gates/two-qubit-gate-4.md"
     },
+    ${multiQubitExpectedResults()
+      .map((result) => JSON.stringify(result))
+      .join(",\n")},
     ${preparingStateResults.map((result) => JSON.stringify(result)).join(",\n")},
     {"taskId":"single-qubit-gates/amplitude-change","title":"AmplitudeChange","submission":"benchmarks/solutions/quantum-katas/single-qubit-gates/amplitude-change.qni","status":"passed","exitCode":0,"gradingCases":[{"caseId":"zero-input","status":"passed","checks":[{"type":"run","status":"passed"}]},{"caseId":"one-input","status":"passed","checks":[{"type":"run","status":"passed"}]},{"caseId":"plus-input","status":"passed","checks":[{"type":"run","status":"passed"}]}],"checks":[{"type":"run","status":"passed"},{"type":"run","status":"passed"},{"type":"run","status":"passed"}],"task":"benchmarks/quantum-katas/single-qubit-gates/amplitude-change.md"},
     {"taskId":"single-qubit-gates/global-phase-i","title":"GlobalPhaseI","submission":"benchmarks/solutions/quantum-katas/single-qubit-gates/global-phase-i.qni","status":"passed","exitCode":0,"gradingCases":[{"caseId":"zero-input","status":"passed","checks":[{"type":"run","status":"passed"}]},{"caseId":"one-input","status":"passed","checks":[{"type":"run","status":"passed"}]},{"caseId":"plus-input","status":"passed","checks":[{"type":"run","status":"passed"}]}],"checks":[{"type":"run","status":"passed"},{"type":"run","status":"passed"},{"type":"run","status":"passed"}],"task":"benchmarks/quantum-katas/single-qubit-gates/global-phase-i.md"},

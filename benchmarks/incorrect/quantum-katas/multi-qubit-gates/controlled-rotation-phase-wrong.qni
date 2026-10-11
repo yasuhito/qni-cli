@@ -1,0 +1,2 @@
+qni add Rx --angle pi/3 --control 0 --qubit 1 --step 0
+qni add Z --qubit 0 --step 1

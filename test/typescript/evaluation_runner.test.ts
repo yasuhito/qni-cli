@@ -597,8 +597,8 @@ describe("evaluation runner public entrypoints", () => {
       assert.equal(captured.value.status, "passed");
       assert.equal(captured.value.exitCode, 0);
       assert.deepStrictEqual(captured.value.summary, {
-        total: 40,
-        passed: 40,
+        total: 44,
+        passed: 44,
         failed: 0,
         disallowed: 0,
         error: 0,
@@ -630,8 +630,8 @@ describe("evaluation runner public entrypoints", () => {
         output.humanOutput,
         [
           "PASS benchmark suite",
-          "tasks: 40",
-          "passed: 40, failed: 0, disallowed: 0, error: 0",
+          "tasks: 44",
+          "passed: 44, failed: 0, disallowed: 0, error: 0",
           "- passed basic-gates/basis-change BasisChange",
           "- passed basic-gates/bell-state-change-1 BellStateChange1",
           "- passed basic-gates/bell-state-change-2 BellStateChange2",
@@ -647,6 +647,10 @@ describe("evaluation runner public entrypoints", () => {
           "- passed basic-gates/two-qubit-gate-2 TwoQubitGate2",
           "- passed basic-gates/two-qubit-gate-3 TwoQubitGate3",
           "- passed basic-gates/two-qubit-gate-4 TwoQubitGate4",
+          "- passed multi-qubit-gates/arbitrary-controls ArbitraryControls",
+          "- passed multi-qubit-gates/compound-gate CompoundGate",
+          "- passed multi-qubit-gates/controlled-rotation ControlledRotation",
+          "- passed multi-qubit-gates/preparing-bell-state PreparingBellState",
           "- passed preparing-states/all-basis-vectors AllBasisVectors",
           "- passed preparing-states/all-bell-states-0 AllBellStates0",
           "- passed preparing-states/all-bell-states-1 AllBellStates1",
@@ -677,8 +681,8 @@ describe("evaluation runner public entrypoints", () => {
       );
       assert.equal(output.jsonOutput.status, "passed");
       assert.deepStrictEqual(output.jsonOutput.summary, {
-        total: 40,
-        passed: 40,
+        total: 44,
+        passed: 44,
         failed: 0,
         disallowed: 0,
         error: 0,

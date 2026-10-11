@@ -265,6 +265,22 @@ function quantumKatasSubmissionContent(status, relativePath) {
       "qni add Ry --angle 2*pi/3 --qubit 0 --step 0\nqni add P --angle pi/3 --qubit 0 --step 1\n",
     ],
     [
+      "multi-qubit-gates/compound-gate.qni",
+      "qni add S --qubit 0 --step 0\nqni add Y --qubit 2 --step 0\n",
+    ],
+    [
+      "multi-qubit-gates/preparing-bell-state.qni",
+      "qni add H --qubit 0 --step 0\nqni add X --control 0 --qubit 1 --step 1\n",
+    ],
+    [
+      "multi-qubit-gates/controlled-rotation.qni",
+      "qni add Rx --angle pi/3 --control 0 --qubit 1 --step 0\n",
+    ],
+    [
+      "multi-qubit-gates/arbitrary-controls.qni",
+      "qni add X --qubit 1 --step 0\nqni add X --qubit 3 --step 0\nqni add X --control 0,1,2,3 --qubit 4 --step 1\nqni add X --qubit 1 --step 2\nqni add X --qubit 3 --step 2\n",
+    ],
+    [
       "single-qubit-gates/global-phase-i.qni",
       "qni add Z --qubit 0 --step 0\nqni add Y --qubit 0 --step 1\nqni add X --qubit 0 --step 2\n",
     ],
@@ -382,6 +398,13 @@ function quantumKatasSubmissionContent(status, relativePath) {
 
 function writeQuantumKatasSubmissions(scenarioDir, status, submissionsDir) {
   const relativePaths = [
+    "single-qubit-gates/amplitude-change.qni",
+    "single-qubit-gates/prepare-rotated-state.qni",
+    "single-qubit-gates/prepare-arbitrary-state.qni",
+    "multi-qubit-gates/compound-gate.qni",
+    "multi-qubit-gates/preparing-bell-state.qni",
+    "multi-qubit-gates/controlled-rotation.qni",
+    "multi-qubit-gates/arbitrary-controls.qni",
     "basic-gates/basis-change.qni",
     "basic-gates/bell-state-change-1.qni",
     "basic-gates/bell-state-change-2.qni",
@@ -407,11 +430,8 @@ function writeQuantumKatasSubmissions(scenarioDir, status, submissionsDir) {
     "preparing-states/two-bitstrings.qni",
     "preparing-states/four-bitstrings.qni",
     "preparing-states/parity-bitstrings.qni",
-    "single-qubit-gates/amplitude-change.qni",
     "single-qubit-gates/global-phase-i.qni",
-    "single-qubit-gates/prepare-arbitrary-state.qni",
     "single-qubit-gates/prepare-minus.qni",
-    "single-qubit-gates/prepare-rotated-state.qni",
     "single-qubit-gates/sign-flip-on-zero.qni",
     "single-qubit-gates/three-quarters-pi-phase.qni",
     "single-qubit-gates/y-gate.qni",
@@ -610,7 +630,7 @@ function quantumKatasTaskEntries() {
 function assertQuantumKatasTaskFailures(buildFailures) {
   const taskEntries = quantumKatasTaskEntries();
 
-  assert.equal(taskEntries.length, 40, "expected Quantum Katas task count");
+  assert.equal(taskEntries.length, 44, "expected Quantum Katas task count");
   assert.deepEqual(taskEntries.flatMap(buildFailures), []);
 }
 
