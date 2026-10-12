@@ -201,7 +201,14 @@ export function writeNeutralCircuitJsonDirectoryAsQniSubmissions(
     )
   ) {
     throw new NeutralCircuitJsonSubmissionError(
-      "symbolic tasks cannot use the legacy JSON-to-qni conversion; use research record --submissions with symbolic JSON"
+      relativeTaskFiles.some(
+        (file) =>
+          benchmarkTaskSubmissionProtocol(
+            path.join(options.benchmarkDirPath, file)
+          ) === "neutral-parameterized-circuit-json-v1"
+      )
+        ? "parameterized tasks cannot use the legacy JSON-to-qni conversion; use research record --submissions with parameterized JSON"
+        : "symbolic tasks cannot use the legacy JSON-to-qni conversion; use research record --submissions with symbolic JSON"
     );
   }
 

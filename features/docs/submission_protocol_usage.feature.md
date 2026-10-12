@@ -22,7 +22,7 @@ qni-cli の利用者として
 
 ## Scenario: ベンチマーク手順は submissionProtocol の値を説明する
 
-- Then リポジトリファイル "docs/benchmark.md" は "`submissionProtocol` は `blind-neutral-circuit-json-v1`、`qni-command-output-v0`、または記号課題の `neutral-symbolic-circuit-json-v1` を保存します。" を含む
+- Then リポジトリファイル "docs/benchmark.md" は "`submissionProtocol` は `blind-neutral-circuit-json-v1`、`qni-command-output-v0`、記号課題の `neutral-symbolic-circuit-json-v1`、または可変入力課題の `neutral-parameterized-circuit-json-v1` を保存します。" を含む
 
 ## Scenario: README は提出経路と研究プロトコルの詳細を専門文書へ案内する
 

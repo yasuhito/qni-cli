@@ -1,0 +1,200 @@
+{
+  "protocol": "neutral-parameterized-circuit-json-v1",
+  "inputs": [
+    {
+      "name": "a",
+      "type": "bits",
+      "min": 1,
+      "max": 8
+    },
+    {
+      "name": "b",
+      "type": "bits",
+      "min": 1,
+      "max": 8
+    }
+  ],
+  "qubits": {
+    "len": {
+      "input": "a"
+    }
+  },
+  "body": [
+    {
+      "let": "pivot",
+      "value": -1
+    },
+    {
+      "for": "i",
+      "from": 0,
+      "to": {
+        "len": {
+          "input": "a"
+        }
+      },
+      "body": [
+        {
+          "if": {
+            "and": [
+              {
+                "eq": [
+                  {
+                    "var": "pivot"
+                  },
+                  -1
+                ]
+              },
+              {
+                "ne": [
+                  {
+                    "at": [
+                      {
+                        "input": "a"
+                      },
+                      {
+                        "var": "i"
+                      }
+                    ]
+                  },
+                  {
+                    "at": [
+                      {
+                        "input": "b"
+                      },
+                      {
+                        "var": "i"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "then": [
+            {
+              "set": "pivot",
+              "value": {
+                "var": "i"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "gate": "H",
+      "targets": {
+        "array": [
+          {
+            "var": "pivot"
+          }
+        ]
+      }
+    },
+    {
+      "for": "i",
+      "from": 0,
+      "to": {
+        "len": {
+          "input": "a"
+        }
+      },
+      "body": [
+        {
+          "if": {
+            "and": [
+              {
+                "ne": [
+                  {
+                    "var": "i"
+                  },
+                  {
+                    "var": "pivot"
+                  }
+                ]
+              },
+              {
+                "ne": [
+                  {
+                    "at": [
+                      {
+                        "input": "a"
+                      },
+                      {
+                        "var": "i"
+                      }
+                    ]
+                  },
+                  {
+                    "at": [
+                      {
+                        "input": "b"
+                      },
+                      {
+                        "var": "i"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "then": [
+            {
+              "gate": "CNOT",
+              "targets": {
+                "array": [
+                  {
+                    "var": "i"
+                  }
+                ]
+              },
+              "controls": {
+                "array": [
+                  {
+                    "var": "pivot"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "for": "i",
+      "from": 0,
+      "to": {
+        "len": {
+          "input": "a"
+        }
+      },
+      "body": [
+        {
+          "if": {
+            "at": [
+              {
+                "input": "a"
+              },
+              {
+                "var": "i"
+              }
+            ]
+          },
+          "then": [
+            {
+              "gate": "X",
+              "targets": {
+                "array": [
+                  {
+                    "var": "i"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

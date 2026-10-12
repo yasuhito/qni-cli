@@ -10,7 +10,7 @@ Pi 経由で `qni research solve` を実行し、`qni research plot` で cost pe
 
 ## 評価ランナーと研究プロトコル
 
-固定幅で角度・連続引数だけが変わる課題の主採点は、[記号版6課題](#記号版6課題の主採点)の全引数に対する証明です。履歴互換の数値版63課題と記号版6課題で、合計69課題ファイル（一般化版の重複を含む）があります。
+固定幅で角度・連続引数だけが変わる課題の主採点は、[記号版6課題](#記号版6課題の主採点)の全引数に対する証明です。可変 N・配列・離散引数は[可変入力版12課題](#可変入力版12課題の採点)で複数入力を数値検証します。履歴互換の数値版63課題、記号版6課題、可変入力版12課題で、合計81課題ファイル（一般化版の重複を含む）があります。
 
 既存数値課題に対する `qni benchmark run` と `qni benchmark run-all` は `.qni` 採点器です。提出物を一時的な作業場所で実行し、課題 frontmatter の検証条件に照らして採点します。AI は呼び出さず、研究試行ディレクトリも作りません。
 
@@ -18,7 +18,7 @@ Pi 経由で `qni research solve` を実行し、`qni research plot` で cost pe
 
 `.qni` 直接提出は `qni-command-output-v0` の legacy protocol です。`qni benchmark` で手元の `.qni` 提出物を採点したい場合や、`qni research record --submissions` で既存の `.qni` 提出物群を研究試行に残したい場合に使います。共同研究者が qni-cli のコマンド形式や許可コマンドを見ているため、`blind-neutral-circuit-json-v1` の結果と `qni-command-output-v0` の結果を同じ順位表や散布図で混ぜて比較しないでください。
 
-研究試行の `metadata.json` と、`solve` が保存する `calls.json` では `submissionProtocol` を確認します。`submissionProtocol` は `blind-neutral-circuit-json-v1`、`qni-command-output-v0`、または記号課題の `neutral-symbolic-circuit-json-v1` を保存します。記号JSONは `research record --submissions` で記録でき、過去のプロトコルとは別枠にします。`blind-neutral-circuit-json-v1` は中立回路 JSON を採点前に `.qni` へ変換した公平比較用の提出プロトコル、`qni-command-output-v0` は既存の `.qni` コマンド列を直接提出した legacy protocol です。
+研究試行の `metadata.json` と、`solve` が保存する `calls.json` では `submissionProtocol` を確認します。`submissionProtocol` は `blind-neutral-circuit-json-v1`、`qni-command-output-v0`、記号課題の `neutral-symbolic-circuit-json-v1`、または可変入力課題の `neutral-parameterized-circuit-json-v1` を保存します。記号JSONは `research record --submissions` で記録でき、過去のプロトコルとは別枠にします。`blind-neutral-circuit-json-v1` は中立回路 JSON を採点前に `.qni` へ変換した公平比較用の提出プロトコル、`qni-command-output-v0` は既存の `.qni` コマンド列を直接提出した legacy protocol です。
 
 ## legacy .qni 直接提出の作り方
 
@@ -36,7 +36,7 @@ Pi 経由で `qni research solve` を実行し、`qni research plot` で cost pe
 qni benchmark run-all benchmarks/quantum-katas-symbolic benchmarks/solutions/quantum-katas-symbolic
 ```
 
-新しい提出プロトコル `neutral-symbolic-circuit-json-v1` の `.json` を直接採点します。全6課題を固定値でなく宣言した全定義域で証明します。PrepareRotatedState は実数角 φ による符号付き振幅の全円、PrepareArbitraryState は α∈[-1,1]・β=√(1−α²)≥0 と独立した実数位相 θ を使い、両方ともゼロ入力の状態を全体位相込みで厳密比較します。詳細・式文法・実数と正規化の仮定・位相・時間切れの不合格は [記号採点](symbolic-grading.md) を参照してください。可変 N/配列の複数値数値採点は後続PRです。過去結果は再採点しません。
+新しい提出プロトコル `neutral-symbolic-circuit-json-v1` の `.json` を直接採点します。全6課題を固定値でなく宣言した全定義域で証明します。PrepareRotatedState は実数角 φ による符号付き振幅の全円、PrepareArbitraryState は α∈[-1,1]・β=√(1−α²)≥0 と独立した実数位相 θ を使い、両方ともゼロ入力の状態を全体位相込みで厳密比較します。詳細・式文法・実数と正規化の仮定・位相・時間切れの不合格は [記号採点](symbolic-grading.md) を参照してください。可変 N/配列の複数値数値採点は可変入力版を使います。過去結果は再採点しません。
 
 ```text
 PASS benchmark suite
@@ -49,6 +49,36 @@ passed: 6, failed: 0, disallowed: 0, error: 0
 - passed single-qubit-gates/prepare-arbitrary-state PrepareArbitraryState
 - passed single-qubit-gates/prepare-rotated-state PrepareRotatedState
 ```
+
+## 可変入力版12課題の採点
+
+[可変入力の提出形式](parameterized-submissions.md) の制限付きJSONを、公開例・非公開分類・境界を含む56ケースで展開します。有限標本であり、全Nの証明ではありません。非公開分類の同梱値はソースから読めるため、本番の未公開値は評価者の私有課題ファイルで管理します。
+
+状態準備9課題はゼロ入力から全体位相まで比較し、ユニタリ3課題はF2の参照等価性を使います。RotationGateのみ位相厳密。AllBellStatesはindex=0..3を一つに統合し、N=1、全零/全一制御、先頭以外の識別ビット、k=0を含みます。FourBitstringsは固定値のままです。上流UnequalSuperpositionも単一量子ビットなので、一般Nの課題は追加しません。
+
+```sh
+qni benchmark run-all benchmarks/quantum-katas-parameterized benchmarks/solutions/quantum-katas-parameterized
+```
+
+```text
+PASS benchmark suite
+tasks: 12
+passed: 12, failed: 0, disallowed: 0, error: 0
+- passed basic-gates/two-qubit-gate-3 QubitSwap
+- passed multi-qubit-gates/arbitrary-controls ArbitraryControls
+- passed preparing-states/all-basis-vectors AllBasisVectors
+- passed preparing-states/all-bell-states AllBellStates
+- passed preparing-states/even-odd EvenOdd
+- passed preparing-states/parity-bitstrings ParityBitstrings
+- passed preparing-states/two-bitstrings TwoBitstrings
+- passed preparing-states/wstate-arbitrary WStateArbitrary
+- passed preparing-states/wstate-power-of-two WStatePowerOfTwo
+- passed preparing-states/zero-and-bitstring ZeroAndBitstring
+- passed qft/rotation-gate RotationGate
+- passed superposition/ghz-state GHZState
+```
+
+JSON出力は `--json`。`research record --submissions` で独立した `neutral-parameterized-circuit-json-v1` 試行に記録します。他形式との混在と旧JSON変換・research solveへの流用は拒否します。
 
 ## 履歴互換の63問の標準解を実行する
 
@@ -591,9 +621,9 @@ Quantum Katas QFT の12課題はこの機能を使って移植済みです。先
 
 ## benchmark と research の責務
 
-`benchmark` は提出物を採点し、`research` は研究ログを保存します。`qni benchmark run` と `qni benchmark run-all` は、既存課題では `.qni` 提出物、記号課題では `neutral-symbolic-circuit-json-v1` の `.json` 提出物を評価し、結果を標準出力へ出します。`qni research record` は、1つのベンチマークスイートに対する外部共同研究者の1回の研究試行を `research/runs/<timestamp>-<slug>/` に保存します。保存時には `qni benchmark run-all --json` 相当の採点を実行し、その結果も同じ研究試行ディレクトリに残します。
+`benchmark` は提出物を採点し、`research` は研究ログを保存します。`qni benchmark run` と `qni benchmark run-all` は、既存課題では `.qni` 提出物、記号課題では `neutral-symbolic-circuit-json-v1`、可変入力課題では `neutral-parameterized-circuit-json-v1` の `.json` 提出物を評価し、結果を標準出力へ出します。`qni research record` は、1つのベンチマークスイートに対する外部共同研究者の1回の研究試行を `research/runs/<timestamp>-<slug>/` に保存します。保存時には `qni benchmark run-all --json` 相当の採点を実行し、その結果も同じ研究試行ディレクトリに残します。
 
-`qni research record` は AI を呼び出さず、git commit も作りません。Pi、Claude、Codex、人間などが外部で作ったプロンプト、AI回答、提出物ディレクトリをファイルパスで渡します。`--circuit-json-dir` は `blind-neutral-circuit-json-v1` の中立 JSON 提出物群、`--submissions` は既存課題では `qni-command-output-v0` の legacy `.qni` 提出物群、記号課題では `neutral-symbolic-circuit-json-v1` の `.json` 提出物群として扱います。1試行で両者を混ぜることはできません。`git commit` が必要な場合は、生成された `research/runs/...` を確認してから手動または上位の実行環境で作ります。
+`qni research record` は AI を呼び出さず、git commit も作りません。Pi、Claude、Codex、人間などが外部で作ったプロンプト、AI回答、提出物ディレクトリをファイルパスで渡します。`--circuit-json-dir` は `blind-neutral-circuit-json-v1` の中立 JSON 提出物群、`--submissions` は既存課題では `qni-command-output-v0` の legacy `.qni` 提出物群、記号課題では `neutral-symbolic-circuit-json-v1`、可変入力課題では `neutral-parameterized-circuit-json-v1` の `.json` 提出物群として扱います。1試行で異なるプロトコルを混ぜることはできません。`git commit` が必要な場合は、生成された `research/runs/...` を確認してから手動または上位の実行環境で作ります。
 
 ## 研究試行を記録する最小例
 

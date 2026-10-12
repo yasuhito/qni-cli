@@ -131,6 +131,19 @@ export function writeResearchTrialDirectory(
       "symbolic results require a separate neutral-symbolic-circuit-json-v1 trial; use research record --submissions with JSON files"
     );
   }
+  const parameterized = request.result.results.filter(
+    (item) =>
+      item.submissionProtocol === "neutral-parameterized-circuit-json-v1"
+  );
+  if (
+    parameterized.length > 0 &&
+    (parameterized.length !== request.result.results.length ||
+      request.metadata?.submissionProtocol !==
+        "neutral-parameterized-circuit-json-v1")
+  )
+    throw new ResearchTrialWriterError(
+      "parameterized results require a separate neutral-parameterized-circuit-json-v1 trial"
+    );
   const parentDir = path.dirname(request.plan.trialDir);
   const stagingPrefix = path.join(
     parentDir,

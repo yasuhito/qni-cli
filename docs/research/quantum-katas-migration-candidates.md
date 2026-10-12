@@ -181,7 +181,7 @@ SignalFrequency は計画どおり測定・整数返却を移植せず、測定�
 
 ## Stage PA: 固定値18上流課題・21課題ファイルの分岐
 
-QFT追加前の部分的移植は18上流課題、Bellの4分割により21ファイル。下表はその全件である。QFTの部分的11件は別枠。固定幅で連続引数だけが変わる課題は**記号証明を主採点**とし、可変 N/配列/離散引数は後続PRの approach a（複数値数値採点）へ分ける。
+QFT追加前の部分的移植は18上流課題、Bellの4分割により21ファイル。下表はその全件である。QFTの部分的11件は別枠。固定幅で連続引数だけが変わる課題は**記号証明を主採点**とし、可変 N/配列/離散引数は Stage PC の approach a（複数値数値採点）へ分ける。
 
 | 上流の課題            | 現行課題ID                                 | ファイル数 | 一般化経路                                                    |
 | --------------------- | ------------------------------------------ | ---------: | ------------------------------------------------------------- |
@@ -189,23 +189,48 @@ QFT追加前の部分的移植は18上流課題、Bellの4分割により21フ�
 | AmplitudeChange       | single-qubit-gates/amplitude-change        |          1 | PA: 実数 α、1量子ビット、ユニタリ厳密                         |
 | PrepareRotatedState   | single-qubit-gates/prepare-rotated-state   |          1 | PB: φ∈ℝ、α=cos(φ), β=sin(φ) の全円、1量子ビット・ゼロ入力厳密 |
 | PrepareArbitraryState | single-qubit-gates/prepare-arbitrary-state |          1 | PB: α∈[-1,1], β=√(1−α²)≥0, θ∈ℝ、1量子ビット・ゼロ入力厳密     |
-| QubitSwap             | basic-gates/two-qubit-gate-3               |          1 | 後続: N/添字の複数値                                          |
+| QubitSwap             | basic-gates/two-qubit-gate-3               |          1 | PC: N/添字の複数値                                            |
 | ControlledRotation    | multi-qubit-gates/controlled-rotation      |          1 | PA: 実数 α、2量子ビット、共通全体位相を許容するユニタリ       |
-| ArbitraryControls     | multi-qubit-gates/arbitrary-controls       |          1 | 後続: N/制御ビット列の複数値                                  |
-| AllBellStates         | preparing-states/all-bell-states-0..3      |          4 | 後続: indexの複数値                                           |
-| GHZState              | superposition/ghz-state                    |          1 | 後続: Nの複数値                                               |
-| AllBasisVectors       | preparing-states/all-basis-vectors         |          1 | 後続: Nの複数値                                               |
-| EvenOdd               | preparing-states/even-odd                  |          1 | 後続: N/真偽値の複数値                                        |
-| ZeroAndBitstring      | preparing-states/zero-and-bitstring        |          1 | 後続: ビット列の複数値                                        |
-| TwoBitstrings         | preparing-states/two-bitstrings            |          1 | 後続: ビット列の複数値                                        |
-| FourBitstrings        | preparing-states/four-bitstrings           |          1 | 後続: ビット列の複数値                                        |
-| ParityBitstrings      | preparing-states/parity-bitstrings         |          1 | 後続: N/整数の複数値                                          |
-| UnequalSuperposition  | preparing-states/unequal-superposition     |          1 | PA: 実数 α、N=1固定、ゼロ入力、全体位相許容。一般Nは後続      |
-| WStatePowerOfTwo      | preparing-states/wstate-power-of-two       |          1 | 後続: Nの複数値                                               |
-| WStateArbitrary       | preparing-states/wstate-arbitrary          |          1 | 後続: Nの複数値                                               |
+| ArbitraryControls     | multi-qubit-gates/arbitrary-controls       |          1 | PC: 制御ビット列の複数値                                      |
+| AllBellStates         | preparing-states/all-bell-states-0..3      |          4 | PC: indexの複数値（1課題に統合）                              |
+| GHZState              | superposition/ghz-state                    |          1 | PC: Nの複数値                                                 |
+| AllBasisVectors       | preparing-states/all-basis-vectors         |          1 | PC: Nの複数値                                                 |
+| EvenOdd               | preparing-states/even-odd                  |          1 | PC: N/真偽値の複数値                                          |
+| ZeroAndBitstring      | preparing-states/zero-and-bitstring        |          1 | PC: ビット列の複数値                                          |
+| TwoBitstrings         | preparing-states/two-bitstrings            |          1 | PC: ビット列の複数値                                          |
+| FourBitstrings        | preparing-states/four-bitstrings           |          1 | PC対象外: 固定値維持（補助必須ではない）                      |
+| ParityBitstrings      | preparing-states/parity-bitstrings         |          1 | PC: N/整数の複数値                                            |
+| UnequalSuperposition  | preparing-states/unequal-superposition     |          1 | PA: 実数 α、上流も1量子ビット、ゼロ入力、全体位相許容         |
+| WStatePowerOfTwo      | preparing-states/wstate-power-of-two       |          1 | PC: Nの複数値                                                 |
+| WStateArbitrary       | preparing-states/wstate-arbitrary          |          1 | PC: Nの複数値                                                 |
 
-PA の4一般化版と PB の2一般化版を `benchmarks/quantum-katas-symbolic` に追加した。**記号6課題、旧数値63課題、合計69課題ファイル**。旧課題ID・固定値・標準解・保存済み結果は維持する。記号版を選んだ評価では旧固定値版の代わりに主判定とし、同じ順位表へ混ぜない。全定義域対応となるのは6課題（UnequalSuperpositionのNは固定のまま）で、旧対応表の29部分的という履歴数値は変更しない。
+PA の4一般化版と PB の2一般化版を `benchmarks/quantum-katas-symbolic` に追加した。**記号6課題、旧数値63課題**（PA/PB時点で合計69ファイル、PC追加後は可変入力12件を含め81ファイル）。旧課題ID・固定値・標準解・保存済み結果は維持する。記号版を選んだ評価では旧固定値版の代わりに主判定とし、同じ順位表へ混ぜない。全定義域対応となるのは6課題（UnequalSuperpositionは上流でも単一量子ビット）で、旧対応表の29部分的という履歴数値は変更しない。
 
 PB の PrepareRotatedState は角度による再パラメータ化で符号付き正規化振幅の全円を覆う。PrepareArbitraryState は閉区間 `unit-interval`（[-1,1]）と独立した実数位相を宣言し、acos の主値で β≥0 を保証する。両者とも上流の Strict なゼロ入力比較を維持し、全体位相だけが異なる解も不合格。後者の上流 Verification.qs は β=sin(i) により負の例も作り、本文 β≥0 と矛盾するため PB は本文を採用する。端点・負の α・相対位相・主値の象限を含む全定義域で証明する。
 
-QFT RotationGate は k が整数なので複数値数値採点が本来の経路で、角度 θ 自体を実数引数に置き換えた固定幅の別課題なら記号採点が適する。QFT PeriodicState/SignalFrequency はNと周波数・測定契約を切り分ける必要があるため、PAの4件には含めない。仕様と実数・正規化仮定は [記号採点](../symbolic-grading.md)、判断の境界は [ADR 0029](../adr/0029-use-symbolic-proof-for-fixed-width-parameter-tasks.md) を参照。
+QFT RotationGate は PC で整数 k の複数値数値採点へ一般化した。角度 θ 自体を実数引数に置き換えた固定幅の別課題なら記号採点が適する。QFT PeriodicState/SignalFrequency はNと周波数・測定契約を切り分ける必要があるため、PAの4件には含めない。仕様と実数・正規化仮定は [記号採点](../symbolic-grading.md)、判断の境界は [ADR 0029](../adr/0029-use-symbolic-proof-for-fixed-width-parameter-tasks.md) を参照。
+
+## Stage PC: 可変入力12課題
+
+`benchmarks/quantum-katas-parameterized` に12課題・標準解12件・採点56ケースを追加した。旧63件、記号6件は不変で、合計81ファイル。有限個の数値検証であり上流の全入力の証明とはしない。旧表の57/57（部分的29）という履歴値は維持する。AllBellStatesは旧4ファイルに対応する新1課題。
+
+| 上流課題          | 一般化版ID                           | 入力             | 採点ケース数 | 比較                 |
+| ----------------- | ------------------------------------ | ---------------- | -----------: | -------------------- |
+| QubitSwap         | basic-gates/two-qubit-gate-3         | N/index1/index2  |            5 | 全ユニタリ・共通位相 |
+| ArbitraryControls | multi-qubit-gates/arbitrary-controls | bits             |            6 | 全ユニタリ・共通位相 |
+| AllBellStates     | preparing-states/all-bell-states     | index=0..3       |            4 | ゼロ入力・全体位相   |
+| GHZState          | superposition/ghz-state              | N                |            4 | ゼロ入力・全体位相   |
+| AllBasisVectors   | preparing-states/all-basis-vectors   | N                |            4 | ゼロ入力・全体位相   |
+| EvenOdd           | preparing-states/even-odd            | N/is_even        |            5 | ゼロ入力・全体位相   |
+| ZeroAndBitstring  | preparing-states/zero-and-bitstring  | bits（先頭true） |            4 | ゼロ入力・全体位相   |
+| TwoBitstrings     | preparing-states/two-bitstrings      | 同長・異なるa/b  |            5 | ゼロ入力・全体位相   |
+| ParityBitstrings  | preparing-states/parity-bitstrings   | N/parity         |            5 | ゼロ入力・全体位相   |
+| WStatePowerOfTwo  | preparing-states/wstate-power-of-two | Nが2の冪         |            4 | ゼロ入力・全体位相   |
+| WStateArbitrary   | preparing-states/wstate-arbitrary    | N                |            4 | ゼロ入力・全体位相   |
+| RotationGate      | qft/rotation-gate                    | 整数k            |            6 | 全ユニタリ・位相厳密 |
+
+N=1が意味を持つ状態課題、全零/全一制御、先頭以外の識別ビット、k=0を含む。同梱hiddenケースは公開ソースから読める検証用であり、秘密ではない。本番の非公開ケースは評価者が私有課題ファイルで管理する。結果はcaseIdだけを保存し、提出には宣言された入力値だけを渡す。
+
+**FourBitstringsは一般化しない。** 上流SolutionBは接頭辞制御Ryによる補助なし構成で、CLIのRy/MCXでも分解可能。しかし現固定課題のH/X/Z/CNOT集合だけでは非アフィン四列を作れず、補助の追加でも解決しない。[検証記録](finding-four-bitstrings.md)を参照。UnequalSuperpositionは上流も単一量子ビットのため、PAの「一般Nは後続」という分類を訂正し、PCで架空のN引数を追加しない。
+
+[提出形式](../parameterized-submissions.md)、[ADR 0030](../adr/0030-use-bounded-parameterized-json-for-variable-input-tasks.md) に資源上限・位相・研究記録の境界を記載した。状態準備でも指定幅を厳密に照合し、旧数値版のゼロ補完の幅違反見逃しは引き継がない。

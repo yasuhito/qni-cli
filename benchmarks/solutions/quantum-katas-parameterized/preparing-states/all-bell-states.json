@@ -1,0 +1,70 @@
+{
+  "protocol": "neutral-parameterized-circuit-json-v1",
+  "inputs": [
+    {
+      "name": "index",
+      "type": "int",
+      "min": 0,
+      "max": 3
+    }
+  ],
+  "qubits": 2,
+  "body": [
+    {
+      "gate": "H",
+      "targets": {
+        "array": [0]
+      }
+    },
+    {
+      "if": {
+        "eq": [
+          {
+            "mod": [
+              {
+                "input": "index"
+              },
+              2
+            ]
+          },
+          1
+        ]
+      },
+      "then": [
+        {
+          "gate": "Z",
+          "targets": {
+            "array": [0]
+          }
+        }
+      ]
+    },
+    {
+      "if": {
+        "le": [
+          2,
+          {
+            "input": "index"
+          }
+        ]
+      },
+      "then": [
+        {
+          "gate": "X",
+          "targets": {
+            "array": [1]
+          }
+        }
+      ]
+    },
+    {
+      "gate": "CNOT",
+      "targets": {
+        "array": [1]
+      },
+      "controls": {
+        "array": [0]
+      }
+    }
+  ]
+}

@@ -1,3 +1,4 @@
+import { gradeParameterizedSubmission } from "./parameterized_grading";
 import {
   existsSync,
   mkdtempSync,
@@ -344,6 +345,8 @@ function evaluateBenchmark(options: {
   readonly submissionPath: string;
   readonly task: BenchmarkTask;
 }): BenchmarkResult {
+  if (options.task.parameterized)
+    return gradeParameterizedSubmission(options.task, options.submissionPath);
   if (options.task.symbolic) {
     const check = proveSymbolicSubmission({
       specification: options.task.symbolic,
