@@ -64,8 +64,8 @@
 | Single-Qubit Gates       |   14 |       14 |              4 |    0 |
 | Multi-Qubit Gates        |   10 |       10 |              3 |    0 |
 | Preparing Quantum States |   21 |       21 |             11 |    0 |
-| QFT                      |   12 |        0 |              0 |   12 |
-| 合計                     |   57 |       45 |             18 |   12 |
+| QFT                      |   12 |       12 |             11 |    0 |
+| 合計                     |   57 |       57 |             29 |    0 |
 
 ### 必要な機能と採点方針
 
@@ -158,17 +158,23 @@ CompoundGate は上流の `CheckOperationsAreEqualStrict` に合わせて厳密�
 
 ### qft
 
-| 上流 exercise ID                 | qni課題ID（未移植は予定）       | 状態   | 必要な機能 | 固定値         |
-| -------------------------------- | ------------------------------- | ------ | ---------- | -------------- |
-| `qft__single_qubit`              | `qft/single-qubit`              | 未移植 | なし       | パラメータなし |
-| `qft__rotation_gate`             | `qft/rotation-gate`             | 未移植 | なし       | 未決定: k      |
-| `qft__binary_fraction_classical` | `qft/binary-fraction-classical` | 未移植 | なし       | 未決定: j      |
-| `qft__binary_fraction_quantum`   | `qft/binary-fraction-quantum`   | 未移植 | F2         | 未決定: n      |
-| `qft__binary_fraction_inplace`   | `qft/binary-fraction-inplace`   | 未移植 | F2         | 未決定: n      |
-| `qft__qft`                       | `qft/qft`                       | 未移植 | F2         | 未決定: n      |
-| `qft__all_basis_vectors`         | `qft/all-basis-vectors`         | 未移植 | F1         | 未決定: n      |
-| `qft__periodic_state`            | `qft/periodic-state`            | 未移植 | F1         | 未決定: n, F   |
-| `qft__alternating_amplitudes`    | `qft/alternating-amplitudes`    | 未移植 | F1         | 未決定: n      |
-| `qft__all_even_vectors`          | `qft/all-even-vectors`          | 未移植 | F1         | 未決定: n      |
-| `qft__square_wave`               | `qft/square-wave`               | 未移植 | F1         | 未決定: n      |
-| `qft__signal_frequency`          | `qft/signal-frequency`          | 未移植 | F2         | 未決定: n, F   |
+| 上流 exercise ID                 | qni課題ID                       | 状態     | 必要な機能 | 固定値                                 | 採点・位相                  |
+| -------------------------------- | ------------------------------- | -------- | ---------- | -------------------------------------- | --------------------------- |
+| `qft__single_qubit`              | `qft/single-qubit`              | 移植済み | F2         | n=1                                    | ユニタリ厳密                |
+| `qft__rotation_gate`             | `qft/rotation-gate`             | 部分的   | F2         | n=1, k=3, 角度 π/4                     | ユニタリ厳密                |
+| `qft__binary_fraction_classical` | `qft/binary-fraction-classical` | 部分的   | F2         | n=1, j=[1,0,1], 0.101₂=5/8             | ユニタリ厳密                |
+| `qft__binary_fraction_quantum`   | `qft/binary-fraction-quantum`   | 部分的   | F2         | 桁数 n=3, 全体4, 対象 q0, j=[q1,q2,q3] | ユニタリ厳密                |
+| `qft__binary_fraction_inplace`   | `qft/binary-fraction-inplace`   | 部分的   | F2         | n=3, j=[q0,q1,q2]                      | ユニタリ厳密                |
+| `qft__qft`                       | `qft/qft`                       | 部分的   | F2         | n=3                                    | ユニタリ厳密                |
+| `qft__all_basis_vectors`         | `qft/all-basis-vectors`         | 部分的   | F1         | n=3                                    | ゼロ入力、全体位相許容      |
+| `qft__periodic_state`            | `qft/periodic-state`            | 部分的   | F1         | n=3, F=5                               | ゼロ入力、全体位相許容      |
+| `qft__alternating_amplitudes`    | `qft/alternating-amplitudes`    | 部分的   | F1         | n=3                                    | ゼロ入力、全体位相許容      |
+| `qft__all_even_vectors`          | `qft/all-even-vectors`          | 部分的   | F1         | n=3                                    | ゼロ入力、全体位相許容      |
+| `qft__square_wave`               | `qft/square-wave`               | 部分的   | F1         | n=3                                    | ゼロ入力、全体位相許容      |
+| `qft__signal_frequency`          | `qft/signal-frequency`          | 部分的   | F2         | n=3, F=5（説明例）                     | 逆QFTユニタリ、全体位相許容 |
+
+QFT12課題を追加し、スイートは **63課題**。上流57問は部分的移植29問を含め57/57対応済み（スイートとの差は既存範囲外3問・Bellの分割3問）。固定値は上流の検証範囲内で、非自明な位相とビット順が現れる値を選んだ。上流の先頭6問は Strict のため F2 の厳密ユニタリ比較、状態準備5問は上流と同じゼロ入力・非Strict比較を使う。q0 は最上位ビット、QFTの指数は正、最後のビット順交換を含める。標準解はQFTを展開した回路を使うが、状態準備課題でQFTを使うこと自体は強制しない。
+
+SignalFrequency は計画どおり測定・整数返却を移植せず、測定前の逆QFTによる |F> への変換を対象とする。F=5 は固定説明例であり、F2 は全8基底入力で逆QFT全体を比較するため、周波数ごとに別の位相を付ける測定同値の実装も不合格となる、上流より強い部分移植である。行列全体で共通の全体位相だけは許容する。解析式による独立テストで全8周波数の復号を検証する。一般引数・可変長回路生成は対象外。
+
+採点器の既存制約: ユニタリ比較は量子ビット数も検証するが、状態準備の `run` 比較は振幅列の不足部分をゼロ補完するため、左端に未使用の |0> を追加した提出物の幅違反までは検出しない。状態準備5問の指定幅・補助量子ビット禁止は課題上の制約であり、このPRでは既存51課題と共通の状態採点仕様を変更しない。中立JSONの許可語彙には既存の `ControlledPhase` を使い、変換後の提出物も採点テストで確認する。

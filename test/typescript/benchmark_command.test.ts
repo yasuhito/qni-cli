@@ -75,6 +75,29 @@ const preparingStateResults = [
     task: `benchmarks/quantum-katas/preparing-states/${slug}.md`,
   }));
 
+const qftResults = [
+  ["all-basis-vectors", "QFTAllBasisVectors", "run"],
+  ["all-even-vectors", "QFTAllEvenVectors", "run"],
+  ["alternating-amplitudes", "QFTAlternatingAmplitudes", "run"],
+  ["binary-fraction-classical", "QFTBinaryFractionClassical", "unitary"],
+  ["binary-fraction-inplace", "QFTBinaryFractionInplace", "unitary"],
+  ["binary-fraction-quantum", "QFTBinaryFractionQuantum", "unitary"],
+  ["periodic-state", "QFTPeriodicState", "run"],
+  ["qft", "QFTQft", "unitary"],
+  ["rotation-gate", "QFTRotationGate", "unitary"],
+  ["signal-frequency", "QFTSignalFrequency", "unitary"],
+  ["single-qubit", "QFTSingleQubit", "unitary"],
+  ["square-wave", "QFTSquareWave", "run"],
+].map(([slug, title, type]) => ({
+  taskId: `qft/${slug}`,
+  title,
+  submission: `benchmarks/solutions/quantum-katas/qft/${slug}.qni`,
+  status: "passed",
+  exitCode: 0,
+  checks: [{ type, status: "passed" }],
+  task: `benchmarks/quantum-katas/qft/${slug}.md`,
+}));
+
 describe("benchmark command TypeScript route", () => {
   it("classifies invalid task frontmatter as an error result", async () => {
     await withTempDir(async (dir) => {
@@ -1318,8 +1341,8 @@ describe("benchmark command TypeScript route", () => {
       assert.equal(captured.value.status, "passed");
       assert.equal(captured.value.exitCode, 0);
       assert.deepStrictEqual(captured.value.summary, {
-        total: 51,
-        passed: 51,
+        total: 63,
+        passed: 63,
         failed: 0,
         disallowed: 0,
         error: 0,
@@ -1467,14 +1490,16 @@ describe("benchmark command TypeScript route", () => {
               { type: "run", status: "passed" },
             ],
           },
-          ...[...multiQubitExpectedResults(), ...preparingStateResults].map(
-            ({ taskId, status, exitCode, checks }) => ({
-              taskId,
-              status,
-              exitCode,
-              checks,
-            })
-          ),
+          ...[
+            ...multiQubitExpectedResults(),
+            ...preparingStateResults,
+            ...qftResults,
+          ].map(({ taskId, status, exitCode, checks }) => ({
+            taskId,
+            status,
+            exitCode,
+            checks,
+          })),
           {
             taskId: "single-qubit-gates/amplitude-change",
             status: "passed",
@@ -1570,8 +1595,8 @@ describe("benchmark command TypeScript route", () => {
         result.stdout,
         [
           "PASS benchmark suite",
-          "tasks: 51",
-          "passed: 51, failed: 0, disallowed: 0, error: 0",
+          "tasks: 63",
+          "passed: 63, failed: 0, disallowed: 0, error: 0",
           "- passed basic-gates/basis-change BasisChange",
           "- passed basic-gates/bell-state-change-1 BellStateChange1",
           "- passed basic-gates/bell-state-change-2 BellStateChange2",
@@ -1591,7 +1616,7 @@ describe("benchmark command TypeScript route", () => {
           "- passed multi-qubit-gates/compound-gate CompoundGate",
           "- passed multi-qubit-gates/controlled-rotation ControlledRotation",
           "- passed multi-qubit-gates/preparing-bell-state PreparingBellState",
-          ...preparingStateResults.map(
+          ...[...preparingStateResults, ...qftResults].map(
             ({ taskId, title }) => `- passed ${taskId} ${title}`
           ),
           "- passed single-qubit-gates/amplitude-change AmplitudeChange",
@@ -1638,8 +1663,8 @@ describe("benchmark command TypeScript route", () => {
     "disallowed": 0,
     "error": 0,
     "failed": 0,
-    "passed": 51,
-    "total": 51
+    "passed": 63,
+    "total": 63
   },
   "results": [
     {
@@ -2539,7 +2564,7 @@ describe("benchmark command TypeScript route", () => {
     ${multiQubitExpectedResults()
       .map((result) => JSON.stringify(result))
       .join(",\n")},
-    ${preparingStateResults.map((result) => JSON.stringify(result)).join(",\n")},
+    ${[...preparingStateResults, ...qftResults].map((result) => JSON.stringify(result)).join(",\n")},
     {"taskId":"single-qubit-gates/amplitude-change","title":"AmplitudeChange","submission":"benchmarks/solutions/quantum-katas/single-qubit-gates/amplitude-change.qni","status":"passed","exitCode":0,"gradingCases":[{"caseId":"zero-input","status":"passed","checks":[{"type":"run","status":"passed"}]},{"caseId":"one-input","status":"passed","checks":[{"type":"run","status":"passed"}]},{"caseId":"plus-input","status":"passed","checks":[{"type":"run","status":"passed"}]}],"checks":[{"type":"run","status":"passed"},{"type":"run","status":"passed"},{"type":"run","status":"passed"}],"task":"benchmarks/quantum-katas/single-qubit-gates/amplitude-change.md"},
     {"taskId":"single-qubit-gates/global-phase-i","title":"GlobalPhaseI","submission":"benchmarks/solutions/quantum-katas/single-qubit-gates/global-phase-i.qni","status":"passed","exitCode":0,"gradingCases":[{"caseId":"zero-input","status":"passed","checks":[{"type":"run","status":"passed"}]},{"caseId":"one-input","status":"passed","checks":[{"type":"run","status":"passed"}]},{"caseId":"plus-input","status":"passed","checks":[{"type":"run","status":"passed"}]}],"checks":[{"type":"run","status":"passed"},{"type":"run","status":"passed"},{"type":"run","status":"passed"}],"task":"benchmarks/quantum-katas/single-qubit-gates/global-phase-i.md"},
     {"taskId":"single-qubit-gates/prepare-arbitrary-state","title":"PrepareArbitraryState","submission":"benchmarks/solutions/quantum-katas/single-qubit-gates/prepare-arbitrary-state.qni","status":"passed","exitCode":0,"gradingCases":[{"caseId":"zero-input","status":"passed","checks":[{"type":"run","status":"passed"}]}],"checks":[{"type":"run","status":"passed"}],"task":"benchmarks/quantum-katas/single-qubit-gates/prepare-arbitrary-state.md"},

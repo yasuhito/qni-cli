@@ -28,7 +28,7 @@ Pi 経由で `qni research solve` を実行し、`qni research plot` で cost pe
 
 提出物には回路を作るコマンドだけを書きます。`qni run` や `qni expect` などの検証コマンドは書きません。
 
-## 51問の標準解を実行する
+## 63問の標準解を実行する
 
 ### StateFlip
 
@@ -427,12 +427,12 @@ grading_cases:
 qni benchmark run-all benchmarks/quantum-katas benchmarks/solutions/quantum-katas
 ```
 
-期待される結果は、51問すべてが `passed` になり、終了コードが `0` になることです。
+期待される結果は、63問すべてが `passed` になり、終了コードが `0` になることです。
 
 ```text
 PASS benchmark suite
-tasks: 51
-passed: 51, failed: 0, disallowed: 0, error: 0
+tasks: 63
+passed: 63, failed: 0, disallowed: 0, error: 0
 - passed basic-gates/basis-change BasisChange
 - passed basic-gates/bell-state-change-1 BellStateChange1
 - passed basic-gates/bell-state-change-2 BellStateChange2
@@ -469,6 +469,18 @@ passed: 51, failed: 0, disallowed: 0, error: 0
 - passed preparing-states/wstate-arbitrary WStateArbitrary
 - passed preparing-states/wstate-power-of-two WStatePowerOfTwo
 - passed preparing-states/zero-and-bitstring ZeroAndBitstring
+- passed qft/all-basis-vectors QFTAllBasisVectors
+- passed qft/all-even-vectors QFTAllEvenVectors
+- passed qft/alternating-amplitudes QFTAlternatingAmplitudes
+- passed qft/binary-fraction-classical QFTBinaryFractionClassical
+- passed qft/binary-fraction-inplace QFTBinaryFractionInplace
+- passed qft/binary-fraction-quantum QFTBinaryFractionQuantum
+- passed qft/periodic-state QFTPeriodicState
+- passed qft/qft QFTQft
+- passed qft/rotation-gate QFTRotationGate
+- passed qft/signal-frequency QFTSignalFrequency
+- passed qft/single-qubit QFTSingleQubit
+- passed qft/square-wave QFTSquareWave
 - passed single-qubit-gates/amplitude-change AmplitudeChange
 - passed single-qubit-gates/global-phase-i GlobalPhaseI
 - passed single-qubit-gates/prepare-arbitrary-state PrepareArbitraryState
@@ -553,7 +565,7 @@ checks:
 
 指数的な計算量のため1〜8量子ビットに制限します。幅の不一致より先にこの上限と操作の有効性を検証するため、例えば9量子ビットの提出物は不合格ではなくエラーになります。測定や古典条件付き操作、未対応ゲート、未解決の記号式はエラーになります。補助量子ビットや部分系の比較は未対応です。不合格の表示には入力基底・出力基底ごとの期待値と実測値を最大16件示します。JSON の検証要約は `{"type":"unitary","status":"passed"}` または `failed` です。量子ビット数の不一致理由は人間向け表示に出ます。
 
-これは Quantum Katas QFT の12課題を移植するための前提機能です。課題の移植と位相方針の選択は別途行い、既存51課題の採点条件は変更しません。設計理由は [ADR 0028](adr/0028-grade-unitary-equivalence-to-reference-circuits.md) を参照してください。
+Quantum Katas QFT の12課題はこの機能を使って移植済みです。先頭6問は全体位相も含む厳密ユニタリ比較、状態準備5問はゼロ入力で全体位相を許容する比較、SignalFrequency は全体位相を許容する逆QFT全体の比較です。固定値・上流との差は [対応表](research/quantum-katas-migration-candidates.md#qft) を参照してください。既存51課題の採点条件は変更しません。設計理由は [ADR 0028](adr/0028-grade-unitary-equivalence-to-reference-circuits.md) を参照してください。
 
 ## benchmark と research の責務
 

@@ -376,16 +376,18 @@ function quantumKatasSubmissionContent(status, relativePath) {
     }
   }
 
-  const content = relativePath.startsWith("preparing-states/")
-    ? fs.readFileSync(
-        path.join(
-          PROJECT_ROOT,
-          "benchmarks/solutions/quantum-katas",
-          relativePath
-        ),
-        "utf8"
-      )
-    : passedSubmissions.get(relativePath);
+  const content =
+    relativePath.startsWith("preparing-states/") ||
+    relativePath.startsWith("qft/")
+      ? fs.readFileSync(
+          path.join(
+            PROJECT_ROOT,
+            "benchmarks/solutions/quantum-katas",
+            relativePath
+          ),
+          "utf8"
+        )
+      : passedSubmissions.get(relativePath);
 
   if (!content) {
     throw new Error(
@@ -398,6 +400,18 @@ function quantumKatasSubmissionContent(status, relativePath) {
 
 function writeQuantumKatasSubmissions(scenarioDir, status, submissionsDir) {
   const relativePaths = [
+    "qft/all-basis-vectors.qni",
+    "qft/all-even-vectors.qni",
+    "qft/alternating-amplitudes.qni",
+    "qft/binary-fraction-classical.qni",
+    "qft/binary-fraction-inplace.qni",
+    "qft/binary-fraction-quantum.qni",
+    "qft/periodic-state.qni",
+    "qft/qft.qni",
+    "qft/rotation-gate.qni",
+    "qft/signal-frequency.qni",
+    "qft/single-qubit.qni",
+    "qft/square-wave.qni",
     "preparing-states/controlled-rotation.qni",
     "preparing-states/hardy-state.qni",
     "preparing-states/three-states-two-qubits.qni",
@@ -637,7 +651,7 @@ function quantumKatasTaskEntries() {
 function assertQuantumKatasTaskFailures(buildFailures) {
   const taskEntries = quantumKatasTaskEntries();
 
-  assert.equal(taskEntries.length, 51, "expected Quantum Katas task count");
+  assert.equal(taskEntries.length, 63, "expected Quantum Katas task count");
   assert.deepEqual(taskEntries.flatMap(buildFailures), []);
 }
 
