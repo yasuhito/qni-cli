@@ -3,10 +3,6 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const {
-  gradeBenchmarkTask,
-  gradeBenchmarkSuite,
-} = require("../../dist/evaluation_runner");
 const { execFileSync } = require("node:child_process");
 const root = path.resolve(__dirname, "../..");
 const context = { cwd: root, projectRoot: root, env: process.env };
@@ -14,6 +10,7 @@ const suite = "benchmarks/quantum-katas-symbolic";
 const solutions = "benchmarks/solutions/quantum-katas-symbolic";
 
 function submit(world, id, change) {
+  const { gradeBenchmarkTask } = require("../../dist/evaluation_runner");
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "qni-symbolic-feature-"));
   try {
     const answer = JSON.parse(
@@ -31,6 +28,7 @@ function submit(world, id, change) {
   }
 }
 When("記号採点の標準解スイートを実行する", function () {
+  const { gradeBenchmarkSuite } = require("../../dist/evaluation_runner");
   this.symbolicResult = gradeBenchmarkSuite(
     { benchmarkDir: suite, solutionsDir: solutions },
     context
