@@ -8,6 +8,11 @@ import {
 import { tmpdir } from "node:os";
 import path = require("node:path");
 
+import { currentCircuitFile } from "../circuit_file";
+import {
+  compareReferenceCircuit,
+  type ReferenceCircuitComparison,
+} from "./reference_circuit";
 import type { CommandHandler, CommandHandlerContext } from "../dispatcher";
 import { runAddCommand } from "../commands/add_command";
 import { runExpectCommand } from "../commands/expect_command";
@@ -68,7 +73,7 @@ export interface BenchmarkSuiteGradingRequest {
 
 export interface BenchmarkCheckSummary {
   readonly status: "failed" | "passed";
-  readonly type: "expect" | "run";
+  readonly type: "expect" | "run" | "unitary";
 }
 
 export interface BenchmarkGradingCaseSummary {
@@ -145,7 +150,12 @@ export interface BenchmarkSuiteSummary {
   readonly total: number;
 }
 
-export type BenchmarkCheckResult = ExpectCheckResult | RunCheckResult;
+export type BenchmarkCheckResult =
+  ExpectCheckResult | RunCheckResult | UnitaryCheckResult;
+
+export interface UnitaryCheckResult extends ReferenceCircuitComparison {
+  readonly type: "unitary";
+}
 
 export interface BenchmarkGradingCaseResult {
   readonly caseId: string;
@@ -718,6 +728,16 @@ function runBenchmarkCheck(
   context: CommandHandlerContext
 ): BenchmarkCheckResult {
   switch (check.type) {
+    case "unitary":
+      return {
+        type: "unitary",
+        ...compareReferenceCircuit(
+          currentCircuitFile(workDir).load(),
+          check.referenceCircuit,
+          checkContext.checks.tolerance,
+          check.upToGlobalPhase
+        ),
+      };
     case "expect":
       return runExpectCheck(check, checkContext, workDir, context);
     case "run":

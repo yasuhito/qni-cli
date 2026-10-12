@@ -1,6 +1,11 @@
 import { readFileSync } from "node:fs";
 import { parseDocument } from "yaml";
 
+import { normalizeCircuit, type CircuitData } from "../circuit_file";
+import {
+  validateReferenceCircuit,
+  validateUnitaryTolerance,
+} from "./reference_circuit";
 import { splitCommandLine } from "../qni_command_line";
 
 export interface BenchmarkTask {
@@ -39,7 +44,13 @@ export interface BenchmarkChecks {
   readonly tolerance: number;
 }
 
-export type BenchmarkCheck = ExpectCheck | RunCheck;
+export type BenchmarkCheck = ExpectCheck | RunCheck | UnitaryCheck;
+
+export interface UnitaryCheck {
+  readonly type: "unitary";
+  readonly referenceCircuit: CircuitData;
+  readonly upToGlobalPhase?: boolean;
+}
 
 export interface RunCheck {
   readonly expected: readonly ExpectedAmplitude[];
@@ -188,10 +199,17 @@ function frontmatterListValues(
 function parseChecks(frontmatter: FrontmatterRecord): BenchmarkChecks {
   const checks = recordValue(frontmatter, "checks");
 
-  return {
-    items: parseCheckItems(checks),
-    tolerance: checksTolerance(checks),
-  };
+  const items = parseCheckItems(checks);
+  const tolerance = checksTolerance(checks);
+  if (items.some((item) => item.type === "unitary")) {
+    if (typeof checks.tolerance !== "number") {
+      throw new BenchmarkTaskError(
+        "unitary checks.tolerance must be a finite non-negative number"
+      );
+    }
+    validateUnitaryTolerance(tolerance);
+  }
+  return { items, tolerance };
 }
 
 function parseGradingCases(
@@ -304,10 +322,28 @@ function parseCheckItem(item: unknown): BenchmarkCheck {
     case "expect":
       if (hasValue(check, "up_to_global_phase")) {
         throw new BenchmarkTaskError(
-          "up_to_global_phase is only supported for run checks"
+          "up_to_global_phase is only supported for run and unitary checks"
         );
       }
       return { expected: parseExpectedExpectations(check), type: "expect" };
+    case "unitary": {
+      const reference = requiredRecord(
+        requiredValue(check, "reference_circuit"),
+        "reference_circuit must be a mapping"
+      );
+      if (hasValue(reference, "initial_state")) {
+        throw new BenchmarkTaskError(
+          "reference_circuit must not specify initial_state"
+        );
+      }
+      const referenceCircuit = normalizeCircuit(reference);
+      validateReferenceCircuit(referenceCircuit);
+      return {
+        type: "unitary",
+        referenceCircuit,
+        ...parseGlobalPhaseOption(check),
+      };
+    }
     case "run":
       return {
         expected: parseExpectedAmplitudes(check),

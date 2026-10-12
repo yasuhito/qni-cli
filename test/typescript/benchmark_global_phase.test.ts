@@ -224,7 +224,7 @@ describe("global-phase benchmark grading", () => {
       );
       assert.throws(
         () => loadBenchmarkTask(file),
-        /only supported for run checks/u
+        /only supported for run and unitary checks/u
       );
     });
   });
