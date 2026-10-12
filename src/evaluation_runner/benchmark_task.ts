@@ -1,5 +1,10 @@
 import { readFileSync } from "node:fs";
 import {
+  parseParameterizedSpecification,
+  PARAMETERIZED_PROTOCOL,
+  type ParameterizedSpecification,
+} from "./parameterized_circuit";
+import {
   parseSymbolicSpecification,
   type SymbolicSpecification,
 } from "./symbolic_grading";
@@ -14,6 +19,7 @@ import { splitCommandLine } from "../qni_command_line";
 
 export interface BenchmarkTask {
   readonly symbolic?: SymbolicSpecification;
+  readonly parameterized?: ParameterizedSpecification;
   readonly allowedCommands: readonly AllowedCommand[];
   readonly availableGates: readonly string[];
   readonly checks: BenchmarkChecks;
@@ -90,11 +96,19 @@ class BenchmarkTaskError extends Error {}
 /** Routing metadata survives a broken check/reference without hiding its error. */
 export function benchmarkTaskSubmissionProtocol(
   taskPath: string
-): SymbolicSpecification["protocol"] | undefined {
+):
+  | SymbolicSpecification["protocol"]
+  | typeof PARAMETERIZED_PROTOCOL
+  | undefined {
   try {
     const frontmatter = frontmatterRecord(
       frontmatterOf(readFileSync(taskPath, "utf8"))
     );
+    if (
+      isRecord(frontmatter.parameterized) &&
+      frontmatter.parameterized.protocol === PARAMETERIZED_PROTOCOL
+    )
+      return PARAMETERIZED_PROTOCOL;
     return isRecord(frontmatter.symbolic) &&
       frontmatter.symbolic.protocol === "neutral-symbolic-circuit-json-v1"
       ? "neutral-symbolic-circuit-json-v1"
@@ -112,7 +126,21 @@ export function loadBenchmarkTask(taskPath: string): BenchmarkTask {
   );
   const allowedCommands = parseAllowedCommands(frontmatter);
   const availableGates = parseAvailableGates(frontmatter);
-  const hasExplicitGradingCases = hasValue(frontmatter, "grading_cases");
+  const parameterized =
+    frontmatter.parameterized === undefined
+      ? undefined
+      : parseParameterizedSpecification(frontmatter.parameterized);
+  if (
+    parameterized &&
+    (hasValue(frontmatter, "checks") ||
+      hasValue(frontmatter, "grading_cases") ||
+      hasValue(frontmatter, "symbolic"))
+  )
+    throw new BenchmarkTaskError(
+      "parameterized grading must not include other grading specifications"
+    );
+  const hasExplicitGradingCases =
+    Boolean(parameterized) || hasValue(frontmatter, "grading_cases");
   const symbolic =
     frontmatter.symbolic === undefined
       ? undefined
@@ -125,20 +153,22 @@ export function loadBenchmarkTask(taskPath: string): BenchmarkTask {
       "symbolic grading must not include numeric checks"
     );
   }
-  const gradingCases = symbolic
-    ? [
-        {
-          id: "default",
-          setupCommands: [],
-          checks: { items: [], tolerance: 0 },
-        },
-      ]
-    : parseGradingCases(frontmatter, hasExplicitGradingCases);
+  const gradingCases =
+    symbolic || parameterized
+      ? [
+          {
+            id: "default",
+            setupCommands: [],
+            checks: { items: [], tolerance: 0 },
+          },
+        ]
+      : parseGradingCases(frontmatter, hasExplicitGradingCases);
 
   return {
     allowedCommands,
     availableGates,
     ...(symbolic ? { symbolic } : {}),
+    ...(parameterized ? { parameterized } : {}),
     checks: compatibleChecks(gradingCases),
     gradingCases,
     hasExplicitGradingCases,

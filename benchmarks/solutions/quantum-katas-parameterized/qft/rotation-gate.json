@@ -1,0 +1,40 @@
+{
+  "protocol": "neutral-parameterized-circuit-json-v1",
+  "inputs": [
+    {
+      "name": "k",
+      "type": "int",
+      "min": 0,
+      "max": 12
+    }
+  ],
+  "qubits": 1,
+  "body": [
+    {
+      "gate": "Phase",
+      "targets": {
+        "array": [0]
+      },
+      "angle": {
+        "div": [
+          {
+            "mul": [
+              2,
+              {
+                "pi": true
+              }
+            ]
+          },
+          {
+            "pow": [
+              2,
+              {
+                "input": "k"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

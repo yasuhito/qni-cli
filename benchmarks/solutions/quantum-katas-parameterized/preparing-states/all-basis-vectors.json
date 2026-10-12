@@ -1,0 +1,35 @@
+{
+  "protocol": "neutral-parameterized-circuit-json-v1",
+  "inputs": [
+    {
+      "name": "n",
+      "type": "int",
+      "min": 1,
+      "max": 8
+    }
+  ],
+  "qubits": {
+    "input": "n"
+  },
+  "body": [
+    {
+      "for": "i",
+      "from": 0,
+      "to": {
+        "input": "n"
+      },
+      "body": [
+        {
+          "gate": "H",
+          "targets": {
+            "array": [
+              {
+                "var": "i"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,119 @@
+{
+  "protocol": "neutral-parameterized-circuit-json-v1",
+  "inputs": [
+    {
+      "name": "bits",
+      "type": "bits",
+      "min": 1,
+      "max": 7
+    }
+  ],
+  "qubits": {
+    "add": [
+      {
+        "len": {
+          "input": "bits"
+        }
+      },
+      1
+    ]
+  },
+  "body": [
+    {
+      "for": "i",
+      "from": 0,
+      "to": {
+        "len": {
+          "input": "bits"
+        }
+      },
+      "body": [
+        {
+          "if": {
+            "not": {
+              "at": [
+                {
+                  "input": "bits"
+                },
+                {
+                  "var": "i"
+                }
+              ]
+            }
+          },
+          "then": [
+            {
+              "gate": "X",
+              "targets": {
+                "array": [
+                  {
+                    "var": "i"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "gate": "MCX",
+      "targets": {
+        "array": [
+          {
+            "len": {
+              "input": "bits"
+            }
+          }
+        ]
+      },
+      "controls": {
+        "range": [
+          0,
+          {
+            "len": {
+              "input": "bits"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "for": "i",
+      "from": 0,
+      "to": {
+        "len": {
+          "input": "bits"
+        }
+      },
+      "body": [
+        {
+          "if": {
+            "not": {
+              "at": [
+                {
+                  "input": "bits"
+                },
+                {
+                  "var": "i"
+                }
+              ]
+            }
+          },
+          "then": [
+            {
+              "gate": "X",
+              "targets": {
+                "array": [
+                  {
+                    "var": "i"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

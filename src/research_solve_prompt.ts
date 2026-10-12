@@ -43,6 +43,10 @@ export function buildResearchSolveTaskPrompts(options: {
   const prompts = relativeTaskFiles.map((relativeTaskFile) => {
     const taskPath = path.join(benchmarkDirPath, relativeTaskFile);
     const task = loadBenchmarkTask(taskPath);
+    if (task.parameterized)
+      throw new ResearchSolvePromptError(
+        "parameterized tasks require neutral-parameterized-circuit-json-v1; research solve conversion is not supported"
+      );
     if (task.symbolic) {
       throw new ResearchSolvePromptError(
         "symbolic tasks require neutral-symbolic-circuit-json-v1; research solve conversion is not supported"

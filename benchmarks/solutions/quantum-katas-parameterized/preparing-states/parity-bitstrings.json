@@ -1,0 +1,95 @@
+{
+  "protocol": "neutral-parameterized-circuit-json-v1",
+  "inputs": [
+    {
+      "name": "n",
+      "type": "int",
+      "min": 1,
+      "max": 8
+    },
+    {
+      "name": "parity",
+      "type": "int",
+      "min": 0,
+      "max": 1
+    }
+  ],
+  "qubits": {
+    "input": "n"
+  },
+  "body": [
+    {
+      "for": "i",
+      "from": 0,
+      "to": {
+        "sub": [
+          {
+            "input": "n"
+          },
+          1
+        ]
+      },
+      "body": [
+        {
+          "gate": "H",
+          "targets": {
+            "array": [
+              {
+                "var": "i"
+              }
+            ]
+          }
+        },
+        {
+          "gate": "CNOT",
+          "targets": {
+            "array": [
+              {
+                "sub": [
+                  {
+                    "input": "n"
+                  },
+                  1
+                ]
+              }
+            ]
+          },
+          "controls": {
+            "array": [
+              {
+                "var": "i"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "if": {
+        "eq": [
+          {
+            "input": "parity"
+          },
+          1
+        ]
+      },
+      "then": [
+        {
+          "gate": "X",
+          "targets": {
+            "array": [
+              {
+                "sub": [
+                  {
+                    "input": "n"
+                  },
+                  1
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

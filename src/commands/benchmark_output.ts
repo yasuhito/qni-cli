@@ -99,7 +99,7 @@ function suiteTaskFailedCheckLines(
   item: BenchmarkSuiteTaskGradingResult
 ): string[] {
   if (!item.gradingCases) {
-    return [];
+    return optionalLine(item.error, (error) => `  - error: ${error}`);
   }
 
   if (!hasMultipleGradingCases(item.gradingCases)) {
@@ -136,6 +136,13 @@ function formatHumanResult(
   return outputLines([
     `${label} ${task.title}`,
     `checks: ${result.checks.length}`,
+    ...optionalLine(result.errorMessage, (error) => `error: ${error}`),
+    ...(result.gradingCases ?? []).flatMap((c) =>
+      optionalLine(
+        c.errorMessage,
+        (error) => `- case ${c.caseId} error: ${error}`
+      )
+    ),
     ...failedCheckDetailsLines(result),
   ]);
 }
