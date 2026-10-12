@@ -1,20 +1,24 @@
-import { readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
-import path from 'node:path';
+import { readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import path from "node:path";
 
-import { AngleExpression, AngleExpressionError, validAngleIdentifier } from './angle_expression';
-import { parseCircuitOperationSlot } from './circuit_operation';
+import {
+  AngleExpression,
+  AngleExpressionError,
+  validAngleIdentifier,
+} from "./angle_expression";
+import { parseCircuitOperationSlot } from "./circuit_operation";
 import {
   formatInitialState,
   initialStateQubitCount,
   parseInitialState,
-  zeroInitialStateText
-} from './initial_state';
+  zeroInitialStateText,
+} from "./initial_state";
 
 export class CircuitFileError extends Error {}
 
-const CONTROL_SYMBOL = '•';
+const CONTROL_SYMBOL = "•";
 const EMPTY_SLOT = 1;
-const SWAP_SYMBOL = 'Swap';
+const SWAP_SYMBOL = "Swap";
 
 export interface CircuitData {
   cols: unknown[][];
@@ -75,14 +79,28 @@ export class CircuitFile {
     this.write(circuit);
   }
 
-  addControlledGate(gate: string, step: number, controls: number[], target: number): void {
+  addControlledGate(
+    gate: string,
+    step: number,
+    controls: number[],
+    target: number
+  ): void {
     validateControls(controls, [target]);
-    this.addPlacement(step, new Map([...controls.map((control) => [control, CONTROL_SYMBOL] as const), [target, gate]]));
+    this.addPlacement(
+      step,
+      new Map([
+        ...controls.map((control) => [control, CONTROL_SYMBOL] as const),
+        [target, gate],
+      ])
+    );
   }
 
   addSwapGate(step: number, targets: number[], symbol = SWAP_SYMBOL): void {
     validateSwapTargets(targets);
-    this.addPlacement(step, new Map(targets.map((target) => [target, symbol] as const)));
+    this.addPlacement(
+      step,
+      new Map(targets.map((target) => [target, symbol] as const))
+    );
   }
 
   addControlledSwapGate(
@@ -97,7 +115,7 @@ export class CircuitFile {
       step,
       new Map([
         ...controls.map((control) => [control, CONTROL_SYMBOL] as const),
-        ...targets.map((target) => [target, symbol] as const)
+        ...targets.map((target) => [target, symbol] as const),
       ])
     );
   }
@@ -117,7 +135,9 @@ export class CircuitFile {
     const col = circuit.cols[step];
 
     if (!col || qubit < 0 || qubit >= col.length) {
-      throw new CircuitFileError(`slot does not exist: cols[${step}][${qubit}]`);
+      throw new CircuitFileError(
+        `slot does not exist: cols[${step}][${qubit}]`
+      );
     }
 
     return String(col[qubit]);
@@ -132,7 +152,12 @@ export class CircuitFile {
       throw new CircuitFileError(`slot is empty: cols[${step}][${qubit}]`);
     }
 
-    for (const removableQubit of removableQubits(col, selectedSlot, step, qubit)) {
+    for (const removableQubit of removableQubits(
+      col,
+      selectedSlot,
+      step,
+      qubit
+    )) {
       col[removableQubit] = EMPTY_SLOT;
     }
 
@@ -156,7 +181,7 @@ export class CircuitFile {
     const variables = circuit.variables ?? {};
     circuit.variables = {
       ...variables,
-      [validateVariableName(name)]: canonicalVariableValue(value)
+      [validateVariableName(name)]: canonicalVariableValue(value),
     };
     this.write(circuit);
     return true;
@@ -192,7 +217,7 @@ export class CircuitFile {
     const circuit = this.existingCircuit();
 
     if (!circuit) {
-      throw new CircuitFileError('circuit.json does not exist');
+      throw new CircuitFileError("circuit.json does not exist");
     }
 
     return circuit;
@@ -202,9 +227,9 @@ export class CircuitFile {
     let raw: string;
 
     try {
-      raw = readFileSync(this.filePath, 'utf8');
+      raw = readFileSync(this.filePath, "utf8");
     } catch (error) {
-      if (isNodeError(error) && error.code === 'ENOENT') {
+      if (isNodeError(error) && error.code === "ENOENT") {
         return undefined;
       }
 
@@ -218,7 +243,10 @@ export class CircuitFile {
     const tempPath = `${this.filePath}.tmp`;
 
     try {
-      writeFileSync(tempPath, `${JSON.stringify(serializedCircuit(circuit), null, 2)}\n`);
+      writeFileSync(
+        tempPath,
+        `${JSON.stringify(serializedCircuit(circuit), null, 2)}\n`
+      );
       renameSync(tempPath, this.filePath);
     } finally {
       rmSync(tempPath, { force: true });
@@ -247,11 +275,11 @@ export class CircuitFile {
 
 function validateSwapTargets(targets: number[]): void {
   if (targets.length !== 2) {
-    throw new CircuitFileError('SWAP requires exactly 2 target qubits');
+    throw new CircuitFileError("SWAP requires exactly 2 target qubits");
   }
 
   if (new Set(targets).size !== targets.length) {
-    throw new CircuitFileError('SWAP target qubits must be different');
+    throw new CircuitFileError("SWAP target qubits must be different");
   }
 }
 
@@ -259,8 +287,10 @@ function emptyCircuit(step: number, qubit: number): CircuitData {
   const qubits = qubit + 1;
 
   return {
-    cols: Array.from({ length: step + 1 }, () => Array.from({ length: qubits }, () => EMPTY_SLOT)),
-    qubits
+    cols: Array.from({ length: step + 1 }, () =>
+      Array.from({ length: qubits }, () => EMPTY_SLOT)
+    ),
+    qubits,
   };
 }
 
@@ -284,29 +314,39 @@ function expandStepsTo(circuit: CircuitData, step: number): void {
   }
 }
 
-function ensureAddSlotAvailable(circuit: CircuitData, step: number, qubit: number): void {
+function ensureAddSlotAvailable(
+  circuit: CircuitData,
+  step: number,
+  qubit: number
+): void {
   const slot = circuit.cols[step]?.[qubit];
 
   if (slot !== EMPTY_SLOT) {
-    throw new CircuitFileError(`target slot is occupied: cols[${step}][${qubit}] = ${JSON.stringify(slot)}`);
+    throw new CircuitFileError(
+      `target slot is occupied: cols[${step}][${qubit}] = ${JSON.stringify(slot)}`
+    );
   }
 }
 
 function validateControls(controls: number[], targets: number[]): void {
   if (controls.length === 0) {
-    throw new CircuitFileError('control must not be empty');
+    throw new CircuitFileError("control must not be empty");
   }
 
   if (new Set(controls).size !== controls.length) {
-    throw new CircuitFileError('control must not contain duplicates');
+    throw new CircuitFileError("control must not contain duplicates");
   }
 
   if (controls.some((control) => targets.includes(control))) {
-    throw new CircuitFileError('control and target must be different');
+    throw new CircuitFileError("control and target must be different");
   }
 }
 
-function existingSlot(circuit: CircuitData, step: number, qubit: number): unknown[] {
+function existingSlot(
+  circuit: CircuitData,
+  step: number,
+  qubit: number
+): unknown[] {
   const col = circuit.cols[step];
 
   if (!col || qubit < 0 || qubit >= col.length) {
@@ -326,7 +366,7 @@ function removableQubits(
     return controlledSwapQubits(col, step);
   }
 
-  if (operationKind(selectedSlot) === 'swap') {
+  if (operationKind(selectedSlot) === "swap") {
     return swapQubits(col, step);
   }
 
@@ -341,7 +381,7 @@ function controlledSwapSlot(col: unknown[], selectedSlot: unknown): boolean {
   return (
     col.includes(CONTROL_SYMBOL) &&
     swapSlots(col).length > 0 &&
-    (selectedSlot === CONTROL_SYMBOL || operationKind(selectedSlot) === 'swap')
+    (selectedSlot === CONTROL_SYMBOL || operationKind(selectedSlot) === "swap")
   );
 }
 
@@ -349,22 +389,40 @@ function controlledSwapQubits(col: unknown[], step: number): number[] {
   const controls = slotIndices(col, CONTROL_SYMBOL);
   const swaps = swapQubits(col, step);
 
-  if (!col.every((slot) => slot === EMPTY_SLOT || slot === CONTROL_SYMBOL || operationKind(slot) === 'swap')) {
-    throw new CircuitFileError(`unsupported controlled swap step: cols[${step}] = ${JSON.stringify(col)}`);
+  if (
+    !col.every(
+      (slot) =>
+        slot === EMPTY_SLOT ||
+        slot === CONTROL_SYMBOL ||
+        operationKind(slot) === "swap"
+    )
+  ) {
+    throw new CircuitFileError(
+      `unsupported controlled swap step: cols[${step}] = ${JSON.stringify(col)}`
+    );
   }
 
   return [...controls, ...swaps];
 }
 
-function controlledSlot(col: unknown[], selectedSlot: unknown, qubit: number): boolean {
-  return col.includes(CONTROL_SYMBOL) && (selectedSlot === CONTROL_SYMBOL || targetQubits(col).includes(qubit));
+function controlledSlot(
+  col: unknown[],
+  selectedSlot: unknown,
+  qubit: number
+): boolean {
+  return (
+    col.includes(CONTROL_SYMBOL) &&
+    (selectedSlot === CONTROL_SYMBOL || targetQubits(col).includes(qubit))
+  );
 }
 
 function controlledQubits(col: unknown[], step: number): number[] {
   const targets = targetQubits(col);
 
   if (targets.length !== 1) {
-    throw new CircuitFileError(`unsupported controlled step: cols[${step}] = ${JSON.stringify(col)}`);
+    throw new CircuitFileError(
+      `unsupported controlled step: cols[${step}] = ${JSON.stringify(col)}`
+    );
   }
 
   return [...slotIndices(col, CONTROL_SYMBOL), ...targets];
@@ -381,17 +439,23 @@ function swapQubits(col: unknown[], step: number): number[] {
   const indices = swapSlots(col);
 
   if (indices.length !== 2) {
-    throw new CircuitFileError(`unsupported swap step: cols[${step}] = ${JSON.stringify(col)}`);
+    throw new CircuitFileError(
+      `unsupported swap step: cols[${step}] = ${JSON.stringify(col)}`
+    );
   }
 
   return indices;
 }
 
 function swapSlots(col: unknown[]): number[] {
-  return col.flatMap((slot, index) => (operationKind(slot) === 'swap' ? [index] : []));
+  return col.flatMap((slot, index) =>
+    operationKind(slot) === "swap" ? [index] : []
+  );
 }
 
-function operationKind(slot: unknown): 'gate' | 'measurement' | 'swap' | undefined {
+function operationKind(
+  slot: unknown
+): "gate" | "measurement" | "swap" | undefined {
   try {
     return parseCircuitOperationSlot(slot)?.kind;
   } catch {
@@ -442,7 +506,10 @@ function trimTrailingEmptyQubits(circuit: CircuitData): void {
 }
 
 function trimTrailingEmptySteps(circuit: CircuitData): void {
-  while (circuit.cols.length > 1 && emptyCol(circuit.cols[circuit.cols.length - 1])) {
+  while (
+    circuit.cols.length > 1 &&
+    emptyCol(circuit.cols[circuit.cols.length - 1])
+  ) {
     circuit.cols.pop();
   }
 }
@@ -450,7 +517,10 @@ function trimTrailingEmptySteps(circuit: CircuitData): void {
 function leadingEmptyQubitCount(circuit: CircuitData): number {
   let count = 0;
 
-  while (count < removableQubitsLimit(circuit) && circuit.cols.every((col) => col[count] === EMPTY_SLOT)) {
+  while (
+    count < removableQubitsLimit(circuit) &&
+    circuit.cols.every((col) => col[count] === EMPTY_SLOT)
+  ) {
     count += 1;
   }
 
@@ -475,7 +545,9 @@ function removableQubitsLimit(circuit: CircuitData): number {
 }
 
 function minimumQubits(circuit: CircuitData): number {
-  return circuit.initial_state == null ? 1 : initialStateQubitCount(circuit.initial_state);
+  return circuit.initial_state == null
+    ? 1
+    : initialStateQubitCount(circuit.initial_state);
 }
 
 function emptyCol(col: unknown[] | undefined): boolean {
@@ -489,12 +561,12 @@ function validateInitialState(circuit: CircuitData): void {
 }
 
 export function currentCircuitFile(cwd: string): CircuitFile {
-  return new CircuitFile(path.resolve(cwd, 'circuit.json'));
+  return new CircuitFile(path.resolve(cwd, "circuit.json"));
 }
 
 function normalizeCircuit(value: unknown): CircuitData {
   if (!isRecord(value)) {
-    throw new CircuitFileError('circuit must be an object');
+    throw new CircuitFileError("circuit must be an object");
   }
 
   const qubits = normalizeQubits(value.qubits);
@@ -503,13 +575,13 @@ function normalizeCircuit(value: unknown): CircuitData {
     cols: normalizeCols(value.cols, qubits),
     initial_state: value.initial_state,
     qubits,
-    variables: normalizeVariables(value.variables ?? {})
+    variables: normalizeVariables(value.variables ?? {}),
   };
 }
 
 function normalizeQubits(value: unknown): number {
-  if (typeof value !== 'number' || !Number.isInteger(value) || value <= 0) {
-    throw new CircuitFileError('qubits must be a positive integer');
+  if (typeof value !== "number" || !Number.isInteger(value) || value <= 0) {
+    throw new CircuitFileError("qubits must be a positive integer");
   }
 
   return value;
@@ -517,11 +589,13 @@ function normalizeQubits(value: unknown): number {
 
 function normalizeCols(value: unknown, qubits: number): unknown[][] {
   if (!Array.isArray(value)) {
-    throw new CircuitFileError('cols must be an array');
+    throw new CircuitFileError("cols must be an array");
   }
 
   if (!value.every((col) => Array.isArray(col) && col.length === qubits)) {
-    throw new CircuitFileError('each column in cols must have exactly qubits entries');
+    throw new CircuitFileError(
+      "each column in cols must have exactly qubits entries"
+    );
   }
 
   return value.map((col) => [...col]);
@@ -529,13 +603,13 @@ function normalizeCols(value: unknown, qubits: number): unknown[][] {
 
 function normalizeVariables(value: unknown): Record<string, string> {
   if (!isRecord(value)) {
-    throw new CircuitFileError('variables must be an object');
+    throw new CircuitFileError("variables must be an object");
   }
 
   return Object.fromEntries(
     Object.entries(value).map(([name, variableValue]) => [
       validateVariableName(name),
-      canonicalVariableValue(variableValue)
+      canonicalVariableValue(variableValue),
     ])
   );
 }
@@ -543,7 +617,7 @@ function normalizeVariables(value: unknown): Record<string, string> {
 function serializedCircuit(circuit: CircuitData): Record<string, unknown> {
   const result: Record<string, unknown> = {
     qubits: circuit.qubits,
-    cols: circuit.cols
+    cols: circuit.cols,
   };
 
   if (circuit.initial_state != null) {
@@ -559,7 +633,7 @@ function serializedCircuit(circuit: CircuitData): Record<string, unknown> {
 
 function validateVariableName(name: string): string {
   if (name.length === 0) {
-    throw new CircuitFileError('variable name is required');
+    throw new CircuitFileError("variable name is required");
   }
 
   if (!validAngleIdentifier(name)) {
@@ -590,13 +664,15 @@ function canonicalVariableValue(value: unknown): string {
 function domainError(error: unknown): CircuitFileError {
   return error instanceof CircuitFileError
     ? error
-    : new CircuitFileError(error instanceof Error ? error.message : String(error));
+    : new CircuitFileError(
+        error instanceof Error ? error.message : String(error)
+      );
 }
 
 function isNodeError(error: unknown): error is NodeJS.ErrnoException {
-  return error instanceof Error && 'code' in error;
+  return error instanceof Error && "code" in error;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
