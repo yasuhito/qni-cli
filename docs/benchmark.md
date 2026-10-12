@@ -530,6 +530,31 @@ qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/
 
 この7課題の比較条件は過去の評価時点から変わっています。過去の研究試行は再採点せず、保存済み結果も変更しません ([ADR 0019](adr/0019-research-report-does-not-regrade.md))。変更前後の点数を同一条件として単純比較しないでください。判断の背景は [ADR 0026](adr/0026-opt-in-to-global-phase-insensitive-state-checks.md) を参照してください。
 
+## 参照回路とのユニタリ等価性
+
+変換全体を検証する課題には `unitary` を使います。参照回路は回路ファイルと同じ `qubits`、`cols`、任意の `variables` を埋め込みます。各列は量子ビット数と同じ長さで、`1` は空の位置です。
+
+```yaml
+checks:
+  tolerance: 1e-9
+  items:
+    - type: unitary
+      reference_circuit:
+        qubits: 2
+        cols:
+          - [H, 1]
+          - ["•", X]
+      # up_to_global_phase: true
+```
+
+提出コマンド実行後の回路と参照回路を、全 `2^n` 個の計算基底入力でシミュレーションします。量子ビット0は基底表記の左端です。量子ビット数が違う提出物は理由付きで不合格になります。初期状態は検証時に基底入力へ置換するため、提出回路の `state set` による状態はこの検証に影響しません。参照回路に `initial_state` は指定できません。空の末尾量子ビットなど幅を保持したい場合は、許可コマンドに `qni state set` を含め、参照と同じ幅の状態を提出物で設定してください。`grading_cases` 内にも置けますが、準備コマンドを含めた最終回路全体が比較対象です。
+
+既定と `up_to_global_phase: false` は位相も含めた厳密比較です。`true` の場合だけ、**行列全体に共通する一つの位相**を許容します。最大期待振幅の成分から単位位相を求め、すべての基底入力へ同じ補正を使います。入力ごとに違う位相（例えば恒等変換に対する Z）は許容しません。基準実測振幅がゼロなら位相1で比較します。補正後の実部・虚部の差をそれぞれ `checks.tolerance` 以下か比較し、正規化や絶対値だけの比較はしません。許容誤差は YAML の数値として有限・非負が必要です。
+
+指数的な計算量のため1〜8量子ビットに制限します。幅の不一致より先にこの上限と操作の有効性を検証するため、例えば9量子ビットの提出物は不合格ではなくエラーになります。測定や古典条件付き操作、未対応ゲート、未解決の記号式はエラーになります。補助量子ビットや部分系の比較は未対応です。不合格の表示には入力基底・出力基底ごとの期待値と実測値を最大16件示します。JSON の検証要約は `{"type":"unitary","status":"passed"}` または `failed` です。量子ビット数の不一致理由は人間向け表示に出ます。
+
+これは Quantum Katas QFT の12課題を移植するための前提機能です。課題の移植と位相方針の選択は別途行い、既存51課題の採点条件は変更しません。設計理由は [ADR 0028](adr/0028-grade-unitary-equivalence-to-reference-circuits.md) を参照してください。
+
 ## benchmark と research の責務
 
 `benchmark` は提出物を採点し、`research` は研究ログを保存します。`qni benchmark run` と `qni benchmark run-all` は `.qni` 提出物を評価し、結果を標準出力へ出します。`qni research record` は、1つのベンチマークスイートに対する外部共同研究者の1回の研究試行を `research/runs/<timestamp>-<slug>/` に保存します。保存時には `qni benchmark run-all --json` 相当の採点を実行し、その結果も同じ研究試行ディレクトリに残します。

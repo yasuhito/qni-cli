@@ -564,7 +564,8 @@ export function currentCircuitFile(cwd: string): CircuitFile {
   return new CircuitFile(path.resolve(cwd, "circuit.json"));
 }
 
-function normalizeCircuit(value: unknown): CircuitData {
+/** Validates and copies the shared circuit-file / embedded-reference structure. */
+export function normalizeCircuit(value: unknown): CircuitData {
   if (!isRecord(value)) {
     throw new CircuitFileError("circuit must be an object");
   }

@@ -236,6 +236,15 @@ function failedCheckLines(
   caseId?: string
 ): string[] {
   switch (check.type) {
+    case "unitary":
+      return [
+        `- ${failedCheckLabel(check, index, caseId)}: ${check.reason ?? "unitary matrix did not match reference circuit"}`,
+        ...check.mismatches.displayed.map(
+          (entry) =>
+            `  - input ${entry.input}, output ${entry.output}: expected ${formatComplexAmplitude(entry.expected)}, actual ${formatComplexAmplitude(entry.actual)}`
+        ),
+        ...omittedAmplitudeMismatchLines(check.mismatches.omittedCount),
+      ];
     case "expect":
       return failedExpectationCheckLines(check, index, caseId);
     case "run":
