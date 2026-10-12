@@ -178,3 +178,32 @@ QFT12課題を追加し、スイートは **63課題**。上流57問は部分的
 SignalFrequency は計画どおり測定・整数返却を移植せず、測定前の逆QFTによる |F> への変換を対象とする。F=5 は固定説明例であり、F2 は全8基底入力で逆QFT全体を比較するため、周波数ごとに別の位相を付ける測定同値の実装も不合格となる、上流より強い部分移植である。行列全体で共通の全体位相だけは許容する。解析式による独立テストで全8周波数の復号を検証する。一般引数・可変長回路生成は対象外。
 
 採点器の既存制約: ユニタリ比較は量子ビット数も検証するが、状態準備の `run` 比較は振幅列の不足部分をゼロ補完するため、左端に未使用の |0> を追加した提出物の幅違反までは検出しない。状態準備5問の指定幅・補助量子ビット禁止は課題上の制約であり、このPRでは既存51課題と共通の状態採点仕様を変更しない。中立JSONの許可語彙には既存の `ControlledPhase` を使い、変換後の提出物も採点テストで確認する。
+
+## Stage PA: 固定値18上流課題・21課題ファイルの分岐
+
+QFT追加前の部分的移植は18上流課題、Bellの4分割により21ファイル。下表はその全件である。QFTの部分的11件は別枠。固定幅で連続引数だけが変わる課題は**記号証明を主採点**とし、可変 N/配列/離散引数は後続PRの approach a（複数値数値採点）へ分ける。
+
+| 上流の課題            | 現行課題ID                                 | ファイル数 | 一般化経路                                                                   |
+| --------------------- | ------------------------------------------ | ---------: | ---------------------------------------------------------------------------- |
+| PhaseChange           | basic-gates/phase-change-pi-over-3         |          1 | PA: 実数 α、1量子ビット、ユニタリ厳密                                        |
+| AmplitudeChange       | single-qubit-gates/amplitude-change        |          1 | PA: 実数 α、1量子ビット、ユニタリ厳密                                        |
+| PrepareRotatedState   | single-qubit-gates/prepare-rotated-state   |          1 | 記号採点候補: 正規化した実数振幅。角度への再パラメータ化または制約機能が必要 |
+| PrepareArbitraryState | single-qubit-gates/prepare-arbitrary-state |          1 | 記号採点候補: 正規化振幅と相対位相。符号・定義域の確認が必要                 |
+| QubitSwap             | basic-gates/two-qubit-gate-3               |          1 | 後続: N/添字の複数値                                                         |
+| ControlledRotation    | multi-qubit-gates/controlled-rotation      |          1 | PA: 実数 α、2量子ビット、共通全体位相を許容するユニタリ                      |
+| ArbitraryControls     | multi-qubit-gates/arbitrary-controls       |          1 | 後続: N/制御ビット列の複数値                                                 |
+| AllBellStates         | preparing-states/all-bell-states-0..3      |          4 | 後続: indexの複数値                                                          |
+| GHZState              | superposition/ghz-state                    |          1 | 後続: Nの複数値                                                              |
+| AllBasisVectors       | preparing-states/all-basis-vectors         |          1 | 後続: Nの複数値                                                              |
+| EvenOdd               | preparing-states/even-odd                  |          1 | 後続: N/真偽値の複数値                                                       |
+| ZeroAndBitstring      | preparing-states/zero-and-bitstring        |          1 | 後続: ビット列の複数値                                                       |
+| TwoBitstrings         | preparing-states/two-bitstrings            |          1 | 後続: ビット列の複数値                                                       |
+| FourBitstrings        | preparing-states/four-bitstrings           |          1 | 後続: ビット列の複数値                                                       |
+| ParityBitstrings      | preparing-states/parity-bitstrings         |          1 | 後続: N/整数の複数値                                                         |
+| UnequalSuperposition  | preparing-states/unequal-superposition     |          1 | PA: 実数 α、N=1固定、ゼロ入力、全体位相許容。一般Nは後続                     |
+| WStatePowerOfTwo      | preparing-states/wstate-power-of-two       |          1 | 後続: Nの複数値                                                              |
+| WStateArbitrary       | preparing-states/wstate-arbitrary          |          1 | 後続: Nの複数値                                                              |
+
+PA の4一般化版は `benchmarks/quantum-katas-symbolic` に追加した。**記号4課題、旧数値63課題、合計67課題ファイル**。旧課題ID・固定値・標準解・保存済み結果は維持する。記号版を選んだ評価では旧固定値版の代わりに主判定とし、同じ順位表へ混ぜない。全角度対応となるのは4課題（UnequalSuperpositionのNは固定のまま）で、旧対応表の29部分的という履歴数値は変更しない。
+
+追加候補は上記2状態準備課題。QFT RotationGate は k が整数なので複数値数値採点が本来の経路で、角度 θ 自体を実数引数に置き換えた固定幅の別課題なら記号採点が適する。QFT PeriodicState/SignalFrequency はNと周波数・測定契約を切り分ける必要があるため、PAの4件には含めない。仕様と実数・正規化仮定は [記号採点](../symbolic-grading.md)、判断の境界は [ADR 0029](../adr/0029-use-symbolic-proof-for-fixed-width-parameter-tasks.md) を参照。

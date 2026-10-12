@@ -10,6 +10,11 @@ import path = require("node:path");
 
 import { currentCircuitFile } from "../circuit_file";
 import {
+  proveSymbolicSubmission,
+  type SymbolicCheckResult,
+  type SymbolicProof,
+} from "./symbolic_grading";
+import {
   compareReferenceCircuit,
   type ReferenceCircuitComparison,
 } from "./reference_circuit";
@@ -20,6 +25,7 @@ import { runRunCommand } from "../commands/run_command";
 import { runStateCommand } from "../commands/state_command";
 import {
   loadBenchmarkTask,
+  benchmarkTaskSubmissionProtocol,
   type BenchmarkCheck,
   type BenchmarkChecks,
   type BenchmarkGradingCase,
@@ -73,7 +79,8 @@ export interface BenchmarkSuiteGradingRequest {
 
 export interface BenchmarkCheckSummary {
   readonly status: "failed" | "passed";
-  readonly type: "expect" | "run" | "unitary";
+  readonly type: "expect" | "run" | "unitary" | "symbolic";
+  readonly proof?: SymbolicProof;
 }
 
 export interface BenchmarkGradingCaseSummary {
@@ -84,6 +91,14 @@ export interface BenchmarkGradingCaseSummary {
 }
 
 export interface BenchmarkTaskGradingResult {
+  readonly submissionProtocol?: string;
+  readonly symbolicAssumptions?: {
+    readonly parameters: unknown;
+    readonly mode: string;
+    readonly qubits: number;
+    readonly normalization: string;
+    readonly globalPhase: string;
+  };
   readonly checks: readonly BenchmarkCheckSummary[];
   readonly error?: string;
   readonly exitCode: number;
@@ -107,6 +122,7 @@ export interface BenchmarkSuiteGradingResult {
 }
 
 export interface BenchmarkResult {
+  readonly submissionProtocol?: string;
   readonly checks: readonly BenchmarkCheckResult[];
   readonly disallowedSubmission?: DisallowedSubmission;
   readonly errorMessage?: string;
@@ -121,6 +137,7 @@ export interface BenchmarkTaskGradingReport {
 }
 
 interface BenchmarkSuiteEntry {
+  readonly submissionProtocol?: string;
   readonly submission: string;
   readonly submissionPath: string;
   readonly taskFile: string;
@@ -151,7 +168,7 @@ export interface BenchmarkSuiteSummary {
 }
 
 export type BenchmarkCheckResult =
-  ExpectCheckResult | RunCheckResult | UnitaryCheckResult;
+  ExpectCheckResult | RunCheckResult | UnitaryCheckResult | SymbolicCheckResult;
 
 export interface UnitaryCheckResult extends ReferenceCircuitComparison {
   readonly type: "unitary";
@@ -262,10 +279,14 @@ export function gradeBenchmarkTaskForReport(
       task,
     };
   } catch (error) {
+    const submissionProtocol = benchmarkTaskSubmissionProtocol(
+      resolveInputPath(request.taskFile, context)
+    );
     const result: BenchmarkResult = {
       checks: [],
       errorMessage: errorMessage(error),
       status: "error",
+      ...(submissionProtocol ? { submissionProtocol } : {}),
     };
 
     return {
@@ -323,6 +344,15 @@ function evaluateBenchmark(options: {
   readonly submissionPath: string;
   readonly task: BenchmarkTask;
 }): BenchmarkResult {
+  if (options.task.symbolic) {
+    const check = proveSymbolicSubmission({
+      specification: options.task.symbolic,
+      submissionPath: options.submissionPath,
+      availableGates: options.task.availableGates,
+      context: options.context,
+    });
+    return { checks: [check], status: check.status };
+  }
   let submission: ReturnType<typeof readBenchmarkSubmission>;
 
   try {
@@ -495,9 +525,16 @@ function benchmarkSuiteEntries(options: {
   }
 
   return relativeTaskFiles.map((relativeTaskFile) => {
-    const relativeSubmissionFile = relativeTaskFile.replace(/\.md$/u, ".qni");
+    const submissionProtocol = benchmarkTaskSubmissionProtocol(
+      path.join(options.benchmarkDirPath, relativeTaskFile)
+    );
+    const relativeSubmissionFile = relativeTaskFile.replace(
+      /\.md$/u,
+      submissionProtocol ? ".json" : ".qni"
+    );
 
     return {
+      ...(submissionProtocol ? { submissionProtocol } : {}),
       submission: displayChildPath(
         options.solutionsDir,
         relativeSubmissionFile
@@ -586,6 +623,9 @@ function evaluateBenchmarkSuiteEntry(
         checks: [],
         errorMessage: errorMessage(error),
         status: "error",
+        ...(entry.submissionProtocol
+          ? { submissionProtocol: entry.submissionProtocol }
+          : {}),
       },
       submission: entry.submission,
       task,
@@ -1159,6 +1199,26 @@ function benchmarkResultPayload(
   result: BenchmarkResult
 ): BenchmarkTaskGradingResult {
   const payload: BenchmarkTaskGradingResult = {
+    ...(result.submissionProtocol
+      ? { submissionProtocol: result.submissionProtocol }
+      : {}),
+    ...(task?.symbolic
+      ? {
+          submissionProtocol: task.symbolic.protocol,
+          symbolicAssumptions: {
+            parameters: task.symbolic.parameters,
+            mode: task.symbolic.mode,
+            qubits: task.symbolic.qubits,
+            normalization:
+              task.symbolic.mode === "state"
+                ? "unitary gates; state starts at |0...0>"
+                : "product of unitary gates; all input columns",
+            globalPhase: task.symbolic.up_to_global_phase
+              ? "one common unit-modulus phase, possibly parameter-dependent"
+              : "exact phase",
+          },
+        }
+      : {}),
     taskId: task?.id ?? null,
     title: task?.title ?? null,
     submission,
@@ -1168,6 +1228,7 @@ function benchmarkResultPayload(
     checks: result.checks.map((check) => ({
       type: check.type,
       status: check.status,
+      ...(check.type === "symbolic" ? { proof: check.proof } : {}),
     })),
   };
 

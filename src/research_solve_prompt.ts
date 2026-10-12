@@ -1,9 +1,9 @@
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
-import path = require('node:path');
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import path = require("node:path");
 
-import type { CommandHandlerContext } from './dispatcher';
-import { loadBenchmarkTask } from './evaluation_runner/benchmark_task';
-import { BLIND_NEUTRAL_CIRCUIT_JSON_SUBMISSION_PROTOCOL } from './research_submission_protocol';
+import type { CommandHandlerContext } from "./dispatcher";
+import { loadBenchmarkTask } from "./evaluation_runner/benchmark_task";
+import { BLIND_NEUTRAL_CIRCUIT_JSON_SUBMISSION_PROTOCOL } from "./research_submission_protocol";
 
 export interface ResearchSolveTaskPrompt {
   readonly systemPrompt: string;
@@ -28,23 +28,39 @@ export function buildResearchSolveTaskPrompts(options: {
   readonly context: CommandHandlerContext;
   readonly taskIds?: readonly string[];
 }): ResearchSolveTaskPrompt[] {
-  const benchmarkDirPath = resolveInputPath(options.benchmarkDir, options.context);
+  const benchmarkDirPath = resolveInputPath(
+    options.benchmarkDir,
+    options.context
+  );
   const relativeTaskFiles = markdownFilesInDirectory(benchmarkDirPath);
 
   if (relativeTaskFiles.length === 0) {
-    throw new ResearchSolvePromptError(`benchmark directory contains no task files: ${options.benchmarkDir}`);
+    throw new ResearchSolvePromptError(
+      `benchmark directory contains no task files: ${options.benchmarkDir}`
+    );
   }
 
   const prompts = relativeTaskFiles.map((relativeTaskFile) => {
     const taskPath = path.join(benchmarkDirPath, relativeTaskFile);
     const task = loadBenchmarkTask(taskPath);
-    const taskBody = benchmarkTaskBody(readFileSync(taskPath, 'utf8'));
+    if (task.symbolic) {
+      throw new ResearchSolvePromptError(
+        "symbolic tasks require neutral-symbolic-circuit-json-v1; research solve conversion is not supported"
+      );
+    }
+    const taskBody = benchmarkTaskBody(readFileSync(taskPath, "utf8"));
     const relativeTaskFilePosix = toPosixPath(relativeTaskFile);
-    const relativeSubmissionFile = relativeTaskFilePosix.replace(/\.md$/u, '.qni');
-    const relativeCircuitJsonFile = relativeTaskFilePosix.replace(/\.md$/u, '.json');
+    const relativeSubmissionFile = relativeTaskFilePosix.replace(
+      /\.md$/u,
+      ".qni"
+    );
+    const relativeCircuitJsonFile = relativeTaskFilePosix.replace(
+      /\.md$/u,
+      ".json"
+    );
     const prompt = promptMessages({
       availableGates: task.availableGates,
-      taskBody
+      taskBody,
     });
 
     return {
@@ -52,15 +68,25 @@ export function buildResearchSolveTaskPrompts(options: {
       systemPrompt: prompt.systemPrompt,
       userPrompt: prompt.userPrompt,
       promptText: savedPromptText(prompt),
-      relativeCircuitJsonPath: toPosixPath(path.join('circuit-json', relativeCircuitJsonFile)),
-      relativePromptPath: toPosixPath(path.join('prompts', relativeTaskFilePosix)),
-      relativeResponsePath: toPosixPath(path.join('responses', relativeTaskFilePosix)),
-      relativeSubmissionPath: toPosixPath(path.join('submissions', relativeSubmissionFile)),
+      relativeCircuitJsonPath: toPosixPath(
+        path.join("circuit-json", relativeCircuitJsonFile)
+      ),
+      relativePromptPath: toPosixPath(
+        path.join("prompts", relativeTaskFilePosix)
+      ),
+      relativeResponsePath: toPosixPath(
+        path.join("responses", relativeTaskFilePosix)
+      ),
+      relativeSubmissionPath: toPosixPath(
+        path.join("submissions", relativeSubmissionFile)
+      ),
       relativeTaskFile: relativeTaskFilePosix,
-      taskFile: toPosixPath(path.join(options.benchmarkDir, relativeTaskFilePosix)),
+      taskFile: toPosixPath(
+        path.join(options.benchmarkDir, relativeTaskFilePosix)
+      ),
       taskId: task.id,
       taskPath,
-      title: task.title
+      title: task.title,
     };
   });
 
@@ -83,56 +109,64 @@ function promptMessages(options: {
   readonly availableGates: readonly string[];
   readonly taskBody: string;
 }): { readonly systemPrompt: string; readonly userPrompt: string } {
-  const responseRule = '有効な JSON だけを返す。Markdown で囲まない。説明を書かない。';
+  const responseRule =
+    "有効な JSON だけを返す。Markdown で囲まない。説明を書かない。";
 
   return {
     systemPrompt: [
-      'あなたは量子回路課題に解答するAIです。',
+      "あなたは量子回路課題に解答するAIです。",
       `利用可能ゲート一覧と課題本文だけを根拠に、中立回路 JSON プロトコル ${BLIND_NEUTRAL_CIRCUIT_JSON_SUBMISSION_PROTOCOL} の提出を作成してください。`,
-      responseRule
-    ].join('\n'),
+      responseRule,
+    ].join("\n"),
     userPrompt: [
-        '# neutral circuit task',
-        '',
-        '## available_gates',
-        '',
-        ...options.availableGates.map((gate) => `- ${gate}`),
-        '',
-        '## response_format',
-        '',
-        responseRule,
-        'トップレベルは object で、キーは operations だけです。',
-        'operations は配列です。配列の順序が回路の操作順序です。',
-        '各 operation は gate と targets を持ち、必要な場合だけ controls と angle を持ちます。',
-        'gate は available_gates にある名前を使います。',
-        'targets と controls は0始まりの非負整数配列です。',
-        'angle は pi を使った記号式の文字列です。数値ラジアンは使いません。',
-        '',
-        '## neutral_task_body',
-        '',
-      options.taskBody
-    ].join('\n')
+      "# neutral circuit task",
+      "",
+      "## available_gates",
+      "",
+      ...options.availableGates.map((gate) => `- ${gate}`),
+      "",
+      "## response_format",
+      "",
+      responseRule,
+      "トップレベルは object で、キーは operations だけです。",
+      "operations は配列です。配列の順序が回路の操作順序です。",
+      "各 operation は gate と targets を持ち、必要な場合だけ controls と angle を持ちます。",
+      "gate は available_gates にある名前を使います。",
+      "targets と controls は0始まりの非負整数配列です。",
+      "angle は pi を使った記号式の文字列です。数値ラジアンは使いません。",
+      "",
+      "## neutral_task_body",
+      "",
+      options.taskBody,
+    ].join("\n"),
   };
 }
 
-function savedPromptText(prompt: { readonly systemPrompt: string; readonly userPrompt: string }): string {
+function savedPromptText(prompt: {
+  readonly systemPrompt: string;
+  readonly userPrompt: string;
+}): string {
   return [
-    '# System message',
-    '',
+    "# System message",
+    "",
     prompt.systemPrompt,
-    '',
-    '# User message',
-    '',
+    "",
+    "# User message",
+    "",
     prompt.userPrompt,
-    ''
-  ].join('\n');
+    "",
+  ].join("\n");
 }
 
 function benchmarkTaskBody(markdown: string): string {
-  const match = /^---\r?\n[\s\S]*?\r?\n---(?:\r?\n|$)(?<body>[\s\S]*)$/u.exec(markdown);
+  const match = /^---\r?\n[\s\S]*?\r?\n---(?:\r?\n|$)(?<body>[\s\S]*)$/u.exec(
+    markdown
+  );
 
   if (!match?.groups) {
-    throw new ResearchSolvePromptError('benchmark task file must start with YAML frontmatter');
+    throw new ResearchSolvePromptError(
+      "benchmark task file must start with YAML frontmatter"
+    );
   }
 
   return match.groups.body.trim();
@@ -140,19 +174,28 @@ function benchmarkTaskBody(markdown: string): string {
 
 function markdownFilesInDirectory(dir: string): string[] {
   if (!existsSync(dir)) {
-    throw new ResearchSolvePromptError(`benchmark directory does not exist: ${dir}`);
+    throw new ResearchSolvePromptError(
+      `benchmark directory does not exist: ${dir}`
+    );
   }
 
   if (!statSync(dir).isDirectory()) {
-    throw new ResearchSolvePromptError(`benchmark path is not a directory: ${dir}`);
+    throw new ResearchSolvePromptError(
+      `benchmark path is not a directory: ${dir}`
+    );
   }
 
-  return markdownFilesInDirectoryEntries(dir, '').sort();
+  return markdownFilesInDirectoryEntries(dir, "").sort();
 }
 
-function markdownFilesInDirectoryEntries(root: string, relativeDir: string): string[] {
+function markdownFilesInDirectoryEntries(
+  root: string,
+  relativeDir: string
+): string[] {
   const dir = path.join(root, relativeDir);
-  const entries = readdirSync(dir, { withFileTypes: true }).sort((left, right) => left.name.localeCompare(right.name));
+  const entries = readdirSync(dir, { withFileTypes: true }).sort(
+    (left, right) => left.name.localeCompare(right.name)
+  );
   const files: string[] = [];
 
   for (const entry of entries) {
@@ -160,7 +203,7 @@ function markdownFilesInDirectoryEntries(root: string, relativeDir: string): str
 
     if (entry.isDirectory()) {
       files.push(...markdownFilesInDirectoryEntries(root, relativePath));
-    } else if (entry.isFile() && entry.name.endsWith('.md')) {
+    } else if (entry.isFile() && entry.name.endsWith(".md")) {
       files.push(relativePath);
     }
   }
@@ -168,7 +211,10 @@ function markdownFilesInDirectoryEntries(root: string, relativeDir: string): str
   return files;
 }
 
-function resolveInputPath(filePath: string, context: CommandHandlerContext): string {
+function resolveInputPath(
+  filePath: string,
+  context: CommandHandlerContext
+): string {
   if (path.isAbsolute(filePath)) {
     return filePath;
   }
@@ -183,5 +229,5 @@ function resolveInputPath(filePath: string, context: CommandHandlerContext): str
 }
 
 function toPosixPath(filePath: string): string {
-  return filePath.split(path.sep).join('/');
+  return filePath.split(path.sep).join("/");
 }

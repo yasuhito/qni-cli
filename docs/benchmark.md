@@ -10,13 +10,15 @@ Pi 経由で `qni research solve` を実行し、`qni research plot` で cost pe
 
 ## 評価ランナーと研究プロトコル
 
-`qni benchmark run` と `qni benchmark run-all` は `.qni` 採点器です。提出物を一時的な作業場所で実行し、課題 frontmatter の検証条件に照らして採点します。AI は呼び出さず、研究試行ディレクトリも作りません。
+固定幅で角度・連続引数だけが変わる課題の主採点は、[記号版4課題](#記号版4課題の主採点)の全引数に対する証明です。履歴互換の数値版63課題と記号版4課題で、合計67課題ファイル（一般化版の重複を含む）があります。
+
+既存数値課題に対する `qni benchmark run` と `qni benchmark run-all` は `.qni` 採点器です。提出物を一時的な作業場所で実行し、課題 frontmatter の検証条件に照らして採点します。AI は呼び出さず、研究試行ディレクトリも作りません。
 
 `qni research solve` と `qni research record --circuit-json-dir` は、`blind-neutral-circuit-json-v1` の研究プロトコルです。共同研究者やモデルには qni-cli 固有語彙を見せず、トップレベルが `operations` だけの中立回路 JSON を提出させます。qni-cli は中立 JSON を保存し、内部で `.qni` へ変換してから同じ評価ランナーに渡します。
 
 `.qni` 直接提出は `qni-command-output-v0` の legacy protocol です。`qni benchmark` で手元の `.qni` 提出物を採点したい場合や、`qni research record --submissions` で既存の `.qni` 提出物群を研究試行に残したい場合に使います。共同研究者が qni-cli のコマンド形式や許可コマンドを見ているため、`blind-neutral-circuit-json-v1` の結果と `qni-command-output-v0` の結果を同じ順位表や散布図で混ぜて比較しないでください。
 
-研究試行の `metadata.json` と、`solve` が保存する `calls.json` では `submissionProtocol` を確認します。`submissionProtocol` は `blind-neutral-circuit-json-v1` または `qni-command-output-v0` を保存します。`blind-neutral-circuit-json-v1` は中立回路 JSON を採点前に `.qni` へ変換した公平比較用の提出プロトコル、`qni-command-output-v0` は既存の `.qni` コマンド列を直接提出した legacy protocol です。
+研究試行の `metadata.json` と、`solve` が保存する `calls.json` では `submissionProtocol` を確認します。`submissionProtocol` は `blind-neutral-circuit-json-v1`、`qni-command-output-v0`、または記号課題の `neutral-symbolic-circuit-json-v1` を保存します。記号JSONは `research record --submissions` で記録でき、過去のプロトコルとは別枠にします。`blind-neutral-circuit-json-v1` は中立回路 JSON を採点前に `.qni` へ変換した公平比較用の提出プロトコル、`qni-command-output-v0` は既存の `.qni` コマンド列を直接提出した legacy protocol です。
 
 ## legacy .qni 直接提出の作り方
 
@@ -28,7 +30,25 @@ Pi 経由で `qni research solve` を実行し、`qni research plot` で cost pe
 
 提出物には回路を作るコマンドだけを書きます。`qni run` や `qni expect` などの検証コマンドは書きません。
 
-## 63問の標準解を実行する
+## 記号版4課題の主採点
+
+```sh
+qni benchmark run-all benchmarks/quantum-katas-symbolic benchmarks/solutions/quantum-katas-symbolic
+```
+
+新しい提出プロトコル `neutral-symbolic-circuit-json-v1` の `.json` を直接採点します。全4課題を固定角度でなく実数全域で証明します。詳細・式文法・実数と正規化の仮定・位相・時間切れの不合格は [記号採点](symbolic-grading.md) を参照してください。可変 N/配列の複数値数値採点は後続PRです。過去結果は再採点しません。
+
+```text
+PASS benchmark suite
+tasks: 4
+passed: 4, failed: 0, disallowed: 0, error: 0
+- passed basic-gates/phase-change-pi-over-3 PhaseChangePiOver3
+- passed multi-qubit-gates/controlled-rotation ControlledRotation
+- passed preparing-states/unequal-superposition UnequalSuperposition
+- passed single-qubit-gates/amplitude-change AmplitudeChange
+```
+
+## 履歴互換の63問の標準解を実行する
 
 ### StateFlip
 
@@ -569,9 +589,9 @@ Quantum Katas QFT の12課題はこの機能を使って移植済みです。先
 
 ## benchmark と research の責務
 
-`benchmark` は提出物を採点し、`research` は研究ログを保存します。`qni benchmark run` と `qni benchmark run-all` は `.qni` 提出物を評価し、結果を標準出力へ出します。`qni research record` は、1つのベンチマークスイートに対する外部共同研究者の1回の研究試行を `research/runs/<timestamp>-<slug>/` に保存します。保存時には `qni benchmark run-all --json` 相当の採点を実行し、その結果も同じ研究試行ディレクトリに残します。
+`benchmark` は提出物を採点し、`research` は研究ログを保存します。`qni benchmark run` と `qni benchmark run-all` は、既存課題では `.qni` 提出物、記号課題では `neutral-symbolic-circuit-json-v1` の `.json` 提出物を評価し、結果を標準出力へ出します。`qni research record` は、1つのベンチマークスイートに対する外部共同研究者の1回の研究試行を `research/runs/<timestamp>-<slug>/` に保存します。保存時には `qni benchmark run-all --json` 相当の採点を実行し、その結果も同じ研究試行ディレクトリに残します。
 
-`qni research record` は AI を呼び出さず、git commit も作りません。Pi、Claude、Codex、人間などが外部で作ったプロンプト、AI回答、提出物ディレクトリをファイルパスで渡します。`--circuit-json-dir` は `blind-neutral-circuit-json-v1` の中立 JSON 提出物群、`--submissions` は `qni-command-output-v0` の legacy `.qni` 提出物群として扱います。`git commit` が必要な場合は、生成された `research/runs/...` を確認してから手動または上位の実行環境で作ります。
+`qni research record` は AI を呼び出さず、git commit も作りません。Pi、Claude、Codex、人間などが外部で作ったプロンプト、AI回答、提出物ディレクトリをファイルパスで渡します。`--circuit-json-dir` は `blind-neutral-circuit-json-v1` の中立 JSON 提出物群、`--submissions` は既存課題では `qni-command-output-v0` の legacy `.qni` 提出物群、記号課題では `neutral-symbolic-circuit-json-v1` の `.json` 提出物群として扱います。1試行で両者を混ぜることはできません。`git commit` が必要な場合は、生成された `research/runs/...` を確認してから手動または上位の実行環境で作ります。
 
 ## 研究試行を記録する最小例
 

@@ -1,0 +1,20 @@
+{
+  "protocol": "neutral-symbolic-circuit-json-v1",
+  "qubits": 1,
+  "parameters": [
+    {
+      "name": "alpha",
+      "real": true,
+      "domain": "real"
+    }
+  ],
+  "operations": [
+    {
+      "gate": "P",
+      "targets": [0],
+      "angle": {
+        "parameter": "alpha"
+      }
+    }
+  ]
+}

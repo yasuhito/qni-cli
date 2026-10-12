@@ -84,6 +84,10 @@ _Avoid_: `circuit.json` 直接提出, Markdown コードフェンス付き回答
 公平比較用の提出プロトコル。`qni research solve` の既定と、`qni research record --circuit-json-dir` の入力で使う。結果比較ではこの値を持つ研究試行同士を比べる。
 _Avoid_: legacy `.qni` 直接提出, qni-cli を知っている共同研究者の結果
 
+**`neutral-symbolic-circuit-json-v1`**:
+固定量子ビット数・連続引数の課題を全定義域で証明する中立JSON提出プロトコル。引数の実数宣言・定義域と式の構文木を持ち、`.qni` へ変換しない。記号課題では主採点とし、証明不能は不合格。旧プロトコルの研究結果とは別枠で保存・比較する。
+_Avoid_: 有限個の数値による検証、任意コード、過去結果の再採点
+
 **`qni-command-output-v0`**:
 既存の `.qni` 直接提出を研究試行に残すための legacy protocol。`qni research record --submissions` の入力で使い、共同研究者が qni-cli のコマンド形式を見ている結果として扱う。
 _Avoid_: blind-neutral 結果との混在比較, 中立回路 JSON

@@ -1,0 +1,21 @@
+{
+  "protocol": "neutral-symbolic-circuit-json-v1",
+  "qubits": 2,
+  "parameters": [
+    {
+      "name": "alpha",
+      "real": true,
+      "domain": "real"
+    }
+  ],
+  "operations": [
+    {
+      "gate": "CRx",
+      "targets": [1],
+      "controls": [0],
+      "angle": {
+        "parameter": "alpha"
+      }
+    }
+  ]
+}

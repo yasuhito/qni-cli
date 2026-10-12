@@ -9,7 +9,10 @@ import {
 import path = require("node:path");
 
 import { AngleExpression, AngleExpressionError } from "../angle_expression";
-import { loadBenchmarkTask } from "./benchmark_task";
+import {
+  loadBenchmarkTask,
+  benchmarkTaskSubmissionProtocol,
+} from "./benchmark_task";
 
 export class NeutralCircuitJsonSubmissionError extends Error {
   constructor(message: string) {
@@ -192,6 +195,15 @@ export function writeNeutralCircuitJsonDirectoryAsQniSubmissions(
 ): NeutralCircuitJsonDirectoryConversionResult {
   const relativeTaskFiles = markdownFilesInDirectory(options.benchmarkDirPath);
   const relativeSubmissionFiles: string[] = [];
+  if (
+    relativeTaskFiles.some((file) =>
+      benchmarkTaskSubmissionProtocol(path.join(options.benchmarkDirPath, file))
+    )
+  ) {
+    throw new NeutralCircuitJsonSubmissionError(
+      "symbolic tasks cannot use the legacy JSON-to-qni conversion; use research record --submissions with symbolic JSON"
+    );
+  }
 
   for (const relativeTaskFile of relativeTaskFiles) {
     const relativeJsonFile = relativeTaskFile.replace(/\.md$/u, ".json");
