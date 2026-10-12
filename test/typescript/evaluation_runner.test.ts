@@ -597,8 +597,8 @@ describe("evaluation runner public entrypoints", () => {
       assert.equal(captured.value.status, "passed");
       assert.equal(captured.value.exitCode, 0);
       assert.deepStrictEqual(captured.value.summary, {
-        total: 51,
-        passed: 51,
+        total: 63,
+        passed: 63,
         failed: 0,
         disallowed: 0,
         error: 0,
@@ -630,8 +630,8 @@ describe("evaluation runner public entrypoints", () => {
         output.humanOutput,
         [
           "PASS benchmark suite",
-          "tasks: 51",
-          "passed: 51, failed: 0, disallowed: 0, error: 0",
+          "tasks: 63",
+          "passed: 63, failed: 0, disallowed: 0, error: 0",
           "- passed basic-gates/basis-change BasisChange",
           "- passed basic-gates/bell-state-change-1 BellStateChange1",
           "- passed basic-gates/bell-state-change-2 BellStateChange2",
@@ -668,6 +668,18 @@ describe("evaluation runner public entrypoints", () => {
           "- passed preparing-states/wstate-arbitrary WStateArbitrary",
           "- passed preparing-states/wstate-power-of-two WStatePowerOfTwo",
           "- passed preparing-states/zero-and-bitstring ZeroAndBitstring",
+          "- passed qft/all-basis-vectors QFTAllBasisVectors",
+          "- passed qft/all-even-vectors QFTAllEvenVectors",
+          "- passed qft/alternating-amplitudes QFTAlternatingAmplitudes",
+          "- passed qft/binary-fraction-classical QFTBinaryFractionClassical",
+          "- passed qft/binary-fraction-inplace QFTBinaryFractionInplace",
+          "- passed qft/binary-fraction-quantum QFTBinaryFractionQuantum",
+          "- passed qft/periodic-state QFTPeriodicState",
+          "- passed qft/qft QFTQft",
+          "- passed qft/rotation-gate QFTRotationGate",
+          "- passed qft/signal-frequency QFTSignalFrequency",
+          "- passed qft/single-qubit QFTSingleQubit",
+          "- passed qft/square-wave QFTSquareWave",
           "- passed single-qubit-gates/amplitude-change AmplitudeChange",
           "- passed single-qubit-gates/global-phase-i GlobalPhaseI",
           "- passed single-qubit-gates/prepare-arbitrary-state PrepareArbitraryState",
@@ -688,8 +700,8 @@ describe("evaluation runner public entrypoints", () => {
       );
       assert.equal(output.jsonOutput.status, "passed");
       assert.deepStrictEqual(output.jsonOutput.summary, {
-        total: 51,
-        passed: 51,
+        total: 63,
+        passed: 63,
         failed: 0,
         disallowed: 0,
         error: 0,
