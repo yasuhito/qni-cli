@@ -77,7 +77,9 @@ interface ResearchRecordPlan {
 }
 
 type SubmissionProtocol =
-  "blind-neutral-circuit-json-v1" | "qni-command-output-v0";
+  | "blind-neutral-circuit-json-v1"
+  | "qni-command-output-v0"
+  | "neutral-symbolic-circuit-json-v1";
 
 type ResearchRecordOption = keyof ResearchRecordRequest;
 
@@ -119,6 +121,9 @@ Overview:
   Record one external collaborator trial for one benchmark suite.
   qni research record does not call AI and does not create a git commit.
   benchmark grades submissions; research saves the research log.
+  --submissions accepts .qni for legacy tasks or .json for symbolic tasks.
+  Symbolic JSON trials use neutral-symbolic-circuit-json-v1 separately.
+  --circuit-json-dir is only for blind-neutral-circuit-json-v1 conversion.
 
 Required inputs:
   --collaborator <name>
@@ -723,20 +728,31 @@ function prepareResearchRecordSubmissionInput(options: {
   readonly request: ResearchRecordRequest;
 }): ResearchRecordPreparedSubmissionInput {
   if (options.plan.inputPaths.submissions) {
+    const result = gradeBenchmarkSuite(
+      {
+        benchmarkDir: options.request.benchmark,
+        solutionsDir: options.request.submissions ?? "",
+      },
+      options.context
+    );
+    const symbolicCount = result.results.filter(
+      (item) => item.submissionProtocol === "neutral-symbolic-circuit-json-v1"
+    ).length;
+    if (symbolicCount > 0 && symbolicCount !== result.results.length)
+      throw new ResearchRecordError(
+        "symbolic and legacy submission protocols must not be mixed"
+      );
     return {
       inputPaths: {
         prompt: options.plan.inputPaths.prompt,
         response: options.plan.inputPaths.response,
         submissions: options.plan.inputPaths.submissions,
       },
-      result: gradeBenchmarkSuite(
-        {
-          benchmarkDir: options.request.benchmark,
-          solutionsDir: options.request.submissions ?? "",
-        },
-        options.context
-      ),
-      submissionProtocol: "qni-command-output-v0",
+      result,
+      submissionProtocol:
+        symbolicCount > 0
+          ? "neutral-symbolic-circuit-json-v1"
+          : "qni-command-output-v0",
     };
   }
 
@@ -922,7 +938,7 @@ function validateResearchRecordSubmissionSource(
     throw new ResearchRecordError(
       [
         "Specify exactly one submission input: --submissions or --circuit-json-dir.",
-        "Pass --submissions <dir> for .qni submissions or --circuit-json-dir <dir> for neutral circuit JSON submissions.",
+        "Pass --submissions <dir> for .qni or symbolic .json submissions, or --circuit-json-dir <dir> for legacy neutral circuit JSON conversion.",
       ].join("\n")
     );
   }

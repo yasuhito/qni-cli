@@ -1,4 +1,8 @@
 import { readFileSync } from "node:fs";
+import {
+  parseSymbolicSpecification,
+  type SymbolicSpecification,
+} from "./symbolic_grading";
 import { parseDocument } from "yaml";
 
 import { normalizeCircuit, type CircuitData } from "../circuit_file";
@@ -9,6 +13,7 @@ import {
 import { splitCommandLine } from "../qni_command_line";
 
 export interface BenchmarkTask {
+  readonly symbolic?: SymbolicSpecification;
   readonly allowedCommands: readonly AllowedCommand[];
   readonly availableGates: readonly string[];
   readonly checks: BenchmarkChecks;
@@ -82,6 +87,23 @@ type FrontmatterRecord = Readonly<Record<string, unknown>>;
 
 class BenchmarkTaskError extends Error {}
 
+/** Routing metadata survives a broken check/reference without hiding its error. */
+export function benchmarkTaskSubmissionProtocol(
+  taskPath: string
+): SymbolicSpecification["protocol"] | undefined {
+  try {
+    const frontmatter = frontmatterRecord(
+      frontmatterOf(readFileSync(taskPath, "utf8"))
+    );
+    return isRecord(frontmatter.symbolic) &&
+      frontmatter.symbolic.protocol === "neutral-symbolic-circuit-json-v1"
+      ? "neutral-symbolic-circuit-json-v1"
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 const IMPLICIT_GRADING_CASE_ID = "default";
 
 export function loadBenchmarkTask(taskPath: string): BenchmarkTask {
@@ -91,11 +113,32 @@ export function loadBenchmarkTask(taskPath: string): BenchmarkTask {
   const allowedCommands = parseAllowedCommands(frontmatter);
   const availableGates = parseAvailableGates(frontmatter);
   const hasExplicitGradingCases = hasValue(frontmatter, "grading_cases");
-  const gradingCases = parseGradingCases(frontmatter, hasExplicitGradingCases);
+  const symbolic =
+    frontmatter.symbolic === undefined
+      ? undefined
+      : parseSymbolicSpecification(frontmatter.symbolic);
+  if (
+    symbolic &&
+    (hasExplicitGradingCases || hasValue(frontmatter, "checks"))
+  ) {
+    throw new BenchmarkTaskError(
+      "symbolic grading must not include numeric checks"
+    );
+  }
+  const gradingCases = symbolic
+    ? [
+        {
+          id: "default",
+          setupCommands: [],
+          checks: { items: [], tolerance: 0 },
+        },
+      ]
+    : parseGradingCases(frontmatter, hasExplicitGradingCases);
 
   return {
     allowedCommands,
     availableGates,
+    ...(symbolic ? { symbolic } : {}),
     checks: compatibleChecks(gradingCases),
     gradingCases,
     hasExplicitGradingCases,

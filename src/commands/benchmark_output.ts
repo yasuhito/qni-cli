@@ -236,6 +236,10 @@ function failedCheckLines(
   caseId?: string
 ): string[] {
   switch (check.type) {
+    case "symbolic":
+      return [
+        `- ${failedCheckLabel(check, index, caseId)}: ${check.proof.verdict}: ${check.proof.reason}`,
+      ];
     case "unitary":
       return [
         `- ${failedCheckLabel(check, index, caseId)}: ${check.reason ?? "unitary matrix did not match reference circuit"}`,

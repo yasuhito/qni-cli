@@ -118,6 +118,19 @@ export function planResearchTrialDirectory(options: {
 export function writeResearchTrialDirectory(
   request: ResearchTrialDirectoryWriteRequest
 ): void {
+  const symbolic = request.result.results.filter(
+    (item) => item.submissionProtocol === "neutral-symbolic-circuit-json-v1"
+  );
+  if (
+    symbolic.length > 0 &&
+    (symbolic.length !== request.result.results.length ||
+      request.metadata?.submissionProtocol !==
+        "neutral-symbolic-circuit-json-v1")
+  ) {
+    throw new ResearchTrialWriterError(
+      "symbolic results require a separate neutral-symbolic-circuit-json-v1 trial; use research record --submissions with JSON files"
+    );
+  }
   const parentDir = path.dirname(request.plan.trialDir);
   const stagingPrefix = path.join(
     parentDir,

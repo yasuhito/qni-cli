@@ -43,6 +43,11 @@ export function buildResearchSolveTaskPrompts(options: {
   const prompts = relativeTaskFiles.map((relativeTaskFile) => {
     const taskPath = path.join(benchmarkDirPath, relativeTaskFile);
     const task = loadBenchmarkTask(taskPath);
+    if (task.symbolic) {
+      throw new ResearchSolvePromptError(
+        "symbolic tasks require neutral-symbolic-circuit-json-v1; research solve conversion is not supported"
+      );
+    }
     const taskBody = benchmarkTaskBody(readFileSync(taskPath, "utf8"));
     const relativeTaskFilePosix = toPosixPath(relativeTaskFile);
     const relativeSubmissionFile = relativeTaskFilePosix.replace(
