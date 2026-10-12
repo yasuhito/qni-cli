@@ -38,7 +38,7 @@ export function parseSymbolicSpecification(
     typeof value.qubits !== "number" ||
     value.qubits < 1 ||
     value.qubits > 4 ||
-    !["unitary", "state"].includes(String(value.mode)) ||
+    (value.mode !== "unitary" && value.mode !== "state") ||
     typeof value.up_to_global_phase !== "boolean" ||
     !record(value.reference) ||
     !Array.isArray(value.reference.operations) ||
@@ -160,7 +160,7 @@ export function proveSymbolicSubmission(options: {
   const proof: unknown = JSON.parse(output.stdout);
   if (
     !record(proof) ||
-    !["proved", "unproven"].includes(String(proof.verdict)) ||
+    (proof.verdict !== "proved" && proof.verdict !== "unproven") ||
     typeof proof.reason !== "string"
   )
     throw new Error("invalid symbolic proof response");

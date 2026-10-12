@@ -263,8 +263,9 @@ describe("primary symbolic grading", () => {
     failed(grade(ids[0], submission));
     operation(submission).angle = rational("1".repeat(33));
     failed(grade(ids[0], submission));
-    submission.parameters = [{ name: "alpha", real: 1, domain: "real" }];
-    failed(grade(ids[0], submission));
+    const declaration = answer(ids[0]);
+    declaration.parameters = [{ name: "alpha", real: 1, domain: "real" }];
+    failed(grade(ids[0], declaration));
   });
   it("runtime absence, permission errors, nonzero exits and invalid responses are errors", () => {
     const dir = mkdtempSync(path.join(tmpdir(), "qni-symbolic-runtime-"));
@@ -291,6 +292,11 @@ describe("primary symbolic grading", () => {
       writeFileSync(
         python,
         `#!${process.execPath}\nconsole.log('{"verdict":"guess"}');\n`
+      );
+      assert.equal(run().status, "error");
+      writeFileSync(
+        python,
+        `#!${process.execPath}\nconsole.log('{"verdict":["proved"],"reason":"invalid type"}');\n`
       );
       assert.equal(run().status, "error");
     } finally {
@@ -418,6 +424,14 @@ describe("primary symbolic grading", () => {
         parseSymbolicSpecification({
           ...loadBenchmarkTask(`${suite}/${ids[0]}.md`).symbolic!,
           qubits: 5,
+        }),
+      /invalid symbolic/u
+    );
+    assert.throws(
+      () =>
+        parseSymbolicSpecification({
+          ...loadBenchmarkTask(`${suite}/${ids[0]}.md`).symbolic!,
+          mode: ["unitary"],
         }),
       /invalid symbolic/u
     );
