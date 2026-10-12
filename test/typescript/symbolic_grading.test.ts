@@ -67,14 +67,14 @@ function failed(result: ReturnType<typeof grade>) {
 }
 
 describe("primary symbolic grading", () => {
-  it("proves all four references with explicit protocol and assumptions", () => {
+  it("proves all six references with explicit protocol and assumptions", () => {
     const result = gradeBenchmarkSuite(
       { benchmarkDir: suite, solutionsDir: solutions },
       context
     );
     assert.deepEqual(result.summary, {
-      total: 4,
-      passed: 4,
+      total: 6,
+      passed: 6,
       failed: 0,
       disallowed: 0,
       error: 0,

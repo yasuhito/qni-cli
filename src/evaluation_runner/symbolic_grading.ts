@@ -11,7 +11,7 @@ export interface SymbolicSpecification {
   readonly parameters: readonly {
     readonly name: string;
     readonly real: true;
-    readonly domain: "real";
+    readonly domain: "real" | "unit-interval";
   }[];
   readonly reference: Readonly<Record<string, unknown>>;
   readonly up_to_global_phase: boolean;
@@ -57,7 +57,7 @@ export function parseSymbolicSpecification(
       !/^[a-z][a-z0-9_]{0,31}$/u.test(parameter.name) ||
       names.has(parameter.name) ||
       parameter.real !== true ||
-      parameter.domain !== "real"
+      (parameter.domain !== "real" && parameter.domain !== "unit-interval")
     ) {
       throw new Error("invalid symbolic real parameter declaration");
     }

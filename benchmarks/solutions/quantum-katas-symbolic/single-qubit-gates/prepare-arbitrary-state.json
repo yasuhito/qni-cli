@@ -1,0 +1,21 @@
+{
+  "protocol": "neutral-symbolic-circuit-json-v1",
+  "qubits": 1,
+  "parameters": [
+    { "name": "alpha", "real": true, "domain": "unit-interval" },
+    { "name": "theta", "real": true, "domain": "real" }
+  ],
+  "operations": [
+    {
+      "gate": "Ry",
+      "targets": [0],
+      "angle": {
+        "mul": [
+          { "rational": ["2", "1"] },
+          { "acos": { "parameter": "alpha" } }
+        ]
+      }
+    },
+    { "gate": "P", "targets": [0], "angle": { "parameter": "theta" } }
+  ]
+}

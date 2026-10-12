@@ -10,7 +10,7 @@ Pi 経由で `qni research solve` を実行し、`qni research plot` で cost pe
 
 ## 評価ランナーと研究プロトコル
 
-固定幅で角度・連続引数だけが変わる課題の主採点は、[記号版4課題](#記号版4課題の主採点)の全引数に対する証明です。履歴互換の数値版63課題と記号版4課題で、合計67課題ファイル（一般化版の重複を含む）があります。
+固定幅で角度・連続引数だけが変わる課題の主採点は、[記号版6課題](#記号版6課題の主採点)の全引数に対する証明です。履歴互換の数値版63課題と記号版6課題で、合計69課題ファイル（一般化版の重複を含む）があります。
 
 既存数値課題に対する `qni benchmark run` と `qni benchmark run-all` は `.qni` 採点器です。提出物を一時的な作業場所で実行し、課題 frontmatter の検証条件に照らして採点します。AI は呼び出さず、研究試行ディレクトリも作りません。
 
@@ -30,22 +30,24 @@ Pi 経由で `qni research solve` を実行し、`qni research plot` で cost pe
 
 提出物には回路を作るコマンドだけを書きます。`qni run` や `qni expect` などの検証コマンドは書きません。
 
-## 記号版4課題の主採点
+## 記号版6課題の主採点
 
 ```sh
 qni benchmark run-all benchmarks/quantum-katas-symbolic benchmarks/solutions/quantum-katas-symbolic
 ```
 
-新しい提出プロトコル `neutral-symbolic-circuit-json-v1` の `.json` を直接採点します。全4課題を固定角度でなく実数全域で証明します。詳細・式文法・実数と正規化の仮定・位相・時間切れの不合格は [記号採点](symbolic-grading.md) を参照してください。可変 N/配列の複数値数値採点は後続PRです。過去結果は再採点しません。
+新しい提出プロトコル `neutral-symbolic-circuit-json-v1` の `.json` を直接採点します。全6課題を固定値でなく宣言した全定義域で証明します。PrepareRotatedState は実数角 φ による符号付き振幅の全円、PrepareArbitraryState は α∈[-1,1]・β=√(1−α²)≥0 と独立した実数位相 θ を使い、両方ともゼロ入力の状態を全体位相込みで厳密比較します。詳細・式文法・実数と正規化の仮定・位相・時間切れの不合格は [記号採点](symbolic-grading.md) を参照してください。可変 N/配列の複数値数値採点は後続PRです。過去結果は再採点しません。
 
 ```text
 PASS benchmark suite
-tasks: 4
-passed: 4, failed: 0, disallowed: 0, error: 0
+tasks: 6
+passed: 6, failed: 0, disallowed: 0, error: 0
 - passed basic-gates/phase-change-pi-over-3 PhaseChangePiOver3
 - passed multi-qubit-gates/controlled-rotation ControlledRotation
 - passed preparing-states/unequal-superposition UnequalSuperposition
 - passed single-qubit-gates/amplitude-change AmplitudeChange
+- passed single-qubit-gates/prepare-arbitrary-state PrepareArbitraryState
+- passed single-qubit-gates/prepare-rotated-state PrepareRotatedState
 ```
 
 ## 履歴互換の63問の標準解を実行する

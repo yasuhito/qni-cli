@@ -1,0 +1,12 @@
+{
+  "protocol": "neutral-symbolic-circuit-json-v1",
+  "qubits": 1,
+  "parameters": [{ "name": "phi", "real": true, "domain": "real" }],
+  "operations": [
+    {
+      "gate": "Rx",
+      "targets": [0],
+      "angle": { "mul": [{ "rational": ["2", "1"] }, { "parameter": "phi" }] }
+    }
+  ]
+}
