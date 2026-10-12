@@ -1,7 +1,16 @@
-import { copyFileSync, cpSync, existsSync, mkdirSync, mkdtempSync, renameSync, rmSync, writeFileSync } from 'node:fs';
-import path = require('node:path');
+import {
+  copyFileSync,
+  cpSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import path = require("node:path");
 
-import type { BenchmarkSuiteGradingResult } from './evaluation_runner';
+import type { BenchmarkSuiteGradingResult } from "./evaluation_runner";
 
 export interface ResearchTrialInputPaths {
   readonly circuitJson?: string;
@@ -53,14 +62,15 @@ export interface ResearchTrialDirectoryWriteRequest {
 interface ResearchTrialScore {
   readonly passed: number;
   readonly percent: number | null;
-  readonly source: 'result.json';
+  readonly source: "result.json";
   readonly total: number;
 }
 
 class ResearchTrialWriterError extends Error {}
 
-const DEFAULT_DESTINATION_CONFLICT_HINT = 'Choose a different research trial slug and try again.';
-const RESEARCH_RUNS_PATH = path.join('research', 'runs');
+const DEFAULT_DESTINATION_CONFLICT_HINT =
+  "Choose a different research trial slug and try again.";
+const RESEARCH_RUNS_PATH = path.join("research", "runs");
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u;
 
 export function validateResearchTrialSlug(slug: string): void {
@@ -68,10 +78,12 @@ export function validateResearchTrialSlug(slug: string): void {
     return;
   }
 
-  throw new ResearchTrialWriterError([
-    `Invalid --slug: ${slug}`,
-    'Use lowercase letters, digits, and hyphens between words (pattern: [a-z0-9]+(-[a-z0-9]+)*).'
-  ].join('\n'));
+  throw new ResearchTrialWriterError(
+    [
+      `Invalid --slug: ${slug}`,
+      "Use lowercase letters, digits, and hyphens between words (pattern: [a-z0-9]+(-[a-z0-9]+)*).",
+    ].join("\n")
+  );
 }
 
 export function planResearchTrialDirectory(options: {
@@ -81,12 +93,17 @@ export function planResearchTrialDirectory(options: {
 }): ResearchTrialPlan {
   validateResearchTrialSlug(options.slug);
   const createdAt = currentUtcSecond();
-  const destinationConflictHint = options.destinationConflictHint ?? DEFAULT_DESTINATION_CONFLICT_HINT;
+  const destinationConflictHint =
+    options.destinationConflictHint ?? DEFAULT_DESTINATION_CONFLICT_HINT;
   const id = `${researchTimestamp(createdAt)}-${options.slug}`;
   const relativePath = toPosixPath(path.join(RESEARCH_RUNS_PATH, id));
   const trialDir = path.join(options.cwd, RESEARCH_RUNS_PATH, id);
 
-  validateResearchTrialDestination({ destinationConflictHint, relativePath, trialDir });
+  validateResearchTrialDestination({
+    destinationConflictHint,
+    relativePath,
+    trialDir,
+  });
 
   return {
     createdAt,
@@ -94,13 +111,18 @@ export function planResearchTrialDirectory(options: {
     id,
     relativePath,
     slug: options.slug,
-    trialDir
+    trialDir,
   };
 }
 
-export function writeResearchTrialDirectory(request: ResearchTrialDirectoryWriteRequest): void {
+export function writeResearchTrialDirectory(
+  request: ResearchTrialDirectoryWriteRequest
+): void {
   const parentDir = path.dirname(request.plan.trialDir);
-  const stagingPrefix = path.join(parentDir, `${path.basename(request.plan.trialDir)}.tmp-`);
+  const stagingPrefix = path.join(
+    parentDir,
+    `${path.basename(request.plan.trialDir)}.tmp-`
+  );
 
   mkdirSync(parentDir, { recursive: true });
   validateResearchTrialDestination(request.plan);
@@ -110,14 +132,30 @@ export function writeResearchTrialDirectory(request: ResearchTrialDirectoryWrite
   let cleanupStaging = true;
 
   try {
-    copyFileSync(request.inputPaths.prompt, path.join(stagingDir, 'prompt.md'));
-    copyFileSync(request.inputPaths.response, path.join(stagingDir, 'response.md'));
-    cpSync(request.inputPaths.submissions, path.join(stagingDir, 'submissions'), { recursive: true });
-    copyOptionalResearchTrialInputDirectory(request.inputPaths.circuitJson, path.join(stagingDir, 'circuit-json'));
+    copyFileSync(request.inputPaths.prompt, path.join(stagingDir, "prompt.md"));
+    copyFileSync(
+      request.inputPaths.response,
+      path.join(stagingDir, "response.md")
+    );
+    cpSync(
+      request.inputPaths.submissions,
+      path.join(stagingDir, "submissions"),
+      { recursive: true }
+    );
+    copyOptionalResearchTrialInputDirectory(
+      request.inputPaths.circuitJson,
+      path.join(stagingDir, "circuit-json")
+    );
     copyExtraResearchTrialInputs(request.extraInputPaths, stagingDir);
-    writeJsonFile(path.join(stagingDir, 'result.json'), request.result);
-    writeJsonFile(path.join(stagingDir, 'metadata.json'), researchMetadata(request, score));
-    writeFileSync(path.join(stagingDir, 'trial.md'), researchTrialSummary(request, score));
+    writeJsonFile(path.join(stagingDir, "result.json"), request.result);
+    writeJsonFile(
+      path.join(stagingDir, "metadata.json"),
+      researchMetadata(request, score)
+    );
+    writeFileSync(
+      path.join(stagingDir, "trial.md"),
+      researchTrialSummary(request, score)
+    );
     validateResearchTrialDestination(request.plan);
     renameSync(stagingDir, request.plan.trialDir);
     cleanupStaging = false;
@@ -132,28 +170,40 @@ export function writeResearchTrialDirectory(request: ResearchTrialDirectoryWrite
   }
 }
 
-function copyOptionalResearchTrialInputDirectory(inputPath: string | undefined, destination: string): void {
+function copyOptionalResearchTrialInputDirectory(
+  inputPath: string | undefined,
+  destination: string
+): void {
   if (inputPath) {
     cpSync(inputPath, destination, { recursive: true });
   }
 }
 
-function copyExtraResearchTrialInputs(inputPaths: ResearchTrialExtraInputPaths | undefined, stagingDir: string): void {
+function copyExtraResearchTrialInputs(
+  inputPaths: ResearchTrialExtraInputPaths | undefined,
+  stagingDir: string
+): void {
   if (!inputPaths) {
     return;
   }
 
   if (inputPaths.prompts) {
-    cpSync(inputPaths.prompts, path.join(stagingDir, 'prompts'), { recursive: true });
+    cpSync(inputPaths.prompts, path.join(stagingDir, "prompts"), {
+      recursive: true,
+    });
   }
   if (inputPaths.responses) {
-    cpSync(inputPaths.responses, path.join(stagingDir, 'responses'), { recursive: true });
+    cpSync(inputPaths.responses, path.join(stagingDir, "responses"), {
+      recursive: true,
+    });
   }
   if (inputPaths.circuitJson) {
-    cpSync(inputPaths.circuitJson, path.join(stagingDir, 'circuit-json'), { recursive: true });
+    cpSync(inputPaths.circuitJson, path.join(stagingDir, "circuit-json"), {
+      recursive: true,
+    });
   }
   if (inputPaths.calls) {
-    copyFileSync(inputPaths.calls, path.join(stagingDir, 'calls.json'));
+    copyFileSync(inputPaths.calls, path.join(stagingDir, "calls.json"));
   }
 }
 
@@ -173,16 +223,21 @@ function researchTrialDestinationError(options: {
   readonly destinationConflictHint: string;
   readonly relativePath: string;
 }): ResearchTrialWriterError {
-  return new ResearchTrialWriterError([
-    `Research trial directory already exists: ${options.relativePath}`,
-    options.destinationConflictHint
-  ].join('\n'));
+  return new ResearchTrialWriterError(
+    [
+      `Research trial directory already exists: ${options.relativePath}`,
+      options.destinationConflictHint,
+    ].join("\n")
+  );
 }
 
 function isDestinationConflict(error: unknown): boolean {
-  const code = error instanceof Error && 'code' in error ? (error as NodeJS.ErrnoException).code : undefined;
+  const code =
+    error instanceof Error && "code" in error
+      ? (error as NodeJS.ErrnoException).code
+      : undefined;
 
-  return code === 'EEXIST' || code === 'ENOTEMPTY';
+  return code === "EEXIST" || code === "ENOTEMPTY";
 }
 
 function currentUtcSecond(): Date {
@@ -206,35 +261,42 @@ function researchMetadata(
     createdAt: request.plan.createdAt.toISOString(),
     collaborator: request.collaborator,
     benchmark: request.benchmark,
-    submissions: 'submissions',
+    submissions: "submissions",
     ...optionalCircuitJsonMetadata(request.inputPaths),
-    prompt: 'prompt.md',
-    response: 'response.md',
-    result: 'result.json',
+    prompt: "prompt.md",
+    response: "response.md",
+    result: "result.json",
     status: request.result.status,
-    score
+    score,
   };
 }
 
-function optionalCircuitJsonMetadata(inputPaths: ResearchTrialInputPaths): Record<string, string> {
-  return inputPaths.circuitJson ? { circuitJson: 'circuit-json' } : {};
+function optionalCircuitJsonMetadata(
+  inputPaths: ResearchTrialInputPaths
+): Record<string, string> {
+  return inputPaths.circuitJson ? { circuitJson: "circuit-json" } : {};
 }
 
-function researchTrialScore(result: BenchmarkSuiteGradingResult): ResearchTrialScore {
+function researchTrialScore(
+  result: BenchmarkSuiteGradingResult
+): ResearchTrialScore {
   const { passed, total } = result.summary;
 
   return {
     passed,
     total,
     percent: total === 0 ? null : (passed / total) * 100,
-    source: 'result.json'
+    source: "result.json",
   };
 }
 
-function researchTrialSummary(request: ResearchTrialDirectoryWriteRequest, score: ResearchTrialScore): string {
+function researchTrialSummary(
+  request: ResearchTrialDirectoryWriteRequest,
+  score: ResearchTrialScore
+): string {
   return [
     `# Research trial: ${request.plan.slug}`,
-    '',
+    "",
     `- collaborator: ${request.collaborator}`,
     `- benchmark: ${request.benchmark}`,
     `- status: ${request.result.status}`,
@@ -245,54 +307,73 @@ function researchTrialSummary(request: ResearchTrialDirectoryWriteRequest, score
     `- error: ${request.result.summary.error}`,
     `- score: ${formatScorePercent(score.percent)}`,
     ...researchTrialSummaryExtraLines(request.summary),
-    '',
-    '## Files',
-    '',
-    '- Prompt: ./prompt.md',
-    '- Response: ./response.md',
+    "",
+    "## Files",
+    "",
+    "- Prompt: ./prompt.md",
+    "- Response: ./response.md",
     ...researchTrialSummaryExtraFileLines(request.extraInputPaths),
     ...researchTrialSummaryCircuitJsonFileLines(request.inputPaths),
-    '- Submissions: ./submissions/',
-    '- Result: ./result.json',
-    ''
-  ].join('\n');
+    "- Submissions: ./submissions/",
+    "- Result: ./result.json",
+    "",
+  ].join("\n");
 }
 
-function researchTrialSummaryCircuitJsonFileLines(inputPaths: ResearchTrialInputPaths): string[] {
-  return inputPaths.circuitJson ? ['- Circuit JSON: ./circuit-json/'] : [];
+function researchTrialSummaryCircuitJsonFileLines(
+  inputPaths: ResearchTrialInputPaths
+): string[] {
+  return inputPaths.circuitJson ? ["- Circuit JSON: ./circuit-json/"] : [];
 }
 
-function researchTrialSummaryExtraLines(summary: ResearchTrialSummaryExtras | undefined): string[] {
+function researchTrialSummaryExtraLines(
+  summary: ResearchTrialSummaryExtras | undefined
+): string[] {
   if (!summary) {
     return [];
   }
 
   return [
     ...optionalSummaryLine(summary.model, (model) => `- model: ${model}`),
-    ...optionalSummaryLine(summary.tokens, (tokens) => `- tokens: input ${tokens.inputTokens}, output ${tokens.outputTokens}, total ${tokens.totalTokens}`),
-    ...optionalSummaryLine(summary.cost, (cost) => `- cost: total ${formatUsd(cost.totalUsd)}, per problem ${formatNullableUsd(cost.perProblemUsd)}`)
+    ...optionalSummaryLine(
+      summary.tokens,
+      (tokens) =>
+        `- tokens: input ${tokens.inputTokens}, output ${tokens.outputTokens}, total ${tokens.totalTokens}`
+    ),
+    ...optionalSummaryLine(
+      summary.cost,
+      (cost) =>
+        `- cost: total ${formatUsd(cost.totalUsd)}, per problem ${formatNullableUsd(cost.perProblemUsd)}`
+    ),
   ];
 }
 
-function researchTrialSummaryExtraFileLines(inputPaths: ResearchTrialExtraInputPaths | undefined): string[] {
+function researchTrialSummaryExtraFileLines(
+  inputPaths: ResearchTrialExtraInputPaths | undefined
+): string[] {
   if (!inputPaths) {
     return [];
   }
 
   return [
-    ...(inputPaths.prompts ? ['- Per-task prompts: ./prompts/'] : []),
-    ...(inputPaths.responses ? ['- Per-task responses: ./responses/'] : []),
-    ...(inputPaths.circuitJson ? ['- Per-task circuit JSON: ./circuit-json/'] : []),
-    ...(inputPaths.calls ? ['- Calls: ./calls.json'] : [])
+    ...(inputPaths.prompts ? ["- Per-task prompts: ./prompts/"] : []),
+    ...(inputPaths.responses ? ["- Per-task responses: ./responses/"] : []),
+    ...(inputPaths.circuitJson
+      ? ["- Per-task circuit JSON: ./circuit-json/"]
+      : []),
+    ...(inputPaths.calls ? ["- Calls: ./calls.json"] : []),
   ];
 }
 
-function optionalSummaryLine<T>(value: T | undefined, format: (value: T) => string): string[] {
+function optionalSummaryLine<T>(
+  value: T | undefined,
+  format: (value: T) => string
+): string[] {
   return value === undefined ? [] : [format(value)];
 }
 
 function formatScorePercent(percent: number | null): string {
-  return percent === null ? 'unknown' : `${percent.toFixed(2)}%`;
+  return percent === null ? "unknown" : `${percent.toFixed(2)}%`;
 }
 
 function formatUsd(value: number): string {
@@ -300,7 +381,7 @@ function formatUsd(value: number): string {
 }
 
 function formatNullableUsd(value: number | null): string {
-  return value === null ? 'unknown' : formatUsd(value);
+  return value === null ? "unknown" : formatUsd(value);
 }
 
 function writeJsonFile(filePath: string, value: unknown): void {
@@ -308,5 +389,5 @@ function writeJsonFile(filePath: string, value: unknown): void {
 }
 
 function toPosixPath(filePath: string): string {
-  return filePath.split(path.sep).join('/');
+  return filePath.split(path.sep).join("/");
 }

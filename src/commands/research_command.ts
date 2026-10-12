@@ -1,31 +1,38 @@
-import { existsSync, mkdtempSync, rmSync, statSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import path = require('node:path');
+import { existsSync, mkdtempSync, rmSync, statSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path = require("node:path");
 
-import type { CommandHandlerContext } from '../dispatcher';
-import { gradeBenchmarkSuite, type BenchmarkSuiteGradingResult } from '../evaluation_runner';
-import { writeNeutralCircuitJsonDirectoryAsQniSubmissions } from '../evaluation_runner/neutral_circuit_json_submission';
-import { buildResearchCompare, formatResearchCompareHumanOutput, type ResearchCompare } from '../research_compare';
-import { writeResearchPlotHtml } from '../research_plot';
+import type { CommandHandlerContext } from "../dispatcher";
+import {
+  gradeBenchmarkSuite,
+  type BenchmarkSuiteGradingResult,
+} from "../evaluation_runner";
+import { writeNeutralCircuitJsonDirectoryAsQniSubmissions } from "../evaluation_runner/neutral_circuit_json_submission";
+import {
+  buildResearchCompare,
+  formatResearchCompareHumanOutput,
+  type ResearchCompare,
+} from "../research_compare";
+import { writeResearchPlotHtml } from "../research_plot";
 import {
   buildResearchReport,
   formatResearchReportHumanOutput,
   readResearchTrialsForReport,
-  type ResearchReport
-} from '../research_report';
+  type ResearchReport,
+} from "../research_report";
 import {
   RESEARCH_THINKING_LEVELS,
   solveResearchTrial,
   type ResearchSolveRequest,
-  type ResearchThinking
-} from '../research_solver';
+  type ResearchThinking,
+} from "../research_solver";
 import {
   planResearchTrialDirectory,
   validateResearchTrialSlug,
   writeResearchTrialDirectory,
   type ResearchTrialInputPaths,
-  type ResearchTrialPlan
-} from '../research_trial_writer';
+  type ResearchTrialPlan,
+} from "../research_trial_writer";
 
 interface ResearchRecordRequest {
   readonly benchmark: string;
@@ -69,36 +76,31 @@ interface ResearchRecordPlan {
   readonly trial: ResearchTrialPlan;
 }
 
-type SubmissionProtocol = 'blind-neutral-circuit-json-v1' | 'qni-command-output-v0';
+type SubmissionProtocol =
+  "blind-neutral-circuit-json-v1" | "qni-command-output-v0";
 
 type ResearchRecordOption = keyof ResearchRecordRequest;
 
 class ResearchRecordError extends Error {}
 
-const RESEARCH_USAGE = [
-  'Usage: qni research <command>',
-  ''
-].join('\n');
+const RESEARCH_USAGE = ["Usage: qni research <command>", ""].join("\n");
 const RECORD_USAGE = [
-  'Usage: qni research record --collaborator <name> --benchmark <dir> (--submissions <dir> | --circuit-json-dir <dir>) --prompt <file> --response <file> --slug <slug>',
-  ''
-].join('\n');
+  "Usage: qni research record --collaborator <name> --benchmark <dir> (--submissions <dir> | --circuit-json-dir <dir>) --prompt <file> --response <file> --slug <slug>",
+  "",
+].join("\n");
 const SOLVE_USAGE = [
-  'Usage: qni research solve --model <pi-model-id> --thinking <level> --benchmark <dir> [--task <task-id> ...] --slug <slug>',
-  ''
-].join('\n');
-const REPORT_USAGE = [
-  'Usage: qni research report [--json]',
-  ''
-].join('\n');
+  "Usage: qni research solve --model <pi-model-id> --thinking <level> --benchmark <dir> [--task <task-id> ...] --slug <slug>",
+  "",
+].join("\n");
+const REPORT_USAGE = ["Usage: qni research report [--json]", ""].join("\n");
 const PLOT_USAGE = [
-  'Usage: qni research plot --benchmark <dir> [--task <task-id> ...] --output <file>',
-  ''
-].join('\n');
+  "Usage: qni research plot --benchmark <dir> [--task <task-id> ...] --output <file>",
+  "",
+].join("\n");
 const COMPARE_USAGE = [
-  'Usage: qni research compare --benchmark <dir> [--task <task-id> ...] [--json]',
-  ''
-].join('\n');
+  "Usage: qni research compare --benchmark <dir> [--task <task-id> ...] [--json]",
+  "",
+].join("\n");
 const RESEARCH_HELP_TEXT = `Usage:
   qni research <command>
 
@@ -245,16 +247,19 @@ Exit codes:
   1  comparison generated and one or more invalid research trials were found
   3  invalid arguments or research/runs/ could not be read`;
 const RECORD_OPTION_NAMES = new Map<string, ResearchRecordOption>([
-  ['--benchmark', 'benchmark'],
-  ['--circuit-json-dir', 'circuitJsonDir'],
-  ['--collaborator', 'collaborator'],
-  ['--prompt', 'prompt'],
-  ['--response', 'response'],
-  ['--slug', 'slug'],
-  ['--submissions', 'submissions']
+  ["--benchmark", "benchmark"],
+  ["--circuit-json-dir", "circuitJsonDir"],
+  ["--collaborator", "collaborator"],
+  ["--prompt", "prompt"],
+  ["--response", "response"],
+  ["--slug", "slug"],
+  ["--submissions", "submissions"],
 ]);
 
-export function runResearchCommand(argv: string[], context: CommandHandlerContext): number {
+export function runResearchCommand(
+  argv: string[],
+  context: CommandHandlerContext
+): number {
   if (isResearchParentHelpRequest(argv)) {
     process.stdout.write(`${RESEARCH_HELP_TEXT}\n`);
     return 0;
@@ -339,7 +344,11 @@ export function runResearchCommand(argv: string[], context: CommandHandlerContex
   const request = parseResearchRecordRequest(argv);
 
   if (!request) {
-    process.stderr.write(argv[0] === 'research' && argv[1] === 'record' ? RECORD_USAGE : RESEARCH_USAGE);
+    process.stderr.write(
+      argv[0] === "research" && argv[1] === "record"
+        ? RECORD_USAGE
+        : RESEARCH_USAGE
+    );
     return 3;
   }
 
@@ -352,7 +361,7 @@ export function runResearchCommand(argv: string[], context: CommandHandlerContex
 }
 
 function isResearchParentHelpRequest(argv: readonly string[]): boolean {
-  if (argv[0] !== 'research') {
+  if (argv[0] !== "research") {
     return false;
   }
 
@@ -360,52 +369,87 @@ function isResearchParentHelpRequest(argv: readonly string[]): boolean {
 }
 
 function isResearchRecordHelpRequest(argv: readonly string[]): boolean {
-  return argv[0] === 'research' && argv[1] === 'record' && argv.length === 3 && isHelpFlag(argv[2]);
+  return (
+    argv[0] === "research" &&
+    argv[1] === "record" &&
+    argv.length === 3 &&
+    isHelpFlag(argv[2])
+  );
 }
 
 function isResearchSolveHelpRequest(argv: readonly string[]): boolean {
-  return argv[0] === 'research' && argv[1] === 'solve' && argv.length === 3 && isHelpFlag(argv[2]);
+  return (
+    argv[0] === "research" &&
+    argv[1] === "solve" &&
+    argv.length === 3 &&
+    isHelpFlag(argv[2])
+  );
 }
 
 function isResearchReportHelpRequest(argv: readonly string[]): boolean {
-  return argv[0] === 'research' && argv[1] === 'report' && argv.length === 3 && isHelpFlag(argv[2]);
+  return (
+    argv[0] === "research" &&
+    argv[1] === "report" &&
+    argv.length === 3 &&
+    isHelpFlag(argv[2])
+  );
 }
 
 function isResearchPlotHelpRequest(argv: readonly string[]): boolean {
-  return argv[0] === 'research' && argv[1] === 'plot' && argv.length === 3 && isHelpFlag(argv[2]);
+  return (
+    argv[0] === "research" &&
+    argv[1] === "plot" &&
+    argv.length === 3 &&
+    isHelpFlag(argv[2])
+  );
 }
 
 function isResearchCompareHelpRequest(argv: readonly string[]): boolean {
-  return argv[0] === 'research' && argv[1] === 'compare' && argv.length === 3 && isHelpFlag(argv[2]);
+  return (
+    argv[0] === "research" &&
+    argv[1] === "compare" &&
+    argv.length === 3 &&
+    isHelpFlag(argv[2])
+  );
 }
 
 function isResearchReportJsonRequest(argv: readonly string[]): boolean {
-  return argv[0] === 'research' && argv[1] === 'report' && argv.length === 3 && argv[2] === '--json';
+  return (
+    argv[0] === "research" &&
+    argv[1] === "report" &&
+    argv.length === 3 &&
+    argv[2] === "--json"
+  );
 }
 
 function isResearchReportHumanRequest(argv: readonly string[]): boolean {
-  return argv[0] === 'research' && argv[1] === 'report' && argv.length === 2;
+  return argv[0] === "research" && argv[1] === "report" && argv.length === 2;
 }
 
 function isResearchReportRequest(argv: readonly string[]): boolean {
-  return argv[0] === 'research' && argv[1] === 'report';
+  return argv[0] === "research" && argv[1] === "report";
 }
 
 function isResearchSolveRequest(argv: readonly string[]): boolean {
-  return argv[0] === 'research' && argv[1] === 'solve';
+  return argv[0] === "research" && argv[1] === "solve";
 }
 
 function isResearchPlotRequest(argv: readonly string[]): boolean {
-  return argv[0] === 'research' && argv[1] === 'plot';
+  return argv[0] === "research" && argv[1] === "plot";
 }
 
 function isResearchCompareRequest(argv: readonly string[]): boolean {
-  return argv[0] === 'research' && argv[1] === 'compare';
+  return argv[0] === "research" && argv[1] === "compare";
 }
 
-function runResearchReport(context: CommandHandlerContext, format: (report: ResearchReport) => string): number {
+function runResearchReport(
+  context: CommandHandlerContext,
+  format: (report: ResearchReport) => string
+): number {
   try {
-    const report = buildResearchReport(readResearchTrialsForReport({ cwd: context.cwd }));
+    const report = buildResearchReport(
+      readResearchTrialsForReport({ cwd: context.cwd })
+    );
 
     process.stdout.write(format(report));
     return report.trialSummary.invalid > 0 ? 1 : 0;
@@ -416,20 +460,26 @@ function runResearchReport(context: CommandHandlerContext, format: (report: Rese
 }
 
 function runResearchReportJson(context: CommandHandlerContext): number {
-  return runResearchReport(context, (report) => `${JSON.stringify(report, null, 2)}\n`);
+  return runResearchReport(
+    context,
+    (report) => `${JSON.stringify(report, null, 2)}\n`
+  );
 }
 
 function runResearchReportHuman(context: CommandHandlerContext): number {
   return runResearchReport(context, formatResearchReportHumanOutput);
 }
 
-function runResearchPlot(request: ResearchPlotRequest, context: CommandHandlerContext): number {
+function runResearchPlot(
+  request: ResearchPlotRequest,
+  context: CommandHandlerContext
+): number {
   try {
     const result = writeResearchPlotHtml({
       benchmark: request.benchmark,
       cwd: context.cwd,
       output: request.output,
-      taskSelection: request.tasks
+      taskSelection: request.tasks,
     });
 
     process.stdout.write(`Wrote research plot: ${result.outputPath}\n`);
@@ -440,10 +490,15 @@ function runResearchPlot(request: ResearchPlotRequest, context: CommandHandlerCo
   }
 }
 
-function runResearchCompare(request: ResearchCompareRequest, context: CommandHandlerContext): number {
-  return runResearchCompareWithFormat(request, context, (compare) => (
-    request.json ? `${JSON.stringify(compare, null, 2)}\n` : formatResearchCompareHumanOutput(compare)
-  ));
+function runResearchCompare(
+  request: ResearchCompareRequest,
+  context: CommandHandlerContext
+): number {
+  return runResearchCompareWithFormat(request, context, (compare) =>
+    request.json
+      ? `${JSON.stringify(compare, null, 2)}\n`
+      : formatResearchCompareHumanOutput(compare)
+  );
 }
 
 function runResearchCompareWithFormat(
@@ -455,7 +510,7 @@ function runResearchCompareWithFormat(
     const compare = buildResearchCompare({
       benchmark: request.benchmark,
       cwd: context.cwd,
-      taskSelection: request.tasks
+      taskSelection: request.tasks,
     });
 
     process.stdout.write(format(compare));
@@ -467,17 +522,23 @@ function runResearchCompareWithFormat(
 }
 
 function isHelpFlag(value: string | undefined): boolean {
-  return value === '--help' || value === '-h';
+  return value === "--help" || value === "-h";
 }
 
-function parseResearchRecordRequest(argv: readonly string[]): ResearchRecordRequest | undefined {
-  if (argv[0] !== 'research' || argv[1] !== 'record') {
+function parseResearchRecordRequest(
+  argv: readonly string[]
+): ResearchRecordRequest | undefined {
+  if (argv[0] !== "research" || argv[1] !== "record") {
     return undefined;
   }
 
-  const values = parseOptionValues<ResearchRecordOption>(argv.slice(2), RECORD_OPTION_NAMES);
+  const values = parseOptionValues<ResearchRecordOption>(
+    argv.slice(2),
+    RECORD_OPTION_NAMES
+  );
 
-  if (!values ||
+  if (
+    !values ||
     values.benchmark === undefined ||
     values.collaborator === undefined ||
     values.prompt === undefined ||
@@ -489,57 +550,80 @@ function parseResearchRecordRequest(argv: readonly string[]): ResearchRecordRequ
 
   return {
     benchmark: values.benchmark,
-    ...(values.circuitJsonDir === undefined ? {} : { circuitJsonDir: values.circuitJsonDir }),
+    ...(values.circuitJsonDir === undefined
+      ? {}
+      : { circuitJsonDir: values.circuitJsonDir }),
     collaborator: values.collaborator,
     prompt: values.prompt,
     response: values.response,
     slug: values.slug,
-    ...(values.submissions === undefined ? {} : { submissions: values.submissions })
+    ...(values.submissions === undefined
+      ? {}
+      : { submissions: values.submissions }),
   };
 }
 
-function parseResearchSolveRequest(argv: readonly string[]): ResearchSolveRequest | undefined {
-  if (argv[0] !== 'research' || argv[1] !== 'solve') return undefined;
-  const parsed = parseRepeatableTaskOptions(argv.slice(2), new Set(['--benchmark', '--model', '--thinking', '--slug']));
+function parseResearchSolveRequest(
+  argv: readonly string[]
+): ResearchSolveRequest | undefined {
+  if (argv[0] !== "research" || argv[1] !== "solve") return undefined;
+  const parsed = parseRepeatableTaskOptions(
+    argv.slice(2),
+    new Set(["--benchmark", "--model", "--thinking", "--slug"])
+  );
   if (!parsed) return undefined;
-  const benchmark = parsed.values.get('--benchmark');
-  const model = parsed.values.get('--model');
-  const slug = parsed.values.get('--slug');
-  const thinking = parsed.values.get('--thinking');
-  if (!benchmark || !model || !slug || !isResearchThinking(thinking)) return undefined;
+  const benchmark = parsed.values.get("--benchmark");
+  const model = parsed.values.get("--model");
+  const slug = parsed.values.get("--slug");
+  const thinking = parsed.values.get("--thinking");
+  if (!benchmark || !model || !slug || !isResearchThinking(thinking))
+    return undefined;
   return { benchmark, model, slug, thinking, tasks: parsed.tasks };
 }
 
-function parseResearchPlotRequest(argv: readonly string[]): ResearchPlotRequest | undefined {
-  if (argv[0] !== 'research' || argv[1] !== 'plot') return undefined;
-  const parsed = parseRepeatableTaskOptions(argv.slice(2), new Set(['--benchmark', '--output']));
-  if (!parsed) return undefined;
-  const benchmark = parsed.values.get('--benchmark');
-  const output = parsed.values.get('--output');
-  return benchmark && output ? { benchmark, output, tasks: parsed.tasks } : undefined;
-}
-
-function parseResearchCompareRequest(argv: readonly string[]): ResearchCompareRequest | undefined {
-  if (argv[0] !== 'research' || argv[1] !== 'compare') return undefined;
+function parseResearchPlotRequest(
+  argv: readonly string[]
+): ResearchPlotRequest | undefined {
+  if (argv[0] !== "research" || argv[1] !== "plot") return undefined;
   const parsed = parseRepeatableTaskOptions(
     argv.slice(2),
-    new Set(['--benchmark']),
-    new Set(['--json'])
+    new Set(["--benchmark", "--output"])
   );
   if (!parsed) return undefined;
-  const benchmark = parsed.values.get('--benchmark');
-  return benchmark ? { benchmark, json: parsed.flags.has('--json'), tasks: parsed.tasks } : undefined;
+  const benchmark = parsed.values.get("--benchmark");
+  const output = parsed.values.get("--output");
+  return benchmark && output
+    ? { benchmark, output, tasks: parsed.tasks }
+    : undefined;
+}
+
+function parseResearchCompareRequest(
+  argv: readonly string[]
+): ResearchCompareRequest | undefined {
+  if (argv[0] !== "research" || argv[1] !== "compare") return undefined;
+  const parsed = parseRepeatableTaskOptions(
+    argv.slice(2),
+    new Set(["--benchmark"]),
+    new Set(["--json"])
+  );
+  if (!parsed) return undefined;
+  const benchmark = parsed.values.get("--benchmark");
+  return benchmark
+    ? { benchmark, json: parsed.flags.has("--json"), tasks: parsed.tasks }
+    : undefined;
 }
 
 function parseRepeatableTaskOptions(
   args: readonly string[],
   uniqueOptions: ReadonlySet<string>,
   standaloneOptions: ReadonlySet<string> = new Set()
-): {
-  readonly flags: ReadonlySet<string>;
-  readonly tasks: readonly string[];
-  readonly values: ReadonlyMap<string, string>;
-} | undefined {
+):
+  | {
+      readonly flags: ReadonlySet<string>;
+      readonly tasks: readonly string[];
+      readonly values: ReadonlyMap<string, string>;
+    }
+  | undefined {
   const flags = new Set<string>();
   const values = new Map<string, string>();
   const tasks: string[] = [];
@@ -556,8 +640,8 @@ function parseRepeatableTaskOptions(
     }
 
     const value = args[index + 1];
-    if (!value || value.startsWith('--')) return undefined;
-    if (name === '--task') {
+    if (!value || value.startsWith("--")) return undefined;
+    if (name === "--task") {
       if (tasks.includes(value)) return undefined;
       tasks.push(value);
       index += 2;
@@ -571,7 +655,9 @@ function parseRepeatableTaskOptions(
   return { flags, tasks: [...tasks].sort(), values };
 }
 
-function isResearchThinking(value: string | undefined): value is ResearchThinking {
+function isResearchThinking(
+  value: string | undefined
+): value is ResearchThinking {
   return RESEARCH_THINKING_LEVELS.some((level) => level === value);
 }
 
@@ -586,7 +672,7 @@ function parseOptionValues<OptionName extends string>(
   }
 
   for (let index = 0; index < args.length; index += 2) {
-    const optionName = optionNames.get(args[index] ?? '');
+    const optionName = optionNames.get(args[index] ?? "");
     const optionValue = args[index + 1];
 
     if (!optionName || optionValue === undefined) {
@@ -599,9 +685,16 @@ function parseOptionValues<OptionName extends string>(
   return values;
 }
 
-function recordResearchTrial(request: ResearchRecordRequest, context: CommandHandlerContext): number {
+function recordResearchTrial(
+  request: ResearchRecordRequest,
+  context: CommandHandlerContext
+): number {
   const plan = planResearchRecord(request, context);
-  const preparedInput = prepareResearchRecordSubmissionInput({ context, plan, request });
+  const preparedInput = prepareResearchRecordSubmissionInput({
+    context,
+    plan,
+    request,
+  });
 
   try {
     writeResearchTrialDirectory({
@@ -609,12 +702,14 @@ function recordResearchTrial(request: ResearchRecordRequest, context: CommandHan
       collaborator: request.collaborator,
       inputPaths: preparedInput.inputPaths,
       metadata: {
-        submissionProtocol: preparedInput.submissionProtocol
+        submissionProtocol: preparedInput.submissionProtocol,
       },
       plan: plan.trial,
-      result: preparedInput.result
+      result: preparedInput.result,
     });
-    process.stdout.write(`Recorded research trial: ${plan.trial.relativePath}\n`);
+    process.stdout.write(
+      `Recorded research trial: ${plan.trial.relativePath}\n`
+    );
 
     return preparedInput.result.exitCode;
   } finally {
@@ -632,13 +727,16 @@ function prepareResearchRecordSubmissionInput(options: {
       inputPaths: {
         prompt: options.plan.inputPaths.prompt,
         response: options.plan.inputPaths.response,
-        submissions: options.plan.inputPaths.submissions
+        submissions: options.plan.inputPaths.submissions,
       },
-      result: gradeBenchmarkSuite({
-        benchmarkDir: options.request.benchmark,
-        solutionsDir: options.request.submissions ?? ''
-      }, options.context),
-      submissionProtocol: 'qni-command-output-v0'
+      result: gradeBenchmarkSuite(
+        {
+          benchmarkDir: options.request.benchmark,
+          solutionsDir: options.request.submissions ?? "",
+        },
+        options.context
+      ),
+      submissionProtocol: "qni-command-output-v0",
     };
   }
 
@@ -651,32 +749,42 @@ function prepareNeutralCircuitJsonRecordSubmissionInput(options: {
   readonly request: ResearchRecordRequest;
 }): ResearchRecordPreparedSubmissionInput {
   if (!options.plan.inputPaths.circuitJsonDir) {
-    throw new ResearchRecordError('Internal error: missing validated --circuit-json-dir path.');
+    throw new ResearchRecordError(
+      "Internal error: missing validated --circuit-json-dir path."
+    );
   }
 
-  const temporarySubmissionsDir = mkdtempSync(path.join(tmpdir(), 'qni-research-record-submissions-'));
+  const temporarySubmissionsDir = mkdtempSync(
+    path.join(tmpdir(), "qni-research-record-submissions-")
+  );
 
   try {
     const conversion = writeNeutralCircuitJsonDirectoryAsQniSubmissions({
       benchmarkDirPath: options.plan.inputPaths.benchmark,
       circuitJsonDirPath: options.plan.inputPaths.circuitJsonDir,
-      outputDirPath: temporarySubmissionsDir
+      outputDirPath: temporarySubmissionsDir,
     });
-    const result = rewriteNeutralCircuitJsonSubmissionPaths(gradeBenchmarkSuite({
-      benchmarkDir: options.request.benchmark,
-      solutionsDir: temporarySubmissionsDir
-    }, options.context), conversion.relativeSubmissionFiles);
+    const result = rewriteNeutralCircuitJsonSubmissionPaths(
+      gradeBenchmarkSuite(
+        {
+          benchmarkDir: options.request.benchmark,
+          solutionsDir: temporarySubmissionsDir,
+        },
+        options.context
+      ),
+      conversion.relativeSubmissionFiles
+    );
 
     return {
       inputPaths: {
         circuitJson: options.plan.inputPaths.circuitJsonDir,
         prompt: options.plan.inputPaths.prompt,
         response: options.plan.inputPaths.response,
-        submissions: temporarySubmissionsDir
+        submissions: temporarySubmissionsDir,
       },
       result,
-      submissionProtocol: 'blind-neutral-circuit-json-v1',
-      temporarySubmissionsDir
+      submissionProtocol: "blind-neutral-circuit-json-v1",
+      temporarySubmissionsDir,
     };
   } catch (error) {
     rmSync(temporarySubmissionsDir, { force: true, recursive: true });
@@ -693,30 +801,36 @@ function rewriteNeutralCircuitJsonSubmissionPaths(
     results: result.results.map((item, index) => ({
       ...item,
       submission: relativeSubmissionFiles[index]
-        ? toPosixPath(path.join('submissions', relativeSubmissionFiles[index]))
-        : item.submission
-    }))
+        ? toPosixPath(path.join("submissions", relativeSubmissionFiles[index]))
+        : item.submission,
+    })),
   };
 }
 
-function cleanupPreparedResearchRecordSubmissionInput(input: ResearchRecordPreparedSubmissionInput): void {
+function cleanupPreparedResearchRecordSubmissionInput(
+  input: ResearchRecordPreparedSubmissionInput
+): void {
   if (input.temporarySubmissionsDir) {
     rmSync(input.temporarySubmissionsDir, { force: true, recursive: true });
   }
 }
 
-function planResearchRecord(request: ResearchRecordRequest, context: CommandHandlerContext): ResearchRecordPlan {
+function planResearchRecord(
+  request: ResearchRecordRequest,
+  context: CommandHandlerContext
+): ResearchRecordPlan {
   validateResearchTrialSlug(request.slug);
   const inputPaths = validateResearchRecordInputs(request, context);
   const trial = planResearchTrialDirectory({
     cwd: context.cwd,
-    destinationConflictHint: 'Choose a different --slug and run qni research record again.',
-    slug: request.slug
+    destinationConflictHint:
+      "Choose a different --slug and run qni research record again.",
+    slug: request.slug,
   });
 
   return {
     inputPaths,
-    trial
+    trial,
   };
 }
 
@@ -726,147 +840,193 @@ function validateResearchRecordInputs(
 ): ResearchRecordInputPaths {
   validateResearchRecordSubmissionSource(request);
 
-  const benchmark = requireDirectoryInput({
-    inputPath: request.benchmark,
-    missingMessage: `Benchmark suite directory does not exist: ${request.benchmark}`,
-    optionName: '--benchmark',
-    typeMessage: `Benchmark suite path is not a directory: ${request.benchmark}`
-  }, context);
-  const prompt = requireFileInput({
-    inputPath: request.prompt,
-    missingMessage: `Prompt file does not exist: ${request.prompt}`,
-    optionName: '--prompt',
-    typeMessage: `Prompt path is not a file: ${request.prompt}`
-  }, context);
-  const response = requireFileInput({
-    inputPath: request.response,
-    missingMessage: `AI response file does not exist: ${request.response}`,
-    optionName: '--response',
-    typeMessage: `AI response path is not a file: ${request.response}`
-  }, context);
+  const benchmark = requireDirectoryInput(
+    {
+      inputPath: request.benchmark,
+      missingMessage: `Benchmark suite directory does not exist: ${request.benchmark}`,
+      optionName: "--benchmark",
+      typeMessage: `Benchmark suite path is not a directory: ${request.benchmark}`,
+    },
+    context
+  );
+  const prompt = requireFileInput(
+    {
+      inputPath: request.prompt,
+      missingMessage: `Prompt file does not exist: ${request.prompt}`,
+      optionName: "--prompt",
+      typeMessage: `Prompt path is not a file: ${request.prompt}`,
+    },
+    context
+  );
+  const response = requireFileInput(
+    {
+      inputPath: request.response,
+      missingMessage: `AI response file does not exist: ${request.response}`,
+      optionName: "--response",
+      typeMessage: `AI response path is not a file: ${request.response}`,
+    },
+    context
+  );
 
   if (request.submissions !== undefined) {
     return {
       benchmark,
       prompt,
       response,
-      submissions: requireDirectoryInput({
-        inputPath: request.submissions,
-        missingMessage: `Submissions directory does not exist: ${request.submissions}`,
-        optionName: '--submissions',
-        typeMessage: `Submissions path is not a directory: ${request.submissions}`
-      }, context)
+      submissions: requireDirectoryInput(
+        {
+          inputPath: request.submissions,
+          missingMessage: `Submissions directory does not exist: ${request.submissions}`,
+          optionName: "--submissions",
+          typeMessage: `Submissions path is not a directory: ${request.submissions}`,
+        },
+        context
+      ),
     };
   }
 
   if (request.circuitJsonDir !== undefined) {
     return {
       benchmark,
-      circuitJsonDir: requireDirectoryInput({
-        inputPath: request.circuitJsonDir,
-        missingMessage: `Circuit JSON directory does not exist: ${request.circuitJsonDir}`,
-        optionName: '--circuit-json-dir',
-        typeMessage: `Circuit JSON path is not a directory: ${request.circuitJsonDir}`
-      }, context),
+      circuitJsonDir: requireDirectoryInput(
+        {
+          inputPath: request.circuitJsonDir,
+          missingMessage: `Circuit JSON directory does not exist: ${request.circuitJsonDir}`,
+          optionName: "--circuit-json-dir",
+          typeMessage: `Circuit JSON path is not a directory: ${request.circuitJsonDir}`,
+        },
+        context
+      ),
       prompt,
-      response
+      response,
     };
   }
 
-  throw new ResearchRecordError('Internal error: missing submission input after validation.');
+  throw new ResearchRecordError(
+    "Internal error: missing submission input after validation."
+  );
 }
 
-function validateResearchRecordSubmissionSource(request: ResearchRecordRequest): void {
-  const sourceCount = [request.submissions, request.circuitJsonDir]
-    .filter((value) => value !== undefined).length;
+function validateResearchRecordSubmissionSource(
+  request: ResearchRecordRequest
+): void {
+  const sourceCount = [request.submissions, request.circuitJsonDir].filter(
+    (value) => value !== undefined
+  ).length;
 
   if (sourceCount === 1) {
     return;
   }
 
   if (sourceCount === 0) {
-    throw new ResearchRecordError([
-      'Specify exactly one submission input: --submissions or --circuit-json-dir.',
-      'Pass --submissions <dir> for .qni submissions or --circuit-json-dir <dir> for neutral circuit JSON submissions.'
-    ].join('\n'));
+    throw new ResearchRecordError(
+      [
+        "Specify exactly one submission input: --submissions or --circuit-json-dir.",
+        "Pass --submissions <dir> for .qni submissions or --circuit-json-dir <dir> for neutral circuit JSON submissions.",
+      ].join("\n")
+    );
   }
 
-  throw new ResearchRecordError([
-    'Specify exactly one submission input: --submissions or --circuit-json-dir.',
-    'Remove one of --submissions or --circuit-json-dir.'
-  ].join('\n'));
+  throw new ResearchRecordError(
+    [
+      "Specify exactly one submission input: --submissions or --circuit-json-dir.",
+      "Remove one of --submissions or --circuit-json-dir.",
+    ].join("\n")
+  );
 }
 
-function requireFileInput(options: {
-  readonly inputPath: string;
-  readonly missingMessage: string;
-  readonly optionName: string;
-  readonly typeMessage: string;
-}, context: CommandHandlerContext): string {
+function requireFileInput(
+  options: {
+    readonly inputPath: string;
+    readonly missingMessage: string;
+    readonly optionName: string;
+    readonly typeMessage: string;
+  },
+  context: CommandHandlerContext
+): string {
   const resolvedPath = requireInputPath(options, context);
 
   if (!statSync(resolvedPath).isFile()) {
-    throw new ResearchRecordError([
-      options.typeMessage,
-      `Pass a file path with ${options.optionName}.`
-    ].join('\n'));
+    throw new ResearchRecordError(
+      [
+        options.typeMessage,
+        `Pass a file path with ${options.optionName}.`,
+      ].join("\n")
+    );
   }
 
   return resolvedPath;
 }
 
-function requireDirectoryInput(options: {
-  readonly inputPath: string;
-  readonly missingMessage: string;
-  readonly optionName: string;
-  readonly typeMessage: string;
-}, context: CommandHandlerContext): string {
+function requireDirectoryInput(
+  options: {
+    readonly inputPath: string;
+    readonly missingMessage: string;
+    readonly optionName: string;
+    readonly typeMessage: string;
+  },
+  context: CommandHandlerContext
+): string {
   const resolvedPath = requireInputPath(options, context);
 
   if (!statSync(resolvedPath).isDirectory()) {
-    throw new ResearchRecordError([
-      options.typeMessage,
-      `Pass a directory path with ${options.optionName}.`
-    ].join('\n'));
+    throw new ResearchRecordError(
+      [
+        options.typeMessage,
+        `Pass a directory path with ${options.optionName}.`,
+      ].join("\n")
+    );
   }
 
   return resolvedPath;
 }
 
-function requireInputPath(options: {
-  readonly inputPath: string;
-  readonly missingMessage: string;
-  readonly optionName: string;
-}, context: CommandHandlerContext): string {
+function requireInputPath(
+  options: {
+    readonly inputPath: string;
+    readonly missingMessage: string;
+    readonly optionName: string;
+  },
+  context: CommandHandlerContext
+): string {
   const resolvedPath = resolveInputPath(options.inputPath, context);
 
   if (!existsSync(resolvedPath)) {
-    const kind = options.optionName === '--prompt' || options.optionName === '--response' ? 'file' : 'directory';
+    const kind =
+      options.optionName === "--prompt" || options.optionName === "--response"
+        ? "file"
+        : "directory";
 
-    throw new ResearchRecordError([
-      options.missingMessage,
-      `Create the ${kind} or pass a different ${options.optionName} path.`
-    ].join('\n'));
+    throw new ResearchRecordError(
+      [
+        options.missingMessage,
+        `Create the ${kind} or pass a different ${options.optionName} path.`,
+      ].join("\n")
+    );
   }
 
   return resolvedPath;
 }
 
-function resolveInputPath(filePath: string, context: CommandHandlerContext): string {
+function resolveInputPath(
+  filePath: string,
+  context: CommandHandlerContext
+): string {
   if (path.isAbsolute(filePath)) {
     return filePath;
   }
 
   const cwdPath = path.resolve(context.cwd, filePath);
 
-  return existsSync(cwdPath) ? cwdPath : path.resolve(context.projectRoot, filePath);
+  return existsSync(cwdPath)
+    ? cwdPath
+    : path.resolve(context.projectRoot, filePath);
 }
 
 function toPosixPath(filePath: string): string {
-  return filePath.split(path.sep).join('/');
+  return filePath.split(path.sep).join("/");
 }
 
 function errorMessage(error: unknown): string {
   return (error instanceof Error ? error.message : String(error)).trimEnd();
 }
-
