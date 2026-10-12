@@ -33,6 +33,7 @@ def integer(value):
 class Interpreter:
     def __init__(self, declarations):
         self.symbols = {}
+        self.bounds = {}
         self.nodes = 0
         if not isinstance(declarations, list) or not 1 <= len(declarations) <= 8:
             raise ValueError("1..8 parameter declarations required")
@@ -41,9 +42,11 @@ class Interpreter:
             name = declaration["name"]
             if not isinstance(name, str) or not re.fullmatch(r"[a-z][a-z0-9_]{0,31}", name) or name in self.symbols:
                 raise ValueError("invalid or duplicate parameter")
-            if declaration["real"] is not True or declaration["domain"] != "real":
-                raise ValueError("PA parameters must explicitly declare real domain")
+            domain = declaration["domain"]
+            if declaration["real"] is not True or type(domain) is not str or domain not in ("real", "unit-interval"):
+                raise ValueError("parameters must explicitly declare a supported real domain")
             self.symbols[name] = s.Symbol(name, real=True)
+            self.bounds[name] = (s.Integer(-1), s.Integer(1)) if domain == "unit-interval" else (-s.oo, s.oo)
 
     def expr(self, value, depth=0):
         self.nodes += 1
@@ -63,7 +66,7 @@ class Interpreter:
         if kind == "pi" and arg is True:
             return s.pi, s.pi, s.pi
         if kind == "parameter" and isinstance(arg, str) and arg in self.symbols:
-            return self.symbols[arg], -s.oo, s.oo
+            return self.symbols[arg], *self.bounds[arg]
         if kind in ("add", "mul"):
             if not isinstance(arg, list) or not 2 <= len(arg) <= 8:
                 raise ValueError("add/mul require 2..8 arguments")

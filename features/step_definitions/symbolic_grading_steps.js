@@ -104,10 +104,10 @@ Then(
     assert.equal(this.symbolicProtocol, "neutral-symbolic-circuit-json-v1");
   }
 );
-Then("記号採点の全4課題が証明済みになる", function () {
+Then("記号採点の全6課題が証明済みになる", function () {
   assert.deepEqual(
     this.symbolicResult.results.map((result) => result.checks[0].proof.verdict),
-    ["proved", "proved", "proved", "proved"]
+    ["proved", "proved", "proved", "proved", "proved", "proved"]
   );
 });
 Then("記号採点の結果は未証明の不合格になる", function () {
@@ -115,4 +115,85 @@ Then("記号採点の結果は未証明の不合格になる", function () {
 });
 Then("記号採点の結果は証明済みになる", function () {
   assert.equal(this.symbolicResult.checks[0].proof.verdict, "proved");
+});
+
+const inverseIds = [
+  "single-qubit-gates/prepare-rotated-state",
+  "single-qubit-gates/prepare-arbitrary-state",
+];
+function submitInverse(world, change) {
+  world.inverseResults = inverseIds.map((id) => {
+    submit(world, id, change);
+    return world.symbolicResult;
+  });
+}
+When("逆三角関数課題の標準解を採点する", function () {
+  submitInverse(this, () => {});
+});
+When("逆三角関数課題へ全体位相だけが異なる解を提出する", function () {
+  submitInverse(this, (answer) => {
+    answer.operations[0].angle = {
+      add: [
+        answer.operations[0].angle,
+        { mul: [{ rational: ["2", "1"] }, { pi: true }] },
+      ],
+    };
+  });
+});
+When("逆三角関数課題へ固定値の解を提出する", function () {
+  submitInverse(this, (answer) => {
+    answer.operations[0].angle = { rational: ["1", "1"] };
+  });
+});
+When("任意状態の記号採点へ asin に置換した解を提出する", function () {
+  submit(this, inverseIds[1], (answer) => {
+    answer.operations[0].angle = {
+      mul: [{ rational: ["2", "1"] }, { asin: { parameter: "alpha" } }],
+    };
+  });
+});
+Then("逆三角関数課題の二つの結果は証明済みになる", function () {
+  assert.deepEqual(
+    this.inverseResults.map((result) => result.status),
+    ["passed", "passed"]
+  );
+});
+Then("逆三角関数課題の二つの結果は未証明になる", function () {
+  assert.deepEqual(
+    this.inverseResults.map((result) => result.checks[0].proof.verdict),
+    ["unproven", "unproven"]
+  );
+});
+When("任意状態の記号採点へ正規化振幅の平方根を含む解を提出する", function () {
+  submit(this, inverseIds[1], (answer) => {
+    const alpha = { parameter: "alpha" };
+    const beta = {
+      sqrt: {
+        add: [{ rational: ["1", "1"] }, { neg: { mul: [alpha, alpha] } }],
+      },
+    };
+    answer.operations[1].angle = {
+      add: [answer.operations[1].angle, beta, { neg: beta }],
+    };
+  });
+});
+When("任意状態の記号採点へ未定義の平方根を相殺した解を提出する", function () {
+  submit(this, inverseIds[1], (answer) => {
+    const root = { sqrt: { parameter: "alpha" } };
+    answer.operations[1].angle = {
+      add: [answer.operations[1].angle, root, { neg: root }],
+    };
+  });
+});
+Then(
+  "任意状態の記号仮定は alpha の unit-interval と独立した theta の real を含む",
+  function () {
+    assert.deepEqual(this.inverseResults[1].symbolicAssumptions.parameters, [
+      { name: "alpha", real: true, domain: "unit-interval" },
+      { name: "theta", real: true, domain: "real" },
+    ]);
+  }
+);
+Then("逆三角関数課題の結果は未証明になる", function () {
+  assert.equal(this.symbolicResult.checks[0].proof.verdict, "unproven");
 });
