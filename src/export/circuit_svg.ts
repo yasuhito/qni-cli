@@ -26,6 +26,7 @@ const CIRCUIT_HORIZONTAL_PADDING = 4;
 const SVG_UNITS_PER_POINT = 4 / 3;
 
 export interface CircuitSvgOptions extends QuantikzCaptionOptions {
+  readonly inkColor?: string;
   readonly theme: ExportTheme;
 }
 
@@ -118,6 +119,7 @@ export class CircuitSvg {
   private readonly circuit: CircuitData;
   private readonly columnCenters: number[];
   private readonly height: number;
+  private readonly inkColor: string | undefined;
   private readonly steps: SvgStep[];
   private readonly theme: ExportTheme;
   private readonly width: number;
@@ -128,6 +130,7 @@ export class CircuitSvg {
     this.captionSize = options.captionSize ?? 12;
     this.captionSizeSvg = this.captionSize * SVG_UNITS_PER_POINT;
     this.circuit = circuit;
+    this.inkColor = requiredInk(options.inkColor);
     this.theme = options.theme;
     this.steps = circuit.cols.map((slots, step) => new SvgStep(slots, step));
     for (const svgStep of this.steps) {
@@ -148,7 +151,7 @@ export class CircuitSvg {
   render(): string {
     const lines = [
       `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${this.width} ${this.height}" width="${this.width}" height="${this.height}" role="img" aria-label="Quantum circuit">`,
-      `<style>svg{color:${this.theme === "light" ? "#111" : "#fff"}}text{fill:currentColor;font-family:"DejaVu Sans",sans-serif;font-size:14px}.wire,.connection,.gate-box,.meter-box,.meter-mark,.target-mark,.swap-mark{stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.wire,.connection,.meter-mark,.target-mark,.swap-mark{fill:none}.control-dot{fill:currentColor}.label{font-size:13px}.annotation{font-size:11px}.measurement-name{font-family:"DejaVu Sans Mono",monospace}</style>`,
+      `<style>svg{color:${this.foregroundColor}}text{fill:currentColor;font-family:"DejaVu Sans",sans-serif;font-size:14px}.wire,.connection,.gate-box,.meter-box,.meter-mark,.target-mark,.swap-mark{stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.wire,.connection,.meter-mark,.target-mark,.swap-mark{fill:none}.control-dot{fill:currentColor}.label{font-size:13px}.annotation{font-size:11px}.measurement-name{font-family:"DejaVu Sans Mono",monospace}</style>`,
       ...this.topCaption,
       ...this.wires,
       ...this.steps.flatMap((step, index) =>
@@ -161,7 +164,15 @@ export class CircuitSvg {
   }
 
   private get backgroundColor(): string {
-    return this.theme === "light" ? "#fff" : "#000";
+    return this.inkColor === undefined
+      ? this.theme === "light"
+        ? "#fff"
+        : "#000"
+      : contrastingSurface(this.inkColor);
+  }
+
+  private get foregroundColor(): string {
+    return this.inkColor ?? (this.theme === "light" ? "#111" : "#fff");
   }
 
   private get bottomCaption(): string[] {
@@ -395,6 +406,50 @@ export class CircuitSvg {
         : 0)
     );
   }
+}
+
+const INK_COLOR = /^#([\da-f]{6})$/iu;
+
+function contrastingSurface(ink: string): "#000" | "#fff" {
+  return contrastRatio(ink, "#ffffff") >= contrastRatio(ink, "#000000")
+    ? "#fff"
+    : "#000";
+}
+
+function contrastRatio(first: string, second: string): number {
+  const brighter = Math.max(
+    relativeLuminance(first),
+    relativeLuminance(second)
+  );
+  const darker = Math.min(relativeLuminance(first), relativeLuminance(second));
+  return (brighter + 0.05) / (darker + 0.05);
+}
+
+function relativeLuminance(color: string): number {
+  const channels = color
+    .slice(1)
+    .match(/../gu)
+    ?.map((value) => Number.parseInt(value, 16) / 255);
+  if (channels?.length !== 3) return 0;
+  const [red, green, blue] = channels.map((channel) =>
+    channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4
+  );
+  return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+}
+
+function normalizeInk(ink: string | undefined): string | undefined {
+  if (ink === undefined) return undefined;
+  const match = INK_COLOR.exec(ink);
+  return match ? `#${match[1].toLowerCase()}` : undefined;
+}
+
+function requiredInk(ink: string | undefined): string | undefined {
+  if (ink === undefined) return undefined;
+  const normalized = normalizeInk(ink);
+  if (normalized === undefined) {
+    throw new Error(`unsupported circuit ink color: ${ink}`);
+  }
+  return normalized;
 }
 
 function columnLayout(

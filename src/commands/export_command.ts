@@ -25,7 +25,7 @@ import { renderSymbolicStateVector } from "../symbolic_state_renderer";
 const CAPTION_PNG_INK_MARGIN = 16;
 
 const HELP_TEXT = `Usage:
-  qni export --svg [--caption=TEXT] [--caption-position=top|bottom] [--caption-size=N] [--output=PATH]
+  qni export --svg [--ink=#RRGGBB] [--caption=TEXT] [--caption-position=top|bottom] [--caption-size=N] [--output=PATH]
   qni export --latex-source [--output=PATH]
   qni export --png [--caption=TEXT] [--caption-tex] [--caption-position=top|bottom] [--caption-size=N] --output=PATH
   qni export --state-vector --png --output=PATH
@@ -52,6 +52,7 @@ Options:
   --circle-notation # write the computational-basis circle notation as PNG
   --dark          # draw white circuit lines for dark backgrounds (default)
   --light         # draw black circuit lines for light backgrounds
+  [--ink=#RRGGBB] # SVG label and line color; overrides --light and --dark
   [--[no-]transparent] # write PNG with transparent background (default: true)
   [--caption=TEXT] # add a caption to regular circuit export
   [--caption-tex] # treat --caption as raw LaTeX
@@ -62,6 +63,7 @@ Options:
 Examples:
   qni export --svg
   qni export --svg --light --output circuit.svg
+  qni export --svg --ink=#111111
   qni export --latex-source
   qni export --latex-source --output circuit.tex
   qni export --latex-source --light
@@ -82,6 +84,7 @@ interface ExportOptions {
   readonly captionSize: number;
   readonly circleNotation: boolean;
   readonly dark: boolean;
+  readonly ink?: string;
   readonly latexSource: boolean;
   readonly light: boolean;
   readonly output?: string;
@@ -174,6 +177,12 @@ const VALUE_OPTIONS = new Map<
     },
   ],
   [
+    "--ink",
+    (options, value) => {
+      options.ink = value;
+    },
+  ],
+  [
     "--caption-size",
     (options, value) => {
       if (value.length === 0) {
@@ -234,6 +243,7 @@ export function runExportCommand(
         caption: options.caption,
         captionPosition: options.captionPosition,
         captionSize: options.captionSize,
+        inkColor: options.ink,
         theme: theme(options),
       }).render();
       writeTextOutput(svg, options, context.cwd);
@@ -341,6 +351,14 @@ function validateOptions(options: ExportOptions): void {
 
   if (options.svg && options.captionFormat === "tex") {
     throw new Error("--caption-tex is not supported with --svg");
+  }
+
+  if (options.ink !== undefined && !options.svg) {
+    throw new Error("--ink is supported only with --svg");
+  }
+
+  if (options.ink !== undefined && !/^#[\da-f]{6}$/iu.test(options.ink)) {
+    throw new Error(`invalid SVG ink color: ${options.ink}`);
   }
 
   if (options.dark && options.light) {
