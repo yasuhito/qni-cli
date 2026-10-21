@@ -66,12 +66,24 @@ function renderedQniToolText(world, expanded) {
   return renderQniToolResult(world, expanded).render(120).join("\n");
 }
 
-function renderQniToolCall(world, expanded) {
+function renderQniToolCall(world, expanded, context = {}) {
   const theme = {
     fg: (_color, text) => text,
     bold: (text) => text,
   };
-  return qniTool(world).renderCall(world.qniToolCallArgs, theme, { expanded });
+  return qniTool(world).renderCall(world.qniToolCallArgs, theme, {
+    expanded,
+    isPartial: false,
+    isError: false,
+    ...context,
+  });
+}
+
+function renderedQniToolCallText(world, expanded, context = {}) {
+  return renderQniToolCall(world, expanded, context)
+    .render(80)
+    .map((line) => line.trimEnd())
+    .join("\n");
 }
 
 function renderQniToolResult(world, expanded = false) {
@@ -885,11 +897,16 @@ Then("展開時の呼び出し表示に commands の中身がある", function (
 });
 
 Then("view を含まない折りたたみ時の呼び出し表示は qni だけである", function () {
+  assert.equal(renderedQniToolCallText(this, false), "qni");
+});
+
+Then("実行中の折りたたみ時の呼び出し表示は qni だけである", function () {
   assert.equal(
-    renderQniToolCall(this, false)
-      .render(80)
-      .map((line) => line.trimEnd())
-      .join("\n"),
+    renderedQniToolCallText(this, false, { isPartial: true }),
     "qni"
   );
+});
+
+Then("失敗した折りたたみ時の呼び出し表示は qni だけである", function () {
+  assert.equal(renderedQniToolCallText(this, false, { isError: true }), "qni");
 });

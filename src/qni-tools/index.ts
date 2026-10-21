@@ -173,7 +173,12 @@ export default function qniToolsExtension(pi: ExtensionAPI): void {
     },
     renderCall(args, theme, context) {
       const params = args as QniToolParams;
-      if (!context.expanded && callIncludesView(params))
+      if (
+        !context.expanded &&
+        callIncludesView(params) &&
+        !context.isPartial &&
+        !context.isError
+      )
         return new Text("", 0, 0);
       const title = theme.fg("toolTitle", theme.bold("qni"));
       if (!context.expanded) return new Text(title, 0, 0);

@@ -129,3 +129,15 @@ Pi で回路の説明を読む人として
 - Given 偽の Pi ExtensionAPI に qni ツール拡張を登録する
 - When view を含まない qni ツールの呼び出し引数を用意する
 - Then view を含まない折りたたみ時の呼び出し表示は qni だけである
+
+## Scenario: 実行中の折りたたみ時は view を含む呼び出しの見出しを残す
+
+- Given 偽の Pi ExtensionAPI に qni ツール拡張を登録する
+- When view を含む qni ツールの呼び出し引数を用意する
+- Then 実行中の折りたたみ時の呼び出し表示は qni だけである
+
+## Scenario: 失敗した折りたたみ時は view を含む呼び出しの見出しを残す
+
+- Given 偽の Pi ExtensionAPI に qni ツール拡張を登録する
+- When view を含む qni ツールの呼び出し引数を用意する
+- Then 失敗した折りたたみ時の呼び出し表示は qni だけである
