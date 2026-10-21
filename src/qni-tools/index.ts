@@ -69,6 +69,24 @@ function formulaModule(): FormulaModule {
   return require("pi-formula") as FormulaModule;
 }
 
+function callIncludesView(params: QniToolParams): boolean {
+  if (params.args?.[0] === "view") return true;
+  return params.commands?.some((command) => command[0] === "view") ?? false;
+}
+
+function expandedCallBody(params: QniToolParams): string {
+  return Object.entries(params)
+    .filter((entry) => entry[1] !== undefined)
+    .map(([key, value]) => {
+      const text =
+        typeof value === "string"
+          ? value
+          : (JSON.stringify(value, null, 2) ?? String(value));
+      return ` ${key}: ${text.replaceAll("\r", "").split("\n").join("\n  ")}`;
+    })
+    .join("\n");
+}
+
 export default function qniToolsExtension(pi: ExtensionAPI): void {
   const formula = formulaModule();
   formula.registerFormula(pi, quantumMacros);
@@ -153,6 +171,24 @@ export default function qniToolsExtension(pi: ExtensionAPI): void {
         return { content, details: { workdir, commands: commandDetails } };
       });
     },
+    renderCall(args, theme, context) {
+      const params = args as QniToolParams;
+      if (
+        !context.expanded &&
+        callIncludesView(params) &&
+        !context.isPartial &&
+        !context.isError
+      )
+        return new Text("", 0, 0);
+      const title = theme.fg("toolTitle", theme.bold("qni"));
+      if (!context.expanded) return new Text(title, 0, 0);
+      const body = expandedCallBody(params);
+      return new Text(
+        body === "" ? title : `${title}\n${theme.fg("muted", body)}`,
+        0,
+        0
+      );
+    },
     renderResult(result, { expanded }, theme) {
       const details = result.details as QniToolDetails | undefined;
       const imageForLatex = (latex: string) => {
@@ -183,23 +219,55 @@ export default function qniToolsExtension(pi: ExtensionAPI): void {
         }
       };
 
+      const imagePath = formula.getFormulaPath() === "image";
+      const hideUnrenderedLatex = (latex: string | undefined, image: unknown) =>
+        !expanded && image === undefined && latex !== undefined && imagePath;
+
       let body;
       if (details && "commands" in details) {
-        const batch = new Container();
         const texts = result.content.filter((item) => item.type === "text");
-        texts.forEach((item, index) => {
-          const command = details.commands[index];
-          const image = command?.circuitSvg
-            ? imageForCircuit(command.circuitSvg)
-            : command?.latex
-              ? imageForLatex(command.latex)
-              : undefined;
-          if (image) {
-            batch.addChild(new Text(item.text.split("\n", 1)[0]!, 0, 0));
-            batch.addChild(image);
-          } else batch.addChild(new Text(item.text.trimEnd(), 0, 0));
-        });
-        body = batch;
+        const circuitOnly =
+          !expanded &&
+          details.commands.some((command) => command.args[0] === "view");
+        if (circuitOnly) {
+          const images = [];
+          for (const command of details.commands) {
+            if (command.args[0] !== "view" || command.circuitSvg === undefined)
+              continue;
+            const image = imageForCircuit(command.circuitSvg);
+            if (image) images.push(image);
+          }
+          if (images.length === 1) {
+            body = images[0];
+          } else if (images.length > 1) {
+            const batch = new Container();
+            for (const image of images) batch.addChild(image);
+            body = batch;
+          } else {
+            const batch = new Container();
+            texts.forEach((item, index) => {
+              if (details.commands[index]?.args[0] !== "view") return;
+              batch.addChild(new Text(item.text.trimEnd(), 0, 0));
+            });
+            body = batch;
+          }
+        } else {
+          const batch = new Container();
+          texts.forEach((item, index) => {
+            const command = details.commands[index];
+            const image = command?.circuitSvg
+              ? imageForCircuit(command.circuitSvg)
+              : command?.latex
+                ? imageForLatex(command.latex)
+                : undefined;
+            if (hideUnrenderedLatex(command?.latex, image)) return;
+            if (image) {
+              batch.addChild(new Text(item.text.split("\n", 1)[0]!, 0, 0));
+              batch.addChild(image);
+            } else batch.addChild(new Text(item.text.trimEnd(), 0, 0));
+          });
+          body = batch;
+        }
       } else {
         const text =
           result.content.find((item) => item.type === "text")?.text ?? "";
@@ -208,6 +276,8 @@ export default function qniToolsExtension(pi: ExtensionAPI): void {
           : details?.latex
             ? imageForLatex(details.latex)
             : undefined;
+        if (hideUnrenderedLatex(details?.latex, body))
+          body = new Text("", 0, 0);
         body ??= new Text(text.trimEnd(), 0, 0);
       }
       if (!expanded || !details) return body;
