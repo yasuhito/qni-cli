@@ -105,7 +105,13 @@ export default function qniToolsExtension(pi: ExtensionAPI): void {
     name: "qni",
     label: "Qni",
     description:
-      'qni-cli をシェルを介さず実行する。依存するコマンド列は commands にまとめる。最初の失敗で止まり、成功分の変更は残るため、修正後は残りだけを呼び直す。workdir を省略するとセッション専用の一時作業場所を使う。利用者が選んだ場所には Pi の作業場所からの相対パスを指定する。引数に ["--help"] を渡すと使い方を確認できる。',
+      'qni-cli をシェルを介さず実行する。依存するコマンド列は commands にまとめる。最初の失敗で止まり、成功分の変更は残るため、修正後は残りだけを呼び直す。workdir を省略するとセッション専用の一時作業場所を使う。利用者が選んだ場所には Pi の作業場所からの相対パスを指定する。引数に ["--help"] を渡すと使い方を確認できる。説明文の途中に ```text のコードブロックで回路図をアスキーアートとして描かない。回路を見せるときは view を呼び、画像の回路図を表示する。',
+    promptSnippet:
+      "量子回路を組み立てて実行し、回路を見せるときは view で画像の回路図を表示する",
+    promptGuidelines: [
+      "回路を見せるときは、説明文の途中に ```text のコードブロックで回路図をアスキーアートとして描かず（例: q0: ─H─P(π/2)─×）、qni ツールの view が返した図を説明文へ書き写さない。qni ツールで view を呼び、画像の回路図を表示する。",
+      "When showing a circuit during an explanation, do not draw an ASCII-art circuit inside a ```text code block (for example q0: ─H─P(π/2)─×) and do not copy the qni view output into the explanation. Call the qni tool with view so the image circuit is displayed.",
+    ],
     parameters: Type.Object({
       args: Type.Optional(Type.Array(Type.String())),
       commands: Type.Optional(Type.Array(Type.Array(Type.String()))),
