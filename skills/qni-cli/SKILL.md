@@ -1,6 +1,6 @@
 ---
 name: qni-cli
-description: Build, run, measure, visualize, verify, and explain quantum circuits with the bundled qni CLI. Use for quantum-circuit tasks, including Quantum Katas, superdense coding, state vectors, expectation values, circuit diagrams, and Bloch-sphere images. Also use for explaining quantum algorithms such as QFT (quantum Fourier transform), Grover, Shor, and quantum teleportation, and for unitary-matrix verification and state-vector calculation. 日本語では、量子アルゴリズムの解説、量子フーリエ変換、ユニタリ行列の検証、状態ベクトルの計算にも使う。
+description: Build, run, measure, visualize, verify, and explain quantum circuits with the bundled qni CLI. Use for quantum-circuit tasks, including Quantum Katas, superdense coding, state vectors, expectation values, circuit diagrams, and Bloch-sphere images. Also use for explaining quantum algorithms such as QFT (quantum Fourier transform), Grover, Shor, and quantum teleportation, and for unitary-matrix verification and state-vector calculation. 日本語では、量子アルゴリズムの解説、量子フーリエ変換、ユニタリ行列の検証、状態ベクトルの計算にも使う。説明文のコードブロックへ回路のアスキーアートを描かず、qni view の画像回路図を使う。
 license: MIT
 compatibility: Requires Node.js 22 or later. SVG export has no external runtime dependency. PNG export also requires pdflatex and pdftocairo; symbolic output and Bloch-sphere rendering require Python helpers.
 ---
@@ -50,7 +50,7 @@ qni-cli を実行するときは、専用の `qni` ツールを優先する。
 ## 基本手順
 
 1. `qni add ...` で回路を作る。初期状態が必要な場合だけ、先に `qni state set "..."` を実行する。
-2. `qni view` で回路を確認して説明する。専用の `qni` ツールでは、pi-formula の画像経路では回路図を PNG で表示し、テキスト経路では ASCII 図へ戻す。画像を得るために `export --png` や LaTeX 処理系を呼ばない。説明の中で回路をアスキーアートや Unicode（罫線文字など）で手書きしない。前に表示した図を「上の回路」のように参照するだけで済ませない。説明の中で回路を見せる箇所（例: 「3 量子ビットの回路」の節）では、その位置で `qni view` を呼び、回路図をその場に表示する。説明文と `qni view` の呼び出しを交互に進める（説明を書く → その場で `qni view` → 続きを書く）。
+2. `qni view` で回路を確認して説明する。専用の `qni` ツールでは、pi-formula の画像経路では回路図を PNG で表示し、テキスト経路では ASCII 図へ戻す。画像を得るために `export --png` や LaTeX 処理系を呼ばない。説明の中で回路をアスキーアートや Unicode（罫線文字など）で手書きしない。説明文の途中に ```text のコードブロックで回路図をアスキーアートとして描かない（例: `q0: ─H─P(π/2)─×`）。`qni view` が返した ASCII 図を説明文へ書き写さない。前に表示した図を「上の回路」のように参照するだけで済ませない。説明の中で回路を見せる箇所（例: 「3 量子ビットの回路」の節）では、その位置で `qni view` を呼び、回路図をその場に表示する。説明文と `qni view` の呼び出しを交互に進める（説明を書く → その場で `qni view` → 続きを書く）。
 3. `qni run` で実行する。説明用の ket 状態には `--symbolic`、再現可能な測定データには `--shots N --seed N --json` を使う。
 4. 測定値、`qni expect ...`、またはその両方で結果を検証する。根拠と要求が一致しなければ、回路を直して再実行する。
 5. 図が役立つ場合は、外部の LaTeX 処理系が不要な `qni export --svg ...` で回路を描く。PNG が必要なら `qni export --png ...`、1 量子ビットの軌跡なら `qni bloch --png --trajectory ...` を使う。

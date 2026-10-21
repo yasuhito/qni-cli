@@ -681,6 +681,74 @@ Then("qni ツールの説明に一括実行と残りだけの再実行がある"
   assert.match(this.qniToolDefinition.description, /残りだけを呼び直す/u);
 });
 
+function qniPromptGuidelines(world) {
+  const guidelines = world.qniToolDefinition.promptGuidelines;
+  assert.ok(Array.isArray(guidelines), "expected promptGuidelines");
+  return guidelines.join("\n");
+}
+
+Then("qni ツールの promptSnippet は view の画像回路図を説明する", function () {
+  assert.match(
+    this.qniToolDefinition.promptSnippet,
+    /view で画像の回路図を表示する/u
+  );
+});
+
+Then(
+  "qni ツールの promptGuidelines は text コードブロックの回路アスキーアートを禁じる",
+  function () {
+    assert.match(
+      qniPromptGuidelines(this),
+      /```text のコードブロックで回路図をアスキーアート/u
+    );
+  }
+);
+
+Then(
+  "qni ツールの promptGuidelines は英語で text コードブロックの回路アスキーアートを禁じる",
+  function () {
+    assert.match(qniPromptGuidelines(this), /```text code block/u);
+  }
+);
+
+Then(
+  "qni ツールの promptGuidelines は qni view の画像回路図を指示する",
+  function () {
+    assert.match(
+      qniPromptGuidelines(this),
+      /qni ツールで view を呼び、画像の回路図を表示する/u
+    );
+  }
+);
+
+Then(
+  "qni ツールの説明は text コードブロックの回路アスキーアートを禁じる",
+  function () {
+    assert.match(
+      this.qniToolDefinition.description,
+      /```text のコードブロックで回路図をアスキーアート/u
+    );
+  }
+);
+
+Then("qni ツールの説明は view の画像回路図を指示する", function () {
+  assert.match(
+    this.qniToolDefinition.description,
+    /view を呼び、画像の回路図を表示する/u
+  );
+});
+
+Then("スキルは text コードブロックの回路アスキーアートを禁じる", function () {
+  const skill = fs.readFileSync(
+    path.join(PROJECT_ROOT, "skills/qni-cli/SKILL.md"),
+    "utf8"
+  );
+  assert.match(
+    skill,
+    /説明文の途中に ```text のコードブロックで回路図をアスキーアートとして描かない/u
+  );
+});
+
 Then("qni ツールの引数スキーマに args と任意の workdir がある", function () {
   const schema = this.qniToolDefinition.parameters;
   assert.deepEqual(
