@@ -16,7 +16,7 @@ qni export のヘルプで利用できる出力形式とオプションを確認
 
   ```text
   Usage:
-    qni export --svg [--caption=TEXT] [--caption-position=top|bottom] [--caption-size=N] [--output=PATH]
+    qni export --svg [--ink=#RRGGBB] [--caption=TEXT] [--caption-position=top|bottom] [--caption-size=N] [--output=PATH]
     qni export --latex-source [--output=PATH]
     qni export --png [--caption=TEXT] [--caption-tex] [--caption-position=top|bottom] [--caption-size=N] --output=PATH
     qni export --state-vector --png --output=PATH
@@ -43,6 +43,7 @@ qni export のヘルプで利用できる出力形式とオプションを確認
     --circle-notation # write the computational-basis circle notation as PNG
     --dark          # draw white circuit lines for dark backgrounds (default)
     --light         # draw black circuit lines for light backgrounds
+    [--ink=#RRGGBB] # SVG label and line color; overrides --light and --dark
     [--[no-]transparent] # write PNG with transparent background (default: true)
     [--caption=TEXT] # add a caption to regular circuit export
     [--caption-tex] # treat --caption as raw LaTeX
@@ -53,6 +54,7 @@ qni export のヘルプで利用できる出力形式とオプションを確認
   Examples:
     qni export --svg
     qni export --svg --light --output circuit.svg
+    qni export --svg --ink=#111111
     qni export --latex-source
     qni export --latex-source --output circuit.tex
     qni export --latex-source --light

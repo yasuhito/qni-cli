@@ -172,7 +172,7 @@ qni benchmark run benchmarks/quantum-katas/basic-gates/state-flip.md benchmarks/
 qni export --svg --light --output circuit.svg
 ```
 
-`qni export --svg` は SVG の基本図形で回路図を直接描くため、LaTeX 処理系は不要です。`--output` を省略すると SVG を標準出力へ書き出します。既定のダークテーマでは白、`--light` では黒の回路線を使います。
+`qni export --svg` は SVG の基本図形で回路図を直接描くため、LaTeX 処理系は不要です。`--output` を省略すると SVG を標準出力へ書き出します。既定のダークテーマでは白、`--light` では黒の回路線を使います。`--ink=#RRGGBB` を渡すと、ラベルと線をその色で描き、ゲートの面は文字が読める反対の色で塗ります。
 
 ワイヤ、ゲート、複数の制御点と制御線、CNOT の標的、SWAP、測定器に対応します。角度、`†`、`√`、測定名、古典条件も文字として描きます。`--caption-size` の単位は pt です。`--caption` と `--caption-position top|bottom` を指定すると、キャプション全体が収まるように表示領域を広げます。
 

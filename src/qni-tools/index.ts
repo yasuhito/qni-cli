@@ -5,7 +5,16 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent" with {
   "resolution-mode": "import",
 };
 
+import {
+  resolveCircuitColor,
+  rgbFromAnsi,
+  type TerminalColors,
+} from "./circuit-color";
 import { quantumMacros } from "./quantum-macros";
+import {
+  queryTerminalColors,
+  skipsTerminalColorQuery,
+} from "./terminal-colors";
 import {
   formatBatchFailure,
   formatCommandOutput,
@@ -58,10 +67,13 @@ type FormulaModule = {
 
 async function circuitSvgFor(
   args: readonly string[],
-  executeCommand: (args: string[]) => Promise<QniExecResult>
+  executeCommand: (args: string[]) => Promise<QniExecResult>,
+  ink: string | undefined
 ): Promise<string | undefined> {
   if (args.length !== 1 || args[0] !== "view") return undefined;
-  const result = await executeCommand(["export", "--svg"]);
+  const exportArgs = ["export", "--svg"];
+  if (ink) exportArgs.push(`--ink=${ink}`);
+  const result = await executeCommand(exportArgs);
   return result.killed || result.code !== 0 ? undefined : result.stdout;
 }
 
@@ -93,9 +105,34 @@ export default function qniToolsExtension(pi: ExtensionAPI): void {
   const qniWorkdirs = new QniWorkdirs((customType, data) =>
     pi.appendEntry(customType, data)
   );
+  let terminalColors: TerminalColors = {};
+  let themeTextColor = (): string | undefined => undefined;
+  const circuitInk = (): string | undefined =>
+    resolveCircuitColor(themeTextColor(), terminalColors).value;
 
-  pi.on("session_start", (event, ctx) => {
+  pi.on("session_start", async (event, ctx) => {
     qniWorkdirs.restore(ctx.sessionManager.getBranch(), event.reason);
+    themeTextColor = () => rgbFromAnsi(ctx.ui.theme.getFgAnsi("text"));
+    terminalColors = {};
+    if (ctx.mode !== "tui" || skipsTerminalColorQuery(process.env)) return;
+
+    let pending: Promise<TerminalColors> | undefined;
+    ctx.ui.setWidget("qni-circuit-colors", (tui) => {
+      pending = queryTerminalColors(tui);
+      return {
+        invalidate(): void {},
+        render(): string[] {
+          return [];
+        },
+      };
+    });
+    try {
+      terminalColors = pending ? await pending : {};
+    } catch {
+      terminalColors = {};
+    } finally {
+      ctx.ui.setWidget("qni-circuit-colors", undefined);
+    }
   });
   pi.on("session_shutdown", (event) => {
     if (event.reason !== "reload") qniWorkdirs.cleanup();
@@ -134,7 +171,11 @@ export default function qniToolsExtension(pi: ExtensionAPI): void {
           if (result.killed) throw new Error("qni was cancelled");
           if (result.code !== 0) throw new Error(formatQniExitError(result));
           const output = await truncateQniOutput(result.stdout);
-          const circuitSvg = await circuitSvgFor(params.args, executeCommand);
+          const circuitSvg = await circuitSvgFor(
+            params.args,
+            executeCommand,
+            circuitInk()
+          );
           return {
             content: [{ type: "text" as const, text: output.text }],
             details: {
@@ -165,7 +206,11 @@ export default function qniToolsExtension(pi: ExtensionAPI): void {
           }
           const output = await formatCommandOutput(args, result.stdout);
           content.push({ type: "text", text: output.text });
-          const circuitSvg = await circuitSvgFor(args, executeCommand);
+          const circuitSvg = await circuitSvgFor(
+            args,
+            executeCommand,
+            circuitInk()
+          );
           commandDetails.push({
             args,
             ...(args.includes("--latex") && !output.truncated

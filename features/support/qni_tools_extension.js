@@ -1,20 +1,24 @@
-const assert = require('node:assert/strict');
-const { execFile } = require('node:child_process');
-const path = require('node:path');
+const assert = require("node:assert/strict");
+const { execFile } = require("node:child_process");
+const path = require("node:path");
 
-const PROJECT_ROOT = path.resolve(__dirname, '../..');
+const PROJECT_ROOT = path.resolve(__dirname, "../..");
 let previousSessionShutdown;
 
 async function registerQniToolsExtension(world, options = {}) {
-  previousSessionShutdown?.({ reason: 'test-reset' });
+  previousSessionShutdown?.({ reason: "test-reset" });
   previousSessionShutdown = undefined;
-  const extensionModule = require(path.join(PROJECT_ROOT, 'dist', 'qni-tools', 'index.js'));
-  const { setCapabilities } = require('@earendil-works/pi-tui');
+  const extensionModule = require(
+    path.join(PROJECT_ROOT, "dist", "qni-tools", "index.js")
+  );
+  const { setCapabilities } = require("@earendil-works/pi-tui");
   const commands = new Map();
   const commandRegistrations = [];
   const tools = new Map();
   const terminalWrites = [];
-  const sessionEntries = options.newSession ? [] : (world.qniToolsSessionEntries ?? []);
+  const sessionEntries = options.newSession
+    ? []
+    : (world.qniToolsSessionEntries ?? []);
   const eventHandlers = new Map();
   const sessionShutdownHandlers = [];
   const sessionStarts = [];
@@ -22,23 +26,26 @@ async function registerQniToolsExtension(world, options = {}) {
   const transformers = [];
   let transformer;
   let inputListener;
-  let textColor = options.textColor ?? '\x1b[38;2;212;212;212m';
+  let textColor = options.textColor ?? "\x1b[38;2;212;212;212m";
   const previousTmux = process.env.TMUX;
   const previousTerm = process.env.TERM;
-  const Module = require('node:module');
+  const Module = require("node:module");
   const originalLoad = Module._load;
-  if (options.tmux) process.env.TMUX = '/tmp/tmux-test/default,1,0';
+  if (options.tmux) process.env.TMUX = "/tmp/tmux-test/default,1,0";
   else delete process.env.TMUX;
   if (options.term) process.env.TERM = options.term;
   setCapabilities({ images: null, trueColor: true, hyperlinks: true });
 
   try {
-    if (options.formulaAvailable === false || options.formulaModule !== undefined) {
+    if (
+      options.formulaAvailable === false ||
+      options.formulaModule !== undefined
+    ) {
       Module._load = function (request, parent, isMain) {
-        if (request === 'pi-formula') {
+        if (request === "pi-formula") {
           if (options.formulaModule !== undefined) return options.formulaModule;
           const error = new Error("Cannot find module 'pi-formula'");
-          error.code = 'MODULE_NOT_FOUND';
+          error.code = "MODULE_NOT_FOUND";
           throw error;
         }
         return originalLoad.call(this, request, parent, isMain);
@@ -47,14 +54,14 @@ async function registerQniToolsExtension(world, options = {}) {
     extensionModule.default({
       on(event, handler) {
         eventHandlers.set(event, handler);
-        if (event === 'session_shutdown') sessionShutdownHandlers.push(handler);
-        if (event === 'session_start') {
+        if (event === "session_shutdown") sessionShutdownHandlers.push(handler);
+        if (event === "session_start") {
           sessionStart = handler;
           sessionStarts.push(handler);
         }
       },
       appendEntry(customType, data) {
-        sessionEntries.push({ type: 'custom', customType, data });
+        sessionEntries.push({ type: "custom", customType, data });
       },
       registerCommand(name, commandOptions) {
         commands.set(name, commandOptions);
@@ -70,44 +77,61 @@ async function registerQniToolsExtension(world, options = {}) {
       exec(command, args, execOptions = {}) {
         if (options.exec) return options.exec(command, args, execOptions);
         return new Promise((resolve) => {
-          execFile(command, args, {
-            cwd: execOptions.cwd,
-            signal: execOptions.signal,
-            encoding: 'utf8'
-          }, (error, stdout, stderr) => {
-            resolve({
-              stdout,
-              stderr,
-              code: typeof error?.code === 'number' ? error.code : (error ? 1 : 0),
-              killed: error?.killed ?? false
-            });
-          });
+          execFile(
+            command,
+            args,
+            {
+              cwd: execOptions.cwd,
+              signal: execOptions.signal,
+              encoding: "utf8",
+            },
+            (error, stdout, stderr) => {
+              resolve({
+                stdout,
+                stderr,
+                code:
+                  typeof error?.code === "number" ? error.code : error ? 1 : 0,
+                killed: error?.killed ?? false,
+              });
+            }
+          );
         });
-      }
+      },
     });
 
-    assert.ok(sessionStart, 'expected pi-formula to observe session startup');
+    assert.ok(sessionStart, "expected pi-formula to observe session startup");
     const sessionContext = {
-      mode: 'tui',
+      mode: "tui",
       sessionManager: { getBranch: () => sessionEntries },
       ui: {
         get theme() {
           return { getFgAnsi: () => textColor };
         },
         setWidget(_key, content) {
-          if (typeof content !== 'function') return;
+          if (typeof content !== "function") return;
           const tui = {
             terminal: {
               write(data) {
                 terminalWrites.push(data);
-                const id = data.match(/i=(\d+)/)?.[1];
-                if (!id || options.response === null) return;
-                const response = options.response ?? 'OK';
-                const sequence = `\x1b_Gi=${id};${response}\x1b\\`;
-                const deliver = (data) => {
-                  const result = inputListener?.(data);
+                const deliver = (payload) => {
+                  const result = inputListener?.(payload);
                   if (result?.data) world.qniToolsForwardedInput = result.data;
                 };
+                const osc = data.match(/\x1b\](10|11);\?/u)?.[1];
+                if (osc) {
+                  const color =
+                    osc === "10"
+                      ? options.terminalForeground
+                      : options.terminalBackground;
+                  const body =
+                    typeof color === "string" ? `rgb:${oscRgb(color)}` : "rgb:";
+                  queueMicrotask(() => deliver(`\x1b]${osc};${body}\x1b\\`));
+                  return;
+                }
+                const id = data.match(/i=(\d+)/)?.[1];
+                if (!id || options.response === null) return;
+                const response = options.response ?? "OK";
+                const sequence = `\x1b_Gi=${id};${response}\x1b\\`;
                 if (options.splitResponse) {
                   queueMicrotask(() => deliver(sequence.slice(0, 8)));
                   queueMicrotask(() => deliver(sequence.slice(8)));
@@ -116,22 +140,25 @@ async function registerQniToolsExtension(world, options = {}) {
                 } else {
                   queueMicrotask(() => deliver(sequence));
                 }
-              }
+              },
             },
             addInputListener(listener) {
               inputListener = listener;
               return () => {
                 if (inputListener === listener) inputListener = undefined;
               };
-            }
+            },
           };
           content(tui, {});
         },
-        notify() {}
-      }
+        notify() {},
+      },
     };
     for (const handler of sessionStarts) {
-      await handler({ reason: options.sessionStartReason ?? 'startup' }, sessionContext);
+      await handler(
+        { reason: options.sessionStartReason ?? "startup" },
+        sessionContext
+      );
     }
   } finally {
     Module._load = originalLoad;
@@ -158,6 +185,12 @@ async function registerQniToolsExtension(world, options = {}) {
   world.qniToolsSetTextColor = (ansi) => {
     textColor = ansi;
   };
+}
+
+function oscRgb(color) {
+  const match = /^#([\da-f]{2})([\da-f]{2})([\da-f]{2})$/iu.exec(color);
+  assert.ok(match, `expected #rrggbb terminal color, got ${color}`);
+  return match.slice(1).join("/");
 }
 
 module.exports = { PROJECT_ROOT, registerQniToolsExtension };

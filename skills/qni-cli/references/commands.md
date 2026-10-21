@@ -4,14 +4,14 @@
 
 ## コマンドとオプション
 
-| コマンド | ゲート、引数、オプション |
-| --- | --- |
-| `qni add` | `H`, `X`, `Y`, `Z`, `S`, `S†`, `T`, `T†`, `√X`, `P`, `Rx`, `Ry`, `Rz`, `GlobalPhase`, `SWAP`, `Measure`, `--qubit`, `--step`, `--control`, `--angle`, `--name`, `--if` |
-| `qni run` | `--symbolic`, `--basis`, `--shots`, `--seed`, `--json`, `--latex` |
-| `qni state set` | — |
-| `qni view` | — |
-| `qni expect` | `--same-axis-correlations`, `--shots`, `--seed`, `--threshold`, `--json`, `--latex` |
-| `qni export` | `--svg`, `--png`, `--latex-source`, `--state-vector`, `--circle-notation`, `--dark`, `--light`, `--no-transparent`, `--caption`, `--caption-tex`, `--caption-position`, `--caption-size`, `--output` |
+| コマンド        | ゲート、引数、オプション                                                                                                                                                                                      |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `qni add`       | `H`, `X`, `Y`, `Z`, `S`, `S†`, `T`, `T†`, `√X`, `P`, `Rx`, `Ry`, `Rz`, `GlobalPhase`, `SWAP`, `Measure`, `--qubit`, `--step`, `--control`, `--angle`, `--name`, `--if`                                        |
+| `qni run`       | `--symbolic`, `--basis`, `--shots`, `--seed`, `--json`, `--latex`                                                                                                                                             |
+| `qni state set` | —                                                                                                                                                                                                             |
+| `qni view`      | —                                                                                                                                                                                                             |
+| `qni expect`    | `--same-axis-correlations`, `--shots`, `--seed`, `--threshold`, `--json`, `--latex`                                                                                                                           |
+| `qni export`    | `--svg`, `--png`, `--latex-source`, `--state-vector`, `--circle-notation`, `--dark`, `--light`, `--ink`, `--no-transparent`, `--caption`, `--caption-tex`, `--caption-position`, `--caption-size`, `--output` |
 
 ## add
 

@@ -112,3 +112,43 @@ qni export --svg で回路図を SVG 形式に直接書き出したい。
   ```text
   color:#111
   ```
+
+## Scenario: qni export --svg --ink は指定した色でラベルと線を描く
+
+- Given "qni add H --qubit 0 --step 0" を実行
+- When "qni export --svg --ink=#100f0d" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  color:#100f0d
+  ```
+
+## Scenario: qni export --svg --ink は暗い文字色のゲート面を白く塗る
+
+- Given "qni add H --qubit 0 --step 0" を実行
+- When "qni export --svg --ink=#100f0d" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  fill="#fff"
+  ```
+
+## Scenario: qni export --svg --ink は明るい文字色のゲート面を黒く塗る
+
+- Given "qni add H --qubit 0 --step 0" を実行
+- When "qni export --svg --ink=#fffcf0" を実行
+- Then 標準出力に次を含む:
+
+  ```text
+  fill="#000"
+  ```
+
+## Scenario: SVG 以外の --ink は失敗する
+
+- Given "qni add H --qubit 0 --step 0" を実行
+- When "qni export --latex-source --ink=#100f0d" を実行
+- Then 標準エラーに次を含む:
+
+  ```text
+  --ink is supported only with --svg
+  ```
