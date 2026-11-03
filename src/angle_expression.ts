@@ -5,10 +5,12 @@ const NUMERIC_PATTERN = /^[+-]?\d+(?:\.\d+)?$/u;
 const MULTIPLIED_PATTERN = /^(?<coefficient>[+-]?\d+(?:\.\d+)?)\*(?<term>.+)$/u;
 const PI_PATTERN =
   /^(?<sign>[+-]?)(?:(?<coefficient>\d+(?:\.\d+)?)(?:\*)?)?(?:π|pi)(?:(?:\/|_)(?<denominator>\d+(?:\.\d+)?))?$/u;
-const SIGNED_IDENTIFIER_PATTERN = /^(?<sign>[+-])(?<identifier>[a-zA-Z_][a-zA-Z0-9_]*)$/u;
+const SIGNED_IDENTIFIER_PATTERN =
+  /^(?<sign>[+-])(?<identifier>[a-zA-Z_][a-zA-Z0-9_]*)$/u;
 
 export function validAngleIdentifier(value: string): boolean {
-  return IDENTIFIER_PATTERN.test(value);
+  // pi and pi_N are the circle constant, so a variable with that name could never be referenced.
+  return IDENTIFIER_PATTERN.test(value) && !PI_PATTERN.test(value);
 }
 
 interface AngleTerm {
@@ -38,12 +40,12 @@ export class AngleExpression {
 
   private normalized(): string {
     const value = String(this.rawValue)
-      .replaceAll(' ', '')
-      .replaceAll('θ', 'theta')
-      .replace(/(?<=\d)theta/gu, '*theta');
+      .replaceAll(" ", "")
+      .replaceAll("θ", "theta")
+      .replace(/(?<=\d)theta/gu, "*theta");
 
     if (value.length === 0) {
-      throw new AngleExpressionError('angle is required');
+      throw new AngleExpressionError("angle is required");
     }
 
     return value;
@@ -64,9 +66,9 @@ export class AngleExpression {
 function parseAngleTerm(value: string): AngleTerm | undefined {
   return (
     parseNumericLiteral(value) ??
+    parsePiTerm(value) ??
     parseSignedIdentifier(value) ??
     parseVariableReference(value) ??
-    parsePiTerm(value) ??
     parseProduct(value)
   );
 }
@@ -87,11 +89,12 @@ function parseSignedIdentifier(value: string): AngleTerm | undefined {
   }
 
   const groups = match.groups;
-  const identifier = groups.identifier ?? '';
+  const identifier = groups.identifier ?? "";
   return {
     concrete: false,
-    radians: (variables) => variableRadians(identifier, variables) * (groups.sign === '-' ? -1 : 1),
-    text: groups.sign === '-' ? `-${identifier}` : identifier
+    radians: (variables) =>
+      variableRadians(identifier, variables) * (groups.sign === "-" ? -1 : 1),
+    text: groups.sign === "-" ? `-${identifier}` : identifier,
   };
 }
 
@@ -100,7 +103,11 @@ function parseVariableReference(value: string): AngleTerm | undefined {
     return undefined;
   }
 
-  return { concrete: false, radians: (variables) => variableRadians(value, variables), text: value };
+  return {
+    concrete: false,
+    radians: (variables) => variableRadians(value, variables),
+    text: value,
+  };
 }
 
 function parsePiTerm(value: string): AngleTerm | undefined {
@@ -110,16 +117,17 @@ function parsePiTerm(value: string): AngleTerm | undefined {
     return undefined;
   }
 
-  const sign = match.groups.sign === '-' ? '-' : '';
-  const coefficient = match.groups.coefficient ?? '1';
-  const coefficientPrefix = coefficient === '1' ? '' : coefficient;
-  const denominator = match.groups.denominator ?? '1';
-  const denominatorSuffix = denominator === '1' ? '' : `/${denominator}`;
+  const sign = match.groups.sign === "-" ? "-" : "";
+  const coefficient = match.groups.coefficient ?? "1";
+  const coefficientPrefix = coefficient === "1" ? "" : coefficient;
+  const denominator = match.groups.denominator ?? "1";
+  const denominatorSuffix = denominator === "1" ? "" : `/${denominator}`;
 
   return {
     concrete: true,
-    radians: () => signValue(sign) * Number(coefficient) * Math.PI / Number(denominator),
-    text: `${sign}${coefficientPrefix}π${denominatorSuffix}`
+    radians: () =>
+      (signValue(sign) * Number(coefficient) * Math.PI) / Number(denominator),
+    text: `${sign}${coefficientPrefix}π${denominatorSuffix}`,
   };
 }
 
@@ -130,17 +138,20 @@ function parseProduct(value: string): AngleTerm | undefined {
     return undefined;
   }
 
-  const coefficient = match.groups.coefficient ?? '';
+  const coefficient = match.groups.coefficient ?? "";
   const inner = new AngleExpression(match.groups.term).parse();
 
   return {
     concrete: inner.concrete,
     radians: (variables) => Number(coefficient) * inner.radians(variables),
-    text: `${coefficient}*${inner.text}`
+    text: `${coefficient}*${inner.text}`,
   };
 }
 
-function variableRadians(name: string, variables: Readonly<Record<string, string>>): number {
+function variableRadians(
+  name: string,
+  variables: Readonly<Record<string, string>>
+): number {
   const resolvedValue = variables[name];
 
   if (resolvedValue === undefined) {
@@ -157,5 +168,5 @@ function variableRadians(name: string, variables: Readonly<Record<string, string
 }
 
 function signValue(sign: string): number {
-  return sign === '-' ? -1 : 1;
+  return sign === "-" ? -1 : 1;
 }

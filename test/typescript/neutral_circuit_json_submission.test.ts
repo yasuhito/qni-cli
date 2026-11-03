@@ -170,6 +170,47 @@ describe("neutral circuit JSON submission converter", () => {
     }
   });
 
+  it("accepts bare pi and -pi as the circle constant", () => {
+    assert.equal(
+      convertNeutralCircuitJsonToQniSubmission({
+        availableGates: ["ControlledPhase(angle, control, target)"],
+        submissionText: JSON.stringify({
+          operations: [
+            {
+              gate: "ControlledPhase",
+              angle: "pi",
+              controls: [1],
+              targets: [0],
+            },
+            {
+              gate: "ControlledPhase",
+              angle: "-pi",
+              controls: [2],
+              targets: [0],
+            },
+          ],
+        }),
+      }),
+      [
+        "qni add P --angle π --control 1 --qubit 0 --step 0",
+        "qni add P --angle -π --control 2 --qubit 0 --step 1",
+        "",
+      ].join("\n")
+    );
+  });
+
+  it("still rejects variable names that merely start with pi", () => {
+    for (const angle of ["pix", "-pix", "pi2"]) {
+      assertInvalidSubmission(
+        JSON.stringify({
+          operations: [{ gate: "Phase", targets: [0], angle }],
+        }),
+        /must use a symbolic pi expression/u,
+        angle
+      );
+    }
+  });
+
   it("rejects non-finite and numeric-product angles for existing phase gates too", () => {
     for (const gate of [
       "Phase",
