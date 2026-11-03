@@ -1,0 +1,192 @@
+diff --git a/src/config.ts b/src/config.ts
+index befc58b..b9e5fab 100644
+--- a/src/config.ts
++++ b/src/config.ts
+@@ -5,6 +5,7 @@
+ // returned) so the extension always starts.
+ 
+ import { CONFIG_DIR_NAME, getAgentDir } from "@earendil-works/pi-coding-agent";
++import type { SettingSource } from "@anthropic-ai/claude-agent-sdk";
+ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+ import { dirname, join } from "path";
+ 
+@@ -37,9 +38,32 @@ export interface Config {
+ 		// Model ids (e.g. "claude-future-9") whose declared 1M context Claude Code
+ 		// does not actually serve; pins them to the bare id at 200K.
+ 		forceTwoHundredK?: string[];
++		// Claude Code setting sources for the provider's child. Omitted keeps Claude
++		// Code's default (all sources); [] is SDK isolation mode, which skips the
++		// user's ~/.claude settings, hooks, plugins and language.
++		settingSources?: SettingSource[];
+ 	};
+ }
+ 
++const SETTING_SOURCES: readonly SettingSource[] = ["user", "project", "local"];
++
++/** Rejects a malformed provider.settingSources rather than falling back to all
++ *  sources: a caller that asked for isolation must not silently lose it. */
++export function validateSettingSources(value: unknown): SettingSource[] | undefined {
++	if (value === undefined) return undefined;
++	const valid = Array.isArray(value)
++		&& value.every((source) => SETTING_SOURCES.includes(source))
++		&& new Set(value).size === value.length;
++	if (!valid) {
++		throw new Error(`claude-bridge: provider.settingSources must be an array of distinct "user", "project" or "local", got ${JSON.stringify(value)}`);
++	}
++	return [...value];
++}
++
++export function settingSourcesOption(provider: Config["provider"] = {}): { settingSources?: SettingSource[] } {
++	return provider.settingSources ? { settingSources: [...provider.settingSources] } : {};
++}
++
+ export function tryParseJson(path: string): Partial<Config> {
+ 	if (!existsSync(path)) return {};
+ 	try {
+@@ -106,10 +130,12 @@ export function markAskClaudeDeprecationNoticeShown(): string {
+ export function loadConfig(cwd: string): Config {
+ 	const global = tryParseJson(globalConfigPath());
+ 	const project = tryParseJson(join(cwd, CONFIG_DIR_NAME, "claude-bridge.json"));
++	const provider = { ...global.provider, ...project.provider };
++	const settingSources = validateSettingSources(provider.settingSources);
+ 	return {
+ 		startupNoticeShown: project.startupNoticeShown ?? global.startupNoticeShown,
+ 		askClaudeDeprecationShown: project.askClaudeDeprecationShown ?? global.askClaudeDeprecationShown,
+ 		askClaude: { ...global.askClaude, ...project.askClaude },
+-		provider: { ...global.provider, ...project.provider },
++		provider: settingSources ? { ...provider, settingSources } : provider,
+ 	};
+ }
+diff --git a/src/index.ts b/src/index.ts
+index e65ec14..3392175 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -15,7 +15,7 @@ import { verifyWrittenSession as _verifyWrittenSession } from "./session-verify.
+ import { extractAllToolResults as _extractAllToolResults, type McpResult } from "./extract-tool-results.js";
+ import { QueryContext, ctx } from "./query-state.js";
+ import { makePromptStream, userMessage, type PromptStream } from "./prompt-stream.js";
+-import { claudeCodeSettings, loadConfig, markAskClaudeDeprecationNoticeShown, markStartupNoticeShown, type Config } from "./config.js";
++import { claudeCodeSettings, loadConfig, markAskClaudeDeprecationNoticeShown, markStartupNoticeShown, settingSourcesOption, type Config } from "./config.js";
+ import {
+ 	collectPromptSkills,
+ 	projectPromptCapture,
+@@ -2054,6 +2054,7 @@ function streamClaudeAgentSdk(model: Model<any>, context: Context, options?: Sim
+ 			append: systemPromptAppend ? systemPromptAppend : undefined,
+ 		},
+ 		extraArgs,
++		...settingSourcesOption(providerSettings),
+ 		...(effort ? { effort } : {}),
+ 		...(mcpServers ? { mcpServers } : {}),
+ 		...(resumeSessionId ? { resume: resumeSessionId } : {}),
+@@ -2065,6 +2066,7 @@ function streamClaudeAgentSdk(model: Model<any>, context: Context, options?: Sim
+ 		`model=${cliModel} msgs=${context.messages.length} tools=${mcpTools.length}`,
+ 		`resume=${resumeSessionId?.slice(0, 8) ?? "none"} effort=${effort ?? "default"}`,
+ 		`ctxFiles=${promptCapture?.contextFiles.length ?? 0} strictMcp=${strictMcpConfigEnabled}`,
++		`settingSources=${queryOptions.settingSources ? JSON.stringify(queryOptions.settingSources) : "default"}`,
+ 		`prompt=${promptText.slice(0, 60)}${promptBlocks ? " [+images]" : ""}`);
+ 
+ 	// 3. Start SDK query and claim it for this context
+diff --git a/tests/unit-setting-sources.mjs b/tests/unit-setting-sources.mjs
+new file mode 100644
+index 0000000..62fefb7
+--- /dev/null
++++ b/tests/unit-setting-sources.mjs
+@@ -0,0 +1,98 @@
++/**
++ * provider.settingSources lets a caller run the provider's Claude Code child in
++ * SDK isolation mode (`[]`), so the user's ~/.claude settings, hooks, plugins and
++ * language do not reach a request. Omitted keeps Claude Code's default (all sources).
++ */
++import { describe, it } from "node:test";
++import assert from "node:assert/strict";
++import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
++import { tmpdir } from "node:os";
++import { join } from "node:path";
++import { CONFIG_DIR_NAME } from "@earendil-works/pi-coding-agent";
++import { loadConfig } from "../src/config.js";
++import activate, { __test } from "../src/index.js";
++
++const ACTIVE_STREAM_SIMPLE_KEY = Symbol.for("claude-bridge:activeStreamSimple");
++
++function projectWithConfig(config) {
++	const cwd = mkdtempSync(join(tmpdir(), "claude-bridge-setting-sources-"));
++	if (config !== undefined) {
++		mkdirSync(join(cwd, CONFIG_DIR_NAME), { recursive: true });
++		writeFileSync(join(cwd, CONFIG_DIR_NAME, "claude-bridge.json"), JSON.stringify(config));
++	}
++	return cwd;
++}
++
++async function providerQueryOptions(t, config) {
++	const cwd = projectWithConfig(config);
++	const previousCwd = process.cwd();
++	process.chdir(cwd);
++	t.after(() => {
++		process.chdir(previousCwd);
++		rmSync(cwd, { recursive: true, force: true });
++	});
++	globalThis[ACTIVE_STREAM_SIMPLE_KEY] = undefined;
++	let providerConfig;
++	activate({ on: () => {}, registerProvider: (_name, value) => { providerConfig = value; }, registerTool: () => {} });
++	t.after(() => { globalThis[ACTIVE_STREAM_SIMPLE_KEY] = undefined; });
++
++	let options;
++	__test.setQuery(({ options: queryOptions }) => {
++		options = queryOptions;
++		const gen = (async function* () {
++			yield { type: "system", subtype: "init", session_id: "cc-setting-sources" };
++			yield { type: "result", subtype: "success", is_error: false, result: "ok" };
++		})();
++		gen.interrupt = async () => {};
++		gen.close = () => {};
++		return gen;
++	});
++	t.after(() => __test.setQuery(null));
++	__test.resetSharedSession();
++
++	await providerConfig.streamSimple(providerConfig.models[0], { messages: [{ role: "user", content: "hi", timestamp: 0 }], tools: [] }, {}).result();
++	return options;
++}
++
++describe("provider.settingSources config", () => {
++	it("keeps an empty array from the project config", () => {
++		const cwd = projectWithConfig({ provider: { settingSources: [] } });
++		try {
++			assert.deepEqual(loadConfig(cwd).provider.settingSources, []);
++		} finally {
++			rmSync(cwd, { recursive: true, force: true });
++		}
++	});
++
++	it("keeps known sources", () => {
++		const cwd = projectWithConfig({ provider: { settingSources: ["project", "local"] } });
++		try {
++			assert.deepEqual(loadConfig(cwd).provider.settingSources, ["project", "local"]);
++		} finally {
++			rmSync(cwd, { recursive: true, force: true });
++		}
++	});
++
++	for (const invalid of ["user", ["global"], [1], ["user", "user"], null, {}]) {
++		it(`rejects ${JSON.stringify(invalid)}`, () => {
++			const cwd = projectWithConfig({ provider: { settingSources: invalid } });
++			try {
++				assert.throws(() => loadConfig(cwd), /provider\.settingSources/);
++			} finally {
++				rmSync(cwd, { recursive: true, force: true });
++			}
++		});
++	}
++});
++
++describe("provider query settingSources", () => {
++	it("omits settingSources by default so Claude Code loads its default sources", async (t) => {
++		const options = await providerQueryOptions(t, undefined);
++		assert.equal(Object.hasOwn(options, "settingSources"), false);
++	});
++
++	it("forwards an empty array to the SDK", async (t) => {
++		const options = await providerQueryOptions(t, { provider: { settingSources: [] } });
++		assert.deepEqual(options.settingSources, []);
++	});
++});

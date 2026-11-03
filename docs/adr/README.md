@@ -27,3 +27,7 @@
 - [0025: ADR 0025: 数式描画の正本を pi-formula へ分離する](0025-extract-pi-formula-as-the-math-rendering-source.md)
 - [0026: 状態準備の採点だけグローバル位相を無視する](0026-opt-in-to-global-phase-insensitive-state-checks.md)
 - [0027: 中立ゲート語彙を拡張し、MCX の許可を固定制御ゲートから分離する](0027-extend-neutral-gates-with-separate-mcx.md)
+- [0028: 参照回路とのユニタリ等価性で採点する](0028-grade-unitary-equivalence-to-reference-circuits.md)
+- [0029: 固定幅の連続引数課題は記号証明を主採点にする](0029-use-symbolic-proof-for-fixed-width-parameter-tasks.md)
+- [0030: 可変長・離散引数課題は上限付きJSON生成器を複数入力で採点する](0030-use-bounded-parameterized-json-for-variable-input-tasks.md)
+- [0031: モデル筆記試験の拡張機能は隔離した Claude Bridge 1つだけを例外にする](0031-allow-only-an-explicit-isolated-claude-bridge-extension-in-solve.md)

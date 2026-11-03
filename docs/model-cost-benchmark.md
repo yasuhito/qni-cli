@@ -68,7 +68,7 @@ qni research solve \
 
 ブリッジは `provider.settingSources` に対応し、不正な値を拒否する版が必要です。実行前の確認で、正しい設定ではモデルが登録され、不正な設定では登録されないことを確かめます。対応していないブリッジでは、モデルを呼ぶ前に終了コード `3` で停止します。Pi の `auth check` は拡張機能のプロバイダーを判定できないため、この経路では使いません。認証は Claude Code が管理します。
 
-この経路では、Claude Code の `claude_code` プリセットのシステムプロンプトに、課題のシステムプロンプトが追記されます。`metadata.json` の `harness.runner` は `pi-claude-bridge` になり、`harness.claudeBridge` に拡張機能のパス、ソースディレクトリの SHA-256、`settingSources`、システムプロンプトの扱いを保存します。モデルが受け取る文脈が API へ直接送る経路と違うため、`harness.runner` が `pi` の研究試行と同一条件として比較しないでください。料金は Pi がモデル表から見積もった値で、サブスクリプションの実際の請求額ではありません。
+この経路では、Claude Code の `claude_code` プリセットのシステムプロンプトに、課題のシステムプロンプトが追記されます。`metadata.json` の `harness.runner` は `pi-claude-bridge` になり、`harness.claudeBridge` に拡張機能のパス、ソースディレクトリの SHA-256、`settingSources`、システムプロンプトの扱いを保存します。モデルが受け取る文脈が API へ直接送る経路と違うため、`harness.runner` が `pi` の研究試行と同一条件として比較しないでください。ブリッジはモデルの単価を0として登録するため、保存される料金は `0` になります。これは無料や請求額を意味せず、料金の見積もりでもありません。判断の背景は [ADR 0031](adr/0031-allow-only-an-explicit-isolated-claude-bridge-extension-in-solve.md)、最初の実行条件と再現手順は [Claude Bridge Opus 5.5 ベースラインの再現条件](reports/claude-bridge-opus-5-5-baseline-2026-11-03.md) を参照してください。
 
 ## 保存されるもの
 
