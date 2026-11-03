@@ -1458,6 +1458,10 @@ function installFakePi(world, options = {}) {
     content: '{"operations":[{"gate":"H","targets":[0]}]}',
     failFirst: false,
     responseModel: null,
+    responseProvider: null,
+    bridgeExtension: null,
+    bridgeValidatesSettingSources: true,
+    extraModels: [],
     ...existing,
     ...options,
   };
@@ -1470,10 +1474,24 @@ const fs=require('node:fs');
 const path=require('node:path');
 const config=JSON.parse(fs.readFileSync(${JSON.stringify(configPath)},'utf8'));
 const args=process.argv.slice(2);
-if(args[0]==='--version'){console.log('9.9.9');process.exit(0)}
-if(args[0]==='--list-models'){
+const optionValue=(name)=>{const index=args.indexOf(name);return index<0?undefined:args[index+1]};
+const extensions=args.flatMap((arg,index)=>arg==='-e'?[args[index+1]]:[]);
+const readBridgeConfig=()=>{const file=path.join(process.cwd(),'.pi','claude-bridge.json');return fs.existsSync(file)?JSON.parse(fs.readFileSync(file,'utf8')):null};
+const bridgeLoaded=()=>{
+ if(!config.bridgeExtension||!args.includes('--no-extensions')||extensions.length!==1||extensions[0]!==config.bridgeExtension) return false;
+ const sources=readBridgeConfig()?.provider?.settingSources;
+ return !config.bridgeValidatesSettingSources||sources===undefined||(Array.isArray(sources)&&sources.every((source)=>['user','project','local'].includes(source)));
+};
+const modelRows=()=>{
+ if(!config.bridgeExtension) return config.available?[['fake-provider',config.model]]:[];
+ const [provider,...id]=config.model.split('/');
+ return [...config.extraModels,...(bridgeLoaded()?[[provider,id.join('/')]]:[])];
+};
+if(args.includes('--version')){console.log('9.9.9');process.exit(0)}
+if(args.includes('--list-models')){
+ const pattern=optionValue('--list-models');
  console.log('provider model context max-out thinking images');
- if(config.available) console.log('fake-provider '+config.model+' 1M 1K yes no');
+ for(const [provider,id] of modelRows()) if(pattern===id||pattern===provider+'/'+id) console.log(provider+' '+id+' 1M 1K yes no');
  process.exit(0);
 }
 if(args[0]==='auth'&&args[1]==='check'){
@@ -1482,9 +1500,11 @@ if(args[0]==='auth'&&args[1]==='check'){
 }
 let calls=0;
 if(fs.existsSync(${JSON.stringify(logPath)})) calls=fs.readFileSync(${JSON.stringify(logPath)},'utf8').trim().split(/\\n/u).filter(Boolean).length;
-fs.appendFileSync(${JSON.stringify(logPath)},JSON.stringify({args,cwd:process.cwd()})+'\\n');
+fs.appendFileSync(${JSON.stringify(logPath)},JSON.stringify({args,cwd:process.cwd(),bridgeConfig:readBridgeConfig()})+'\\n');
 if(config.failFirst&&calls===0){console.error('fake Pi failure');process.exit(1)}
-const message={role:'assistant',content:[{type:'thinking',thinking:'not saved'},{type:'text',text:config.content}],provider:'fake-provider',model:config.responseModel||config.model,usage:{input:100,output:20,cacheRead:5,cacheWrite:0,totalTokens:125,cost:{input:0.00005,output:0.00007,cacheRead:0,cacheWrite:0,total:0.00012}},stopReason:'stop',timestamp:Date.now()};
+const responseProvider=config.responseProvider||(config.bridgeExtension?optionValue('--provider'):'fake-provider');
+const responseModel=config.responseModel||(config.bridgeExtension?optionValue('--model'):config.model);
+const message={role:'assistant',content:[{type:'thinking',thinking:'not saved'},{type:'text',text:config.content}],provider:responseProvider,model:responseModel,usage:{input:100,output:20,cacheRead:5,cacheWrite:0,totalTokens:125,cost:{input:0.00005,output:0.00007,cacheRead:0,cacheWrite:0,total:0.00012}},stopReason:'stop',timestamp:Date.now()};
 console.log(JSON.stringify({type:'session',version:3,id:'fake',timestamp:new Date().toISOString(),cwd:process.cwd()}));
 console.log(JSON.stringify({type:'message_end',message}));
 `
@@ -1520,6 +1540,37 @@ Given("偽 Pi は1回目の課題呼び出しだけ失敗する", function () {
 
 Given("偽 Pi は応答モデル {string} を返す", function (model) {
   installFakePi(this, { responseModel: model });
+});
+
+Given(
+  "偽 Pi は Claude Bridge 拡張機能 {string} でモデル {string} を提供する",
+  function (extension, model) {
+    const extensionPath = path.join(this.scenarioDir, extension);
+    fs.mkdirSync(path.dirname(extensionPath), { recursive: true });
+    fs.writeFileSync(extensionPath, "export default function () {}\n");
+    installFakePi(this, {
+      bridgeExtension: fs.realpathSync(extensionPath),
+      model,
+    });
+  }
+);
+
+Given(
+  "偽 Pi はプロバイダー {string} のモデル {string} も提供する",
+  function (provider, model) {
+    const config = JSON.parse(fs.readFileSync(this.fakePiConfigPath, "utf8"));
+    installFakePi(this, {
+      extraModels: [...config.extraModels, [provider, model]],
+    });
+  }
+);
+
+Given("偽 Pi は応答プロバイダー {string} を返す", function (provider) {
+  installFakePi(this, { responseProvider: provider });
+});
+
+Given("偽 Pi の Claude Bridge は settingSources を検証しない", function () {
+  installFakePi(this, { bridgeValidatesSettingSources: false });
 });
 
 Given(
@@ -2304,6 +2355,77 @@ Then(
         ].join("\n")
       );
     }
+  }
+);
+
+function fakePiTaskCalls(world) {
+  return fs
+    .readFileSync(world.fakePiLogPath, "utf8")
+    .trim()
+    .split(/\r?\n/u)
+    .filter(Boolean)
+    .map(JSON.parse);
+}
+
+Then(
+  "偽 Pi の課題呼び出しは Claude Bridge 拡張機能 {string} とプロバイダー {string} のモデル {string} を指定する",
+  function (extension, provider, model) {
+    const records = fakePiTaskCalls(this);
+    assert.equal(records.length, 1);
+    const args = records[0].args;
+    const valueAfter = (name) => args[args.indexOf(name) + 1];
+    assert.deepEqual(
+      {
+        extensions: args.flatMap((arg, index) =>
+          arg === "-e" ? [args[index + 1]] : []
+        ),
+        provider: valueAfter("--provider"),
+        model: valueAfter("--model"),
+      },
+      {
+        extensions: [fs.realpathSync(path.join(this.scenarioDir, extension))],
+        provider,
+        model,
+      }
+    );
+  }
+);
+
+Then(
+  "偽 Pi の課題呼び出しは Claude Bridge の隔離オプションをすべて含む",
+  function () {
+    const records = fakePiTaskCalls(this);
+    assert.equal(records.length, 1);
+    const args = records[0].args;
+    for (const option of [
+      "--mode",
+      "json",
+      "--thinking",
+      "high",
+      "--no-session",
+      "--no-tools",
+      "--no-context-files",
+      "--no-skills",
+      "--no-extensions",
+      "--no-prompt-templates",
+      "--system-prompt",
+    ]) {
+      assert.ok(args.includes(option), `missing Pi option: ${option}`);
+    }
+    assert.notEqual(records[0].cwd, this.scenarioDir);
+    assert.equal(fs.existsSync(records[0].cwd), false);
+  }
+);
+
+Then(
+  "偽 Pi の課題呼び出し時の Claude Bridge 設定は次の JSON と等しい:",
+  function (docString) {
+    const records = fakePiTaskCalls(this);
+    assert.equal(records.length, 1);
+    assert.deepEqual(
+      records[0].bridgeConfig,
+      JSON.parse(docStringContent(docString))
+    );
   }
 );
 

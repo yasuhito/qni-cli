@@ -92,7 +92,7 @@ const RECORD_USAGE = [
   "",
 ].join("\n");
 const SOLVE_USAGE = [
-  "Usage: qni research solve --model <pi-model-id> --thinking <level> --benchmark <dir> [--task <task-id> ...] --slug <slug>",
+  "Usage: qni research solve --model <pi-model-id> --thinking <level> --benchmark <dir> [--task <task-id> ...] --slug <slug> [--provider <pi-provider>] [--claude-bridge-extension <file>]",
   "",
 ].join("\n");
 const REPORT_USAGE = ["Usage: qni research report [--json]", ""].join("\n");
@@ -154,7 +154,7 @@ Example:
   qni research record --collaborator claude-sonnet-4 --benchmark benchmarks/quantum-katas --submissions tmp/submissions --prompt tmp/prompt.md --response tmp/response.md --slug smoke-claude
   qni research record --collaborator external-agent --benchmark benchmarks/quantum-katas --circuit-json-dir tmp/circuit-json --prompt tmp/prompt.md --response tmp/response.md --slug neutral-json`;
 const SOLVE_HELP_TEXT = `Usage:
-  qni research solve --model <pi-model-id> --thinking <level> --benchmark <dir> [--task <task-id> ...] --slug <slug>
+  qni research solve --model <pi-model-id> --thinking <level> --benchmark <dir> [--task <task-id> ...] --slug <slug> [--provider <pi-provider>] [--claude-bridge-extension <file>]
 
 Overview:
   Run one model through a fresh, tool-free Pi process for each benchmark task.
@@ -168,6 +168,10 @@ Required inputs:
 
 Options:
   --task <task-id>  Select one task. Repeat to select multiple tasks.
+  --provider <pi-provider>  Require this exact Pi provider for the model and every response.
+  --claude-bridge-extension <file>  Load only this pi-claude-bridge extension. Requires --provider claude-bridge.
+      Each task runs Claude Code with provider.settingSources [] so personal Claude Code settings, hooks, plugins, and language are not loaded.
+      The bridge must reject an invalid provider.settingSources; otherwise solve stops before any model request.
 
 Saved files:
   research/runs/<timestamp>-<slug>/trial.md
@@ -576,16 +580,33 @@ function parseResearchSolveRequest(
   if (argv[0] !== "research" || argv[1] !== "solve") return undefined;
   const parsed = parseRepeatableTaskOptions(
     argv.slice(2),
-    new Set(["--benchmark", "--model", "--thinking", "--slug"])
+    new Set([
+      "--benchmark",
+      "--model",
+      "--thinking",
+      "--slug",
+      "--provider",
+      "--claude-bridge-extension",
+    ])
   );
   if (!parsed) return undefined;
   const benchmark = parsed.values.get("--benchmark");
   const model = parsed.values.get("--model");
   const slug = parsed.values.get("--slug");
   const thinking = parsed.values.get("--thinking");
+  const provider = parsed.values.get("--provider");
+  const claudeBridgeExtension = parsed.values.get("--claude-bridge-extension");
   if (!benchmark || !model || !slug || !isResearchThinking(thinking))
     return undefined;
-  return { benchmark, model, slug, thinking, tasks: parsed.tasks };
+  return {
+    benchmark,
+    model,
+    slug,
+    thinking,
+    tasks: parsed.tasks,
+    ...(provider ? { provider } : {}),
+    ...(claudeBridgeExtension ? { claudeBridgeExtension } : {}),
+  };
 }
 
 function parseResearchPlotRequest(
