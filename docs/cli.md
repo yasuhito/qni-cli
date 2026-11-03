@@ -184,7 +184,15 @@ qni export --svg --light --output circuit.svg
 qni export --png --light --output circuit.png
 ```
 
-回路図は quantikz 形式の LaTeX を `pdflatex` で組版します。`qni export --latex-source` では同じ LaTeX ソースを出力できます。
+回路図は quantikz 形式の LaTeX を `pdflatex` で組版し、`pdftocairo` で PNG に変換します。`qni export --latex-source` では同じ LaTeX ソースを出力できます。
+
+Ubuntu / Debian では必要なパッケージを次のように導入します。TeX Live 2025 では quantikz が `texlive-pictures` から `texlive-science` に移ったため、`texlive-latex-extra` だけでは足りません。`kpsewhich` で `quantikz.sty` のパスが表示されることを確認してください。
+
+```bash
+sudo apt-get update
+sudo apt-get install -y texlive-latex-base texlive-latex-extra texlive-science poppler-utils
+kpsewhich quantikz.sty
+```
 
 メモ、スライド、ドキュメントに載せる図にはキャプションを付けられます。背景を不透過にする場合は `--no-transparent` を使います。背景色はテーマに合わせ、既定のダークテーマでは黒、`--light` では白になります。
 

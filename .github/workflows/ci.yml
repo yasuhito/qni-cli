@@ -27,7 +27,9 @@ jobs:
       - name: Install system packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y texlive-latex-base texlive-latex-extra poppler-utils
+          # TeX Live 2025 moved quantikz from texlive-pictures to texlive-science.
+          sudo apt-get install -y texlive-latex-base texlive-latex-extra texlive-science poppler-utils
+          kpsewhich quantikz.sty
 
       - name: Set up symbolic Python runtime
         run: scripts/setup_symbolic_python.sh
