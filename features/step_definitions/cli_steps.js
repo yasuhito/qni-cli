@@ -1483,7 +1483,7 @@ const bridgeLoaded=()=>{
  return !config.bridgeValidatesSettingSources||sources===undefined||(Array.isArray(sources)&&sources.every((source)=>['user','project','local'].includes(source)));
 };
 const modelRows=()=>{
- if(!config.bridgeExtension) return config.available?[['fake-provider',config.model]]:[];
+ if(!config.bridgeExtension) return [...(config.available?[['fake-provider',config.model]]:[]),...config.extraModels];
  const [provider,...id]=config.model.split('/');
  return [...config.extraModels,...(bridgeLoaded()?[[provider,id.join('/')]]:[])];
 };
@@ -1491,7 +1491,9 @@ if(args.includes('--version')){console.log('9.9.9');process.exit(0)}
 if(args.includes('--list-models')){
  const pattern=optionValue('--list-models');
  console.log('provider model context max-out thinking images');
- for(const [provider,id] of modelRows()) if(pattern===id||pattern===provider+'/'+id) console.log(provider+' '+id+' 1M 1K yes no');
+ // Like Pi, a provider prefix filters providers exactly while the model id is a fuzzy search.
+ const [patternProvider,patternModel]=pattern.includes('/')?[pattern.slice(0,pattern.indexOf('/')),pattern.slice(pattern.indexOf('/')+1)]:[undefined,pattern];
+ for(const [provider,id] of modelRows()) if((patternProvider===undefined||patternProvider===provider)&&id.includes(patternModel)) console.log(provider+' '+id+' 1M 1K yes no');
  process.exit(0);
 }
 if(args[0]==='auth'&&args[1]==='check'){
@@ -2387,6 +2389,25 @@ Then(
         provider,
         model,
       }
+    );
+  }
+);
+
+Then(
+  "偽 Pi の課題呼び出しは拡張機能を読み込まずにプロバイダー {string} のモデル {string} を指定する",
+  function (provider, model) {
+    const records = fakePiTaskCalls(this);
+    assert.equal(records.length, 1);
+    const args = records[0].args;
+    const valueAfter = (name) => args[args.indexOf(name) + 1];
+    assert.deepEqual(
+      {
+        noExtensions: args.includes("--no-extensions"),
+        extensions: args.filter((arg) => arg === "-e").length,
+        provider: valueAfter("--provider"),
+        model: valueAfter("--model"),
+      },
+      { noExtensions: true, extensions: 0, provider, model }
     );
   }
 );

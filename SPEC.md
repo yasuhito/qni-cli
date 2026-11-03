@@ -35,7 +35,7 @@ MVP は、以下のトップレベル構造を前提にする。
 
 - `qubits`: 回路全体の量子ビット数。正の整数。
 - `cols`: ステップごとの列配列。各要素は長さ `qubits` の配列。
-- `variables`: 角度変数の連想配列。省略可。キーは ASCII 識別子、値は具体的な角度。
+- `variables`: 角度変数の連想配列。省略可。キーは ASCII 識別子 (`pi` と `pi_N` を除く)、値は具体的な角度。
 
 ### セル値の扱い
 
@@ -70,9 +70,7 @@ MVP は、以下のトップレベル構造を前提にする。
 ```json
 {
   "qubits": 2,
-  "cols": [
-    ["•", "X"]
-  ]
+  "cols": [["•", "X"]]
 }
 ```
 
@@ -87,9 +85,7 @@ MVP は、以下のトップレベル構造を前提にする。
 ```json
 {
   "qubits": 2,
-  "cols": [
-    ["Swap", "Swap"]
-  ]
+  "cols": [["Swap", "Swap"]]
 }
 ```
 
@@ -163,9 +159,9 @@ qni variable clear
 - `--qubit <qubit>`: 配置先、取得対象、または削除対象の量子ビット番号。0 始まりの整数。`add SWAP` の場合は `0,1` のようにカンマ区切りで 2 つ指定する。
 - `--control <control>`: 制御量子ビット番号。カンマ区切りで複数指定できる。`X` と組み合わせた場合は CNOT / 多重制御 X を表す。
 - `<angled_gate>`: `P`, `Rx`, `Ry`, `Rz` のいずれか。
-- `--angle <angle>`: `P`, `Rx`, `Ry`, `Rz` に必須の角度。`π/3`, `pi/3`, `3*pi/4`, `0.5` のような具体角度か、`theta` のような ASCII 識別子を受け付ける。具体角度は保存時に `P(π/3)`, `Rx(π/2)` のような正規形に正規化し、変数は `Ry(theta)` のようにそのまま保存する。
+- `--angle <angle>`: `P`, `Rx`, `Ry`, `Rz` に必須の角度。`π/3`, `pi/3`, `3*pi/4`, `0.5` のような具体角度か、`theta` のような ASCII 識別子を受け付ける。`pi`, `-pi`, `pi_2` は `π`, `-π`, `π/2` と同じ具体角度で、変数ではない。具体角度は保存時に `P(π/3)`, `Rx(π/2)` のような正規形に正規化し、変数は `Ry(theta)` のようにそのまま保存する。
 - `<pauli_string>`: `I`, `X`, `Y`, `Z` だけで構成された観測量文字列。長さは回路の `qubits` と一致必須。例: `Z`, `ZZ`, `XIX`, `ZZI`。
-- `<name>`: ASCII 識別子。例: `theta`, `phi_1`。
+- `<name>`: ASCII 識別子。例: `theta`, `phi_1`。円周率の式と同じ `pi` と `pi_N` (`pi_2` など) は使えない。`pix` や `pi2` のように `pi` で始まるだけの名前は使える。
 - `qni variable set` の `<angle>`: 具体角度のみ。`π/4`, `pi/3`, `0.5` を受け付ける。変数参照の入れ子は許可しない。
 
 ### `gate` コマンド名
@@ -269,9 +265,7 @@ qni variable clear
 ```json
 {
   "qubits": 1,
-  "cols": [
-    [1]
-  ]
+  "cols": [[1]]
 }
 ```
 
@@ -308,9 +302,7 @@ qni variable clear
 ```json
 {
   "qubits": 2,
-  "cols": [
-    ["H", "H"]
-  ]
+  "cols": [["H", "H"]]
 }
 ```
 
@@ -327,9 +319,7 @@ qni variable clear
 ```json
 {
   "qubits": 1,
-  "cols": [
-    ["H"]
-  ]
+  "cols": [["H"]]
 }
 ```
 
@@ -348,9 +338,7 @@ qni variable clear
 ```json
 {
   "qubits": 1,
-  "cols": [
-    ["H"]
-  ]
+  "cols": [["H"]]
 }
 ```
 
@@ -555,9 +543,7 @@ qni add P --angle π/3 --step 0 --qubit 0
 ```json
 {
   "qubits": 1,
-  "cols": [
-    ["P(π/3)"]
-  ]
+  "cols": [["P(π/3)"]]
 }
 ```
 
@@ -572,9 +558,7 @@ qni add Rx --angle π/2 --step 0 --qubit 0
 ```json
 {
   "qubits": 1,
-  "cols": [
-    ["Rx(π/2)"]
-  ]
+  "cols": [["Rx(π/2)"]]
 }
 ```
 
@@ -589,9 +573,7 @@ qni add √X --step 0 --qubit 0
 ```json
 {
   "qubits": 1,
-  "cols": [
-    ["X^½"]
-  ]
+  "cols": [["X^½"]]
 }
 ```
 
@@ -606,9 +588,7 @@ qni add H --step 0 --qubit 0
 ```json
 {
   "qubits": 1,
-  "cols": [
-    ["H"]
-  ]
+  "cols": [["H"]]
 }
 ```
 

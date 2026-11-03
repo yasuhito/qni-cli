@@ -156,6 +156,8 @@ qni variable clear
 
 `Rx`、`Ry`、`Rz`、`P` などの角度付きゲートに記号を使う場合は、`qni variable` で値を管理します。`qni variable set` は既存の `circuit.json` に変数を保存するため、先に角度付きゲートを追加します。
 
+`pi`、`-pi`、`pi_2` は `π`、`-π`、`π/2` と同じ円周率の角度として扱い、変数にはなりません。そのため `pi` と `pi_N` は変数名に使えません。以前の版では `--angle pi` が未定義の変数 `pi` として保存され、`qni run` が `unresolved angle variable: pi` で失敗していました。変数名 `pi` や `pi_N` を保存した既存の `circuit.json` は読み込めなくなるので、`theta` などの別の名前に変えてください。
+
 ## ベンチマーク提出物を採点する
 
 次の例は、リポジトリルートから実行します。

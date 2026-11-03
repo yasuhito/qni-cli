@@ -47,3 +47,30 @@ qni-cli の利用者として
   ```text
   invalid variable name: pi
   ```
+
+## Scenario: qni run は角度 pi_2 を π/2 として P ゲートの状態ベクトルを表示
+
+- Given "qni add H --qubit 0 --step 0" を実行
+- And "qni add P --angle pi_2 --qubit 0 --step 1" を実行
+- When "qni run" を実行
+- Then 標準出力:
+
+  ```text
+  0.7071067811865475,0.7071067811865475i
+  ```
+
+## Scenario: qni variable set は pi_N 形式の名前の変数を作らない
+
+- Given "qni add H --qubit 0 --step 0" を実行
+- When "qni variable set pi_2 π/2" を実行
+- Then 標準エラー:
+
+  ```text
+  invalid variable name: pi_2
+  ```
+
+## Scenario: qni variable set は pi で始まるだけの名前の変数を作る
+
+- Given "qni add P --angle pix --qubit 0 --step 0" を実行
+- When "qni variable set pix π/2" を実行
+- Then コマンドは成功
