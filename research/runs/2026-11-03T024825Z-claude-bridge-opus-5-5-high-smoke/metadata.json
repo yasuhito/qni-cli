@@ -1,0 +1,64 @@
+{
+  "submissionProtocol": "blind-neutral-circuit-json-v1",
+  "taskSelection": [
+    "basic-gates/state-flip",
+    "basic-gates/toffoli-gate",
+    "superposition/bell-state"
+  ],
+  "taskSelectionMode": "selected",
+  "model": {
+    "id": "claude-opus-5-5",
+    "provider": "claude-bridge"
+  },
+  "generation": {
+    "thinking": "high"
+  },
+  "pi": {
+    "version": "1.4.0"
+  },
+  "harness": {
+    "name": "qni-cli",
+    "command": "qni research solve",
+    "runner": "pi-claude-bridge",
+    "claudeBridge": {
+      "extension": "/tmp/qni-cli-baseline-evidence/bridge-isolated/package/src/index.ts",
+      "sourceDirectorySha256": "e210ee6331949ca07b2b83db11810cc20addc2feb7a3a13ab388fc42c6dbfcc9",
+      "settingSources": [],
+      "systemPrompt": "claude_code-preset-with-appended-task-system-prompt"
+    },
+    "benchmarkRunner": "qni benchmark run-all",
+    "promptView": "neutral-benchmark-task",
+    "submissionExtraction": "strict-neutral-circuit-json-conversion",
+    "submissionProtocol": "blind-neutral-circuit-json-v1"
+  },
+  "tokens": {
+    "inputTokens": 6,
+    "outputTokens": 113,
+    "cacheReadTokens": 2556,
+    "cacheWriteTokens": 3719,
+    "totalTokens": 6394,
+    "source": "pi_usage"
+  },
+  "cost": {
+    "totalUsd": 0,
+    "perProblemUsd": 0,
+    "source": "pi_usage"
+  },
+  "calls": "calls.json",
+  "schemaVersion": 1,
+  "id": "2026-11-03T024825Z-claude-bridge-opus-5-5-high-smoke",
+  "createdAt": "2026-11-03T02:48:25.000Z",
+  "collaborator": "claude-bridge/claude-opus-5-5",
+  "benchmark": "benchmarks/quantum-katas",
+  "submissions": "submissions",
+  "prompt": "prompt.md",
+  "response": "response.md",
+  "result": "result.json",
+  "status": "passed",
+  "score": {
+    "passed": 3,
+    "total": 3,
+    "percent": 100,
+    "source": "result.json"
+  }
+}

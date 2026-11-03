@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 2,
+  "submissionProtocol": "blind-neutral-circuit-json-v1",
+  "taskSelection": [
+    "basic-gates/state-flip",
+    "basic-gates/toffoli-gate",
+    "superposition/bell-state"
+  ],
+  "taskSelectionMode": "selected",
+  "calls": [
+    {
+      "taskId": "basic-gates/state-flip",
+      "task": "benchmarks/quantum-katas/basic-gates/state-flip.md",
+      "prompt": "prompts/basic-gates/state-flip.md",
+      "response": "responses/basic-gates/state-flip.md",
+      "circuitJson": "circuit-json/basic-gates/state-flip.json",
+      "submission": "submissions/basic-gates/state-flip.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "claude-bridge",
+      "model": "claude-opus-5-5",
+      "piVersion": "1.4.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 2,
+        "outputTokens": 25,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 2098,
+        "totalTokens": 2125
+      },
+      "cost": {
+        "totalUsd": 0
+      }
+    },
+    {
+      "taskId": "basic-gates/toffoli-gate",
+      "task": "benchmarks/quantum-katas/basic-gates/toffoli-gate.md",
+      "prompt": "prompts/basic-gates/toffoli-gate.md",
+      "response": "responses/basic-gates/toffoli-gate.md",
+      "circuitJson": "circuit-json/basic-gates/toffoli-gate.json",
+      "submission": "submissions/basic-gates/toffoli-gate.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "claude-bridge",
+      "model": "claude-opus-5-5",
+      "piVersion": "1.4.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 2,
+        "outputTokens": 38,
+        "cacheReadTokens": 1278,
+        "cacheWriteTokens": 803,
+        "totalTokens": 2121
+      },
+      "cost": {
+        "totalUsd": 0
+      }
+    },
+    {
+      "taskId": "superposition/bell-state",
+      "task": "benchmarks/quantum-katas/superposition/bell-state.md",
+      "prompt": "prompts/superposition/bell-state.md",
+      "response": "responses/superposition/bell-state.md",
+      "circuitJson": "circuit-json/superposition/bell-state.json",
+      "submission": "submissions/superposition/bell-state.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "claude-bridge",
+      "model": "claude-opus-5-5",
+      "piVersion": "1.4.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 2,
+        "outputTokens": 50,
+        "cacheReadTokens": 1278,
+        "cacheWriteTokens": 818,
+        "totalTokens": 2148
+      },
+      "cost": {
+        "totalUsd": 0
+      }
+    }
+  ]
+}
