@@ -144,6 +144,18 @@ const INVALID_NEUTRAL_CIRCUIT_JSON_SUBMISSION =
   "qni __invalid-neutral-circuit-json-submission__";
 const PI_EXECUTION_ERROR_SUBMISSION = "qni __pi-execution-error__";
 const PI_TIMEOUT_MS = 5 * 60 * 1000;
+const PI_TASK_SETTINGS = {
+  retry: { enabled: false, provider: { maxRetries: 0 } },
+  transport: "sse",
+  cacheWarming: "off",
+  compaction: { enabled: false },
+} as const;
+const CLAUDE_BRIDGE_PROCESS_ENV = {
+  CLAUDE_CODE_MAX_RETRIES: "0",
+  CLAUDE_CODE_NO_MODEL_FALLBACK: "1",
+  CLAUDE_CODE_DISABLE_MODEL_ACCESS_FALLBACK: "1",
+  CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK: "1",
+} as const;
 const CLAUDE_BRIDGE_PROVIDER = "claude-bridge";
 const CLAUDE_BRIDGE_CONFIG = { provider: { settingSources: [] } } as const;
 const CLAUDE_BRIDGE_INVALID_CONFIG_PROBE = {
@@ -162,10 +174,20 @@ export function solveResearchTrial(
     context,
     taskIds: request.tasks,
   });
-  const runner = piRunner(request, context);
-  const preflight = preflightPi({ context, model: request.model, runner });
+  const candidateRunner = piRunner(request, context);
+  const preflight = preflightPi({
+    context,
+    model: request.model,
+    runner: candidateRunner,
+  });
+  const runner: PiRunner = {
+    ...candidateRunner,
+    provider: preflight.provider,
+    modelArgs: ["--provider", preflight.provider, "--model", request.model],
+  };
   const plan = planResearchSolveTrialDirectory(request, context);
   const artifacts = createResearchSolveArtifacts();
+  let retainArtifacts = false;
 
   try {
     prepareSelectedBenchmark(artifacts.benchmark, tasks);
@@ -177,15 +199,40 @@ export function solveResearchTrial(
       runner,
       tasks,
     });
-    writeResearchSolveSuitePrompt({ artifacts, request, tasks });
+    const executionError = calls.find(
+      (call) => call.responseValidation.status === "error"
+    );
+    const attemptedTasks = tasks.slice(0, calls.length);
+    writeResearchSolveSuitePrompt({
+      artifacts,
+      request,
+      tasks: attemptedTasks,
+    });
     writeResearchSolveSuiteResponse({ artifacts, calls, request });
     writeJsonFile(artifacts.calls, {
       schemaVersion: 2,
       submissionProtocol: SUBMISSION_PROTOCOL,
-      taskSelection: tasks.map((task) => task.taskId),
-      taskSelectionMode: request.tasks.length === 0 ? "full" : "selected",
+      taskSelection: attemptedTasks.map((task) => task.taskId),
+      taskSelectionMode: executionError
+        ? "selected"
+        : request.tasks.length === 0
+          ? "full"
+          : "selected",
+      ...(executionError
+        ? {
+            executionStatus: "aborted",
+            plannedTaskSelection: tasks.map((task) => task.taskId),
+          }
+        : {}),
       calls,
     });
+    if (executionError) {
+      retainArtifacts = true;
+      process.stderr.write(
+        `${executionError.error}\nPartial research solve artifacts: ${artifacts.root}\n`
+      );
+      return 3;
+    }
 
     const graded = gradeBenchmarkSuite(
       {
@@ -227,7 +274,8 @@ export function solveResearchTrial(
     process.stdout.write(`Recorded research trial: ${plan.relativePath}\n`);
     return result.exitCode;
   } finally {
-    rmSync(artifacts.root, { force: true, recursive: true });
+    if (!retainArtifacts)
+      rmSync(artifacts.root, { force: true, recursive: true });
   }
 }
 
@@ -314,7 +362,12 @@ function preflightPi(options: {
   }
 
   const modelList = runPiPreflight(
-    ["--list-models", runner.provider ? `${runner.provider}/${model}` : model],
+    [
+      "--offline",
+      ...runner.extensionArgs,
+      "--list-models",
+      runner.provider ? `${runner.provider}/${model}` : model,
+    ],
     context
   );
   const matching = modelListRows(modelList).find(
@@ -402,7 +455,7 @@ function runPiPreflight(
     return execFileSync("pi", [...args], {
       cwd,
       encoding: "utf8",
-      env: context.env,
+      env: { ...context.env, PI_OFFLINE: "1" },
       timeout: 30_000,
     });
   } catch (error) {
@@ -491,9 +544,13 @@ function runResearchSolveCalls(options: {
   readonly runner: PiRunner;
   readonly tasks: readonly ResearchSolveTaskPrompt[];
 }): ResearchSolveCallRecord[] {
-  return options.tasks.map((task) =>
-    runResearchSolveCall({ ...options, task })
-  );
+  const calls: ResearchSolveCallRecord[] = [];
+  for (const task of options.tasks) {
+    const call = runResearchSolveCall({ ...options, task });
+    calls.push(call);
+    if (call.responseValidation.status === "error") break;
+  }
+  return calls;
 }
 
 function runResearchSolveCall(options: {
@@ -525,6 +582,7 @@ function runResearchSolveCall(options: {
     completion = callPi({
       context: options.context,
       runner: options.runner,
+      model: options.request.model,
       systemPrompt: task.systemPrompt,
       thinking: options.request.thinking,
       userPrompt: task.userPrompt,
@@ -543,25 +601,6 @@ function runResearchSolveCall(options: {
   }
 
   writeTextFile(responsePath, completion.content);
-
-  const mismatch =
-    completion.model !== options.request.model
-      ? `Pi responded with a different model: requested ${options.request.model}, received ${completion.model}`
-      : options.runner.provider !== undefined &&
-          completion.provider !== options.runner.provider
-        ? `Pi responded with a different provider: requested ${options.runner.provider}, received ${completion.provider}`
-        : undefined;
-  if (mismatch) {
-    const message = mismatch;
-    writeTextFile(submissionPath, PI_EXECUTION_ERROR_SUBMISSION);
-    return callRecord({
-      options,
-      completion,
-      circuitJson: null,
-      error: message,
-      responseValidation: { status: "error", error: message },
-    });
-  }
 
   const submission = neutralCircuitJsonSubmission({
     availableGates: task.availableGates,
@@ -597,57 +636,71 @@ interface PiCompletion {
 function callPi(options: {
   readonly context: CommandHandlerContext;
   readonly runner: PiRunner;
+  readonly model: string;
   readonly systemPrompt: string;
   readonly thinking: ResearchThinking;
   readonly userPrompt: string;
 }): PiCompletion {
   const cwd = mkdtempSync(path.join(tmpdir(), "qni-pi-task-"));
   try {
+    writeJsonFile(path.join(cwd, ".pi", "settings.json"), PI_TASK_SETTINGS);
     if (options.runner.claudeBridge)
       writeJsonFile(
         path.join(cwd, ".pi", "claude-bridge.json"),
         CLAUDE_BRIDGE_CONFIG
       );
-    const output = execFileSync(
-      "pi",
-      [
-        "--mode",
-        "json",
-        ...options.runner.modelArgs,
-        "--thinking",
-        options.thinking,
-        "--no-session",
-        "--no-tools",
-        "--no-context-files",
-        "--no-skills",
-        ...options.runner.extensionArgs,
-        "--no-prompt-templates",
-        "--system-prompt",
-        options.systemPrompt,
-        "--",
-        options.userPrompt,
-      ],
-      {
-        cwd,
-        encoding: "utf8",
-        env: options.context.env,
-        maxBuffer: 20 * 1024 * 1024,
-        timeout: PI_TIMEOUT_MS,
-      }
-    );
-    return parsePiCompletion(output);
-  } catch (error) {
-    const timeoutMinutes = PI_TIMEOUT_MS / 60_000;
-    const message = isExecTimeout(error)
-      ? `Pi task timed out after ${timeoutMinutes} minutes`
-      : "Pi task failed";
-    throw new ResearchSolveError(message);
+    let output: string;
+    try {
+      output = execFileSync(
+        "pi",
+        [
+          "--mode",
+          "json",
+          "--approve",
+          "--offline",
+          ...options.runner.modelArgs,
+          "--thinking",
+          options.thinking,
+          "--no-session",
+          "--no-tools",
+          "--no-context-files",
+          "--no-skills",
+          ...options.runner.extensionArgs,
+          "--no-prompt-templates",
+          "--system-prompt",
+          options.systemPrompt,
+          "--",
+          options.userPrompt,
+        ],
+        {
+          cwd,
+          encoding: "utf8",
+          env: {
+            ...options.context.env,
+            ...(options.runner.claudeBridge ? CLAUDE_BRIDGE_PROCESS_ENV : {}),
+          },
+          maxBuffer: 20 * 1024 * 1024,
+          timeout: PI_TIMEOUT_MS,
+        }
+      );
+    } catch (error) {
+      const timeoutMinutes = PI_TIMEOUT_MS / 60_000;
+      const message = isExecTimeout(error)
+        ? `Pi task timed out after ${timeoutMinutes} minutes`
+        : "Pi task failed";
+      throw new ResearchSolveError(message);
+    }
+    return parsePiCompletion(output, options.runner.provider, options.model);
   } finally {
     rmSync(cwd, { force: true, recursive: true });
   }
 }
 
-function parsePiCompletion(jsonl: string): PiCompletion {
+function parsePiCompletion(
+  jsonl: string,
+  provider: string | undefined,
+  model: string
+): PiCompletion {
   const events = jsonl
     .split(/\r?\n/u)
     .filter(Boolean)
@@ -670,6 +723,18 @@ function parsePiCompletion(jsonl: string): PiCompletion {
   if (!isRecord(event) || !isRecord(event.message))
     throw new ResearchSolveError("Pi returned no final assistant message");
   const message = event.message;
+  if (message.model !== model)
+    throw new ResearchSolveError(
+      `Pi responded with a different model: requested ${model}, received ${String(message.model)}`
+    );
+  if (message.provider !== provider)
+    throw new ResearchSolveError(
+      `Pi responded with a different provider: requested ${provider}, received ${String(message.provider)}`
+    );
+  if (message.stopReason === "error" || message.stopReason === "aborted")
+    throw new ResearchSolveError(
+      `Pi execution ${message.stopReason}: ${typeof message.errorMessage === "string" ? message.errorMessage : "No error detail"}`
+    );
   const content = Array.isArray(message.content)
     ? message.content
         .filter(isRecord)
@@ -954,6 +1019,12 @@ function researchSolveMetadata(options: {
           }
         : {}),
       benchmarkRunner: "qni benchmark run-all",
+      piTaskSettings: PI_TASK_SETTINGS,
+      projectApproval: "self-created-empty-task-directory-only",
+      offline: true,
+      ...(claudeBridge
+        ? { claudeBridgeProcessEnv: CLAUDE_BRIDGE_PROCESS_ENV }
+        : {}),
       promptView: "neutral-benchmark-task",
       submissionExtraction: "strict-neutral-circuit-json-conversion",
       submissionProtocol: SUBMISSION_PROTOCOL,

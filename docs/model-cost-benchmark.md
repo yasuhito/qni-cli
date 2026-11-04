@@ -43,11 +43,17 @@ qni research solve \
 
 実行前に qni-cli は Pi の版、モデルの存在、認証、課題 ID を確認します。準備不足なら終了コード `3` で停止し、研究試行を作りません。
 
-各課題は最大5分待ちます。自動再試行はしません。実験開始後の Pi エラーや時間切れは、その課題を `error` として保存し、残りの課題を続行します。JSON 形式やスキーマが不正な最終回答は `disallowed` です。
+各課題は最大5分待ちます。課題ごとの自作ディレクトリだけを `--approve` で承認し、`.pi/settings.json` にエージェントとプロバイダー両方の再試行無効化、SSE、キャッシュ保温無効化、自動要約無効化を指定します。`--offline` で実行途中のモデルカタログ更新も止めます。利用者のグローバル設定は変更しません。
+
+Pi の実行エラー、時間切れ、応答プロバイダー・モデルの不一致、不正な JSONL では、最初の1件で後続の呼び出しを止め、終了コード `3` で終了します。`stopReason` が `error` や `aborted` の応答は、説明文があっても回路回答として採点しません。
+
+この場合は正式な研究試行を作らず、標準エラーの `Partial research solve artifacts: <path>` に示した一時ディレクトリに部分記録を残します。`calls.json` の `executionStatus` は `aborted`、`taskSelection` と `calls` は実際に試みた課題だけ、`plannedTaskSelection` は当初の課題集合です。未実行課題を合成しません。エラー呼び出しの利用量の `0` は不明な値の代替であり、実際の消費量が0とは限りません。部分記録は完成した63課題の比較には使えません。自動再開や再試行はしません。
+
+正常に返った回答の JSON 形式やスキーマが不正なら `disallowed` です。この場合や採点上の `failed` では残りの課題を続行し、従来どおり研究試行を保存します。過去の研究試行は変更しません。
 
 ## プロバイダーを固定する
 
-`--provider` を付けると、Pi のプロバイダーとモデル ID の両方が完全一致する行だけを使います。同じモデル ID を持つ別プロバイダーへは切り替えません。課題ごとの応答のプロバイダーとモデルが指定と違えば、その課題は `error` になります。
+`--provider` を付けると、Pi のプロバイダーとモデル ID の両方が完全一致する行だけを使います。省略した場合も、事前確認で選んだプロバイダーを課題ごとの呼び出しに明示します。同じモデル ID を持つ別プロバイダーへは切り替えません。課題ごとの応答のプロバイダーとモデルが指定と違えば、部分記録に `error` を残して停止します。
 
 ## Claude Bridge で実行する
 
@@ -66,7 +72,7 @@ qni research solve \
 
 `--claude-bridge-extension` には `--provider claude-bridge` が必要です。Pi は `--no-extensions` のまま、指定した拡張機能だけを `-e` で読み込みます。課題ごとの空の作業場所に `.pi/claude-bridge.json` として `{"provider":{"settingSources":[]}}` を置き、Claude Code の子プロセスが利用者の `~/.claude` の設定、フック、プラグイン、言語設定を読まないようにします。
 
-ブリッジは `provider.settingSources` に対応し、不正な値を拒否する版が必要です。実行前の確認で、正しい設定ではモデルが登録され、不正な設定では登録されないことを確かめます。対応していないブリッジでは、モデルを呼ぶ前に終了コード `3` で停止します。Pi の `auth check` は拡張機能のプロバイダーを判定できないため、この経路では使いません。認証は Claude Code が管理します。
+ブリッジは `provider.settingSources` に対応し、不正な値を拒否する版が必要です。実行前の確認で、正しい設定ではモデルが登録され、不正な設定では登録されないことを確かめます。対応していないブリッジでは、モデルを呼ぶ前に終了コード `3` で停止します。Pi の `auth check` は拡張機能のプロバイダーを判定できないため、この経路では使いません。認証は Claude Code が管理します。呼び出し環境では `CLAUDE_CODE_MAX_RETRIES=0`、`CLAUDE_CODE_NO_MODEL_FALLBACK=1`、`CLAUDE_CODE_DISABLE_MODEL_ACCESS_FALLBACK=1`、`CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK=1` を指定し、Claude Code 側の再試行と代替経路も無効にします。
 
 この経路では、Claude Code の `claude_code` プリセットのシステムプロンプトに、課題のシステムプロンプトが追記されます。`metadata.json` の `harness.runner` は `pi-claude-bridge` になり、`harness.claudeBridge` に拡張機能のパス、ソースディレクトリの SHA-256、`settingSources`、システムプロンプトの扱いを保存します。モデルが受け取る文脈が API へ直接送る経路と違うため、`harness.runner` が `pi` の研究試行と同一条件として比較しないでください。ブリッジはモデルの単価を0として登録するため、保存される料金は `0` になります。これは無料や請求額を意味せず、料金の見積もりでもありません。判断の背景は [ADR 0031](adr/0031-allow-only-an-explicit-isolated-claude-bridge-extension-in-solve.md)、最初の実行条件と再現手順は [Claude Bridge Opus 5.5 ベースラインの再現条件](reports/claude-bridge-opus-5-5-baseline-2026-11-03.md) を参照してください。
 

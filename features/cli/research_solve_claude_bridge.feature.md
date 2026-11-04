@@ -38,6 +38,11 @@ Claude Code のサブスクリプションで動く Claude Bridge のモデル�
   }
   ```
 
+## Scenario: Claude Code 子プロセスの再試行と代替モデルを無効にする
+
+- When "qni research solve --provider claude-bridge --model claude-opus-5-5 --claude-bridge-extension bridge/src/index.ts --thinking high --benchmark benchmarks/smoke --task smoke/state-flip --slug bridge" を実行
+- Then 偽 Pi の課題呼び出しは Claude Code の再試行と代替モデルを無効にする
+
 ## Scenario: 実行条件を研究試行に保存する
 
 - When "qni research solve --provider claude-bridge --model claude-opus-5-5 --claude-bridge-extension bridge/src/index.ts --thinking high --benchmark benchmarks/smoke --task smoke/state-flip --slug bridge" を実行
@@ -63,21 +68,11 @@ Claude Code のサブスクリプションで動く Claude Bridge のモデル�
   }
   ```
 
-## Scenario: 応答プロバイダーが指定と異なる課題は error として保存する
+## Scenario: 応答プロバイダーが指定と異なる課題は部分記録に error として保存する
 
 - Given 偽 Pi は応答プロバイダー "anthropic" を返す
 - When "qni research solve --provider claude-bridge --model claude-opus-5-5 --claude-bridge-extension bridge/src/index.ts --thinking high --benchmark benchmarks/smoke --task smoke/state-flip --slug bridge" を実行
-- Then 研究試行 JSON ファイル "result.json" は次の部分 JSON を含む:
-
-  ```json
-  {
-    "status": "error",
-    "summary": {
-      "total": 1,
-      "error": 1
-    }
-  }
-  ```
+- Then 部分記録の最初の呼び出しエラーは "Pi responded with a different provider: requested claude-bridge, received anthropic"
 
 ## Scenario: settingSources を検証しない Claude Bridge では研究試行を作らない
 

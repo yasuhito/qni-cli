@@ -1457,6 +1457,10 @@ function installFakePi(world, options = {}) {
     available: true,
     content: '{"operations":[{"gate":"H","targets":[0]}]}',
     failFirst: false,
+    failSecond: false,
+    stopReason: "stop",
+    errorMessage: null,
+    badJsonl: false,
     responseModel: null,
     responseProvider: null,
     bridgeExtension: null,
@@ -1502,11 +1506,15 @@ if(args[0]==='auth'&&args[1]==='check'){
 }
 let calls=0;
 if(fs.existsSync(${JSON.stringify(logPath)})) calls=fs.readFileSync(${JSON.stringify(logPath)},'utf8').trim().split(/\\n/u).filter(Boolean).length;
-fs.appendFileSync(${JSON.stringify(logPath)},JSON.stringify({args,cwd:process.cwd(),bridgeConfig:readBridgeConfig()})+'\\n');
-if(config.failFirst&&calls===0){console.error('fake Pi failure');process.exit(1)}
+const settingsPath=path.join(process.cwd(),'.pi','settings.json');
+const settings=fs.existsSync(settingsPath)?JSON.parse(fs.readFileSync(settingsPath,'utf8')):null;
+const bridgeEnv=Object.fromEntries(['CLAUDE_CODE_MAX_RETRIES','CLAUDE_CODE_NO_MODEL_FALLBACK','CLAUDE_CODE_DISABLE_MODEL_ACCESS_FALLBACK','CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK'].map(key=>[key,process.env[key]??null]));
+fs.appendFileSync(${JSON.stringify(logPath)},JSON.stringify({args,cwd:process.cwd(),bridgeConfig:readBridgeConfig(),settings,bridgeEnv,entries:fs.readdirSync(process.cwd())})+'\\n');
+if((config.failFirst&&calls===0)||(config.failSecond&&calls===1)){console.error('fake Pi failure');process.exit(1)}
+if(config.badJsonl){console.log('invalid jsonl');process.exit(0)}
 const responseProvider=config.responseProvider||(config.bridgeExtension?optionValue('--provider'):'fake-provider');
 const responseModel=config.responseModel||(config.bridgeExtension?optionValue('--model'):config.model);
-const message={role:'assistant',content:[{type:'thinking',thinking:'not saved'},{type:'text',text:config.content}],provider:responseProvider,model:responseModel,usage:{input:100,output:20,cacheRead:5,cacheWrite:0,totalTokens:125,cost:{input:0.00005,output:0.00007,cacheRead:0,cacheWrite:0,total:0.00012}},stopReason:'stop',timestamp:Date.now()};
+const message={role:'assistant',content:[{type:'thinking',thinking:'not saved'},{type:'text',text:config.content}],provider:responseProvider,model:responseModel,usage:{input:100,output:20,cacheRead:5,cacheWrite:0,totalTokens:125,cost:{input:0.00005,output:0.00007,cacheRead:0,cacheWrite:0,total:0.00012}},stopReason:config.stopReason,errorMessage:config.errorMessage,timestamp:Date.now()};
 console.log(JSON.stringify({type:'session',version:3,id:'fake',timestamp:new Date().toISOString(),cwd:process.cwd()}));
 console.log(JSON.stringify({type:'message_end',message}));
 `
@@ -1539,6 +1547,21 @@ Given("偽 Pi は最終回答 {string} を返す", function (content) {
 Given("偽 Pi は1回目の課題呼び出しだけ失敗する", function () {
   installFakePi(this, { failFirst: true });
 });
+
+Given("偽 Pi は2回目の課題呼び出しだけ失敗する", function () {
+  installFakePi(this, { failSecond: true });
+});
+
+Given("偽 Pi は不正な JSONL を返す", function () {
+  installFakePi(this, { badJsonl: true });
+});
+
+Given(
+  "偽 Pi は停止理由 {string} とエラー {string} を返す",
+  function (stopReason, errorMessage) {
+    installFakePi(this, { stopReason, errorMessage });
+  }
+);
 
 Given("偽 Pi は応答モデル {string} を返す", function (model) {
   installFakePi(this, { responseModel: model });
@@ -2368,6 +2391,81 @@ function fakePiTaskCalls(world) {
     .filter(Boolean)
     .map(JSON.parse);
 }
+
+function partialSolveDirectory(world) {
+  const match = /^Partial research solve artifacts: (.+)$/mu.exec(
+    world.lastCommand.stderr
+  );
+  assert.ok(match, world.lastCommand.stderr);
+  const directory = match[1];
+  assert.equal(path.dirname(directory), fs.realpathSync(os.tmpdir()));
+  assert.ok(path.basename(directory).startsWith("qni-research-solve-"));
+  return directory;
+}
+
+Then("偽 Pi の課題呼び出し回数は {int}", function (count) {
+  assert.equal(fakePiTaskCalls(this).length, count);
+});
+
+Then("偽 Pi の課題呼び出しは安全な実行設定だけを承認する", function () {
+  const [record] = fakePiTaskCalls(this);
+  assert.ok(record.args.includes("--approve"));
+  assert.ok(record.args.includes("--offline"));
+  assert.notEqual(record.cwd, this.scenarioDir);
+  assert.deepEqual(record.entries, [".pi"]);
+  assert.deepEqual(record.settings, {
+    retry: { enabled: false, provider: { maxRetries: 0 } },
+    transport: "sse",
+    cacheWarming: "off",
+    compaction: { enabled: false },
+  });
+});
+
+Then(
+  "偽 Pi の課題呼び出しは Claude Code の再試行と代替モデルを無効にする",
+  function () {
+    assert.deepEqual(fakePiTaskCalls(this)[0].bridgeEnv, {
+      CLAUDE_CODE_MAX_RETRIES: "0",
+      CLAUDE_CODE_NO_MODEL_FALLBACK: "1",
+      CLAUDE_CODE_DISABLE_MODEL_ACCESS_FALLBACK: "1",
+      CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK: "1",
+    });
+  }
+);
+
+Then("部分記録の最初の呼び出しエラーは {string}", function (expected) {
+  const calls = JSON.parse(
+    fs.readFileSync(
+      path.join(partialSolveDirectory(this), "calls.json"),
+      "utf8"
+    )
+  );
+  assert.equal(calls.calls[0].error, expected);
+});
+
+Then("部分記録は成功した1課題と実行エラーの1課題を保持する", function () {
+  const directory = partialSolveDirectory(this);
+  const calls = JSON.parse(
+    fs.readFileSync(path.join(directory, "calls.json"), "utf8")
+  );
+  assert.deepEqual(
+    calls.calls.map((call) => call.responseValidation.status),
+    ["valid", "error"]
+  );
+  assert.equal(
+    fs.existsSync(path.join(directory, calls.calls[0].prompt)),
+    true
+  );
+  assert.equal(
+    fs.existsSync(path.join(directory, calls.calls[0].response)),
+    true
+  );
+  assert.equal(
+    fs.existsSync(path.join(directory, calls.calls[0].submission)),
+    true
+  );
+  assert.equal(fs.existsSync(path.join(directory, "result.json")), false);
+});
 
 Then(
   "偽 Pi の課題呼び出しは Claude Bridge 拡張機能 {string} とプロバイダー {string} のモデル {string} を指定する",

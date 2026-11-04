@@ -47,21 +47,11 @@ qni-cli の利用者として
 - When "qni research solve --provider other-provider --model fake-qni --thinking max --benchmark benchmarks/smoke --task smoke/state-flip --slug provider" を実行
 - Then 終了コードは 3
 
-## Scenario: 応答プロバイダーが指定と異なる課題は error として保存する
+## Scenario: 応答プロバイダーが指定と異なる課題は部分記録に error として保存する
 
 - Given 偽 Pi は応答プロバイダー "other-provider" を返す
 - When "qni research solve --provider fake-provider --model fake-qni --thinking max --benchmark benchmarks/smoke --task smoke/state-flip --slug provider" を実行
-- Then 研究試行 JSON ファイル "result.json" は次の部分 JSON を含む:
-
-  ```json
-  {
-    "status": "error",
-    "summary": {
-      "total": 1,
-      "error": 1
-    }
-  }
-  ```
+- Then 部分記録の最初の呼び出しエラーは "Pi responded with a different provider: requested fake-provider, received other-provider"
 
 ## Scenario: Pi のあいまい検索で見つかった別のモデル ID では研究試行を作らない
 

@@ -98,35 +98,14 @@ qni-cli の利用者として
 - When "qni research solve --model fake-qni --thinking max --benchmark benchmarks/smoke --task smoke/state-flip --slug fake-pi" を実行
 - Then 終了コードは 2
 
-## Scenario: 指定モデルと応答モデルが異なる課題は error として保存する
+## Scenario: 指定モデルと応答モデルが異なる課題は部分記録に error として保存する
 
 - Given 偽 Pi は応答モデル "other-model" を返す
 - When "qni research solve --model fake-qni --thinking max --benchmark benchmarks/smoke --task smoke/state-flip --slug fake-pi" を実行
-- Then 研究試行 JSON ファイル "result.json" は次の部分 JSON を含む:
+- Then 部分記録の最初の呼び出しエラーは "Pi responded with a different model: requested fake-qni, received other-model"
 
-  ```json
-  {
-    "status": "error",
-    "summary": {
-      "total": 1,
-      "error": 1
-    }
-  }
-  ```
-
-## Scenario: 1課題の Pi 実行失敗後も残りを実行して error を保存する
+## Scenario: 1課題の Pi 実行失敗後は研究試行を作らず停止する
 
 - Given 偽 Pi は1回目の課題呼び出しだけ失敗する
 - When "qni research solve --model fake-qni --thinking max --benchmark benchmarks/smoke --slug fake-pi" を実行
-- Then 研究試行 JSON ファイル "result.json" は次の部分 JSON を含む:
-
-  ```json
-  {
-    "status": "error",
-    "summary": {
-      "total": 2,
-      "passed": 1,
-      "error": 1
-    }
-  }
-  ```
+- Then 研究試行ディレクトリは作られない
