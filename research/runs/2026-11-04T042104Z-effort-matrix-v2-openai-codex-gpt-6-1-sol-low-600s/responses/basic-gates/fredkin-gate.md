@@ -1,0 +1,1 @@
+{"operations":[{"gate":"CSWAP","targets":[1,2],"controls":[0]}]}

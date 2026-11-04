@@ -1,0 +1,65 @@
+{
+  "operations": [
+    {
+      "gate": "X",
+      "targets": [
+        0
+      ]
+    },
+    {
+      "gate": "CRy",
+      "controls": [
+        0
+      ],
+      "targets": [
+        2
+      ],
+      "angle": "pi/2"
+    },
+    {
+      "gate": "CNOT",
+      "controls": [
+        2
+      ],
+      "targets": [
+        0
+      ]
+    },
+    {
+      "gate": "CH",
+      "controls": [
+        0
+      ],
+      "targets": [
+        1
+      ]
+    },
+    {
+      "gate": "CNOT",
+      "controls": [
+        1
+      ],
+      "targets": [
+        0
+      ]
+    },
+    {
+      "gate": "CH",
+      "controls": [
+        2
+      ],
+      "targets": [
+        3
+      ]
+    },
+    {
+      "gate": "CNOT",
+      "controls": [
+        3
+      ],
+      "targets": [
+        2
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+{"operations":[{"gate":"X","targets":[1]},{"gate":"CRy","targets":[2],"controls":[1],"angle":"pi/2"},{"gate":"CNOT","targets":[1],"controls":[2]},{"gate":"CRy","targets":[0],"controls":[1],"angle":"pi/2"},{"gate":"CNOT","targets":[1],"controls":[0]},{"gate":"CRy","targets":[3],"controls":[2],"angle":"pi/2"},{"gate":"CNOT","targets":[2],"controls":[3]}]}

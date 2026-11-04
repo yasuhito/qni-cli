@@ -1,0 +1,16 @@
+{
+  "operations": [
+    {
+      "gate": "S",
+      "targets": [
+        0
+      ]
+    },
+    {
+      "gate": "Y",
+      "targets": [
+        2
+      ]
+    }
+  ]
+}

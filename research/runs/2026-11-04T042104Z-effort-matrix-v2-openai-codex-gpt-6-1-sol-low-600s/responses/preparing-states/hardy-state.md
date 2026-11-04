@@ -1,0 +1,1 @@
+{"operations":[{"gate":"Ry","targets":[0],"angle":"2*atan(1/sqrt(5))"},{"gate":"Ry","targets":[1],"angle":"2*atan(1/3)"},{"gate":"CRy","targets":[1],"controls":[0],"angle":"pi/2-2*atan(1/3)"}]}

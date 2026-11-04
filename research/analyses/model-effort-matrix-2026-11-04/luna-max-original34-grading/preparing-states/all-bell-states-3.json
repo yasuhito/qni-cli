@@ -1,0 +1,13 @@
+{
+  "taskId": "preparing-states/all-bell-states-3",
+  "title": "AllBellStates3",
+  "submission": "/tmp/qni-research-solve-Rvsq3k/submissions/preparing-states/all-bell-states-3.qni",
+  "status": "passed",
+  "exitCode": 0,
+  "checks": [
+    {
+      "type": "run",
+      "status": "passed"
+    }
+  ]
+}

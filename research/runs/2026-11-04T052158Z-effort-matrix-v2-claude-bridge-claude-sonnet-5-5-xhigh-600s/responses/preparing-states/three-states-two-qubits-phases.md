@@ -1,0 +1,1 @@
+{"operations":[{"gate":"Ry","targets":[0],"angle":"3918265520306073*pi/10000000000000000"},{"gate":"X","targets":[0]},{"gate":"CH","controls":[0],"targets":[1]},{"gate":"X","targets":[0]},{"gate":"P","targets":[1],"angle":"2*pi/3"},{"gate":"P","targets":[0],"angle":"4*pi/3"}]}

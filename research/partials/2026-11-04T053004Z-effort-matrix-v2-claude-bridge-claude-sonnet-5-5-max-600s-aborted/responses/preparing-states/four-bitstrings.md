@@ -1,0 +1,1 @@
+{"operations":[{"gate":"H","targets":[0]},{"gate":"H","targets":[1]},{"gate":"CNOT","controls":[0],"targets":[2]},{"gate":"X","targets":[2]}]}

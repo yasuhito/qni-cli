@@ -1,0 +1,55 @@
+{
+  "operations": [
+    {
+      "gate": "H",
+      "targets": [
+        0
+      ]
+    },
+    {
+      "gate": "H",
+      "targets": [
+        1
+      ]
+    },
+    {
+      "gate": "H",
+      "targets": [
+        2
+      ]
+    },
+    {
+      "gate": "X",
+      "targets": [
+        3
+      ]
+    },
+    {
+      "gate": "CNOT",
+      "targets": [
+        3
+      ],
+      "controls": [
+        0
+      ]
+    },
+    {
+      "gate": "CNOT",
+      "targets": [
+        3
+      ],
+      "controls": [
+        1
+      ]
+    },
+    {
+      "gate": "CNOT",
+      "targets": [
+        3
+      ],
+      "controls": [
+        2
+      ]
+    }
+  ]
+}

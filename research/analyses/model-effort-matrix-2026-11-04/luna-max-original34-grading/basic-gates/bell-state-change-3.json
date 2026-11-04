@@ -1,0 +1,25 @@
+{
+  "taskId": "basic-gates/bell-state-change-3",
+  "title": "BellStateChange3",
+  "submission": "/tmp/qni-research-solve-Rvsq3k/submissions/basic-gates/bell-state-change-3.qni",
+  "status": "passed",
+  "exitCode": 0,
+  "gradingCases": [
+    {
+      "caseId": "phi-plus-input",
+      "status": "passed",
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "type": "run",
+      "status": "passed"
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "operations": [
+    {
+      "gate": "Ry",
+      "targets": [
+        0
+      ],
+      "angle": "0.26772048*pi"
+    },
+    {
+      "gate": "X",
+      "targets": [
+        0
+      ]
+    },
+    {
+      "gate": "CRy",
+      "controls": [
+        0
+      ],
+      "targets": [
+        1
+      ],
+      "angle": "0.20483277*pi"
+    },
+    {
+      "gate": "X",
+      "targets": [
+        0
+      ]
+    },
+    {
+      "gate": "CRy",
+      "controls": [
+        0
+      ],
+      "targets": [
+        1
+      ],
+      "angle": "pi/2"
+    }
+  ]
+}

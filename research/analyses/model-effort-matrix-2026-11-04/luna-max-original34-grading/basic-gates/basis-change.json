@@ -1,0 +1,39 @@
+{
+  "taskId": "basic-gates/basis-change",
+  "title": "BasisChange",
+  "submission": "/tmp/qni-research-solve-Rvsq3k/submissions/basic-gates/basis-change.qni",
+  "status": "passed",
+  "exitCode": 0,
+  "gradingCases": [
+    {
+      "caseId": "zero-input",
+      "status": "passed",
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "caseId": "one-input",
+      "status": "passed",
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "type": "run",
+      "status": "passed"
+    },
+    {
+      "type": "run",
+      "status": "passed"
+    }
+  ]
+}

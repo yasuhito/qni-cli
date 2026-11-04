@@ -1,0 +1,81 @@
+{
+  "taskId": "multi-qubit-gates/controlled-rotation",
+  "title": "ControlledRotation",
+  "submission": "/tmp/qni-research-solve-Rvsq3k/submissions/multi-qubit-gates/controlled-rotation.qni",
+  "status": "passed",
+  "exitCode": 0,
+  "gradingCases": [
+    {
+      "caseId": "basis-00",
+      "status": "passed",
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "caseId": "basis-01",
+      "status": "passed",
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "caseId": "basis-10",
+      "status": "passed",
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "caseId": "basis-11",
+      "status": "passed",
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "caseId": "complex-superposition",
+      "status": "passed",
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "type": "run",
+      "status": "passed"
+    },
+    {
+      "type": "run",
+      "status": "passed"
+    },
+    {
+      "type": "run",
+      "status": "passed"
+    },
+    {
+      "type": "run",
+      "status": "passed"
+    },
+    {
+      "type": "run",
+      "status": "passed"
+    }
+  ]
+}

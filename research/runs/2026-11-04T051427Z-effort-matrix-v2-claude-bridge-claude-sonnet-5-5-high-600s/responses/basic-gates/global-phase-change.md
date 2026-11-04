@@ -1,0 +1,1 @@
+{"operations":[{"gate":"ControlledGlobalPhase","controls":[0],"targets":[1],"angle":"pi"}]}

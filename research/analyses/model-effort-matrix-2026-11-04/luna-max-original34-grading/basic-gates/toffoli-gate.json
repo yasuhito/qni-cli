@@ -1,0 +1,81 @@
+{
+  "taskId": "basic-gates/toffoli-gate",
+  "title": "ToffoliGate",
+  "submission": "/tmp/qni-research-solve-Rvsq3k/submissions/basic-gates/toffoli-gate.qni",
+  "status": "passed",
+  "exitCode": 0,
+  "gradingCases": [
+    {
+      "caseId": "zero-zero-zero-input",
+      "status": "passed",
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "caseId": "one-one-zero-input",
+      "status": "passed",
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "caseId": "one-one-one-input",
+      "status": "passed",
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "caseId": "one-zero-one-input",
+      "status": "passed",
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "caseId": "superposition-input",
+      "status": "passed",
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "type": "run",
+      "status": "passed"
+    },
+    {
+      "type": "run",
+      "status": "passed"
+    },
+    {
+      "type": "run",
+      "status": "passed"
+    },
+    {
+      "type": "run",
+      "status": "passed"
+    },
+    {
+      "type": "run",
+      "status": "passed"
+    }
+  ]
+}

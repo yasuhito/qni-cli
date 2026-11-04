@@ -1,0 +1,42 @@
+{
+  "condition": 8,
+  "trial": "research/runs/2026-11-04T042557Z-effort-matrix-v2-openai-codex-gpt-6-1-sol-medium-600s",
+  "provider": "openai-codex",
+  "model": "gpt-6.1-sol",
+  "thinking": "medium",
+  "effectiveEffort": "medium",
+  "taskCount": 63,
+  "partialContinuation": false,
+  "maximumPerTaskSeconds": 600,
+  "elapsedMs": 331490,
+  "result": {
+    "total": 63,
+    "passed": 57,
+    "failed": 2,
+    "disallowed": 4,
+    "error": 0
+  },
+  "executionErrors": 0,
+  "knownEmptyOperationsGraderErrors": [],
+  "passRatePercent": 90.47619047619048,
+  "tokens": {
+    "inputTokens": 24377,
+    "outputTokens": 4590,
+    "cacheReadTokens": 0,
+    "cacheWriteTokens": 0,
+    "totalTokens": 28967,
+    "costTotalUsd": 0.09465400000000003
+  },
+  "reasoning": {
+    "reportedTotal": 2080,
+    "reportedCallCount": 63,
+    "totalCalls": 63,
+    "missingIsZero": false,
+    "codexProviderOmissionIndistinguishable": true
+  },
+  "sha256": {
+    "calls": "48b496fbd099988b36bb70a543514fb609d0607e28ee2b9e1426931cdda7c48e",
+    "metadata": "995d263cb5f16c7063dc772986ce3f9dcc5864a21049a2c205c5caa72328df52",
+    "result": "469cdabe65ad04f4d1760eed82bcbaf8a84990be32221f33718094d03f22a8a8"
+  }
+}

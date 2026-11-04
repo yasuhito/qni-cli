@@ -1,0 +1,1 @@
+{"operations":[{"gate":"X","targets":[0]},{"gate":"CRy","controls":[0],"targets":[1],"angle":"2*pi/3"},{"gate":"CNOT","controls":[1],"targets":[0]},{"gate":"CRy","controls":[1],"targets":[2],"angle":"2*acos(1/sqrt(3))"},{"gate":"CNOT","controls":[2],"targets":[1]},{"gate":"CRy","controls":[2],"targets":[3],"angle":"pi/2"},{"gate":"CNOT","controls":[3],"targets":[2]}]}

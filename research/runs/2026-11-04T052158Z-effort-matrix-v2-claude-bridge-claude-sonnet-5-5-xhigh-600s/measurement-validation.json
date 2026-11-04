@@ -1,0 +1,42 @@
+{
+  "condition": 15,
+  "trial": "research/runs/2026-11-04T052158Z-effort-matrix-v2-claude-bridge-claude-sonnet-5-5-xhigh-600s",
+  "provider": "claude-bridge",
+  "model": "claude-sonnet-5-5",
+  "thinking": "xhigh",
+  "effectiveEffort": "xhigh",
+  "taskCount": 63,
+  "partialContinuation": false,
+  "maximumPerTaskSeconds": 600,
+  "elapsedMs": 479599,
+  "result": {
+    "total": 63,
+    "passed": 57,
+    "failed": 3,
+    "disallowed": 3,
+    "error": 0
+  },
+  "executionErrors": 0,
+  "knownEmptyOperationsGraderErrors": [],
+  "passRatePercent": 90.47619047619048,
+  "tokens": {
+    "inputTokens": 126,
+    "outputTokens": 30754,
+    "cacheReadTokens": 114946,
+    "cacheWriteTokens": 21539,
+    "totalTokens": 167365,
+    "costTotalUsd": 0
+  },
+  "reasoning": {
+    "reportedTotal": 26540,
+    "reportedCallCount": 63,
+    "totalCalls": 63,
+    "missingIsZero": false,
+    "codexProviderOmissionIndistinguishable": false
+  },
+  "sha256": {
+    "calls": "e9251edf59c830e79469c2a4cf1e7ce5c42c82c3fe5a14a183b70845555054be",
+    "metadata": "a4c485f10947de1efa2af82cdc0f7bdf6a6347f543ed540d989363aa19a696c8",
+    "result": "e2d1ce3c3d7edd0e883158fdd24d8a3516347b591e3d85d3185e5ce832a2f8bf"
+  }
+}

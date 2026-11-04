@@ -1,0 +1,13 @@
+{
+  "taskId": "preparing-states/even-odd",
+  "title": "EvenOdd",
+  "submission": "/tmp/qni-research-solve-Rvsq3k/submissions/preparing-states/even-odd.qni",
+  "status": "passed",
+  "exitCode": 0,
+  "checks": [
+    {
+      "type": "run",
+      "status": "passed"
+    }
+  ]
+}

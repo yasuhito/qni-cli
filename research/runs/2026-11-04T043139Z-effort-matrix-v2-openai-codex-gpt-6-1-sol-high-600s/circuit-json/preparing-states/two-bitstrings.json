@@ -1,0 +1,25 @@
+{
+  "operations": [
+    {
+      "gate": "X",
+      "targets": [
+        1
+      ]
+    },
+    {
+      "gate": "H",
+      "targets": [
+        0
+      ]
+    },
+    {
+      "gate": "CNOT",
+      "targets": [
+        2
+      ],
+      "controls": [
+        0
+      ]
+    }
+  ]
+}

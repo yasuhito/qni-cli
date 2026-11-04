@@ -1,0 +1,2 @@
+qni add Ry --angle 2π/3 --qubit 0 --step 0
+qni add P --angle π/3 --qubit 0 --step 1

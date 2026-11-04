@@ -1,0 +1,39 @@
+{
+  "taskId": "basic-gates/phase-change-pi-over-3",
+  "title": "PhaseChangePiOver3",
+  "submission": "/tmp/qni-research-solve-Rvsq3k/submissions/basic-gates/phase-change-pi-over-3.qni",
+  "status": "passed",
+  "exitCode": 0,
+  "gradingCases": [
+    {
+      "caseId": "zero-input",
+      "status": "passed",
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "caseId": "one-input",
+      "status": "passed",
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "type": "run",
+      "status": "passed"
+    },
+    {
+      "type": "run",
+      "status": "passed"
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+{"operations":[{"gate":"CCNOT","targets":[2],"controls":[0,1]}]}
