@@ -100,9 +100,12 @@ interface PiUsage {
   readonly totalTokens: number;
 }
 
+type PiUsageAccounting = { readonly [K in keyof PiUsage]: PiUsage[K] | null };
+
 interface ResearchSolveCallRecord {
   readonly circuitJson: string | null;
-  readonly cost: { readonly totalUsd: number };
+  readonly cost: { readonly totalUsd: number | null };
+  readonly diagnostic?: string;
   readonly error?: string;
   readonly finishReason: string | null;
   readonly model: string;
@@ -116,7 +119,7 @@ interface ResearchSolveCallRecord {
   readonly task: string;
   readonly taskId: string;
   readonly thinking: ResearchThinking;
-  readonly tokens: Omit<PiUsage, "costTotalUsd">;
+  readonly tokens: Omit<PiUsageAccounting, "costTotalUsd">;
 }
 
 interface ValidResearchSolveResponseValidation {
@@ -138,6 +141,16 @@ type ResearchSolveResponseValidation =
 interface ResearchSolveTotals extends PiUsage {}
 
 class ResearchSolveError extends Error {}
+
+class PiExecutionError extends ResearchSolveError {
+  constructor(
+    message: string,
+    readonly completion?: PiCompletion,
+    readonly diagnostic?: string
+  ) {
+    super(message);
+  }
+}
 
 const SUBMISSION_PROTOCOL = BLIND_NEUTRAL_CIRCUIT_JSON_SUBMISSION_PROTOCOL;
 const INVALID_NEUTRAL_CIRCUIT_JSON_SUBMISSION =
@@ -455,11 +468,19 @@ function runPiPreflight(
     return execFileSync("pi", [...args], {
       cwd,
       encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
       env: { ...context.env, PI_OFFLINE: "1" },
       timeout: 30_000,
     });
   } catch (error) {
-    throw new ResearchSolveError(`Pi preflight failed: ${errorMessage(error)}`);
+    const directory = mkdtempSync(
+      path.join(tmpdir(), "qni-pi-preflight-error-")
+    );
+    const diagnostic = path.join(directory, "diagnostic.json");
+    writePrivatePiDiagnostic(diagnostic, isRecord(error) ? error : {});
+    throw new ResearchSolveError(
+      `Pi preflight failed; private diagnostic: ${diagnostic}`
+    );
   }
 }
 
@@ -583,19 +604,36 @@ function runResearchSolveCall(options: {
       context: options.context,
       runner: options.runner,
       model: options.request.model,
+      diagnostic: path.join(
+        options.artifacts.root,
+        "diagnostics",
+        `${task.taskId}.json`
+      ),
       systemPrompt: task.systemPrompt,
       thinking: options.request.thinking,
       userPrompt: task.userPrompt,
     });
   } catch (error) {
     const message = errorMessage(error);
-    writeTextFile(responsePath, "");
+    const detail = error instanceof PiExecutionError ? error : undefined;
+    const failedCompletion =
+      detail?.completion ??
+      emptyCompletion(options.preflight, options.request.model);
+    writeTextFile(responsePath, failedCompletion.content);
     writeTextFile(submissionPath, PI_EXECUTION_ERROR_SUBMISSION);
     return callRecord({
       options,
       responseValidation: { status: "error", error: message },
       circuitJson: null,
-      completion: emptyCompletion(options.preflight, options.request.model),
+      completion: failedCompletion,
+      ...(detail?.diagnostic
+        ? {
+            diagnostic: path.relative(
+              options.artifacts.root,
+              detail.diagnostic
+            ),
+          }
+        : {}),
       error: message,
     });
   }
@@ -630,13 +668,14 @@ interface PiCompletion {
   readonly finishReason: string | null;
   readonly model: string;
   readonly provider: string;
-  readonly usage: PiUsage;
+  readonly usage: PiUsageAccounting;
 }
 
 function callPi(options: {
   readonly context: CommandHandlerContext;
   readonly runner: PiRunner;
   readonly model: string;
+  readonly diagnostic: string;
   readonly systemPrompt: string;
   readonly thinking: ResearchThinking;
   readonly userPrompt: string;
@@ -675,6 +714,7 @@ function callPi(options: {
         {
           cwd,
           encoding: "utf8",
+          stdio: ["ignore", "pipe", "pipe"],
           env: {
             ...options.context.env,
             ...(options.runner.claudeBridge ? CLAUDE_BRIDGE_PROCESS_ENV : {}),
@@ -684,11 +724,29 @@ function callPi(options: {
         }
       );
     } catch (error) {
-      const timeoutMinutes = PI_TIMEOUT_MS / 60_000;
+      const detail = isRecord(error) ? error : {};
+      writePrivatePiDiagnostic(options.diagnostic, detail);
+      let completion: PiCompletion | undefined;
+      if (typeof detail.stdout === "string") {
+        try {
+          completion = parsePiCompletion(
+            detail.stdout,
+            options.runner.provider,
+            options.model
+          );
+        } catch (parseError) {
+          if (parseError instanceof PiExecutionError)
+            completion = parseError.completion;
+        }
+      }
       const message = isExecTimeout(error)
-        ? `Pi task timed out after ${timeoutMinutes} minutes`
-        : "Pi task failed";
-      throw new ResearchSolveError(message);
+        ? `Pi task timed out after ${PI_TIMEOUT_MS / 60_000} minutes`
+        : typeof detail.signal === "string"
+          ? `Pi task terminated by ${detail.signal}`
+          : typeof detail.status === "number"
+            ? `Pi task failed with exit code ${detail.status}`
+            : "Pi task failed";
+      throw new PiExecutionError(message, completion, options.diagnostic);
     }
     return parsePiCompletion(output, options.runner.provider, options.model);
   } finally {
@@ -723,77 +781,50 @@ function parsePiCompletion(
   if (!isRecord(event) || !isRecord(event.message))
     throw new ResearchSolveError("Pi returned no final assistant message");
   const message = event.message;
+  const completion: PiCompletion = {
+    content: Array.isArray(message.content)
+      ? message.content
+          .filter(isRecord)
+          .filter(
+            (item) => item.type === "text" && typeof item.text === "string"
+          )
+          .map((item) => String(item.text))
+          .join("")
+      : "",
+    finishReason:
+      typeof message.stopReason === "string" ? message.stopReason : null,
+    provider:
+      typeof message.provider === "string" ? message.provider : "unknown",
+    model: typeof message.model === "string" ? message.model : "unknown",
+    usage: piUsageAccounting(message.usage),
+  };
+  const fail = (reason: string): never => {
+    throw new PiExecutionError(reason, completion);
+  };
   if (message.model !== model)
-    throw new ResearchSolveError(
+    fail(
       `Pi responded with a different model: requested ${model}, received ${String(message.model)}`
     );
   if (message.provider !== provider)
-    throw new ResearchSolveError(
+    fail(
       `Pi responded with a different provider: requested ${provider}, received ${String(message.provider)}`
     );
   if (message.stopReason === "error" || message.stopReason === "aborted")
-    throw new ResearchSolveError(
+    fail(
       `Pi execution ${message.stopReason}: ${typeof message.errorMessage === "string" ? message.errorMessage : "No error detail"}`
     );
-  const content = Array.isArray(message.content)
-    ? message.content
-        .filter(isRecord)
-        .filter((item) => item.type === "text" && typeof item.text === "string")
-        .map((item) => String(item.text))
-        .join("")
-    : "";
-  if (content.trim().length === 0)
-    throw new ResearchSolveError("Pi returned an empty final answer");
-  const usage = requiredRecord(
-    message.usage,
-    "Pi final message is missing usage"
-  );
-  const cost = requiredRecord(
-    usage.cost,
-    "Pi final message is missing usage.cost"
-  );
-  return {
-    content,
-    finishReason:
-      typeof message.stopReason === "string" ? message.stopReason : null,
-    provider: requiredString(
-      message.provider,
-      "Pi final message is missing provider"
-    ),
-    model: requiredString(message.model, "Pi final message is missing model"),
-    usage: {
-      inputTokens: requiredNonnegativeInteger(
-        usage.input,
-        "Pi usage.input must be a non-negative integer"
-      ),
-      outputTokens: requiredNonnegativeInteger(
-        usage.output,
-        "Pi usage.output must be a non-negative integer"
-      ),
-      cacheReadTokens: requiredNonnegativeInteger(
-        usage.cacheRead,
-        "Pi usage.cacheRead must be a non-negative integer"
-      ),
-      cacheWriteTokens: requiredNonnegativeInteger(
-        usage.cacheWrite,
-        "Pi usage.cacheWrite must be a non-negative integer"
-      ),
-      totalTokens: requiredNonnegativeInteger(
-        usage.totalTokens,
-        "Pi usage.totalTokens must be a non-negative integer"
-      ),
-      costTotalUsd: requiredNonnegativeNumber(
-        cost.total,
-        "Pi usage.cost.total must be a non-negative number"
-      ),
-    },
-  };
+  if (completion.content.trim().length === 0)
+    fail("Pi returned an empty final answer");
+  if (!hasCompletePiUsage(completion.usage))
+    fail("Pi final message has missing or invalid usage");
+  return completion;
 }
 
 function callRecord(input: {
   readonly circuitJson: string | null;
   readonly completion: PiCompletion;
   readonly error?: string;
+  readonly diagnostic?: string;
   readonly options: {
     readonly preflight: PiPreflight;
     readonly request: ResearchSolveRequest;
@@ -825,6 +856,7 @@ function callRecord(input: {
     },
     cost: { totalUsd: completion.usage.costTotalUsd },
     ...(input.error ? { error: input.error } : {}),
+    ...(input.diagnostic ? { diagnostic: input.diagnostic } : {}),
   };
 }
 
@@ -834,14 +866,7 @@ function emptyCompletion(preflight: PiPreflight, model: string): PiCompletion {
     finishReason: null,
     model,
     provider: preflight.provider,
-    usage: {
-      inputTokens: 0,
-      outputTokens: 0,
-      cacheReadTokens: 0,
-      cacheWriteTokens: 0,
-      totalTokens: 0,
-      costTotalUsd: 0,
-    },
+    usage: piUsageAccounting(undefined),
   };
 }
 
@@ -1076,14 +1101,19 @@ function researchSolveTotals(
   calls: readonly ResearchSolveCallRecord[]
 ): ResearchSolveTotals {
   return calls.reduce(
-    (totals, call) => ({
-      inputTokens: totals.inputTokens + call.tokens.inputTokens,
-      outputTokens: totals.outputTokens + call.tokens.outputTokens,
-      cacheReadTokens: totals.cacheReadTokens + call.tokens.cacheReadTokens,
-      cacheWriteTokens: totals.cacheWriteTokens + call.tokens.cacheWriteTokens,
-      totalTokens: totals.totalTokens + call.tokens.totalTokens,
-      costTotalUsd: totals.costTotalUsd + call.cost.totalUsd,
-    }),
+    (totals, call) => {
+      const usage = { ...call.tokens, costTotalUsd: call.cost.totalUsd };
+      if (!hasCompletePiUsage(usage))
+        throw new ResearchSolveError("Cannot total unknown Pi usage");
+      return {
+        inputTokens: totals.inputTokens + usage.inputTokens,
+        outputTokens: totals.outputTokens + usage.outputTokens,
+        cacheReadTokens: totals.cacheReadTokens + usage.cacheReadTokens,
+        cacheWriteTokens: totals.cacheWriteTokens + usage.cacheWriteTokens,
+        totalTokens: totals.totalTokens + usage.totalTokens,
+        costTotalUsd: totals.costTotalUsd + usage.costTotalUsd,
+      };
+    },
     {
       inputTokens: 0,
       outputTokens: 0,
@@ -1102,38 +1132,67 @@ function writeTextFile(filePath: string, content: string): void {
 function writeJsonFile(filePath: string, value: unknown): void {
   writeTextFile(filePath, `${JSON.stringify(value, null, 2)}\n`);
 }
-function requiredRecord(
-  value: unknown,
-  message: string
-): Readonly<Record<string, unknown>> {
-  if (!isRecord(value)) throw new ResearchSolveError(message);
-  return value;
+function piUsageAccounting(value: unknown): PiUsageAccounting {
+  const usage = isRecord(value) ? value : {};
+  const cost = isRecord(usage.cost) ? usage.cost : {};
+  const integer = (field: unknown): number | null =>
+    typeof field === "number" && Number.isInteger(field) && field >= 0
+      ? field
+      : null;
+  return {
+    inputTokens: integer(usage.input),
+    outputTokens: integer(usage.output),
+    cacheReadTokens: integer(usage.cacheRead),
+    cacheWriteTokens: integer(usage.cacheWrite),
+    totalTokens: integer(usage.totalTokens),
+    costTotalUsd:
+      typeof cost.total === "number" &&
+      Number.isFinite(cost.total) &&
+      cost.total >= 0
+        ? cost.total
+        : null,
+  };
 }
-function requiredString(value: unknown, message: string): string {
-  if (typeof value !== "string" || value.length === 0)
-    throw new ResearchSolveError(message);
-  return value;
+function hasCompletePiUsage(usage: PiUsageAccounting): usage is PiUsage {
+  return Object.values(usage).every((value) => value !== null);
 }
-function requiredNonnegativeInteger(value: unknown, message: string): number {
-  if (typeof value !== "number" || !Number.isInteger(value) || value < 0)
-    throw new ResearchSolveError(message);
-  return value;
-}
-function requiredNonnegativeNumber(value: unknown, message: string): number {
-  if (typeof value !== "number" || !Number.isFinite(value) || value < 0)
-    throw new ResearchSolveError(message);
-  return value;
+function writePrivatePiDiagnostic(
+  filePath: string,
+  error: Readonly<Record<string, unknown>>
+): void {
+  const tail = (value: unknown): string => {
+    const text =
+      typeof value === "string"
+        ? value
+        : Buffer.isBuffer(value)
+          ? value.toString("utf8")
+          : "";
+    // Leave room for a replacement character if truncation cuts a UTF-8 sequence.
+    return Buffer.from(text).subarray(-65532).toString("utf8");
+  };
+  mkdirSync(path.dirname(filePath), { recursive: true, mode: 0o700 });
+  writeFileSync(
+    filePath,
+    `${JSON.stringify(
+      {
+        exitCode: typeof error.status === "number" ? error.status : null,
+        signal: typeof error.signal === "string" ? error.signal : null,
+        code: typeof error.code === "string" ? error.code : null,
+        stdout: tail(error.stdout),
+        stderr: tail(error.stderr),
+      },
+      null,
+      2
+    )}\n`,
+    { mode: 0o600 }
+  );
 }
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 function isExecTimeout(error: unknown): boolean {
   if (!isRecord(error)) return false;
-  return (
-    error.signal === "SIGTERM" ||
-    error.code === "ETIMEDOUT" ||
-    error.errno === "ETIMEDOUT"
-  );
+  return error.code === "ETIMEDOUT" || error.errno === "ETIMEDOUT";
 }
 function errorMessage(error: unknown): string {
   return (error instanceof Error ? error.message : String(error)).trimEnd();

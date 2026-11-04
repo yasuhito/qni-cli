@@ -1461,6 +1461,10 @@ function installFakePi(world, options = {}) {
     stopReason: "stop",
     errorMessage: null,
     badJsonl: false,
+    omitOutput: false,
+    exitAfter: 0,
+    terminate: false,
+    failVersion: false,
     responseModel: null,
     responseProvider: null,
     bridgeExtension: null,
@@ -1491,7 +1495,7 @@ const modelRows=()=>{
  const [provider,...id]=config.model.split('/');
  return [...config.extraModels,...(bridgeLoaded()?[[provider,id.join('/')]]:[])];
 };
-if(args.includes('--version')){console.log('9.9.9');process.exit(0)}
+if(args.includes('--version')){if(config.failVersion){fs.writeSync(2,'QNI_PRIVATE_DIAGNOSTIC_CANARY');process.exit(7)}console.log('9.9.9');process.exit(0)}
 if(args.includes('--list-models')){
  const pattern=optionValue('--list-models');
  console.log('provider model context max-out thinking images');
@@ -1512,11 +1516,14 @@ const bridgeEnv=Object.fromEntries(['CLAUDE_CODE_MAX_RETRIES','CLAUDE_CODE_NO_MO
 fs.appendFileSync(${JSON.stringify(logPath)},JSON.stringify({args,cwd:process.cwd(),bridgeConfig:readBridgeConfig(),settings,bridgeEnv,entries:fs.readdirSync(process.cwd())})+'\\n');
 if((config.failFirst&&calls===0)||(config.failSecond&&calls===1)){console.error('fake Pi failure');process.exit(1)}
 if(config.badJsonl){console.log('invalid jsonl');process.exit(0)}
+if(config.terminate){process.kill(process.pid,'SIGTERM')}
 const responseProvider=config.responseProvider||(config.bridgeExtension?optionValue('--provider'):'fake-provider');
 const responseModel=config.responseModel||(config.bridgeExtension?optionValue('--model'):config.model);
 const message={role:'assistant',content:[{type:'thinking',thinking:'not saved'},{type:'text',text:config.content}],provider:responseProvider,model:responseModel,usage:{input:100,output:20,cacheRead:5,cacheWrite:0,totalTokens:125,cost:{input:0.00005,output:0.00007,cacheRead:0,cacheWrite:0,total:0.00012}},stopReason:config.stopReason,errorMessage:config.errorMessage,timestamp:Date.now()};
+if(config.omitOutput)delete message.usage.output;
 console.log(JSON.stringify({type:'session',version:3,id:'fake',timestamp:new Date().toISOString(),cwd:process.cwd()}));
 console.log(JSON.stringify({type:'message_end',message}));
+if(config.exitAfter){fs.writeSync(2,'QNI_PRIVATE_DIAGNOSTIC_CANARY'.repeat(4096));process.exit(config.exitAfter)}
 `
   );
   fs.chmodSync(scriptPath, 0o755);
@@ -1562,6 +1569,22 @@ Given(
     installFakePi(this, { stopReason, errorMessage });
   }
 );
+
+Given("偽 Pi は出力トークン数を報告しない", function () {
+  installFakePi(this, { omitOutput: true });
+});
+
+Given("偽 Pi は最終応答を返して終了コード {int} で終了する", function (code) {
+  installFakePi(this, { exitAfter: code });
+});
+
+Given("偽 Pi は版確認で終了コード 7 を返す", function () {
+  installFakePi(this, { failVersion: true });
+});
+
+Given("偽 Pi は自分に SIGTERM を送る", function () {
+  installFakePi(this, { terminate: true });
+});
 
 Given("偽 Pi は応答モデル {string} を返す", function (model) {
   installFakePi(this, { responseModel: model });
@@ -2432,6 +2455,60 @@ Then(
     });
   }
 );
+
+Then("部分記録の最初の呼び出しは次の部分 JSON を含む:", function (docString) {
+  const directory = partialSolveDirectory(this);
+  const calls = JSON.parse(
+    fs.readFileSync(path.join(directory, "calls.json"), "utf8")
+  );
+  assert.equal(calls.calls.length, 1);
+  assert.equal(fakePiTaskCalls(this).length, 1);
+  assert.equal(
+    fs.existsSync(path.join(this.scenarioDir, "research", "runs")),
+    false
+  );
+  assertJsonContains(calls.calls[0], JSON.parse(docStringContent(docString)));
+});
+
+Then(
+  "Pi の非ゼロ終了の診断は標準エラーに漏れず非公開で保持される",
+  function () {
+    const directory = partialSolveDirectory(this);
+    const calls = JSON.parse(
+      fs.readFileSync(path.join(directory, "calls.json"), "utf8")
+    );
+    const file = path.join(directory, calls.calls[0].diagnostic);
+    const diagnostic = JSON.parse(fs.readFileSync(file, "utf8"));
+    assert.equal(diagnostic.exitCode, 7);
+    assert.ok(diagnostic.stderr.includes("QNI_PRIVATE_DIAGNOSTIC_CANARY"));
+    assert.ok(Buffer.byteLength(diagnostic.stderr) <= 65536);
+    assert.equal(fs.statSync(file).mode & 0o777, 0o600);
+    assert.equal(
+      this.lastCommand.stderr.includes("QNI_PRIVATE_DIAGNOSTIC_CANARY"),
+      false
+    );
+  }
+);
+
+Then("Pi の準備確認の診断は標準エラーに漏れず非公開で保持される", function () {
+  const match = /^Pi preflight failed; private diagnostic: (.+)$/mu.exec(
+    this.lastCommand.stderr
+  );
+  assert.ok(match, this.lastCommand.stderr);
+  const directory = path.dirname(match[1]);
+  assert.equal(path.dirname(directory), fs.realpathSync(os.tmpdir()));
+  assert.ok(path.basename(directory).startsWith("qni-pi-preflight-error-"));
+  this.tempDirs ||= [];
+  this.tempDirs.push(directory);
+  const diagnostic = JSON.parse(fs.readFileSync(match[1], "utf8"));
+  assert.equal(diagnostic.exitCode, 7);
+  assert.ok(diagnostic.stderr.includes("QNI_PRIVATE_DIAGNOSTIC_CANARY"));
+  assert.equal(fs.statSync(match[1]).mode & 0o777, 0o600);
+  assert.equal(
+    this.lastCommand.stderr.includes("QNI_PRIVATE_DIAGNOSTIC_CANARY"),
+    false
+  );
+});
 
 Then("部分記録の最初の呼び出しエラーは {string}", function (expected) {
   const calls = JSON.parse(

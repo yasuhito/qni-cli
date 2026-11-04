@@ -37,6 +37,14 @@ Quantum Katas の思考量比較を始める前に、`qni research solve` が認
 
 外部証拠は `/tmp/qni-model-effort-matrix-evidence/` に置いた。再現用の `safety-repair-probe.mjs`、`pi-raw-launcher.mjs`、`safety-repair-validation/`、`safety-repair-final-validation/` が対応する。自動回帰テストは `features/cli/research_solve_safety.feature.md` と既存 solve の機能仕様で実行する。全体チェックの出力は同ディレクトリの `repair-npm-check.log` に保存する。自動テストから有料リクエストは送らない。
 
+## 利用量の欠測とエラー応答
+
+安全修正のレビューで、エラー応答やモデル・プロバイダー不一致を検出すると、応答に含まれる正の利用量まで0へ置き換えていた回帰を見つけた。応答を保持する型付きエラーを使い、実際の応答元、停止理由、本文、報告された利用量と料金を部分記録へ残すよう修正した。不一致の応答を解答として受け付けることはない。応答が得られない場合や個別の項目が欠ける場合は `null` とし、既知の他の項目は失わない。
+
+非ゼロ終了前に最終応答が出ていた場合も利用量を保持する。課題呼び出しと準備確認の生の標準エラーは公開せず、末尾各64 KiB以内の非公開診断を残す。外部 SIGTERM を時間切れと誤認する判定も除き、`ETIMEDOUT` と区別した。
+
+回帰テストは `features/cli/research_solve_accounting.feature.md` に追加した。OS 側の隔離内でも15条件を検証し、正の利用量の保持、応答なしの欠測、非ゼロ終了、元の5分上限での時間切れを確認した。証拠は外部の `accounting-repair-validation/` に保存した。元の検証記録は変更していない。
+
 ## 測定候補と未実施の作業
 
 OS 側の隔離内で要求を捕捉した結果、重複のない実効設定は次の21条件だった。63課題ずつなら計1,323課題になる。これは候補数であり、測定済みの件数ではない。
