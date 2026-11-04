@@ -1,0 +1,1 @@
+{"operations":[{"gate":"CNOT","controls":[0],"targets":[1]},{"gate":"ControlledGlobalPhase","controls":[0],"targets":[1],"angle":"pi"},{"gate":"CNOT","controls":[0],"targets":[1]}]}

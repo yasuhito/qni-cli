@@ -1,0 +1,1777 @@
+{
+  "schemaVersion": 2,
+  "submissionProtocol": "blind-neutral-circuit-json-v1",
+  "taskSelection": [
+    "basic-gates/basis-change",
+    "basic-gates/bell-state-change-1",
+    "basic-gates/bell-state-change-2",
+    "basic-gates/bell-state-change-3",
+    "basic-gates/fredkin-gate",
+    "basic-gates/global-phase-change",
+    "basic-gates/phase-change-pi-over-3",
+    "basic-gates/phase-flip",
+    "basic-gates/sign-flip",
+    "basic-gates/state-flip",
+    "basic-gates/toffoli-gate",
+    "basic-gates/two-qubit-gate-1",
+    "basic-gates/two-qubit-gate-2",
+    "basic-gates/two-qubit-gate-3",
+    "basic-gates/two-qubit-gate-4",
+    "multi-qubit-gates/arbitrary-controls",
+    "multi-qubit-gates/compound-gate",
+    "multi-qubit-gates/controlled-rotation",
+    "multi-qubit-gates/preparing-bell-state",
+    "preparing-states/all-basis-vectors",
+    "preparing-states/all-bell-states-0",
+    "preparing-states/all-bell-states-1",
+    "preparing-states/all-bell-states-2",
+    "preparing-states/all-bell-states-3",
+    "preparing-states/controlled-rotation",
+    "preparing-states/even-odd",
+    "preparing-states/four-bitstrings",
+    "preparing-states/hardy-state",
+    "preparing-states/parity-bitstrings",
+    "preparing-states/three-states-two-qubits-phases",
+    "preparing-states/three-states-two-qubits",
+    "preparing-states/two-bitstrings",
+    "preparing-states/unequal-superposition",
+    "preparing-states/wstate-arbitrary",
+    "preparing-states/wstate-power-of-two",
+    "preparing-states/zero-and-bitstring",
+    "qft/all-basis-vectors",
+    "qft/all-even-vectors",
+    "qft/alternating-amplitudes",
+    "qft/binary-fraction-classical",
+    "qft/binary-fraction-inplace",
+    "qft/binary-fraction-quantum",
+    "qft/periodic-state",
+    "qft/qft",
+    "qft/rotation-gate",
+    "qft/signal-frequency",
+    "qft/single-qubit",
+    "qft/square-wave",
+    "single-qubit-gates/amplitude-change",
+    "single-qubit-gates/global-phase-i",
+    "single-qubit-gates/prepare-arbitrary-state",
+    "single-qubit-gates/prepare-minus",
+    "single-qubit-gates/prepare-rotated-state",
+    "single-qubit-gates/sign-flip-on-zero",
+    "single-qubit-gates/three-quarters-pi-phase",
+    "single-qubit-gates/y-gate",
+    "superposition/all-basis-vector-with-phase-flip-two-qubits",
+    "superposition/all-basis-vectors-two-qubits",
+    "superposition/all-basis-vectors-with-phases-two-qubits",
+    "superposition/bell-state",
+    "superposition/ghz-state",
+    "superposition/minus-state",
+    "superposition/plus-state"
+  ],
+  "taskSelectionMode": "full",
+  "calls": [
+    {
+      "taskId": "basic-gates/basis-change",
+      "task": "benchmarks/quantum-katas/basic-gates/basis-change.md",
+      "prompt": "prompts/basic-gates/basis-change.md",
+      "response": "responses/basic-gates/basis-change.md",
+      "circuitJson": "circuit-json/basic-gates/basis-change.json",
+      "submission": "submissions/basic-gates/basis-change.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 342,
+        "outputTokens": 37,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 379
+      },
+      "cost": {
+        "totalUsd": 0.00005270000000000001
+      }
+    },
+    {
+      "taskId": "basic-gates/bell-state-change-1",
+      "task": "benchmarks/quantum-katas/basic-gates/bell-state-change-1.md",
+      "prompt": "prompts/basic-gates/bell-state-change-1.md",
+      "response": "responses/basic-gates/bell-state-change-1.md",
+      "circuitJson": "circuit-json/basic-gates/bell-state-change-1.json",
+      "submission": "submissions/basic-gates/bell-state-change-1.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 336,
+        "outputTokens": 50,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 386
+      },
+      "cost": {
+        "totalUsd": 0.0000586
+      }
+    },
+    {
+      "taskId": "basic-gates/bell-state-change-2",
+      "task": "benchmarks/quantum-katas/basic-gates/bell-state-change-2.md",
+      "prompt": "prompts/basic-gates/bell-state-change-2.md",
+      "response": "responses/basic-gates/bell-state-change-2.md",
+      "circuitJson": "circuit-json/basic-gates/bell-state-change-2.json",
+      "submission": "submissions/basic-gates/bell-state-change-2.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 334,
+        "outputTokens": 58,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 392
+      },
+      "cost": {
+        "totalUsd": 0.0000624
+      }
+    },
+    {
+      "taskId": "basic-gates/bell-state-change-3",
+      "task": "benchmarks/quantum-katas/basic-gates/bell-state-change-3.md",
+      "prompt": "prompts/basic-gates/bell-state-change-3.md",
+      "response": "responses/basic-gates/bell-state-change-3.md",
+      "circuitJson": "circuit-json/basic-gates/bell-state-change-3.json",
+      "submission": "submissions/basic-gates/bell-state-change-3.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 338,
+        "outputTokens": 151,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 489
+      },
+      "cost": {
+        "totalUsd": 0.0001093
+      }
+    },
+    {
+      "taskId": "basic-gates/fredkin-gate",
+      "task": "benchmarks/quantum-katas/basic-gates/fredkin-gate.md",
+      "prompt": "prompts/basic-gates/fredkin-gate.md",
+      "response": "responses/basic-gates/fredkin-gate.md",
+      "circuitJson": "circuit-json/basic-gates/fredkin-gate.json",
+      "submission": "submissions/basic-gates/fredkin-gate.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 404,
+        "outputTokens": 388,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 792
+      },
+      "cost": {
+        "totalUsd": 0.0002344
+      }
+    },
+    {
+      "taskId": "basic-gates/global-phase-change",
+      "task": "benchmarks/quantum-katas/basic-gates/global-phase-change.md",
+      "prompt": "prompts/basic-gates/global-phase-change.md",
+      "response": "responses/basic-gates/global-phase-change.md",
+      "circuitJson": "circuit-json/basic-gates/global-phase-change.json",
+      "submission": "submissions/basic-gates/global-phase-change.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 469,
+        "outputTokens": 512,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 981
+      },
+      "cost": {
+        "totalUsd": 0.0003029
+      }
+    },
+    {
+      "taskId": "basic-gates/phase-change-pi-over-3",
+      "task": "benchmarks/quantum-katas/basic-gates/phase-change-pi-over-3.md",
+      "prompt": "prompts/basic-gates/phase-change-pi-over-3.md",
+      "response": "responses/basic-gates/phase-change-pi-over-3.md",
+      "circuitJson": "circuit-json/basic-gates/phase-change-pi-over-3.json",
+      "submission": "submissions/basic-gates/phase-change-pi-over-3.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 338,
+        "outputTokens": 51,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 389
+      },
+      "cost": {
+        "totalUsd": 0.000059300000000000005
+      }
+    },
+    {
+      "taskId": "basic-gates/phase-flip",
+      "task": "benchmarks/quantum-katas/basic-gates/phase-flip.md",
+      "prompt": "prompts/basic-gates/phase-flip.md",
+      "response": "responses/basic-gates/phase-flip.md",
+      "circuitJson": "circuit-json/basic-gates/phase-flip.json",
+      "submission": "submissions/basic-gates/phase-flip.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 335,
+        "outputTokens": 53,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 388
+      },
+      "cost": {
+        "totalUsd": 0.00006
+      }
+    },
+    {
+      "taskId": "basic-gates/sign-flip",
+      "task": "benchmarks/quantum-katas/basic-gates/sign-flip.md",
+      "prompt": "prompts/basic-gates/sign-flip.md",
+      "response": "responses/basic-gates/sign-flip.md",
+      "circuitJson": "circuit-json/basic-gates/sign-flip.json",
+      "submission": "submissions/basic-gates/sign-flip.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 329,
+        "outputTokens": 64,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 393
+      },
+      "cost": {
+        "totalUsd": 0.0000649
+      }
+    },
+    {
+      "taskId": "basic-gates/state-flip",
+      "task": "benchmarks/quantum-katas/basic-gates/state-flip.md",
+      "prompt": "prompts/basic-gates/state-flip.md",
+      "response": "responses/basic-gates/state-flip.md",
+      "circuitJson": "circuit-json/basic-gates/state-flip.json",
+      "submission": "submissions/basic-gates/state-flip.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 341,
+        "outputTokens": 35,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 376
+      },
+      "cost": {
+        "totalUsd": 0.0000516
+      }
+    },
+    {
+      "taskId": "basic-gates/toffoli-gate",
+      "task": "benchmarks/quantum-katas/basic-gates/toffoli-gate.md",
+      "prompt": "prompts/basic-gates/toffoli-gate.md",
+      "response": "responses/basic-gates/toffoli-gate.md",
+      "circuitJson": "circuit-json/basic-gates/toffoli-gate.json",
+      "submission": "submissions/basic-gates/toffoli-gate.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 321,
+        "outputTokens": 69,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 390
+      },
+      "cost": {
+        "totalUsd": 0.00006659999999999999
+      }
+    },
+    {
+      "taskId": "basic-gates/two-qubit-gate-1",
+      "task": "benchmarks/quantum-katas/basic-gates/two-qubit-gate-1.md",
+      "prompt": "prompts/basic-gates/two-qubit-gate-1.md",
+      "response": "responses/basic-gates/two-qubit-gate-1.md",
+      "circuitJson": "circuit-json/basic-gates/two-qubit-gate-1.json",
+      "submission": "submissions/basic-gates/two-qubit-gate-1.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 328,
+        "outputTokens": 143,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 471
+      },
+      "cost": {
+        "totalUsd": 0.00010430000000000001
+      }
+    },
+    {
+      "taskId": "basic-gates/two-qubit-gate-2",
+      "task": "benchmarks/quantum-katas/basic-gates/two-qubit-gate-2.md",
+      "prompt": "prompts/basic-gates/two-qubit-gate-2.md",
+      "response": "responses/basic-gates/two-qubit-gate-2.md",
+      "circuitJson": "circuit-json/basic-gates/two-qubit-gate-2.json",
+      "submission": "submissions/basic-gates/two-qubit-gate-2.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 342,
+        "outputTokens": 239,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 581
+      },
+      "cost": {
+        "totalUsd": 0.0001537
+      }
+    },
+    {
+      "taskId": "basic-gates/two-qubit-gate-3",
+      "task": "benchmarks/quantum-katas/basic-gates/two-qubit-gate-3.md",
+      "prompt": "prompts/basic-gates/two-qubit-gate-3.md",
+      "response": "responses/basic-gates/two-qubit-gate-3.md",
+      "circuitJson": "circuit-json/basic-gates/two-qubit-gate-3.json",
+      "submission": "submissions/basic-gates/two-qubit-gate-3.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 327,
+        "outputTokens": 54,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 381
+      },
+      "cost": {
+        "totalUsd": 0.0000597
+      }
+    },
+    {
+      "taskId": "basic-gates/two-qubit-gate-4",
+      "task": "benchmarks/quantum-katas/basic-gates/two-qubit-gate-4.md",
+      "prompt": "prompts/basic-gates/two-qubit-gate-4.md",
+      "response": "responses/basic-gates/two-qubit-gate-4.md",
+      "circuitJson": "circuit-json/basic-gates/two-qubit-gate-4.json",
+      "submission": "submissions/basic-gates/two-qubit-gate-4.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 329,
+        "outputTokens": 287,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 616
+      },
+      "cost": {
+        "totalUsd": 0.0001764
+      }
+    },
+    {
+      "taskId": "multi-qubit-gates/arbitrary-controls",
+      "task": "benchmarks/quantum-katas/multi-qubit-gates/arbitrary-controls.md",
+      "prompt": "prompts/multi-qubit-gates/arbitrary-controls.md",
+      "response": "responses/multi-qubit-gates/arbitrary-controls.md",
+      "circuitJson": "circuit-json/multi-qubit-gates/arbitrary-controls.json",
+      "submission": "submissions/multi-qubit-gates/arbitrary-controls.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 496,
+        "outputTokens": 139,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 635
+      },
+      "cost": {
+        "totalUsd": 0.0001191
+      }
+    },
+    {
+      "taskId": "multi-qubit-gates/compound-gate",
+      "task": "benchmarks/quantum-katas/multi-qubit-gates/compound-gate.md",
+      "prompt": "prompts/multi-qubit-gates/compound-gate.md",
+      "response": "responses/multi-qubit-gates/compound-gate.md",
+      "circuitJson": "circuit-json/multi-qubit-gates/compound-gate.json",
+      "submission": "submissions/multi-qubit-gates/compound-gate.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 451,
+        "outputTokens": 63,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 514
+      },
+      "cost": {
+        "totalUsd": 0.0000766
+      }
+    },
+    {
+      "taskId": "multi-qubit-gates/controlled-rotation",
+      "task": "benchmarks/quantum-katas/multi-qubit-gates/controlled-rotation.md",
+      "prompt": "prompts/multi-qubit-gates/controlled-rotation.md",
+      "response": "responses/multi-qubit-gates/controlled-rotation.md",
+      "circuitJson": "circuit-json/multi-qubit-gates/controlled-rotation.json",
+      "submission": "submissions/multi-qubit-gates/controlled-rotation.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 491,
+        "outputTokens": 81,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 572
+      },
+      "cost": {
+        "totalUsd": 0.00008960000000000001
+      }
+    },
+    {
+      "taskId": "multi-qubit-gates/preparing-bell-state",
+      "task": "benchmarks/quantum-katas/multi-qubit-gates/preparing-bell-state.md",
+      "prompt": "prompts/multi-qubit-gates/preparing-bell-state.md",
+      "response": "responses/multi-qubit-gates/preparing-bell-state.md",
+      "circuitJson": "circuit-json/multi-qubit-gates/preparing-bell-state.json",
+      "submission": "submissions/multi-qubit-gates/preparing-bell-state.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 422,
+        "outputTokens": 76,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 498
+      },
+      "cost": {
+        "totalUsd": 0.0000802
+      }
+    },
+    {
+      "taskId": "preparing-states/all-basis-vectors",
+      "task": "benchmarks/quantum-katas/preparing-states/all-basis-vectors.md",
+      "prompt": "prompts/preparing-states/all-basis-vectors.md",
+      "response": "responses/preparing-states/all-basis-vectors.md",
+      "circuitJson": "circuit-json/preparing-states/all-basis-vectors.json",
+      "submission": "submissions/preparing-states/all-basis-vectors.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 402,
+        "outputTokens": 53,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 455
+      },
+      "cost": {
+        "totalUsd": 0.0000667
+      }
+    },
+    {
+      "taskId": "preparing-states/all-bell-states-0",
+      "task": "benchmarks/quantum-katas/preparing-states/all-bell-states-0.md",
+      "prompt": "prompts/preparing-states/all-bell-states-0.md",
+      "response": "responses/preparing-states/all-bell-states-0.md",
+      "circuitJson": "circuit-json/preparing-states/all-bell-states-0.json",
+      "submission": "submissions/preparing-states/all-bell-states-0.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 383,
+        "outputTokens": 70,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 453
+      },
+      "cost": {
+        "totalUsd": 0.00007329999999999999
+      }
+    },
+    {
+      "taskId": "preparing-states/all-bell-states-1",
+      "task": "benchmarks/quantum-katas/preparing-states/all-bell-states-1.md",
+      "prompt": "prompts/preparing-states/all-bell-states-1.md",
+      "response": "responses/preparing-states/all-bell-states-1.md",
+      "circuitJson": "circuit-json/preparing-states/all-bell-states-1.json",
+      "submission": "submissions/preparing-states/all-bell-states-1.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 384,
+        "outputTokens": 132,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 516
+      },
+      "cost": {
+        "totalUsd": 0.00010439999999999999
+      }
+    },
+    {
+      "taskId": "preparing-states/all-bell-states-2",
+      "task": "benchmarks/quantum-katas/preparing-states/all-bell-states-2.md",
+      "prompt": "prompts/preparing-states/all-bell-states-2.md",
+      "response": "responses/preparing-states/all-bell-states-2.md",
+      "circuitJson": "circuit-json/preparing-states/all-bell-states-2.json",
+      "submission": "submissions/preparing-states/all-bell-states-2.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 382,
+        "outputTokens": 147,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 529
+      },
+      "cost": {
+        "totalUsd": 0.0001117
+      }
+    },
+    {
+      "taskId": "preparing-states/all-bell-states-3",
+      "task": "benchmarks/quantum-katas/preparing-states/all-bell-states-3.md",
+      "prompt": "prompts/preparing-states/all-bell-states-3.md",
+      "response": "responses/preparing-states/all-bell-states-3.md",
+      "circuitJson": "circuit-json/preparing-states/all-bell-states-3.json",
+      "submission": "submissions/preparing-states/all-bell-states-3.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 383,
+        "outputTokens": 224,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 607
+      },
+      "cost": {
+        "totalUsd": 0.0001503
+      }
+    },
+    {
+      "taskId": "preparing-states/controlled-rotation",
+      "task": "benchmarks/quantum-katas/preparing-states/controlled-rotation.md",
+      "prompt": "prompts/preparing-states/controlled-rotation.md",
+      "response": "responses/preparing-states/controlled-rotation.md",
+      "circuitJson": "circuit-json/preparing-states/controlled-rotation.json",
+      "submission": "submissions/preparing-states/controlled-rotation.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 406,
+        "outputTokens": 223,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 629
+      },
+      "cost": {
+        "totalUsd": 0.0001521
+      }
+    },
+    {
+      "taskId": "preparing-states/even-odd",
+      "task": "benchmarks/quantum-katas/preparing-states/even-odd.md",
+      "prompt": "prompts/preparing-states/even-odd.md",
+      "response": "responses/preparing-states/even-odd.md",
+      "circuitJson": "circuit-json/preparing-states/even-odd.json",
+      "submission": "submissions/preparing-states/even-odd.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 394,
+        "outputTokens": 193,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 587
+      },
+      "cost": {
+        "totalUsd": 0.0001359
+      }
+    },
+    {
+      "taskId": "preparing-states/four-bitstrings",
+      "task": "benchmarks/quantum-katas/preparing-states/four-bitstrings.md",
+      "prompt": "prompts/preparing-states/four-bitstrings.md",
+      "response": "responses/preparing-states/four-bitstrings.md",
+      "circuitJson": "circuit-json/preparing-states/four-bitstrings.json",
+      "submission": "submissions/preparing-states/four-bitstrings.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 413,
+        "outputTokens": 245,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 658
+      },
+      "cost": {
+        "totalUsd": 0.0001638
+      }
+    },
+    {
+      "taskId": "preparing-states/hardy-state",
+      "task": "benchmarks/quantum-katas/preparing-states/hardy-state.md",
+      "prompt": "prompts/preparing-states/hardy-state.md",
+      "response": "responses/preparing-states/hardy-state.md",
+      "circuitJson": null,
+      "submission": "submissions/preparing-states/hardy-state.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "invalid",
+        "error": "invalid angle at operations[0]: invalid angle: asin(1/sqrt(6))"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 410,
+        "outputTokens": 1274,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 1684
+      },
+      "cost": {
+        "totalUsd": 0.000678
+      }
+    },
+    {
+      "taskId": "preparing-states/parity-bitstrings",
+      "task": "benchmarks/quantum-katas/preparing-states/parity-bitstrings.md",
+      "prompt": "prompts/preparing-states/parity-bitstrings.md",
+      "response": "responses/preparing-states/parity-bitstrings.md",
+      "circuitJson": "circuit-json/preparing-states/parity-bitstrings.json",
+      "submission": "submissions/preparing-states/parity-bitstrings.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 423,
+        "outputTokens": 234,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 657
+      },
+      "cost": {
+        "totalUsd": 0.0001593
+      }
+    },
+    {
+      "taskId": "preparing-states/three-states-two-qubits-phases",
+      "task": "benchmarks/quantum-katas/preparing-states/three-states-two-qubits-phases.md",
+      "prompt": "prompts/preparing-states/three-states-two-qubits-phases.md",
+      "response": "responses/preparing-states/three-states-two-qubits-phases.md",
+      "circuitJson": null,
+      "submission": "submissions/preparing-states/three-states-two-qubits-phases.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "invalid",
+        "error": "invalid angle at operations[0]: invalid angle: acos(sqrt(2/3))"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 430,
+        "outputTokens": 1074,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 1504
+      },
+      "cost": {
+        "totalUsd": 0.0005799999999999999
+      }
+    },
+    {
+      "taskId": "preparing-states/three-states-two-qubits",
+      "task": "benchmarks/quantum-katas/preparing-states/three-states-two-qubits.md",
+      "prompt": "prompts/preparing-states/three-states-two-qubits.md",
+      "response": "responses/preparing-states/three-states-two-qubits.md",
+      "circuitJson": null,
+      "submission": "submissions/preparing-states/three-states-two-qubits.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "invalid",
+        "error": "invalid angle at operations[0]: invalid angle: acos(sqrt(2/3))"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 403,
+        "outputTokens": 872,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 1275
+      },
+      "cost": {
+        "totalUsd": 0.0004763
+      }
+    },
+    {
+      "taskId": "preparing-states/two-bitstrings",
+      "task": "benchmarks/quantum-katas/preparing-states/two-bitstrings.md",
+      "prompt": "prompts/preparing-states/two-bitstrings.md",
+      "response": "responses/preparing-states/two-bitstrings.md",
+      "circuitJson": "circuit-json/preparing-states/two-bitstrings.json",
+      "submission": "submissions/preparing-states/two-bitstrings.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 399,
+        "outputTokens": 181,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 580
+      },
+      "cost": {
+        "totalUsd": 0.0001304
+      }
+    },
+    {
+      "taskId": "preparing-states/unequal-superposition",
+      "task": "benchmarks/quantum-katas/preparing-states/unequal-superposition.md",
+      "prompt": "prompts/preparing-states/unequal-superposition.md",
+      "response": "responses/preparing-states/unequal-superposition.md",
+      "circuitJson": "circuit-json/preparing-states/unequal-superposition.json",
+      "submission": "submissions/preparing-states/unequal-superposition.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 400,
+        "outputTokens": 98,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 498
+      },
+      "cost": {
+        "totalUsd": 0.000089
+      }
+    },
+    {
+      "taskId": "preparing-states/wstate-arbitrary",
+      "task": "benchmarks/quantum-katas/preparing-states/wstate-arbitrary.md",
+      "prompt": "prompts/preparing-states/wstate-arbitrary.md",
+      "response": "responses/preparing-states/wstate-arbitrary.md",
+      "circuitJson": null,
+      "submission": "submissions/preparing-states/wstate-arbitrary.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "invalid",
+        "error": "invalid angle at operations[1]: invalid angle: asin(1/sqrt(3))"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 459,
+        "outputTokens": 1800,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 2259
+      },
+      "cost": {
+        "totalUsd": 0.0009459
+      }
+    },
+    {
+      "taskId": "preparing-states/wstate-power-of-two",
+      "task": "benchmarks/quantum-katas/preparing-states/wstate-power-of-two.md",
+      "prompt": "prompts/preparing-states/wstate-power-of-two.md",
+      "response": "responses/preparing-states/wstate-power-of-two.md",
+      "circuitJson": "circuit-json/preparing-states/wstate-power-of-two.json",
+      "submission": "submissions/preparing-states/wstate-power-of-two.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 468,
+        "outputTokens": 1540,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 2008
+      },
+      "cost": {
+        "totalUsd": 0.0008168
+      }
+    },
+    {
+      "taskId": "preparing-states/zero-and-bitstring",
+      "task": "benchmarks/quantum-katas/preparing-states/zero-and-bitstring.md",
+      "prompt": "prompts/preparing-states/zero-and-bitstring.md",
+      "response": "responses/preparing-states/zero-and-bitstring.md",
+      "circuitJson": "circuit-json/preparing-states/zero-and-bitstring.json",
+      "submission": "submissions/preparing-states/zero-and-bitstring.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 387,
+        "outputTokens": 114,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 501
+      },
+      "cost": {
+        "totalUsd": 0.0000957
+      }
+    },
+    {
+      "taskId": "qft/all-basis-vectors",
+      "task": "benchmarks/quantum-katas/qft/all-basis-vectors.md",
+      "prompt": "prompts/qft/all-basis-vectors.md",
+      "response": "responses/qft/all-basis-vectors.md",
+      "circuitJson": "circuit-json/qft/all-basis-vectors.json",
+      "submission": "submissions/qft/all-basis-vectors.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 365,
+        "outputTokens": 64,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 429
+      },
+      "cost": {
+        "totalUsd": 0.00006850000000000001
+      }
+    },
+    {
+      "taskId": "qft/all-even-vectors",
+      "task": "benchmarks/quantum-katas/qft/all-even-vectors.md",
+      "prompt": "prompts/qft/all-even-vectors.md",
+      "response": "responses/qft/all-even-vectors.md",
+      "circuitJson": "circuit-json/qft/all-even-vectors.json",
+      "submission": "submissions/qft/all-even-vectors.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 372,
+        "outputTokens": 100,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 472
+      },
+      "cost": {
+        "totalUsd": 0.0000872
+      }
+    },
+    {
+      "taskId": "qft/alternating-amplitudes",
+      "task": "benchmarks/quantum-katas/qft/alternating-amplitudes.md",
+      "prompt": "prompts/qft/alternating-amplitudes.md",
+      "response": "responses/qft/alternating-amplitudes.md",
+      "circuitJson": "circuit-json/qft/alternating-amplitudes.json",
+      "submission": "submissions/qft/alternating-amplitudes.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 370,
+        "outputTokens": 145,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 515
+      },
+      "cost": {
+        "totalUsd": 0.0001095
+      }
+    },
+    {
+      "taskId": "qft/binary-fraction-classical",
+      "task": "benchmarks/quantum-katas/qft/binary-fraction-classical.md",
+      "prompt": "prompts/qft/binary-fraction-classical.md",
+      "response": "responses/qft/binary-fraction-classical.md",
+      "circuitJson": "circuit-json/qft/binary-fraction-classical.json",
+      "submission": "submissions/qft/binary-fraction-classical.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 438,
+        "outputTokens": 119,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 557
+      },
+      "cost": {
+        "totalUsd": 0.00010329999999999999
+      }
+    },
+    {
+      "taskId": "qft/binary-fraction-inplace",
+      "task": "benchmarks/quantum-katas/qft/binary-fraction-inplace.md",
+      "prompt": "prompts/qft/binary-fraction-inplace.md",
+      "response": "responses/qft/binary-fraction-inplace.md",
+      "circuitJson": "circuit-json/qft/binary-fraction-inplace.json",
+      "submission": "submissions/qft/binary-fraction-inplace.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 429,
+        "outputTokens": 530,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 959
+      },
+      "cost": {
+        "totalUsd": 0.0003079
+      }
+    },
+    {
+      "taskId": "qft/binary-fraction-quantum",
+      "task": "benchmarks/quantum-katas/qft/binary-fraction-quantum.md",
+      "prompt": "prompts/qft/binary-fraction-quantum.md",
+      "response": "responses/qft/binary-fraction-quantum.md",
+      "circuitJson": "circuit-json/qft/binary-fraction-quantum.json",
+      "submission": "submissions/qft/binary-fraction-quantum.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 451,
+        "outputTokens": 307,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 758
+      },
+      "cost": {
+        "totalUsd": 0.0001986
+      }
+    },
+    {
+      "taskId": "qft/periodic-state",
+      "task": "benchmarks/quantum-katas/qft/periodic-state.md",
+      "prompt": "prompts/qft/periodic-state.md",
+      "response": "responses/qft/periodic-state.md",
+      "circuitJson": "circuit-json/qft/periodic-state.json",
+      "submission": "submissions/qft/periodic-state.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 379,
+        "outputTokens": 353,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 732
+      },
+      "cost": {
+        "totalUsd": 0.00021439999999999998
+      }
+    },
+    {
+      "taskId": "qft/qft",
+      "task": "benchmarks/quantum-katas/qft/qft.md",
+      "prompt": "prompts/qft/qft.md",
+      "response": "responses/qft/qft.md",
+      "circuitJson": "circuit-json/qft/qft.json",
+      "submission": "submissions/qft/qft.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 422,
+        "outputTokens": 1599,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 2021
+      },
+      "cost": {
+        "totalUsd": 0.0008417
+      }
+    },
+    {
+      "taskId": "qft/rotation-gate",
+      "task": "benchmarks/quantum-katas/qft/rotation-gate.md",
+      "prompt": "prompts/qft/rotation-gate.md",
+      "response": "responses/qft/rotation-gate.md",
+      "circuitJson": "circuit-json/qft/rotation-gate.json",
+      "submission": "submissions/qft/rotation-gate.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 402,
+        "outputTokens": 54,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 456
+      },
+      "cost": {
+        "totalUsd": 0.00006720000000000001
+      }
+    },
+    {
+      "taskId": "qft/signal-frequency",
+      "task": "benchmarks/quantum-katas/qft/signal-frequency.md",
+      "prompt": "prompts/qft/signal-frequency.md",
+      "response": "responses/qft/signal-frequency.md",
+      "circuitJson": "circuit-json/qft/signal-frequency.json",
+      "submission": "submissions/qft/signal-frequency.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 477,
+        "outputTokens": 885,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 1362
+      },
+      "cost": {
+        "totalUsd": 0.0004902
+      }
+    },
+    {
+      "taskId": "qft/single-qubit",
+      "task": "benchmarks/quantum-katas/qft/single-qubit.md",
+      "prompt": "prompts/qft/single-qubit.md",
+      "response": "responses/qft/single-qubit.md",
+      "circuitJson": "circuit-json/qft/single-qubit.json",
+      "submission": "submissions/qft/single-qubit.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 400,
+        "outputTokens": 43,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 443
+      },
+      "cost": {
+        "totalUsd": 0.0000615
+      }
+    },
+    {
+      "taskId": "qft/square-wave",
+      "task": "benchmarks/quantum-katas/qft/square-wave.md",
+      "prompt": "prompts/qft/square-wave.md",
+      "response": "responses/qft/square-wave.md",
+      "circuitJson": "circuit-json/qft/square-wave.json",
+      "submission": "submissions/qft/square-wave.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 384,
+        "outputTokens": 123,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 507
+      },
+      "cost": {
+        "totalUsd": 0.00009989999999999999
+      }
+    },
+    {
+      "taskId": "single-qubit-gates/amplitude-change",
+      "task": "benchmarks/quantum-katas/single-qubit-gates/amplitude-change.md",
+      "prompt": "prompts/single-qubit-gates/amplitude-change.md",
+      "response": "responses/single-qubit-gates/amplitude-change.md",
+      "circuitJson": "circuit-json/single-qubit-gates/amplitude-change.json",
+      "submission": "submissions/single-qubit-gates/amplitude-change.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 441,
+        "outputTokens": 115,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 556
+      },
+      "cost": {
+        "totalUsd": 0.0001016
+      }
+    },
+    {
+      "taskId": "single-qubit-gates/global-phase-i",
+      "task": "benchmarks/quantum-katas/single-qubit-gates/global-phase-i.md",
+      "prompt": "prompts/single-qubit-gates/global-phase-i.md",
+      "response": "responses/single-qubit-gates/global-phase-i.md",
+      "circuitJson": "circuit-json/single-qubit-gates/global-phase-i.json",
+      "submission": "submissions/single-qubit-gates/global-phase-i.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 349,
+        "outputTokens": 272,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 621
+      },
+      "cost": {
+        "totalUsd": 0.0001709
+      }
+    },
+    {
+      "taskId": "single-qubit-gates/prepare-arbitrary-state",
+      "task": "benchmarks/quantum-katas/single-qubit-gates/prepare-arbitrary-state.md",
+      "prompt": "prompts/single-qubit-gates/prepare-arbitrary-state.md",
+      "response": "responses/single-qubit-gates/prepare-arbitrary-state.md",
+      "circuitJson": "circuit-json/single-qubit-gates/prepare-arbitrary-state.json",
+      "submission": "submissions/single-qubit-gates/prepare-arbitrary-state.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 443,
+        "outputTokens": 150,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 593
+      },
+      "cost": {
+        "totalUsd": 0.0001193
+      }
+    },
+    {
+      "taskId": "single-qubit-gates/prepare-minus",
+      "task": "benchmarks/quantum-katas/single-qubit-gates/prepare-minus.md",
+      "prompt": "prompts/single-qubit-gates/prepare-minus.md",
+      "response": "responses/single-qubit-gates/prepare-minus.md",
+      "circuitJson": "circuit-json/single-qubit-gates/prepare-minus.json",
+      "submission": "submissions/single-qubit-gates/prepare-minus.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 429,
+        "outputTokens": 257,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 686
+      },
+      "cost": {
+        "totalUsd": 0.00017140000000000002
+      }
+    },
+    {
+      "taskId": "single-qubit-gates/prepare-rotated-state",
+      "task": "benchmarks/quantum-katas/single-qubit-gates/prepare-rotated-state.md",
+      "prompt": "prompts/single-qubit-gates/prepare-rotated-state.md",
+      "response": "responses/single-qubit-gates/prepare-rotated-state.md",
+      "circuitJson": "circuit-json/single-qubit-gates/prepare-rotated-state.json",
+      "submission": "submissions/single-qubit-gates/prepare-rotated-state.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 426,
+        "outputTokens": 210,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 636
+      },
+      "cost": {
+        "totalUsd": 0.0001476
+      }
+    },
+    {
+      "taskId": "single-qubit-gates/sign-flip-on-zero",
+      "task": "benchmarks/quantum-katas/single-qubit-gates/sign-flip-on-zero.md",
+      "prompt": "prompts/single-qubit-gates/sign-flip-on-zero.md",
+      "response": "responses/single-qubit-gates/sign-flip-on-zero.md",
+      "circuitJson": "circuit-json/single-qubit-gates/sign-flip-on-zero.json",
+      "submission": "submissions/single-qubit-gates/sign-flip-on-zero.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 358,
+        "outputTokens": 38,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 396
+      },
+      "cost": {
+        "totalUsd": 0.000054800000000000004
+      }
+    },
+    {
+      "taskId": "single-qubit-gates/three-quarters-pi-phase",
+      "task": "benchmarks/quantum-katas/single-qubit-gates/three-quarters-pi-phase.md",
+      "prompt": "prompts/single-qubit-gates/three-quarters-pi-phase.md",
+      "response": "responses/single-qubit-gates/three-quarters-pi-phase.md",
+      "circuitJson": "circuit-json/single-qubit-gates/three-quarters-pi-phase.json",
+      "submission": "submissions/single-qubit-gates/three-quarters-pi-phase.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 376,
+        "outputTokens": 110,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 486
+      },
+      "cost": {
+        "totalUsd": 0.0000926
+      }
+    },
+    {
+      "taskId": "single-qubit-gates/y-gate",
+      "task": "benchmarks/quantum-katas/single-qubit-gates/y-gate.md",
+      "prompt": "prompts/single-qubit-gates/y-gate.md",
+      "response": "responses/single-qubit-gates/y-gate.md",
+      "circuitJson": "circuit-json/single-qubit-gates/y-gate.json",
+      "submission": "submissions/single-qubit-gates/y-gate.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 360,
+        "outputTokens": 72,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 432
+      },
+      "cost": {
+        "totalUsd": 0.000072
+      }
+    },
+    {
+      "taskId": "superposition/all-basis-vector-with-phase-flip-two-qubits",
+      "task": "benchmarks/quantum-katas/superposition/all-basis-vector-with-phase-flip-two-qubits.md",
+      "prompt": "prompts/superposition/all-basis-vector-with-phase-flip-two-qubits.md",
+      "response": "responses/superposition/all-basis-vector-with-phase-flip-two-qubits.md",
+      "circuitJson": "circuit-json/superposition/all-basis-vector-with-phase-flip-two-qubits.json",
+      "submission": "submissions/superposition/all-basis-vector-with-phase-flip-two-qubits.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 334,
+        "outputTokens": 86,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 420
+      },
+      "cost": {
+        "totalUsd": 0.0000764
+      }
+    },
+    {
+      "taskId": "superposition/all-basis-vectors-two-qubits",
+      "task": "benchmarks/quantum-katas/superposition/all-basis-vectors-two-qubits.md",
+      "prompt": "prompts/superposition/all-basis-vectors-two-qubits.md",
+      "response": "responses/superposition/all-basis-vectors-two-qubits.md",
+      "circuitJson": "circuit-json/superposition/all-basis-vectors-two-qubits.json",
+      "submission": "submissions/superposition/all-basis-vectors-two-qubits.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 323,
+        "outputTokens": 50,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 373
+      },
+      "cost": {
+        "totalUsd": 0.000057300000000000004
+      }
+    },
+    {
+      "taskId": "superposition/all-basis-vectors-with-phases-two-qubits",
+      "task": "benchmarks/quantum-katas/superposition/all-basis-vectors-with-phases-two-qubits.md",
+      "prompt": "prompts/superposition/all-basis-vectors-with-phases-two-qubits.md",
+      "response": "responses/superposition/all-basis-vectors-with-phases-two-qubits.md",
+      "circuitJson": "circuit-json/superposition/all-basis-vectors-with-phases-two-qubits.json",
+      "submission": "submissions/superposition/all-basis-vectors-with-phases-two-qubits.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 339,
+        "outputTokens": 180,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 519
+      },
+      "cost": {
+        "totalUsd": 0.0001239
+      }
+    },
+    {
+      "taskId": "superposition/bell-state",
+      "task": "benchmarks/quantum-katas/superposition/bell-state.md",
+      "prompt": "prompts/superposition/bell-state.md",
+      "response": "responses/superposition/bell-state.md",
+      "circuitJson": "circuit-json/superposition/bell-state.json",
+      "submission": "submissions/superposition/bell-state.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 325,
+        "outputTokens": 62,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 387
+      },
+      "cost": {
+        "totalUsd": 0.0000635
+      }
+    },
+    {
+      "taskId": "superposition/ghz-state",
+      "task": "benchmarks/quantum-katas/superposition/ghz-state.md",
+      "prompt": "prompts/superposition/ghz-state.md",
+      "response": "responses/superposition/ghz-state.md",
+      "circuitJson": "circuit-json/superposition/ghz-state.json",
+      "submission": "submissions/superposition/ghz-state.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 346,
+        "outputTokens": 101,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 447
+      },
+      "cost": {
+        "totalUsd": 0.00008510000000000001
+      }
+    },
+    {
+      "taskId": "superposition/minus-state",
+      "task": "benchmarks/quantum-katas/superposition/minus-state.md",
+      "prompt": "prompts/superposition/minus-state.md",
+      "response": "responses/superposition/minus-state.md",
+      "circuitJson": "circuit-json/superposition/minus-state.json",
+      "submission": "submissions/superposition/minus-state.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 316,
+        "outputTokens": 95,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 411
+      },
+      "cost": {
+        "totalUsd": 0.0000791
+      }
+    },
+    {
+      "taskId": "superposition/plus-state",
+      "task": "benchmarks/quantum-katas/superposition/plus-state.md",
+      "prompt": "prompts/superposition/plus-state.md",
+      "response": "responses/superposition/plus-state.md",
+      "circuitJson": "circuit-json/superposition/plus-state.json",
+      "submission": "submissions/superposition/plus-state.qni",
+      "submissionProtocol": "blind-neutral-circuit-json-v1",
+      "responseValidation": {
+        "status": "valid"
+      },
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "piVersion": "1.5.0",
+      "thinking": "high",
+      "finishReason": "stop",
+      "tokens": {
+        "inputTokens": 312,
+        "outputTokens": 34,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 346
+      },
+      "cost": {
+        "totalUsd": 0.0000482
+      }
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "condition": 1,
+  "trial": "research/runs/2026-11-04T020943Z-effort-matrix-v1-openai-codex-gpt-6-luna-off",
+  "provider": "openai-codex",
+  "model": "gpt-6-luna",
+  "thinking": "off",
+  "effectiveEffort": "none",
+  "elapsedMs": 198940,
+  "result": {
+    "total": 63,
+    "passed": 37,
+    "failed": 19,
+    "disallowed": 4,
+    "error": 3
+  },
+  "passRatePercent": 58.730158730158735,
+  "tokens": {
+    "inputTokens": 24376,
+    "outputTokens": 2736,
+    "cacheReadTokens": 0,
+    "cacheWriteTokens": 0,
+    "totalTokens": 27112,
+    "costTotalUsd": 0.0038056000000000014
+  },
+  "reasoning": {
+    "reportedTotal": 0,
+    "reportedCallCount": 63,
+    "totalCalls": 63,
+    "missingIsZero": false,
+    "codexProviderOmissionIndistinguishable": true
+  },
+  "sha256": {
+    "calls": "a1d300e7d0e254ed18fb946d71a34a6c1d37f27c1b9fb2ae0909d54b7de0c61d",
+    "metadata": "81b64c86009f956fd747cea95ced5828eb4d3f2bf36d32002173f07fa69f0838",
+    "result": "e5e0e47b3af141de95da1d6a10d93174d09bc4f4ecfb7e5af3d74889a994885c"
+  },
+  "reviewStatus": "stopped-for-grader-errors",
+  "piExecutionErrors": 0
+}

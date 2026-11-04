@@ -1,0 +1,1 @@
+{"operations":[{"gate":"CRx","controls":[0],"targets":[1],"angle":"pi/3"}]}

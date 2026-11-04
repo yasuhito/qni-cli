@@ -1,0 +1,39 @@
+{
+  "condition": 3,
+  "trial": "research/runs/2026-11-04T022606Z-effort-matrix-v1-openai-codex-gpt-6-luna-medium",
+  "provider": "openai-codex",
+  "model": "gpt-6-luna",
+  "thinking": "medium",
+  "effectiveEffort": "medium",
+  "elapsedMs": 613823,
+  "result": {
+    "total": 63,
+    "passed": 54,
+    "failed": 4,
+    "disallowed": 5,
+    "error": 0
+  },
+  "executionErrors": 0,
+  "knownEmptyOperationsGraderErrors": [],
+  "passRatePercent": 85.71428571428571,
+  "tokens": {
+    "inputTokens": 24370,
+    "outputTokens": 14304,
+    "cacheReadTokens": 0,
+    "cacheWriteTokens": 0,
+    "totalTokens": 38674,
+    "costTotalUsd": 0.009589000000000002
+  },
+  "reasoning": {
+    "reportedTotal": 11568,
+    "reportedCallCount": 63,
+    "totalCalls": 63,
+    "missingIsZero": false,
+    "codexProviderOmissionIndistinguishable": true
+  },
+  "sha256": {
+    "calls": "9498416dffd02ff3626591551197ac8571ae25a237d61b4b9ada2c114def6782",
+    "metadata": "69f0445e5524583475c3955c75d60263faed8680546a31bfb0cd4c917954d820",
+    "result": "f30cc1359d22c83b6898a6550a511c8a8bb80216df3d7784bf080e263ea9d502"
+  }
+}

@@ -1,0 +1,1 @@
+{"operations":[{"gate":"ControlledPhase","angle":"pi/4","controls":[0,3],"targets":[3]},{"gate":"ControlledPhase","angle":"pi/8","controls":[0,2],"targets":[2]},{"gate":"ControlledPhase","angle":"pi/16","controls":[0,1],"targets":[1]}]}

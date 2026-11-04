@@ -1,0 +1,42 @@
+{
+  "condition": 2,
+  "trial": "research/runs/2026-11-04T021824Z-effort-matrix-v1-openai-codex-gpt-6-luna-low",
+  "provider": "openai-codex",
+  "model": "gpt-6-luna",
+  "thinking": "low",
+  "effectiveEffort": "low",
+  "elapsedMs": 454616,
+  "result": {
+    "total": 63,
+    "passed": 51,
+    "failed": 3,
+    "disallowed": 7,
+    "error": 2
+  },
+  "executionErrors": 0,
+  "knownEmptyOperationsGraderErrors": [
+    "basic-gates/two-qubit-gate-3",
+    "basic-gates/two-qubit-gate-4"
+  ],
+  "passRatePercent": 80.95238095238095,
+  "tokens": {
+    "inputTokens": 24378,
+    "outputTokens": 10416,
+    "cacheReadTokens": 0,
+    "cacheWriteTokens": 0,
+    "totalTokens": 34794,
+    "costTotalUsd": 0.0076457999999999995
+  },
+  "reasoning": {
+    "reportedTotal": 7862,
+    "reportedCallCount": 63,
+    "totalCalls": 63,
+    "missingIsZero": false,
+    "codexProviderOmissionIndistinguishable": true
+  },
+  "sha256": {
+    "calls": "da66fcb32a0659a4268a2f2199c33af8e8ab3d10b94700247318539c4d285148",
+    "metadata": "3e35693939c9be56fff125caadcd6519e9bfbe29bf622997b221fe2794423f18",
+    "result": "9b4633d35543a5e55c3ad397945cea9c9eb33a8b661043b1e5922642c63ccc6d"
+  }
+}

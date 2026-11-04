@@ -1,0 +1,8 @@
+qni add H --qubit 2 --step 0
+qni add P --angle π/2 --qubit 2 --step 1
+qni add P --angle π/4 --control 1 --qubit 2 --step 2
+qni add P --angle π/8 --control 0 --qubit 2 --step 3
+qni add H --qubit 1 --step 4
+qni add P --angle π/2 --qubit 1 --step 5
+qni add P --angle π/4 --control 0 --qubit 1 --step 6
+qni add H --qubit 0 --step 7

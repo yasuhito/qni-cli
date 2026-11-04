@@ -1,0 +1,2466 @@
+{
+  "status": "error",
+  "exitCode": 3,
+  "summary": {
+    "total": 63,
+    "passed": 37,
+    "failed": 19,
+    "disallowed": 4,
+    "error": 3
+  },
+  "results": [
+    {
+      "taskId": "basic-gates/basis-change",
+      "title": "BasisChange",
+      "submission": "submissions/basic-gates/basis-change.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "gradingCases": [
+        {
+          "caseId": "zero-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "one-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/basic-gates/basis-change.md"
+    },
+    {
+      "taskId": "basic-gates/bell-state-change-1",
+      "title": "BellStateChange1",
+      "submission": "submissions/basic-gates/bell-state-change-1.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "gradingCases": [
+        {
+          "caseId": "phi-plus-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/basic-gates/bell-state-change-1.md"
+    },
+    {
+      "taskId": "basic-gates/bell-state-change-2",
+      "title": "BellStateChange2",
+      "submission": "submissions/basic-gates/bell-state-change-2.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "gradingCases": [
+        {
+          "caseId": "phi-plus-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/basic-gates/bell-state-change-2.md"
+    },
+    {
+      "taskId": "basic-gates/bell-state-change-3",
+      "title": "BellStateChange3",
+      "submission": "submissions/basic-gates/bell-state-change-3.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "gradingCases": [
+        {
+          "caseId": "phi-plus-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/basic-gates/bell-state-change-3.md"
+    },
+    {
+      "taskId": "basic-gates/fredkin-gate",
+      "title": "FredkinGate",
+      "submission": "submissions/basic-gates/fredkin-gate.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "gradingCases": [
+        {
+          "caseId": "basis-000",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-010",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-011",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-100",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-110",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-111",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "control-zero",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "control-one",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "control-superposition",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "complex-superposition",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/basic-gates/fredkin-gate.md"
+    },
+    {
+      "taskId": "basic-gates/global-phase-change",
+      "title": "GlobalPhaseChange",
+      "submission": "submissions/basic-gates/global-phase-change.qni",
+      "status": "failed",
+      "exitCode": 1,
+      "gradingCases": [
+        {
+          "caseId": "basis-00",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-01",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-10",
+          "status": "failed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "failed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-11",
+          "status": "failed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "failed"
+            }
+          ]
+        },
+        {
+          "caseId": "target-zero",
+          "status": "failed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "failed"
+            }
+          ]
+        },
+        {
+          "caseId": "target-one",
+          "status": "failed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "failed"
+            }
+          ]
+        },
+        {
+          "caseId": "complex-superposition",
+          "status": "failed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "failed"
+            }
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "failed"
+        },
+        {
+          "type": "run",
+          "status": "failed"
+        },
+        {
+          "type": "run",
+          "status": "failed"
+        },
+        {
+          "type": "run",
+          "status": "failed"
+        },
+        {
+          "type": "run",
+          "status": "failed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/basic-gates/global-phase-change.md"
+    },
+    {
+      "taskId": "basic-gates/phase-change-pi-over-3",
+      "title": "PhaseChangePiOver3",
+      "submission": "submissions/basic-gates/phase-change-pi-over-3.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "gradingCases": [
+        {
+          "caseId": "zero-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "one-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/basic-gates/phase-change-pi-over-3.md"
+    },
+    {
+      "taskId": "basic-gates/phase-flip",
+      "title": "PhaseFlip",
+      "submission": "submissions/basic-gates/phase-flip.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "gradingCases": [
+        {
+          "caseId": "zero-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "one-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/basic-gates/phase-flip.md"
+    },
+    {
+      "taskId": "basic-gates/sign-flip",
+      "title": "SignFlip",
+      "submission": "submissions/basic-gates/sign-flip.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "gradingCases": [
+        {
+          "caseId": "plus-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "minus-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/basic-gates/sign-flip.md"
+    },
+    {
+      "taskId": "basic-gates/state-flip",
+      "title": "StateFlip",
+      "submission": "submissions/basic-gates/state-flip.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "gradingCases": [
+        {
+          "caseId": "zero",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "one",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "real-superposition",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "complex-superposition",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/basic-gates/state-flip.md"
+    },
+    {
+      "taskId": "basic-gates/toffoli-gate",
+      "title": "ToffoliGate",
+      "submission": "submissions/basic-gates/toffoli-gate.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "gradingCases": [
+        {
+          "caseId": "zero-zero-zero-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "one-one-zero-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "one-one-one-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "one-zero-one-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "superposition-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/basic-gates/toffoli-gate.md"
+    },
+    {
+      "taskId": "basic-gates/two-qubit-gate-1",
+      "title": "TwoQubitGate1",
+      "submission": "submissions/basic-gates/two-qubit-gate-1.qni",
+      "status": "error",
+      "exitCode": 3,
+      "gradingCases": [
+        {
+          "caseId": "zero-input",
+          "status": "error",
+          "checks": [],
+          "error": "run check failed to execute for basic-gates/two-qubit-gate-1: circuit.json does not exist"
+        },
+        {
+          "caseId": "one-input",
+          "status": "failed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "failed"
+            }
+          ]
+        },
+        {
+          "caseId": "superposition-input",
+          "status": "failed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "failed"
+            }
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "run",
+          "status": "failed"
+        },
+        {
+          "type": "run",
+          "status": "failed"
+        }
+      ],
+      "error": "case zero-input error: run check failed to execute for basic-gates/two-qubit-gate-1: circuit.json does not exist",
+      "task": "benchmarks/quantum-katas/basic-gates/two-qubit-gate-1.md"
+    },
+    {
+      "taskId": "basic-gates/two-qubit-gate-2",
+      "title": "TwoQubitGate2",
+      "submission": "submissions/basic-gates/two-qubit-gate-2.qni",
+      "status": "failed",
+      "exitCode": 1,
+      "gradingCases": [
+        {
+          "caseId": "plus-plus-input",
+          "status": "failed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "failed"
+            }
+          ]
+        },
+        {
+          "caseId": "eleven-input",
+          "status": "failed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "failed"
+            }
+          ]
+        },
+        {
+          "caseId": "ten-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "run",
+          "status": "failed"
+        },
+        {
+          "type": "run",
+          "status": "failed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/basic-gates/two-qubit-gate-2.md"
+    },
+    {
+      "taskId": "basic-gates/two-qubit-gate-3",
+      "title": "TwoQubitGate3",
+      "submission": "submissions/basic-gates/two-qubit-gate-3.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "gradingCases": [
+        {
+          "caseId": "zero-zero-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "zero-one-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "one-zero-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "superposition-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/basic-gates/two-qubit-gate-3.md"
+    },
+    {
+      "taskId": "basic-gates/two-qubit-gate-4",
+      "title": "TwoQubitGate4",
+      "submission": "submissions/basic-gates/two-qubit-gate-4.qni",
+      "status": "error",
+      "exitCode": 3,
+      "gradingCases": [
+        {
+          "caseId": "zero-zero-input",
+          "status": "error",
+          "checks": [],
+          "error": "run check failed to execute for basic-gates/two-qubit-gate-4: circuit.json does not exist"
+        },
+        {
+          "caseId": "zero-one-input",
+          "status": "failed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "failed"
+            }
+          ]
+        },
+        {
+          "caseId": "one-zero-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "superposition-input",
+          "status": "failed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "failed"
+            }
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "run",
+          "status": "failed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "failed"
+        }
+      ],
+      "error": "case zero-zero-input error: run check failed to execute for basic-gates/two-qubit-gate-4: circuit.json does not exist",
+      "task": "benchmarks/quantum-katas/basic-gates/two-qubit-gate-4.md"
+    },
+    {
+      "taskId": "multi-qubit-gates/arbitrary-controls",
+      "title": "ArbitraryControls",
+      "submission": "submissions/multi-qubit-gates/arbitrary-controls.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "gradingCases": [
+        {
+          "caseId": "basis-00000",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-00001",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-00010",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-00011",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-00100",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-00101",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-00110",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-00111",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-01000",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-01001",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-01010",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-01011",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-01100",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-01101",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-01110",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-01111",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-10000",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-10001",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-10010",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-10011",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-10100",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-10101",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-10110",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-10111",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-11000",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-11001",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-11010",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-11011",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-11100",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-11101",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-11110",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-11111",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "complex-superposition",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/multi-qubit-gates/arbitrary-controls.md"
+    },
+    {
+      "taskId": "multi-qubit-gates/compound-gate",
+      "title": "CompoundGate",
+      "submission": "submissions/multi-qubit-gates/compound-gate.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "gradingCases": [
+        {
+          "caseId": "basis-000",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-001",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-010",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-011",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-100",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-101",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-110",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-111",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "complex-superposition",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/multi-qubit-gates/compound-gate.md"
+    },
+    {
+      "taskId": "multi-qubit-gates/controlled-rotation",
+      "title": "ControlledRotation",
+      "submission": "submissions/multi-qubit-gates/controlled-rotation.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "gradingCases": [
+        {
+          "caseId": "basis-00",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-01",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-10",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "basis-11",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "complex-superposition",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/multi-qubit-gates/controlled-rotation.md"
+    },
+    {
+      "taskId": "multi-qubit-gates/preparing-bell-state",
+      "title": "PreparingBellState",
+      "submission": "submissions/multi-qubit-gates/preparing-bell-state.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "gradingCases": [
+        {
+          "caseId": "zero-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/multi-qubit-gates/preparing-bell-state.md"
+    },
+    {
+      "taskId": "preparing-states/all-basis-vectors",
+      "title": "AllBasisVectors",
+      "submission": "submissions/preparing-states/all-basis-vectors.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/preparing-states/all-basis-vectors.md"
+    },
+    {
+      "taskId": "preparing-states/all-bell-states-0",
+      "title": "AllBellStates0",
+      "submission": "submissions/preparing-states/all-bell-states-0.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/preparing-states/all-bell-states-0.md"
+    },
+    {
+      "taskId": "preparing-states/all-bell-states-1",
+      "title": "AllBellStates1",
+      "submission": "submissions/preparing-states/all-bell-states-1.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/preparing-states/all-bell-states-1.md"
+    },
+    {
+      "taskId": "preparing-states/all-bell-states-2",
+      "title": "AllBellStates2",
+      "submission": "submissions/preparing-states/all-bell-states-2.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/preparing-states/all-bell-states-2.md"
+    },
+    {
+      "taskId": "preparing-states/all-bell-states-3",
+      "title": "AllBellStates3",
+      "submission": "submissions/preparing-states/all-bell-states-3.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/preparing-states/all-bell-states-3.md"
+    },
+    {
+      "taskId": "preparing-states/controlled-rotation",
+      "title": "ControlledRotation",
+      "submission": "submissions/preparing-states/controlled-rotation.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/preparing-states/controlled-rotation.md"
+    },
+    {
+      "taskId": "preparing-states/even-odd",
+      "title": "EvenOdd",
+      "submission": "submissions/preparing-states/even-odd.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/preparing-states/even-odd.md"
+    },
+    {
+      "taskId": "preparing-states/four-bitstrings",
+      "title": "FourBitstrings",
+      "submission": "submissions/preparing-states/four-bitstrings.qni",
+      "status": "failed",
+      "exitCode": 1,
+      "checks": [
+        {
+          "type": "run",
+          "status": "failed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/preparing-states/four-bitstrings.md"
+    },
+    {
+      "taskId": "preparing-states/hardy-state",
+      "title": "HardyState",
+      "submission": "submissions/preparing-states/hardy-state.qni",
+      "status": "disallowed",
+      "exitCode": 2,
+      "checks": [],
+      "task": "benchmarks/quantum-katas/preparing-states/hardy-state.md"
+    },
+    {
+      "taskId": "preparing-states/parity-bitstrings",
+      "title": "ParityBitstrings",
+      "submission": "submissions/preparing-states/parity-bitstrings.qni",
+      "status": "failed",
+      "exitCode": 1,
+      "checks": [
+        {
+          "type": "run",
+          "status": "failed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/preparing-states/parity-bitstrings.md"
+    },
+    {
+      "taskId": "preparing-states/three-states-two-qubits-phases",
+      "title": "ThreeStatesTwoQubitsPhases",
+      "submission": "submissions/preparing-states/three-states-two-qubits-phases.qni",
+      "status": "failed",
+      "exitCode": 1,
+      "checks": [
+        {
+          "type": "run",
+          "status": "failed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/preparing-states/three-states-two-qubits-phases.md"
+    },
+    {
+      "taskId": "preparing-states/three-states-two-qubits",
+      "title": "ThreeStatesTwoQubits",
+      "submission": "submissions/preparing-states/three-states-two-qubits.qni",
+      "status": "disallowed",
+      "exitCode": 2,
+      "checks": [],
+      "task": "benchmarks/quantum-katas/preparing-states/three-states-two-qubits.md"
+    },
+    {
+      "taskId": "preparing-states/two-bitstrings",
+      "title": "TwoBitstrings",
+      "submission": "submissions/preparing-states/two-bitstrings.qni",
+      "status": "failed",
+      "exitCode": 1,
+      "checks": [
+        {
+          "type": "run",
+          "status": "failed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/preparing-states/two-bitstrings.md"
+    },
+    {
+      "taskId": "preparing-states/unequal-superposition",
+      "title": "UnequalSuperposition",
+      "submission": "submissions/preparing-states/unequal-superposition.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/preparing-states/unequal-superposition.md"
+    },
+    {
+      "taskId": "preparing-states/wstate-arbitrary",
+      "title": "WStateArbitrary",
+      "submission": "submissions/preparing-states/wstate-arbitrary.qni",
+      "status": "disallowed",
+      "exitCode": 2,
+      "checks": [],
+      "task": "benchmarks/quantum-katas/preparing-states/wstate-arbitrary.md"
+    },
+    {
+      "taskId": "preparing-states/wstate-power-of-two",
+      "title": "WStatePowerOfTwo",
+      "submission": "submissions/preparing-states/wstate-power-of-two.qni",
+      "status": "failed",
+      "exitCode": 1,
+      "checks": [
+        {
+          "type": "run",
+          "status": "failed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/preparing-states/wstate-power-of-two.md"
+    },
+    {
+      "taskId": "preparing-states/zero-and-bitstring",
+      "title": "ZeroAndBitstring",
+      "submission": "submissions/preparing-states/zero-and-bitstring.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/preparing-states/zero-and-bitstring.md"
+    },
+    {
+      "taskId": "qft/all-basis-vectors",
+      "title": "QFTAllBasisVectors",
+      "submission": "submissions/qft/all-basis-vectors.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/qft/all-basis-vectors.md"
+    },
+    {
+      "taskId": "qft/all-even-vectors",
+      "title": "QFTAllEvenVectors",
+      "submission": "submissions/qft/all-even-vectors.qni",
+      "status": "failed",
+      "exitCode": 1,
+      "checks": [
+        {
+          "type": "run",
+          "status": "failed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/qft/all-even-vectors.md"
+    },
+    {
+      "taskId": "qft/alternating-amplitudes",
+      "title": "QFTAlternatingAmplitudes",
+      "submission": "submissions/qft/alternating-amplitudes.qni",
+      "status": "failed",
+      "exitCode": 1,
+      "checks": [
+        {
+          "type": "run",
+          "status": "failed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/qft/alternating-amplitudes.md"
+    },
+    {
+      "taskId": "qft/binary-fraction-classical",
+      "title": "QFTBinaryFractionClassical",
+      "submission": "submissions/qft/binary-fraction-classical.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "checks": [
+        {
+          "type": "unitary",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/qft/binary-fraction-classical.md"
+    },
+    {
+      "taskId": "qft/binary-fraction-inplace",
+      "title": "QFTBinaryFractionInplace",
+      "submission": "submissions/qft/binary-fraction-inplace.qni",
+      "status": "failed",
+      "exitCode": 1,
+      "checks": [
+        {
+          "type": "unitary",
+          "status": "failed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/qft/binary-fraction-inplace.md"
+    },
+    {
+      "taskId": "qft/binary-fraction-quantum",
+      "title": "QFTBinaryFractionQuantum",
+      "submission": "submissions/qft/binary-fraction-quantum.qni",
+      "status": "disallowed",
+      "exitCode": 2,
+      "checks": [],
+      "task": "benchmarks/quantum-katas/qft/binary-fraction-quantum.md"
+    },
+    {
+      "taskId": "qft/periodic-state",
+      "title": "QFTPeriodicState",
+      "submission": "submissions/qft/periodic-state.qni",
+      "status": "failed",
+      "exitCode": 1,
+      "checks": [
+        {
+          "type": "run",
+          "status": "failed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/qft/periodic-state.md"
+    },
+    {
+      "taskId": "qft/qft",
+      "title": "QFTQft",
+      "submission": "submissions/qft/qft.qni",
+      "status": "failed",
+      "exitCode": 1,
+      "checks": [
+        {
+          "type": "unitary",
+          "status": "failed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/qft/qft.md"
+    },
+    {
+      "taskId": "qft/rotation-gate",
+      "title": "QFTRotationGate",
+      "submission": "submissions/qft/rotation-gate.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "checks": [
+        {
+          "type": "unitary",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/qft/rotation-gate.md"
+    },
+    {
+      "taskId": "qft/signal-frequency",
+      "title": "QFTSignalFrequency",
+      "submission": "submissions/qft/signal-frequency.qni",
+      "status": "failed",
+      "exitCode": 1,
+      "checks": [
+        {
+          "type": "unitary",
+          "status": "failed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/qft/signal-frequency.md"
+    },
+    {
+      "taskId": "qft/single-qubit",
+      "title": "QFTSingleQubit",
+      "submission": "submissions/qft/single-qubit.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "checks": [
+        {
+          "type": "unitary",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/qft/single-qubit.md"
+    },
+    {
+      "taskId": "qft/square-wave",
+      "title": "QFTSquareWave",
+      "submission": "submissions/qft/square-wave.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/qft/square-wave.md"
+    },
+    {
+      "taskId": "single-qubit-gates/amplitude-change",
+      "title": "AmplitudeChange",
+      "submission": "submissions/single-qubit-gates/amplitude-change.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "gradingCases": [
+        {
+          "caseId": "zero-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "one-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "plus-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/single-qubit-gates/amplitude-change.md"
+    },
+    {
+      "taskId": "single-qubit-gates/global-phase-i",
+      "title": "GlobalPhaseI",
+      "submission": "submissions/single-qubit-gates/global-phase-i.qni",
+      "status": "failed",
+      "exitCode": 1,
+      "gradingCases": [
+        {
+          "caseId": "zero-input",
+          "status": "failed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "failed"
+            }
+          ]
+        },
+        {
+          "caseId": "one-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "plus-input",
+          "status": "failed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "failed"
+            }
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "run",
+          "status": "failed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "failed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/single-qubit-gates/global-phase-i.md"
+    },
+    {
+      "taskId": "single-qubit-gates/prepare-arbitrary-state",
+      "title": "PrepareArbitraryState",
+      "submission": "submissions/single-qubit-gates/prepare-arbitrary-state.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "gradingCases": [
+        {
+          "caseId": "zero-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/single-qubit-gates/prepare-arbitrary-state.md"
+    },
+    {
+      "taskId": "single-qubit-gates/prepare-minus",
+      "title": "PrepareMinus",
+      "submission": "submissions/single-qubit-gates/prepare-minus.qni",
+      "status": "failed",
+      "exitCode": 1,
+      "gradingCases": [
+        {
+          "caseId": "zero-input",
+          "status": "failed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "failed"
+            }
+          ]
+        },
+        {
+          "caseId": "one-input",
+          "status": "failed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "failed"
+            }
+          ]
+        },
+        {
+          "caseId": "plus-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "run",
+          "status": "failed"
+        },
+        {
+          "type": "run",
+          "status": "failed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/single-qubit-gates/prepare-minus.md"
+    },
+    {
+      "taskId": "single-qubit-gates/prepare-rotated-state",
+      "title": "PrepareRotatedState",
+      "submission": "submissions/single-qubit-gates/prepare-rotated-state.qni",
+      "status": "failed",
+      "exitCode": 1,
+      "gradingCases": [
+        {
+          "caseId": "zero-input",
+          "status": "failed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "failed"
+            }
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "run",
+          "status": "failed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/single-qubit-gates/prepare-rotated-state.md"
+    },
+    {
+      "taskId": "single-qubit-gates/sign-flip-on-zero",
+      "title": "SignFlipOnZero",
+      "submission": "submissions/single-qubit-gates/sign-flip-on-zero.qni",
+      "status": "failed",
+      "exitCode": 1,
+      "gradingCases": [
+        {
+          "caseId": "zero-input",
+          "status": "failed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "failed"
+            }
+          ]
+        },
+        {
+          "caseId": "one-input",
+          "status": "failed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "failed"
+            }
+          ]
+        },
+        {
+          "caseId": "plus-input",
+          "status": "failed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "failed"
+            }
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "run",
+          "status": "failed"
+        },
+        {
+          "type": "run",
+          "status": "failed"
+        },
+        {
+          "type": "run",
+          "status": "failed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/single-qubit-gates/sign-flip-on-zero.md"
+    },
+    {
+      "taskId": "single-qubit-gates/three-quarters-pi-phase",
+      "title": "ThreeQuartersPiPhase",
+      "submission": "submissions/single-qubit-gates/three-quarters-pi-phase.qni",
+      "status": "error",
+      "exitCode": 3,
+      "gradingCases": [
+        {
+          "caseId": "zero-input",
+          "status": "error",
+          "checks": [],
+          "error": "run check failed to execute for single-qubit-gates/three-quarters-pi-phase: circuit.json does not exist"
+        },
+        {
+          "caseId": "one-input",
+          "status": "failed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "failed"
+            }
+          ]
+        },
+        {
+          "caseId": "plus-input",
+          "status": "failed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "failed"
+            }
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "run",
+          "status": "failed"
+        },
+        {
+          "type": "run",
+          "status": "failed"
+        }
+      ],
+      "error": "case zero-input error: run check failed to execute for single-qubit-gates/three-quarters-pi-phase: circuit.json does not exist",
+      "task": "benchmarks/quantum-katas/single-qubit-gates/three-quarters-pi-phase.md"
+    },
+    {
+      "taskId": "single-qubit-gates/y-gate",
+      "title": "YGate",
+      "submission": "submissions/single-qubit-gates/y-gate.qni",
+      "status": "failed",
+      "exitCode": 1,
+      "gradingCases": [
+        {
+          "caseId": "zero-input",
+          "status": "failed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "failed"
+            }
+          ]
+        },
+        {
+          "caseId": "one-input",
+          "status": "passed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "passed"
+            }
+          ]
+        },
+        {
+          "caseId": "plus-input",
+          "status": "failed",
+          "checks": [
+            {
+              "type": "run",
+              "status": "failed"
+            }
+          ]
+        }
+      ],
+      "checks": [
+        {
+          "type": "run",
+          "status": "failed"
+        },
+        {
+          "type": "run",
+          "status": "passed"
+        },
+        {
+          "type": "run",
+          "status": "failed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/single-qubit-gates/y-gate.md"
+    },
+    {
+      "taskId": "superposition/all-basis-vector-with-phase-flip-two-qubits",
+      "title": "AllBasisVectorWithPhaseFlip_TwoQubits",
+      "submission": "submissions/superposition/all-basis-vector-with-phase-flip-two-qubits.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/superposition/all-basis-vector-with-phase-flip-two-qubits.md"
+    },
+    {
+      "taskId": "superposition/all-basis-vectors-two-qubits",
+      "title": "AllBasisVectors_TwoQubits",
+      "submission": "submissions/superposition/all-basis-vectors-two-qubits.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/superposition/all-basis-vectors-two-qubits.md"
+    },
+    {
+      "taskId": "superposition/all-basis-vectors-with-phases-two-qubits",
+      "title": "AllBasisVectorsWithPhases_TwoQubits",
+      "submission": "submissions/superposition/all-basis-vectors-with-phases-two-qubits.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/superposition/all-basis-vectors-with-phases-two-qubits.md"
+    },
+    {
+      "taskId": "superposition/bell-state",
+      "title": "BellState",
+      "submission": "submissions/superposition/bell-state.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/superposition/bell-state.md"
+    },
+    {
+      "taskId": "superposition/ghz-state",
+      "title": "GHZState",
+      "submission": "submissions/superposition/ghz-state.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/superposition/ghz-state.md"
+    },
+    {
+      "taskId": "superposition/minus-state",
+      "title": "MinusState",
+      "submission": "submissions/superposition/minus-state.qni",
+      "status": "failed",
+      "exitCode": 1,
+      "checks": [
+        {
+          "type": "run",
+          "status": "failed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/superposition/minus-state.md"
+    },
+    {
+      "taskId": "superposition/plus-state",
+      "title": "PlusState",
+      "submission": "submissions/superposition/plus-state.qni",
+      "status": "passed",
+      "exitCode": 0,
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ],
+      "task": "benchmarks/quantum-katas/superposition/plus-state.md"
+    }
+  ]
+}
