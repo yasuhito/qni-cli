@@ -16,6 +16,10 @@
 
 - Then リポジトリファイル "docs/reports/model-effort-matrix-2026-11-04.md" は "300秒・600秒・3,600秒" を含む
 
+## Scenario: 思考内訳の独立した再導出に必要な非公開入力を説明する
+
+- Then リポジトリファイル "docs/reports/model-effort-matrix-2026-11-04.md" は "reasoning 索引の独立した再導出には非公開の生ログが必要" を含む
+
 ## Scenario: 単一観測に架空の信頼区間を付けない
 
 - Then リポジトリファイル "docs/reports/model-effort-matrix-2026-11-04.md" は "信頼区間は付けない" を含む

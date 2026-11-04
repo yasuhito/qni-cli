@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "sources": {
+    "collect-final-matrix.mjs": "9b39ff7939ec59fcfe4b6414c30c1a4e4b0a9cb7fca9d15b24e29a641c1a84ad",
+    "assemble-luna-max-once.mjs": "bd20a54e118b29fdcff4af04830c5588216d1c3b45e563d4ec7f6fbfb1d6262e",
+    "assemble-sonnet-max-once.mjs": "d1517a4fea5a53f2a1c974bddb01aa5d5e0c9029099860a5a2c71c5bab8dec59"
+  }
+}

@@ -32,25 +32,25 @@
 <polyline data-series="claude-opus-5-5" data-effort-order="low,medium,high,xhigh,max" points="536.575,348.889 683.945,391.429 725.158,370.159 971.747,327.619 1427.825,348.889" fill="none" stroke="#8b4291" stroke-width="2.4" opacity="0.8"/>
 <path d="M679.574 306.349L690.824 306.349" stroke="#b84400" stroke-width="0.9" opacity="0.65"/>
 <path d="M1487.051 306.349L1487.051 328.849" stroke="#007552" stroke-width="0.9" opacity="0.65"/>
-<path d="M343.769 327.619L343.769 339.868" stroke="#b84400" stroke-width="0.9" opacity="0.65"/>
-<path d="M818.790 327.619L818.790 339.868" stroke="#007552" stroke-width="0.9" opacity="0.65"/>
-<path d="M879.034 327.619L879.034 307.783" stroke="#007552" stroke-width="0.9" opacity="0.65"/>
-<path d="M888.340 327.619L903.587 364.617" stroke="#0067a3" stroke-width="0.9" opacity="0.65"/>
-<path d="M971.747 327.619L971.747 307.783" stroke="#8b4291" stroke-width="0.9" opacity="0.65"/>
-<path d="M278.204 348.889L278.204 368.725" stroke="#b84400" stroke-width="0.9" opacity="0.65"/>
+<path d="M343.769 327.619L343.769 347.455" stroke="#b84400" stroke-width="0.9" opacity="0.65"/>
+<path d="M818.790 327.619L818.790 307.783" stroke="#007552" stroke-width="0.9" opacity="0.65"/>
+<path d="M879.034 327.619L879.034 305.119" stroke="#007552" stroke-width="0.9" opacity="0.65"/>
+<path d="M888.340 327.619L888.340 361.313" stroke="#0067a3" stroke-width="0.9" opacity="0.65"/>
+<path d="M971.747 327.619L971.747 339.868" stroke="#8b4291" stroke-width="0.9" opacity="0.65"/>
+<path d="M278.204 348.889L278.204 371.389" stroke="#b84400" stroke-width="0.9" opacity="0.65"/>
 <path d="M420.181 348.889L420.181 361.138" stroke="#b84400" stroke-width="0.9" opacity="0.65"/>
-<path d="M536.575 348.889L537.574 361.138" stroke="#8b4291" stroke-width="0.9" opacity="0.65"/>
+<path d="M536.575 348.889L536.575 368.725" stroke="#8b4291" stroke-width="0.9" opacity="0.65"/>
 <path d="M595.442 348.889L595.442 329.053" stroke="#b84400" stroke-width="0.9" opacity="0.65"/>
-<path d="M913.443 348.889L934.443 348.889" stroke="#0067a3" stroke-width="0.9" opacity="0.65"/>
+<path d="M913.443 348.889L919.798 371.744" stroke="#0067a3" stroke-width="0.9" opacity="0.65"/>
 <path d="M1427.825 348.889L1428.824 361.138" stroke="#8b4291" stroke-width="0.9" opacity="0.65"/>
 <path d="M715.149 370.159L715.149 382.407" stroke="#0067a3" stroke-width="0.9" opacity="0.65"/>
 <path d="M725.158 370.159L725.158 350.323" stroke="#8b4291" stroke-width="0.9" opacity="0.65"/>
-<path d="M663.627 391.429L663.627 425.123" stroke="#0067a3" stroke-width="0.9" opacity="0.65"/>
-<path d="M666.738 391.429L655.488 391.429" stroke="#007552" stroke-width="0.9" opacity="0.65"/>
-<path d="M683.945 391.429L693.943 428.426" stroke="#8b4291" stroke-width="0.9" opacity="0.65"/>
+<path d="M663.627 391.429L663.627 414.284" stroke="#0067a3" stroke-width="0.9" opacity="0.65"/>
+<path d="M666.738 391.429L666.738 371.593" stroke="#007552" stroke-width="0.9" opacity="0.65"/>
+<path d="M683.945 391.429L683.945 443.600" stroke="#8b4291" stroke-width="0.9" opacity="0.65"/>
 <path d="M638.669 412.698L638.669 464.870" stroke="#007552" stroke-width="0.9" opacity="0.65"/>
-<path d="M574.368 455.238L574.368 475.074" stroke="#0067a3" stroke-width="0.9" opacity="0.65"/>
-<path d="M198.177 753.016L209.427 753.016" stroke="#0067a3" stroke-width="0.9" opacity="0.65"/>
+<path d="M574.368 455.238L565.782 454.344" stroke="#0067a3" stroke-width="0.9" opacity="0.65"/>
+<path d="M198.177 753.016L206.763 753.910" stroke="#0067a3" stroke-width="0.9" opacity="0.65"/>
 <g data-point-id="openai-codex/gpt-6-luna/off" data-output-tokens="2736" data-pass-rate="58.730158730158735">
 <circle cx="198.177" cy="753.016" r="5" fill="#0067a3" stroke="white" stroke-width="1.2"/>
 </g>
@@ -114,27 +114,27 @@
 <g data-point-id="claude-bridge/claude-opus-5-5/max" data-output-tokens="216205" data-pass-rate="88.88888888888889">
 <circle cx="1427.825" cy="348.889" r="5" fill="#8b4291" stroke="white" stroke-width="1.2"/>
 </g>
-<rect x="690.8236735427004" y="293.8492063492064" width="47.5" height="25" rx="3" fill="white" fill-opacity="0.94"/><text x="695.8236735427004" y="310.8492063492064" fill="#b84400" font-size="15" font-weight="bold">max</text>
-<rect x="1458.051189926964" y="328.8492063492064" width="58" height="25" rx="3" fill="white" fill-opacity="0.94"/><text x="1463.051189926964" y="345.8492063492064" fill="#007552" font-size="15" font-weight="bold">max‡</text>
-<rect x="329.01815790437706" y="339.8677849605767" width="79" height="25" rx="3" fill="white" fill-opacity="0.94"/><text x="334.01815790437706" y="356.8677849605767" fill="#b84400" font-size="15" font-weight="bold">medium</text>
-<rect x="814.5383545361001" y="339.8677849605767" width="58" height="25" rx="3" fill="white" fill-opacity="0.94"/><text x="819.5383545361001" y="356.8677849605767" fill="#007552" font-size="15" font-weight="bold">high</text>
-<rect x="831.3904525250157" y="282.7832639811526" width="68.5" height="25" rx="3" fill="white" fill-opacity="0.94"/><text x="836.3904525250157" y="299.7832639811526" fill="#007552" font-size="15" font-weight="bold">xhigh</text>
-<rect x="903.5874533910444" y="364.6165223021059" width="68.5" height="25" rx="3" fill="white" fill-opacity="0.94"/><text x="908.5874533910444" y="381.6165223021059" fill="#0067a3" font-size="15" font-weight="bold">xhigh</text>
-<rect x="924.1026828628887" y="282.7832639811526" width="68.5" height="25" rx="3" fill="white" fill-opacity="0.94"/><text x="929.1026828628887" y="299.7832639811526" fill="#8b4291" font-size="15" font-weight="bold">xhigh</text>
-<rect x="267.8479730216381" y="368.72467252678393" width="47.5" height="25" rx="3" fill="white" fill-opacity="0.94"/><text x="272.8479730216381" y="385.72467252678393" fill="#b84400" font-size="15" font-weight="bold">low</text>
-<rect x="415.9297384664086" y="361.13762623041805" width="58" height="25" rx="3" fill="white" fill-opacity="0.94"/><text x="420.9297384664086" y="378.13762623041805" fill="#b84400" font-size="15" font-weight="bold">high</text>
-<rect x="537.5741058251783" y="361.13762623041805" width="47.5" height="25" rx="3" fill="white" fill-opacity="0.94"/><text x="542.5741058251783" y="378.13762623041805" fill="#8b4291" font-size="15" font-weight="bold">low</text>
-<rect x="547.7975819796607" y="304.0531052509939" width="68.5" height="25" rx="3" fill="white" fill-opacity="0.94"/><text x="552.7975819796607" y="321.0531052509939" fill="#b84400" font-size="15" font-weight="bold">xhigh</text>
-<rect x="934.4426232351983" y="336.3888888888889" width="58" height="25" rx="3" fill="white" fill-opacity="0.94"/><text x="939.4426232351983" y="353.3888888888889" fill="#0067a3" font-size="15" font-weight="bold">max†</text>
-<rect x="1428.824163160961" y="361.13762623041805" width="47.5" height="25" rx="3" fill="white" fill-opacity="0.94"/><text x="1433.824163160961" y="378.13762623041805" fill="#8b4291" font-size="15" font-weight="bold">max</text>
-<rect x="710.8975629641419" y="382.40746750025926" width="58" height="25" rx="3" fill="white" fill-opacity="0.94"/><text x="715.8975629641419" y="399.40746750025926" fill="#0067a3" font-size="15" font-weight="bold">high</text>
-<rect x="682.7640626947584" y="325.3229465208351" width="58" height="25" rx="3" fill="white" fill-opacity="0.94"/><text x="687.7640626947584" y="342.3229465208351" fill="#8b4291" font-size="15" font-weight="bold">high</text>
-<rect x="604.9927859587383" y="425.12254805413585" width="79" height="25" rx="3" fill="white" fill-opacity="0.94"/><text x="609.9927859587383" y="442.12254805413585" fill="#0067a3" font-size="15" font-weight="bold">medium</text>
-<rect x="607.9876945327597" y="378.9285714285715" width="47.5" height="25" rx="3" fill="white" fill-opacity="0.94"/><text x="612.9876945327597" y="395.9285714285715" fill="#007552" font-size="15" font-weight="bold">low</text>
-<rect x="693.9426281260644" y="428.42604611162983" width="79" height="25" rx="3" fill="white" fill-opacity="0.94"/><text x="698.9426281260644" y="445.42604611162983" fill="#8b4291" font-size="15" font-weight="bold">medium</text>
-<rect x="625.9571242226936" y="464.8699799742028" width="79" height="25" rx="3" fill="white" fill-opacity="0.94"/><text x="630.9571242226936" y="481.8699799742028" fill="#007552" font-size="15" font-weight="bold">medium</text>
-<rect x="564.0114283126981" y="475.0738788759903" width="47.5" height="25" rx="3" fill="white" fill-opacity="0.94"/><text x="569.0114283126981" y="492.0738788759903" fill="#0067a3" font-size="15" font-weight="bold">low</text>
-<rect x="209.42709115510382" y="740.5158730158729" width="47.5" height="25" rx="3" fill="white" fill-opacity="0.94"/><text x="214.42709115510382" y="757.5158730158729" fill="#0067a3" font-size="15" font-weight="bold">off</text>
+<text x="695.8236735427004" y="310.8492063492064" fill="#b84400" font-size="15" font-weight="bold">max</text>
+<text x="1463.051189926964" y="345.8492063492064" fill="#007552" font-size="15" font-weight="bold">max‡</text>
+<text x="322.66334069562606" y="364.4548312569426" fill="#b84400" font-size="15" font-weight="bold">medium</text>
+<text x="781.3956970617928" y="299.7832639811526" fill="#007552" font-size="15" font-weight="bold">high</text>
+<text x="849.7843726577938" y="297.1190476190476" fill="#007552" font-size="15" font-weight="bold">xhigh</text>
+<text x="839.9558070897315" y="378.31302424461194" fill="#0067a3" font-size="15" font-weight="bold">xhigh</text>
+<text x="967.245340337196" y="356.8677849605767" fill="#8b4291" font-size="15" font-weight="bold">xhigh</text>
+<text x="259.45405288885996" y="388.3888888888889" fill="#b84400" font-size="15" font-weight="bold">low</text>
+<text x="420.9297384664086" y="378.13762623041805" fill="#b84400" font-size="15" font-weight="bold">high</text>
+<text x="531.2192886164273" y="385.72467252678393" fill="#8b4291" font-size="15" font-weight="bold">low</text>
+<text x="552.7975819796607" y="321.0531052509939" fill="#b84400" font-size="15" font-weight="bold">xhigh</text>
+<text x="924.7979622945256" y="388.7442279482163" fill="#0067a3" font-size="15" font-weight="bold">max†</text>
+<text x="1433.824163160961" y="378.13762623041805" fill="#8b4291" font-size="15" font-weight="bold">max</text>
+<text x="715.8975629641419" y="399.40746750025926" fill="#0067a3" font-size="15" font-weight="bold">high</text>
+<text x="687.7640626947584" y="342.3229465208351" fill="#8b4291" font-size="15" font-weight="bold">high</text>
+<text x="664.4822966363201" y="431.2839104878989" fill="#0067a3" font-size="15" font-weight="bold">medium</text>
+<text x="634.5937743999816" y="363.5927877906765" fill="#007552" font-size="15" font-weight="bold">low</text>
+<text x="676.2329937085624" y="460.6001387043616" fill="#8b4291" font-size="15" font-weight="bold">medium</text>
+<text x="577.381443691581" y="481.8699799742028" fill="#007552" font-size="15" font-weight="bold">medium</text>
+<text x="523.2817245420249" y="446.34417510531716" fill="#0067a3" font-size="15" font-weight="bold">low</text>
+<text x="211.76287479299884" y="770.909793148651" fill="#0067a3" font-size="15" font-weight="bold">off</text>
 <text x="80" y="978" font-size="14" fill="#405366">† Luna max: 34 answers at 300s + 29 at 600s. Original timed-out attempt usage is unknown.</text>
 <text x="80" y="1002" font-size="14" fill="#405366">‡ Sonnet max: 30 answers at 600s + 33 at 3600s. Original timed-out attempt usage is unknown.</text>
 <text x="80" y="1026" font-size="14" fill="#405366">Hollow diamonds show selected-answer subtotals, exclude unknown failed-attempt usage, and are not connected.</text>

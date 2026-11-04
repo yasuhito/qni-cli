@@ -9,6 +9,8 @@ const {
   loadMatrix,
   renderSvg,
   renderPng,
+  buildPlotData,
+  formatTables,
   DEFAULT_MANIFEST,
   DEFAULT_OUTPUT,
 } = require("./plot_model_effort_matrix.js");
@@ -47,6 +49,8 @@ test("SVG has 21 data-matched points and four x-ordered lines without confidence
   );
   assert.equal((svg.match(/data-point-id=/g) || []).length, 21);
   assert.equal((svg.match(/<polyline /g) || []).length, 4);
+  // The only rectangle is the canvas background, drawn before all data lines.
+  assert.equal((svg.match(/<rect /g) || []).length, 1);
   for (const p of matrix.points) {
     assert.ok(
       svg.includes(
@@ -88,6 +92,56 @@ test("rejects a changed source hash rather than plotting stale or altered record
   }
 });
 
+test("rejects a manifest whose collector identity differs from the archived source", () => {
+  const directory = fs.mkdtempSync(
+    path.join(os.tmpdir(), "qni-matrix-collector-")
+  );
+  try {
+    const manifest = JSON.parse(
+      fs.readFileSync(path.join(root, DEFAULT_MANIFEST), "utf8")
+    );
+    manifest.generatorSha256 = "0".repeat(64);
+    const file = path.join(directory, "manifest.json");
+    fs.writeFileSync(file, JSON.stringify(manifest));
+    assert.throws(() => loadMatrix(root, file), /Collector identity mismatch/);
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test("rejects altered continuation assembly source bytes", () => {
+  const directory = fs.mkdtempSync(
+    path.join(os.tmpdir(), "qni-matrix-assembly-")
+  );
+  try {
+    const base = path.dirname(DEFAULT_MANIFEST);
+    fs.mkdirSync(path.join(directory, base), { recursive: true });
+    fs.copyFileSync(
+      path.join(root, DEFAULT_MANIFEST),
+      path.join(directory, DEFAULT_MANIFEST)
+    );
+    fs.cpSync(
+      path.join(root, base, "derivation-sources"),
+      path.join(directory, base, "derivation-sources"),
+      { recursive: true }
+    );
+    fs.appendFileSync(
+      path.join(
+        directory,
+        base,
+        "derivation-sources/assemble-sonnet-max-once.mjs"
+      ),
+      "\n"
+    );
+    assert.throws(
+      () => loadMatrix(directory),
+      /SHA-256 mismatch:.*assemble-sonnet-max-once\.mjs/
+    );
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
+});
+
 test("check-only runs with no credentials, no Pi on PATH, and no artifact changes", () => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), "qni-matrix-cli-"));
   const before = fs.readFileSync(path.join(root, DEFAULT_OUTPUT + ".svg"));
@@ -111,6 +165,28 @@ test("check-only runs with no credentials, no Pi on PATH, and no artifact change
   } finally {
     fs.rmSync(directory, { recursive: true, force: true });
   }
+});
+
+test("published plot JSON exactly matches regenerated data", () => {
+  const expected =
+    JSON.stringify(buildPlotData(root, loadMatrix(root)), null, 2) + "\n";
+  assert.equal(
+    fs.readFileSync(path.join(root, DEFAULT_OUTPUT + ".json"), "utf8"),
+    expected
+  );
+});
+
+test("published result table exactly matches regenerated Markdown", () => {
+  assert.equal(
+    fs.readFileSync(
+      path.join(
+        root,
+        "research/analyses/model-effort-matrix-2026-11-04/matrix-results.md"
+      ),
+      "utf8"
+    ),
+    formatTables(loadMatrix(root))
+  );
 });
 
 test("published PNG is nonblank at the documented resolution", () => {

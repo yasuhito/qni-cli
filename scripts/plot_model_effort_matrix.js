@@ -75,6 +75,21 @@ function loadMatrix(
   const manifest = JSON.parse(
     fs.readFileSync(path.resolve(root, manifestPath))
   );
+  const derivationDir = `${BASE}/derivation-sources`;
+  const derivation = json(`${derivationDir}/source-index.json`);
+  assert.equal(derivation.schemaVersion, 1);
+  assert.deepEqual(Object.keys(derivation.sources).sort(), [
+    "assemble-luna-max-once.mjs",
+    "assemble-sonnet-max-once.mjs",
+    "collect-final-matrix.mjs",
+  ]);
+  for (const [source, expected] of Object.entries(derivation.sources))
+    verify(`${derivationDir}/${source}`, expected);
+  assert.equal(
+    derivation.sources["collect-final-matrix.mjs"],
+    manifest.generatorSha256,
+    "Collector identity mismatch"
+  );
   for (const [source, expected] of Object.entries(
     json(`${BASE}/source-artifact-sha256.json`)
   ))
@@ -459,6 +474,35 @@ function renderSvg(matrix) {
     py: y(p.passRatePercent),
     color: SERIES.find((s) => s.model === p.model).color,
   }));
+  const segments = SERIES.flatMap((s) => {
+    const points = positions
+      .filter((p) => p.model === s.model && !p.resumed)
+      .sort((a, b) => a.px - b.px);
+    return points.slice(1).map((p, i) => [points[i], p]);
+  });
+  // Liang-Barsky clipping: labels must not touch any model's connecting segment.
+  const intersects = ([a, b], box) => {
+    const dx = b.px - a.px,
+      dy = b.py - a.py;
+    let enter = 0,
+      leave = 1;
+    for (const [p, q] of [
+      [-dx, a.px - box.x + 3],
+      [dx, box.x + box.w + 3 - a.px],
+      [-dy, a.py - box.y + 3],
+      [dy, box.y + box.h + 3 - a.py],
+    ]) {
+      if (p === 0) {
+        if (q < 0) return false;
+      } else {
+        const t = q / p;
+        if (p < 0) enter = Math.max(enter, t);
+        else leave = Math.min(leave, t);
+        if (enter > leave) return false;
+      }
+    }
+    return true;
+  };
   const labels = [];
   for (const p of [...positions].sort((a, b) => a.py - b.py || a.px - b.px)) {
     const w = p.label.length * 10.5 + 16,
@@ -502,6 +546,7 @@ function renderSvg(matrix) {
       const score =
         (overlap ? 100000 : 0) +
         (marker ? 100000 : 0) +
+        (segments.some((s) => intersects(s, b)) ? 100000 : 0) +
         Math.hypot(dx + w / 2, dy + h / 2);
       if (!best || score < best.score) best = { score, box: b, point: p };
     }
@@ -536,7 +581,7 @@ function renderSvg(matrix) {
   }
   for (const l of labels)
     out.push(
-      `<rect x="${l.box.x}" y="${l.box.y}" width="${l.box.w}" height="${l.box.h}" rx="3" fill="white" fill-opacity="0.94"/><text x="${l.box.x + 5}" y="${l.box.y + 17}" fill="${l.point.color}" font-size="15" font-weight="bold">${xml(l.point.label)}</text>`
+      `<text x="${l.box.x + 5}" y="${l.box.y + 17}" fill="${l.point.color}" font-size="15" font-weight="bold">${xml(l.point.label)}</text>`
     );
   const notes = [
     "† Luna max: 34 answers at 300s + 29 at 600s. Original timed-out attempt usage is unknown.",
@@ -598,27 +643,25 @@ function renderPng(root, svg) {
     .render()
     .asPng();
 }
+function buildPlotData(root, matrix) {
+  return {
+    ...matrix,
+    fontSha256: fontFiles(root).map((f) => ({
+      name: path.basename(f),
+      sha256: sha(fs.readFileSync(f)),
+    })),
+  };
+}
 function writePlot(root, matrix, output = DEFAULT_OUTPUT) {
   const prefix = path.resolve(root, output);
   fs.mkdirSync(path.dirname(prefix), { recursive: true });
-  const fonts = fontFiles(root);
   const svg = renderSvg(matrix);
   const png = renderPng(root, svg);
   fs.writeFileSync(prefix + ".svg", svg);
   fs.writeFileSync(prefix + ".png", png);
   fs.writeFileSync(
     prefix + ".json",
-    JSON.stringify(
-      {
-        ...matrix,
-        fontSha256: fonts.map((f) => ({
-          name: path.basename(f),
-          sha256: sha(fs.readFileSync(f)),
-        })),
-      },
-      null,
-      2
-    ) + "\n"
+    JSON.stringify(buildPlotData(root, matrix), null, 2) + "\n"
   );
   fs.writeFileSync(
     path.join(root, BASE, "matrix-results.md"),
@@ -655,6 +698,7 @@ module.exports = {
   loadMatrix,
   renderSvg,
   renderPng,
+  buildPlotData,
   writePlot,
   formatTables,
   DEFAULT_MANIFEST,
