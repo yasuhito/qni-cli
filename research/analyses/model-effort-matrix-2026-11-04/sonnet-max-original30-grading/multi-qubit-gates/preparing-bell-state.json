@@ -1,0 +1,25 @@
+{
+  "taskId": "multi-qubit-gates/preparing-bell-state",
+  "title": "PreparingBellState",
+  "submission": "/tmp/qni-research-solve-PIFogg/submissions/multi-qubit-gates/preparing-bell-state.qni",
+  "status": "passed",
+  "exitCode": 0,
+  "gradingCases": [
+    {
+      "caseId": "zero-input",
+      "status": "passed",
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "type": "run",
+      "status": "passed"
+    }
+  ]
+}

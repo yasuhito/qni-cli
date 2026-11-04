@@ -1,0 +1,13 @@
+{
+  "taskId": "preparing-states/three-states-two-qubits-phases",
+  "title": "ThreeStatesTwoQubitsPhases",
+  "submission": "/tmp/qni-research-solve-PIFogg/submissions/preparing-states/three-states-two-qubits-phases.qni",
+  "status": "passed",
+  "exitCode": 0,
+  "checks": [
+    {
+      "type": "run",
+      "status": "passed"
+    }
+  ]
+}

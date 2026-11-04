@@ -1,0 +1,72 @@
+# qni research solve response
+
+- model: claude-opus-5-5
+- thinking: max
+- benchmark: benchmarks/quantum-katas
+- calls: 63
+
+## Per-task responses and submissions
+
+- basic-gates/basis-change: ./responses/basic-gates/basis-change.md -> ./circuit-json/basic-gates/basis-change.json -> ./submissions/basic-gates/basis-change.qni
+- basic-gates/bell-state-change-1: ./responses/basic-gates/bell-state-change-1.md -> ./circuit-json/basic-gates/bell-state-change-1.json -> ./submissions/basic-gates/bell-state-change-1.qni
+- basic-gates/bell-state-change-2: ./responses/basic-gates/bell-state-change-2.md -> ./circuit-json/basic-gates/bell-state-change-2.json -> ./submissions/basic-gates/bell-state-change-2.qni
+- basic-gates/bell-state-change-3: ./responses/basic-gates/bell-state-change-3.md -> ./circuit-json/basic-gates/bell-state-change-3.json -> ./submissions/basic-gates/bell-state-change-3.qni
+- basic-gates/fredkin-gate: ./responses/basic-gates/fredkin-gate.md -> ./circuit-json/basic-gates/fredkin-gate.json -> ./submissions/basic-gates/fredkin-gate.qni
+- basic-gates/global-phase-change: ./responses/basic-gates/global-phase-change.md -> ./circuit-json/basic-gates/global-phase-change.json -> ./submissions/basic-gates/global-phase-change.qni
+- basic-gates/phase-change-pi-over-3: ./responses/basic-gates/phase-change-pi-over-3.md -> ./circuit-json/basic-gates/phase-change-pi-over-3.json -> ./submissions/basic-gates/phase-change-pi-over-3.qni
+- basic-gates/phase-flip: ./responses/basic-gates/phase-flip.md -> ./circuit-json/basic-gates/phase-flip.json -> ./submissions/basic-gates/phase-flip.qni
+- basic-gates/sign-flip: ./responses/basic-gates/sign-flip.md -> ./circuit-json/basic-gates/sign-flip.json -> ./submissions/basic-gates/sign-flip.qni
+- basic-gates/state-flip: ./responses/basic-gates/state-flip.md -> ./circuit-json/basic-gates/state-flip.json -> ./submissions/basic-gates/state-flip.qni
+- basic-gates/toffoli-gate: ./responses/basic-gates/toffoli-gate.md -> ./circuit-json/basic-gates/toffoli-gate.json -> ./submissions/basic-gates/toffoli-gate.qni
+- basic-gates/two-qubit-gate-1: ./responses/basic-gates/two-qubit-gate-1.md -> ./circuit-json/basic-gates/two-qubit-gate-1.json -> ./submissions/basic-gates/two-qubit-gate-1.qni
+- basic-gates/two-qubit-gate-2: ./responses/basic-gates/two-qubit-gate-2.md -> ./circuit-json/basic-gates/two-qubit-gate-2.json -> ./submissions/basic-gates/two-qubit-gate-2.qni
+- basic-gates/two-qubit-gate-3: ./responses/basic-gates/two-qubit-gate-3.md -> ./circuit-json/basic-gates/two-qubit-gate-3.json -> ./submissions/basic-gates/two-qubit-gate-3.qni
+- basic-gates/two-qubit-gate-4: ./responses/basic-gates/two-qubit-gate-4.md -> ./circuit-json/basic-gates/two-qubit-gate-4.json -> ./submissions/basic-gates/two-qubit-gate-4.qni
+- multi-qubit-gates/arbitrary-controls: ./responses/multi-qubit-gates/arbitrary-controls.md -> ./circuit-json/multi-qubit-gates/arbitrary-controls.json -> ./submissions/multi-qubit-gates/arbitrary-controls.qni
+- multi-qubit-gates/compound-gate: ./responses/multi-qubit-gates/compound-gate.md -> ./circuit-json/multi-qubit-gates/compound-gate.json -> ./submissions/multi-qubit-gates/compound-gate.qni
+- multi-qubit-gates/controlled-rotation: ./responses/multi-qubit-gates/controlled-rotation.md -> ./circuit-json/multi-qubit-gates/controlled-rotation.json -> ./submissions/multi-qubit-gates/controlled-rotation.qni
+- multi-qubit-gates/preparing-bell-state: ./responses/multi-qubit-gates/preparing-bell-state.md -> ./circuit-json/multi-qubit-gates/preparing-bell-state.json -> ./submissions/multi-qubit-gates/preparing-bell-state.qni
+- preparing-states/all-basis-vectors: ./responses/preparing-states/all-basis-vectors.md -> ./circuit-json/preparing-states/all-basis-vectors.json -> ./submissions/preparing-states/all-basis-vectors.qni
+- preparing-states/all-bell-states-0: ./responses/preparing-states/all-bell-states-0.md -> ./circuit-json/preparing-states/all-bell-states-0.json -> ./submissions/preparing-states/all-bell-states-0.qni
+- preparing-states/all-bell-states-1: ./responses/preparing-states/all-bell-states-1.md -> ./circuit-json/preparing-states/all-bell-states-1.json -> ./submissions/preparing-states/all-bell-states-1.qni
+- preparing-states/all-bell-states-2: ./responses/preparing-states/all-bell-states-2.md -> ./circuit-json/preparing-states/all-bell-states-2.json -> ./submissions/preparing-states/all-bell-states-2.qni
+- preparing-states/all-bell-states-3: ./responses/preparing-states/all-bell-states-3.md -> ./circuit-json/preparing-states/all-bell-states-3.json -> ./submissions/preparing-states/all-bell-states-3.qni
+- preparing-states/controlled-rotation: ./responses/preparing-states/controlled-rotation.md -> ./circuit-json/preparing-states/controlled-rotation.json -> ./submissions/preparing-states/controlled-rotation.qni
+- preparing-states/even-odd: ./responses/preparing-states/even-odd.md -> ./circuit-json/preparing-states/even-odd.json -> ./submissions/preparing-states/even-odd.qni
+- preparing-states/four-bitstrings: ./responses/preparing-states/four-bitstrings.md -> ./circuit-json/preparing-states/four-bitstrings.json -> ./submissions/preparing-states/four-bitstrings.qni
+- preparing-states/hardy-state: ./responses/preparing-states/hardy-state.md -> invalid -> ./submissions/preparing-states/hardy-state.qni
+- preparing-states/parity-bitstrings: ./responses/preparing-states/parity-bitstrings.md -> ./circuit-json/preparing-states/parity-bitstrings.json -> ./submissions/preparing-states/parity-bitstrings.qni
+- preparing-states/three-states-two-qubits-phases: ./responses/preparing-states/three-states-two-qubits-phases.md -> invalid -> ./submissions/preparing-states/three-states-two-qubits-phases.qni
+- preparing-states/three-states-two-qubits: ./responses/preparing-states/three-states-two-qubits.md -> invalid -> ./submissions/preparing-states/three-states-two-qubits.qni
+- preparing-states/two-bitstrings: ./responses/preparing-states/two-bitstrings.md -> ./circuit-json/preparing-states/two-bitstrings.json -> ./submissions/preparing-states/two-bitstrings.qni
+- preparing-states/unequal-superposition: ./responses/preparing-states/unequal-superposition.md -> ./circuit-json/preparing-states/unequal-superposition.json -> ./submissions/preparing-states/unequal-superposition.qni
+- preparing-states/wstate-arbitrary: ./responses/preparing-states/wstate-arbitrary.md -> invalid -> ./submissions/preparing-states/wstate-arbitrary.qni
+- preparing-states/wstate-power-of-two: ./responses/preparing-states/wstate-power-of-two.md -> ./circuit-json/preparing-states/wstate-power-of-two.json -> ./submissions/preparing-states/wstate-power-of-two.qni
+- preparing-states/zero-and-bitstring: ./responses/preparing-states/zero-and-bitstring.md -> ./circuit-json/preparing-states/zero-and-bitstring.json -> ./submissions/preparing-states/zero-and-bitstring.qni
+- qft/all-basis-vectors: ./responses/qft/all-basis-vectors.md -> ./circuit-json/qft/all-basis-vectors.json -> ./submissions/qft/all-basis-vectors.qni
+- qft/all-even-vectors: ./responses/qft/all-even-vectors.md -> ./circuit-json/qft/all-even-vectors.json -> ./submissions/qft/all-even-vectors.qni
+- qft/alternating-amplitudes: ./responses/qft/alternating-amplitudes.md -> ./circuit-json/qft/alternating-amplitudes.json -> ./submissions/qft/alternating-amplitudes.qni
+- qft/binary-fraction-classical: ./responses/qft/binary-fraction-classical.md -> ./circuit-json/qft/binary-fraction-classical.json -> ./submissions/qft/binary-fraction-classical.qni
+- qft/binary-fraction-inplace: ./responses/qft/binary-fraction-inplace.md -> ./circuit-json/qft/binary-fraction-inplace.json -> ./submissions/qft/binary-fraction-inplace.qni
+- qft/binary-fraction-quantum: ./responses/qft/binary-fraction-quantum.md -> ./circuit-json/qft/binary-fraction-quantum.json -> ./submissions/qft/binary-fraction-quantum.qni
+- qft/periodic-state: ./responses/qft/periodic-state.md -> ./circuit-json/qft/periodic-state.json -> ./submissions/qft/periodic-state.qni
+- qft/qft: ./responses/qft/qft.md -> ./circuit-json/qft/qft.json -> ./submissions/qft/qft.qni
+- qft/rotation-gate: ./responses/qft/rotation-gate.md -> ./circuit-json/qft/rotation-gate.json -> ./submissions/qft/rotation-gate.qni
+- qft/signal-frequency: ./responses/qft/signal-frequency.md -> ./circuit-json/qft/signal-frequency.json -> ./submissions/qft/signal-frequency.qni
+- qft/single-qubit: ./responses/qft/single-qubit.md -> ./circuit-json/qft/single-qubit.json -> ./submissions/qft/single-qubit.qni
+- qft/square-wave: ./responses/qft/square-wave.md -> ./circuit-json/qft/square-wave.json -> ./submissions/qft/square-wave.qni
+- single-qubit-gates/amplitude-change: ./responses/single-qubit-gates/amplitude-change.md -> ./circuit-json/single-qubit-gates/amplitude-change.json -> ./submissions/single-qubit-gates/amplitude-change.qni
+- single-qubit-gates/global-phase-i: ./responses/single-qubit-gates/global-phase-i.md -> ./circuit-json/single-qubit-gates/global-phase-i.json -> ./submissions/single-qubit-gates/global-phase-i.qni
+- single-qubit-gates/prepare-arbitrary-state: ./responses/single-qubit-gates/prepare-arbitrary-state.md -> ./circuit-json/single-qubit-gates/prepare-arbitrary-state.json -> ./submissions/single-qubit-gates/prepare-arbitrary-state.qni
+- single-qubit-gates/prepare-minus: ./responses/single-qubit-gates/prepare-minus.md -> ./circuit-json/single-qubit-gates/prepare-minus.json -> ./submissions/single-qubit-gates/prepare-minus.qni
+- single-qubit-gates/prepare-rotated-state: ./responses/single-qubit-gates/prepare-rotated-state.md -> ./circuit-json/single-qubit-gates/prepare-rotated-state.json -> ./submissions/single-qubit-gates/prepare-rotated-state.qni
+- single-qubit-gates/sign-flip-on-zero: ./responses/single-qubit-gates/sign-flip-on-zero.md -> ./circuit-json/single-qubit-gates/sign-flip-on-zero.json -> ./submissions/single-qubit-gates/sign-flip-on-zero.qni
+- single-qubit-gates/three-quarters-pi-phase: ./responses/single-qubit-gates/three-quarters-pi-phase.md -> ./circuit-json/single-qubit-gates/three-quarters-pi-phase.json -> ./submissions/single-qubit-gates/three-quarters-pi-phase.qni
+- single-qubit-gates/y-gate: ./responses/single-qubit-gates/y-gate.md -> ./circuit-json/single-qubit-gates/y-gate.json -> ./submissions/single-qubit-gates/y-gate.qni
+- superposition/all-basis-vector-with-phase-flip-two-qubits: ./responses/superposition/all-basis-vector-with-phase-flip-two-qubits.md -> ./circuit-json/superposition/all-basis-vector-with-phase-flip-two-qubits.json -> ./submissions/superposition/all-basis-vector-with-phase-flip-two-qubits.qni
+- superposition/all-basis-vectors-two-qubits: ./responses/superposition/all-basis-vectors-two-qubits.md -> ./circuit-json/superposition/all-basis-vectors-two-qubits.json -> ./submissions/superposition/all-basis-vectors-two-qubits.qni
+- superposition/all-basis-vectors-with-phases-two-qubits: ./responses/superposition/all-basis-vectors-with-phases-two-qubits.md -> ./circuit-json/superposition/all-basis-vectors-with-phases-two-qubits.json -> ./submissions/superposition/all-basis-vectors-with-phases-two-qubits.qni
+- superposition/bell-state: ./responses/superposition/bell-state.md -> ./circuit-json/superposition/bell-state.json -> ./submissions/superposition/bell-state.qni
+- superposition/ghz-state: ./responses/superposition/ghz-state.md -> ./circuit-json/superposition/ghz-state.json -> ./submissions/superposition/ghz-state.qni
+- superposition/minus-state: ./responses/superposition/minus-state.md -> ./circuit-json/superposition/minus-state.json -> ./submissions/superposition/minus-state.qni
+- superposition/plus-state: ./responses/superposition/plus-state.md -> ./circuit-json/superposition/plus-state.json -> ./submissions/superposition/plus-state.qni

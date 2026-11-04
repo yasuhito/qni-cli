@@ -1,0 +1,951 @@
+{
+  "schemaVersion": 1,
+  "manifestSha256": "8e434d0426e98563eff57c38c999875a2cc13309e5d8ae4f6d5493a47721b6cc",
+  "selectedAnswers": 1323,
+  "attemptedCalls": 1325,
+  "xMetric": "output tokens across 63 selected final answers",
+  "xScale": "log10",
+  "yMetric": "passed / 63 * 100",
+  "caveats": [
+    "Two resumed max points use selected-answer output subtotals; all-attempt output and cost are unknown.",
+    "Timeout limits differ: 300, 600, and 3600 seconds.",
+    "Codex and Bridge use different runners, system contexts and tokenizers.",
+    "Reported output includes reasoning; reasoning is not added twice. Codex coerces missing provider reasoning detail to zero.",
+    "Bridge recorded cost zero is not a bill or a cost estimate.",
+    "One observation per condition; no confidence intervals."
+  ],
+  "points": [
+    {
+      "id": "openai-codex/gpt-6-luna/off",
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "effort": "off",
+      "effectiveEffort": "none",
+      "resumed": false,
+      "label": "off",
+      "source": {
+        "kind": "trial",
+        "path": "research/runs/2026-11-04T020943Z-effort-matrix-v1-openai-codex-gpt-6-luna-off",
+        "callsSha256": "a1d300e7d0e254ed18fb946d71a34a6c1d37f27c1b9fb2ae0909d54b7de0c61d",
+        "metadataSha256": "81b64c86009f956fd747cea95ced5828eb4d3f2bf36d32002173f07fa69f0838",
+        "resultSha256": "e5e0e47b3af141de95da1d6a10d93174d09bc4f4ecfb7e5af3d74889a994885c",
+        "envelopeSha256": "410e0427dbe898accd0f5887c0ba70d84b48490e939d4f6ae628c98c9b37f932"
+      },
+      "timeoutMix": {
+        "300": 63
+      },
+      "counts": {
+        "passed": 37,
+        "failed": 19,
+        "disallowed": 4,
+        "error": 3
+      },
+      "total": 63,
+      "passRatePercent": 58.730158730158735,
+      "tokens": {
+        "inputTokens": 24376,
+        "outputTokens": 2736,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 27112
+      },
+      "reasoningReported": 0,
+      "recordedAnswerCostUsd": 0.0038056000000000014,
+      "allAttemptOutputTokens": 2736,
+      "allAttemptRecordedCostUsd": 0.0038056000000000014,
+      "elapsedMs": 198940,
+      "executionErrors": 0,
+      "timeLimits": {
+        "300": 63
+      }
+    },
+    {
+      "id": "openai-codex/gpt-6-luna/low",
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "effort": "low",
+      "effectiveEffort": "low",
+      "resumed": false,
+      "label": "low",
+      "source": {
+        "kind": "trial",
+        "path": "research/runs/2026-11-04T021824Z-effort-matrix-v1-openai-codex-gpt-6-luna-low",
+        "callsSha256": "da66fcb32a0659a4268a2f2199c33af8e8ab3d10b94700247318539c4d285148",
+        "metadataSha256": "3e35693939c9be56fff125caadcd6519e9bfbe29bf622997b221fe2794423f18",
+        "resultSha256": "9b4633d35543a5e55c3ad397945cea9c9eb33a8b661043b1e5922642c63ccc6d",
+        "envelopeSha256": "aed9e20ffc0556f6665e1f2d10ea3bfe18f3455c3a083e442da213ed6d013f16"
+      },
+      "timeoutMix": {
+        "300": 63
+      },
+      "counts": {
+        "passed": 51,
+        "failed": 3,
+        "disallowed": 7,
+        "error": 2
+      },
+      "total": 63,
+      "passRatePercent": 80.95238095238095,
+      "tokens": {
+        "inputTokens": 24378,
+        "outputTokens": 10416,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 34794
+      },
+      "reasoningReported": 7862,
+      "recordedAnswerCostUsd": 0.0076457999999999995,
+      "allAttemptOutputTokens": 10416,
+      "allAttemptRecordedCostUsd": 0.0076457999999999995,
+      "elapsedMs": 454616,
+      "executionErrors": 0,
+      "timeLimits": {
+        "300": 63
+      }
+    },
+    {
+      "id": "openai-codex/gpt-6-luna/medium",
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "effort": "medium",
+      "effectiveEffort": "medium",
+      "resumed": false,
+      "label": "medium",
+      "source": {
+        "kind": "trial",
+        "path": "research/runs/2026-11-04T022606Z-effort-matrix-v1-openai-codex-gpt-6-luna-medium",
+        "callsSha256": "9498416dffd02ff3626591551197ac8571ae25a237d61b4b9ada2c114def6782",
+        "metadataSha256": "69f0445e5524583475c3955c75d60263faed8680546a31bfb0cd4c917954d820",
+        "resultSha256": "f30cc1359d22c83b6898a6550a511c8a8bb80216df3d7784bf080e263ea9d502",
+        "envelopeSha256": "8adbc1e5b8f9433c4a20ec6e426b60d5bd92427f7cb98486ff263c838875523e"
+      },
+      "timeoutMix": {
+        "300": 63
+      },
+      "counts": {
+        "passed": 54,
+        "failed": 4,
+        "disallowed": 5,
+        "error": 0
+      },
+      "total": 63,
+      "passRatePercent": 85.71428571428571,
+      "tokens": {
+        "inputTokens": 24370,
+        "outputTokens": 14304,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 38674
+      },
+      "reasoningReported": 11568,
+      "recordedAnswerCostUsd": 0.009589000000000002,
+      "allAttemptOutputTokens": 14304,
+      "allAttemptRecordedCostUsd": 0.009589000000000002,
+      "elapsedMs": 613823,
+      "executionErrors": 0,
+      "timeLimits": {
+        "300": 63
+      }
+    },
+    {
+      "id": "openai-codex/gpt-6-luna/high",
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "effort": "high",
+      "effectiveEffort": "high",
+      "resumed": false,
+      "label": "high",
+      "source": {
+        "kind": "trial",
+        "path": "research/runs/2026-11-04T023627Z-effort-matrix-v1-openai-codex-gpt-6-luna-high",
+        "callsSha256": "7970c459e9b2d3d8a14f500e222ecb2c74a0291a74d0ef82dd5482ffab35bc14",
+        "metadataSha256": "c93b4f352d21d5fa9df15eebc7b9de74557fb67086b6678163b60f0f10db1cee",
+        "resultSha256": "5e52470b7497850457b97bffe4181b788908215608bb9710e3734099f777995f",
+        "envelopeSha256": "35ec7d8f8fe946a87d72406926fbc637a40d4ab77f4ceed998879f75655777b7"
+      },
+      "timeoutMix": {
+        "300": 63
+      },
+      "counts": {
+        "passed": 55,
+        "failed": 4,
+        "disallowed": 4,
+        "error": 0
+      },
+      "total": 63,
+      "passRatePercent": 87.3015873015873,
+      "tokens": {
+        "inputTokens": 24365,
+        "outputTokens": 17178,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 41543
+      },
+      "reasoningReported": 14595,
+      "recordedAnswerCostUsd": 0.011025499999999999,
+      "allAttemptOutputTokens": 17178,
+      "allAttemptRecordedCostUsd": 0.011025499999999999,
+      "elapsedMs": 679254,
+      "executionErrors": 0,
+      "timeLimits": {
+        "300": 63
+      }
+    },
+    {
+      "id": "openai-codex/gpt-6-luna/xhigh",
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "effort": "xhigh",
+      "effectiveEffort": "xhigh",
+      "resumed": false,
+      "label": "xhigh",
+      "source": {
+        "kind": "trial",
+        "path": "research/runs/2026-11-04T024754Z-effort-matrix-v1-openai-codex-gpt-6-luna-xhigh",
+        "callsSha256": "3c3eb63f6daafd29786119bcb939cdaebf51db3ef7393d8d448fa90fa102bebd",
+        "metadataSha256": "fe1bacdbefcbb456d9a8e7e623962147f69ef8ee1b9a60adcfc2d8fdb0c85710",
+        "resultSha256": "469cdabe65ad04f4d1760eed82bcbaf8a84990be32221f33718094d03f22a8a8",
+        "envelopeSha256": "7fc76c43438b72d8218c747ac2ba978d011e31a52f316c128cd63094686a0f83"
+      },
+      "timeoutMix": {
+        "300": 63
+      },
+      "counts": {
+        "passed": 57,
+        "failed": 2,
+        "disallowed": 4,
+        "error": 0
+      },
+      "total": 63,
+      "passRatePercent": 90.47619047619048,
+      "tokens": {
+        "inputTokens": 24368,
+        "outputTokens": 31788,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 56156
+      },
+      "reasoningReported": 29174,
+      "recordedAnswerCostUsd": 0.018330799999999998,
+      "allAttemptOutputTokens": 31788,
+      "allAttemptRecordedCostUsd": 0.018330799999999998,
+      "elapsedMs": 926210,
+      "executionErrors": 0,
+      "timeLimits": {
+        "300": 63
+      }
+    },
+    {
+      "id": "openai-codex/gpt-6-luna/max",
+      "provider": "openai-codex",
+      "model": "gpt-6-luna",
+      "effort": "max",
+      "effectiveEffort": "max",
+      "resumed": true,
+      "label": "max†",
+      "source": {
+        "kind": "derived",
+        "path": "research/analyses/model-effort-matrix-2026-11-04/luna-max-continuation.json",
+        "sha256": "da0e6fce763aec08d5160f23a6ff94eb00dce9f77fa23edd87149c06ae9b5770"
+      },
+      "timeoutMix": {
+        "answersAt300Seconds": 34,
+        "answersAt600Seconds": 29
+      },
+      "counts": {
+        "passed": 56,
+        "failed": 2,
+        "disallowed": 5,
+        "error": 0
+      },
+      "total": 63,
+      "passRatePercent": 88.88888888888889,
+      "tokens": {
+        "inputTokens": 24359,
+        "outputTokens": 34754,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 59113
+      },
+      "reasoningReported": 32133,
+      "recordedAnswerCostUsd": 0.019812899999999998,
+      "allAttemptOutputTokens": null,
+      "allAttemptRecordedCostUsd": null,
+      "elapsedMs": 1301270,
+      "executionErrors": 1,
+      "timeLimits": {
+        "300": 34,
+        "600": 29
+      }
+    },
+    {
+      "id": "openai-codex/gpt-6.1-sol/low",
+      "provider": "openai-codex",
+      "model": "gpt-6.1-sol",
+      "effort": "low",
+      "effectiveEffort": "low",
+      "resumed": false,
+      "label": "low",
+      "source": {
+        "kind": "trial",
+        "path": "research/runs/2026-11-04T042104Z-effort-matrix-v2-openai-codex-gpt-6-1-sol-low-600s",
+        "callsSha256": "2abd1ac13fcc909d8b97526bc36846a372d5a6532bf5cbd8e0d91b02cbce8fc1",
+        "metadataSha256": "cad10b6aabb3a7a6ceb72ea4a9b8501014b4ce727b79cf5d24e5f7ee10958f84",
+        "resultSha256": "0006bf6841aabf00d8be87584c3bd3ff7df8e9c52081c15f012cc68ee3ee9f52",
+        "envelopeSha256": "d52c80bc87e29d1fdd7b7025c424013df6e313791a77eaba1a3d820abb8ea501"
+      },
+      "timeoutMix": {
+        "600": 63
+      },
+      "counts": {
+        "passed": 56,
+        "failed": 3,
+        "disallowed": 4,
+        "error": 0
+      },
+      "total": 63,
+      "passRatePercent": 88.88888888888889,
+      "tokens": {
+        "inputTokens": 24371,
+        "outputTokens": 3636,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 28007
+      },
+      "reasoningReported": 1131,
+      "recordedAnswerCostUsd": 0.08510200000000002,
+      "allAttemptOutputTokens": 3636,
+      "allAttemptRecordedCostUsd": 0.08510200000000002,
+      "elapsedMs": 283650,
+      "executionErrors": 0,
+      "timeLimits": {
+        "600": 63
+      }
+    },
+    {
+      "id": "openai-codex/gpt-6.1-sol/medium",
+      "provider": "openai-codex",
+      "model": "gpt-6.1-sol",
+      "effort": "medium",
+      "effectiveEffort": "medium",
+      "resumed": false,
+      "label": "medium",
+      "source": {
+        "kind": "trial",
+        "path": "research/runs/2026-11-04T042557Z-effort-matrix-v2-openai-codex-gpt-6-1-sol-medium-600s",
+        "callsSha256": "48b496fbd099988b36bb70a543514fb609d0607e28ee2b9e1426931cdda7c48e",
+        "metadataSha256": "995d263cb5f16c7063dc772986ce3f9dcc5864a21049a2c205c5caa72328df52",
+        "resultSha256": "469cdabe65ad04f4d1760eed82bcbaf8a84990be32221f33718094d03f22a8a8",
+        "envelopeSha256": "0234687986e60d085508b93f266a9518e5e4d5067e20eb2d30e606b4ffc4537d"
+      },
+      "timeoutMix": {
+        "600": 63
+      },
+      "counts": {
+        "passed": 57,
+        "failed": 2,
+        "disallowed": 4,
+        "error": 0
+      },
+      "total": 63,
+      "passRatePercent": 90.47619047619048,
+      "tokens": {
+        "inputTokens": 24377,
+        "outputTokens": 4590,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 28967
+      },
+      "reasoningReported": 2080,
+      "recordedAnswerCostUsd": 0.09465400000000003,
+      "allAttemptOutputTokens": 4590,
+      "allAttemptRecordedCostUsd": 0.09465400000000003,
+      "elapsedMs": 331490,
+      "executionErrors": 0,
+      "timeLimits": {
+        "600": 63
+      }
+    },
+    {
+      "id": "openai-codex/gpt-6.1-sol/high",
+      "provider": "openai-codex",
+      "model": "gpt-6.1-sol",
+      "effort": "high",
+      "effectiveEffort": "high",
+      "resumed": false,
+      "label": "high",
+      "source": {
+        "kind": "trial",
+        "path": "research/runs/2026-11-04T043139Z-effort-matrix-v2-openai-codex-gpt-6-1-sol-high-600s",
+        "callsSha256": "b0363d989b79150d5ec9680908b14605ad690360e5a0899679d65c8295c07c9d",
+        "metadataSha256": "bda8a565718cc47cac7c07f68135c7d18fa96703eb1bfe5f5921e936d141a636",
+        "resultSha256": "0006bf6841aabf00d8be87584c3bd3ff7df8e9c52081c15f012cc68ee3ee9f52",
+        "envelopeSha256": "f8cfe9cb086ada5ead4c4aaff024bf58f37737154eb6b58c3be301ab9314f995"
+      },
+      "timeoutMix": {
+        "600": 63
+      },
+      "counts": {
+        "passed": 56,
+        "failed": 3,
+        "disallowed": 4,
+        "error": 0
+      },
+      "total": 63,
+      "passRatePercent": 88.88888888888889,
+      "tokens": {
+        "inputTokens": 24377,
+        "outputTokens": 6022,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 30399
+      },
+      "reasoningReported": 3479,
+      "recordedAnswerCostUsd": 0.108974,
+      "allAttemptOutputTokens": 6022,
+      "allAttemptRecordedCostUsd": 0.108974,
+      "elapsedMs": 429306,
+      "executionErrors": 0,
+      "timeLimits": {
+        "600": 63
+      }
+    },
+    {
+      "id": "openai-codex/gpt-6.1-sol/xhigh",
+      "provider": "openai-codex",
+      "model": "gpt-6.1-sol",
+      "effort": "xhigh",
+      "effectiveEffort": "xhigh",
+      "resumed": false,
+      "label": "xhigh",
+      "source": {
+        "kind": "trial",
+        "path": "research/runs/2026-11-04T043857Z-effort-matrix-v2-openai-codex-gpt-6-1-sol-xhigh-600s",
+        "callsSha256": "426873073dffbcd15724751d1c332ce1cce41328adff2e2301946cc87a34c52b",
+        "metadataSha256": "25fa0ca106e7902c72682cee7cb5b6e90e75325970213cef007dfd0bbe07f832",
+        "resultSha256": "0006bf6841aabf00d8be87584c3bd3ff7df8e9c52081c15f012cc68ee3ee9f52",
+        "envelopeSha256": "c7da52e6cda3db4054b7dcff563465a1b7032928d201c29f35ce977e5f9524fb"
+      },
+      "timeoutMix": {
+        "600": 63
+      },
+      "counts": {
+        "passed": 56,
+        "failed": 3,
+        "disallowed": 4,
+        "error": 0
+      },
+      "total": 63,
+      "passRatePercent": 88.88888888888889,
+      "tokens": {
+        "inputTokens": 24366,
+        "outputTokens": 11226,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 35592
+      },
+      "reasoningReported": 8636,
+      "recordedAnswerCostUsd": 0.16099200000000002,
+      "allAttemptOutputTokens": 11226,
+      "allAttemptRecordedCostUsd": 0.16099200000000002,
+      "elapsedMs": 621654,
+      "executionErrors": 0,
+      "timeLimits": {
+        "600": 63
+      }
+    },
+    {
+      "id": "openai-codex/gpt-6.1-sol/max",
+      "provider": "openai-codex",
+      "model": "gpt-6.1-sol",
+      "effort": "max",
+      "effectiveEffort": "max",
+      "resumed": false,
+      "label": "max",
+      "source": {
+        "kind": "trial",
+        "path": "research/runs/2026-11-04T044928Z-effort-matrix-v2-openai-codex-gpt-6-1-sol-max-600s",
+        "callsSha256": "108fe395fd5704d301ac8e31dbc8866b9b7a4089b793110f7997eb45c31b14d4",
+        "metadataSha256": "2a89315497bad554778c090c72db2e24b5137e900a9c8a2c7fd7cbcb18b7fa57",
+        "resultSha256": "f54f58454da6db14789db6cfa4aa22496f3f922340f088446606b5dbf39683dd",
+        "envelopeSha256": "1de9e41bca6e645cf8f54c2ee0233a5877f34019a2b67416af6d498e2e0f2df3"
+      },
+      "timeoutMix": {
+        "600": 63
+      },
+      "counts": {
+        "passed": 58,
+        "failed": 2,
+        "disallowed": 3,
+        "error": 0
+      },
+      "total": 63,
+      "passRatePercent": 92.06349206349206,
+      "tokens": {
+        "inputTokens": 24366,
+        "outputTokens": 15138,
+        "cacheReadTokens": 0,
+        "cacheWriteTokens": 0,
+        "totalTokens": 39504
+      },
+      "reasoningReported": 12556,
+      "recordedAnswerCostUsd": 0.20011200000000004,
+      "allAttemptOutputTokens": 15138,
+      "allAttemptRecordedCostUsd": 0.20011200000000004,
+      "elapsedMs": 709653,
+      "executionErrors": 0,
+      "timeLimits": {
+        "600": 63
+      }
+    },
+    {
+      "id": "claude-bridge/claude-sonnet-5-5/low",
+      "provider": "claude-bridge",
+      "model": "claude-sonnet-5-5",
+      "effort": "low",
+      "effectiveEffort": "low",
+      "resumed": false,
+      "label": "low",
+      "source": {
+        "kind": "trial",
+        "path": "research/runs/2026-11-04T050301Z-effort-matrix-v2-claude-bridge-claude-sonnet-5-5-low-600s",
+        "callsSha256": "4bd5040920daa1b3b19fc544bfd13b2eee9825fc9cc605b12ad57cb1e6111d12",
+        "metadataSha256": "49e80f8623195aa61764f5ff72de1367a5b746c151d6f11b411d2ddf5cc20044",
+        "resultSha256": "d01f780fc251d86fa7cd86de8cdb3baff0d9b8c751d60f84653a502d4600dd02",
+        "envelopeSha256": "f4144a5f8d6f1ca5befde3c0d16241fe2c23cdbd7960c733a19f81a8615f97d1"
+      },
+      "timeoutMix": {
+        "600": 63
+      },
+      "counts": {
+        "passed": 54,
+        "failed": 5,
+        "disallowed": 4,
+        "error": 0
+      },
+      "total": 63,
+      "passRatePercent": 85.71428571428571,
+      "tokens": {
+        "inputTokens": 126,
+        "outputTokens": 14463,
+        "cacheReadTokens": 79236,
+        "cacheWriteTokens": 57253,
+        "totalTokens": 151078
+      },
+      "reasoningReported": 10336,
+      "recordedAnswerCostUsd": 0,
+      "allAttemptOutputTokens": 14463,
+      "allAttemptRecordedCostUsd": 0,
+      "elapsedMs": 336480,
+      "executionErrors": 0,
+      "timeLimits": {
+        "600": 63
+      }
+    },
+    {
+      "id": "claude-bridge/claude-sonnet-5-5/medium",
+      "provider": "claude-bridge",
+      "model": "claude-sonnet-5-5",
+      "effort": "medium",
+      "effectiveEffort": "medium",
+      "resumed": false,
+      "label": "medium",
+      "source": {
+        "kind": "trial",
+        "path": "research/runs/2026-11-04T050846Z-effort-matrix-v2-claude-bridge-claude-sonnet-5-5-medium-600s",
+        "callsSha256": "7439dc88ac677292ee2d785893854aed7d28a079f676d536c42d545758f19d31",
+        "metadataSha256": "cb9dc1eb538452e5b534341b4bdbc1c2d2840dbb1bc71fa78386bee2b854e913",
+        "resultSha256": "577a24ba9a6378857f6fd1b7d6b2e66228252adb7d293b28f041d56851bb5e9f",
+        "envelopeSha256": "c068a987c62e85c5114006076f8ce1f1790d85dfe53caed8dfbb69e1bede33c1"
+      },
+      "timeoutMix": {
+        "600": 63
+      },
+      "counts": {
+        "passed": 53,
+        "failed": 4,
+        "disallowed": 6,
+        "error": 0
+      },
+      "total": 63,
+      "passRatePercent": 84.12698412698413,
+      "tokens": {
+        "inputTokens": 126,
+        "outputTokens": 13090,
+        "cacheReadTokens": 114946,
+        "cacheWriteTokens": 21533,
+        "totalTokens": 149695
+      },
+      "reasoningReported": 8832,
+      "recordedAnswerCostUsd": 0,
+      "allAttemptOutputTokens": 13090,
+      "allAttemptRecordedCostUsd": 0,
+      "elapsedMs": 330163,
+      "executionErrors": 0,
+      "timeLimits": {
+        "600": 63
+      }
+    },
+    {
+      "id": "claude-bridge/claude-sonnet-5-5/high",
+      "provider": "claude-bridge",
+      "model": "claude-sonnet-5-5",
+      "effort": "high",
+      "effectiveEffort": "high",
+      "resumed": false,
+      "label": "high",
+      "source": {
+        "kind": "trial",
+        "path": "research/runs/2026-11-04T051427Z-effort-matrix-v2-claude-bridge-claude-sonnet-5-5-high-600s",
+        "callsSha256": "a8b5d3cabe09ba7070aee3ae928fd148aedb828d9fcfc5bf67083eed9412c736",
+        "metadataSha256": "6a29fc4a44389843ddc52bbc7ccddb388a5e5dee2e4451bf2c6fc186e6db1744",
+        "resultSha256": "66659c6d340688142aa0072cc910b0753a0b6a59b25440e4619e21ec946b83ce",
+        "envelopeSha256": "7105535f5dfdf00d52b4a9b762bf33439ae636928b8e9032e2d188e01b41b7a3"
+      },
+      "timeoutMix": {
+        "600": 63
+      },
+      "counts": {
+        "passed": 57,
+        "failed": 5,
+        "disallowed": 1,
+        "error": 0
+      },
+      "total": 63,
+      "passRatePercent": 90.47619047619048,
+      "tokens": {
+        "inputTokens": 126,
+        "outputTokens": 24827,
+        "cacheReadTokens": 114946,
+        "cacheWriteTokens": 21540,
+        "totalTokens": 161439
+      },
+      "reasoningReported": 20772,
+      "recordedAnswerCostUsd": 0,
+      "allAttemptOutputTokens": 24827,
+      "allAttemptRecordedCostUsd": 0,
+      "elapsedMs": 441923,
+      "executionErrors": 0,
+      "timeLimits": {
+        "600": 63
+      }
+    },
+    {
+      "id": "claude-bridge/claude-sonnet-5-5/xhigh",
+      "provider": "claude-bridge",
+      "model": "claude-sonnet-5-5",
+      "effort": "xhigh",
+      "effectiveEffort": "xhigh",
+      "resumed": false,
+      "label": "xhigh",
+      "source": {
+        "kind": "trial",
+        "path": "research/runs/2026-11-04T052158Z-effort-matrix-v2-claude-bridge-claude-sonnet-5-5-xhigh-600s",
+        "callsSha256": "e9251edf59c830e79469c2a4cf1e7ce5c42c82c3fe5a14a183b70845555054be",
+        "metadataSha256": "a4c485f10947de1efa2af82cdc0f7bdf6a6347f543ed540d989363aa19a696c8",
+        "resultSha256": "e2d1ce3c3d7edd0e883158fdd24d8a3516347b591e3d85d3185e5ce832a2f8bf",
+        "envelopeSha256": "473ed45b1c36f1e81457d4d04d1b53719a13f0ae33493e6796d659daa5a36619"
+      },
+      "timeoutMix": {
+        "600": 63
+      },
+      "counts": {
+        "passed": 57,
+        "failed": 3,
+        "disallowed": 3,
+        "error": 0
+      },
+      "total": 63,
+      "passRatePercent": 90.47619047619048,
+      "tokens": {
+        "inputTokens": 126,
+        "outputTokens": 30754,
+        "cacheReadTokens": 114946,
+        "cacheWriteTokens": 21539,
+        "totalTokens": 167365
+      },
+      "reasoningReported": 26540,
+      "recordedAnswerCostUsd": 0,
+      "allAttemptOutputTokens": 30754,
+      "allAttemptRecordedCostUsd": 0,
+      "elapsedMs": 479599,
+      "executionErrors": 0,
+      "timeLimits": {
+        "600": 63
+      }
+    },
+    {
+      "id": "claude-bridge/claude-sonnet-5-5/max",
+      "provider": "claude-bridge",
+      "model": "claude-sonnet-5-5",
+      "effort": "max",
+      "effectiveEffort": "max",
+      "resumed": true,
+      "label": "max‡",
+      "source": {
+        "kind": "derived",
+        "path": "research/analyses/model-effort-matrix-2026-11-04/sonnet-max-continuation.json",
+        "sha256": "7396abc97f376b599013eaf5d0196541bca2bf966caf891390511a6bf2718d06"
+      },
+      "timeoutMix": {
+        "answersAt600Seconds": 30,
+        "answersAt3600Seconds": 33
+      },
+      "counts": {
+        "passed": 58,
+        "failed": 3,
+        "disallowed": 2,
+        "error": 0
+      },
+      "total": 63,
+      "passRatePercent": 92.06349206349206,
+      "tokens": {
+        "inputTokens": 126,
+        "outputTokens": 266852,
+        "cacheReadTokens": 95490,
+        "cacheWriteTokens": 40994,
+        "totalTokens": 403462
+      },
+      "reasoningReported": 262745,
+      "recordedAnswerCostUsd": 0,
+      "allAttemptOutputTokens": null,
+      "allAttemptRecordedCostUsd": null,
+      "elapsedMs": 2841713,
+      "executionErrors": 1,
+      "timeLimits": {
+        "600": 30,
+        "3600": 33
+      }
+    },
+    {
+      "id": "claude-bridge/claude-opus-5-5/low",
+      "provider": "claude-bridge",
+      "model": "claude-opus-5-5",
+      "effort": "low",
+      "effectiveEffort": "low",
+      "resumed": false,
+      "label": "low",
+      "source": {
+        "kind": "trial",
+        "path": "research/runs/2026-11-04T073426Z-effort-matrix-v3-claude-bridge-claude-opus-5-5-low-3600s",
+        "callsSha256": "d5bab416d2d863312e16c4f906084ace3caf4b918ff10e441309cbe61de35f67",
+        "metadataSha256": "db9426911c87bd6072c8a339f4e199a68ca0d9f076d35bbf90f5c8bfcad6e734",
+        "resultSha256": "809edfc372e05f65c2ca3922e8eb7eed0b14c7db776c505773e306f915f14410",
+        "envelopeSha256": "627cb94db38621764f70e4ad956112c54ff6967296eccd8719807d57bfa680a0"
+      },
+      "timeoutMix": {
+        "3600": 63
+      },
+      "counts": {
+        "passed": 56,
+        "failed": 2,
+        "disallowed": 5,
+        "error": 0
+      },
+      "total": 63,
+      "passRatePercent": 88.88888888888889,
+      "tokens": {
+        "inputTokens": 126,
+        "outputTokens": 9107,
+        "cacheReadTokens": 79236,
+        "cacheWriteTokens": 57314,
+        "totalTokens": 145783
+      },
+      "reasoningReported": 4978,
+      "recordedAnswerCostUsd": 0,
+      "allAttemptOutputTokens": 9107,
+      "allAttemptRecordedCostUsd": 0,
+      "elapsedMs": 342730,
+      "executionErrors": 0,
+      "timeLimits": {
+        "3600": 63
+      }
+    },
+    {
+      "id": "claude-bridge/claude-opus-5-5/medium",
+      "provider": "claude-bridge",
+      "model": "claude-opus-5-5",
+      "effort": "medium",
+      "effectiveEffort": "medium",
+      "resumed": false,
+      "label": "medium",
+      "source": {
+        "kind": "trial",
+        "path": "research/runs/2026-11-04T074017Z-effort-matrix-v3-claude-bridge-claude-opus-5-5-medium-3600s",
+        "callsSha256": "071f38041ce36686c862e7a8c77413839eb503c072c94feb136e150700e1b776",
+        "metadataSha256": "e36d5c1ddeaa7f7e91e8daf8141a332cb859758d534e8fbe27f67054a9e6373a",
+        "resultSha256": "190f17a029d221d370f34f0781f125c54e7a31e84ed3ce9e2b93e99f4804d6cb",
+        "envelopeSha256": "0acd5768d736f453e5acdb969504efe981ee0158a0ad8aa12ff52cc8d261963f"
+      },
+      "timeoutMix": {
+        "3600": 63
+      },
+      "counts": {
+        "passed": 54,
+        "failed": 5,
+        "disallowed": 4,
+        "error": 0
+      },
+      "total": 63,
+      "passRatePercent": 85.71428571428571,
+      "tokens": {
+        "inputTokens": 126,
+        "outputTokens": 15375,
+        "cacheReadTokens": 114946,
+        "cacheWriteTokens": 21590,
+        "totalTokens": 152037
+      },
+      "reasoningReported": 11316,
+      "recordedAnswerCostUsd": 0,
+      "allAttemptOutputTokens": 15375,
+      "allAttemptRecordedCostUsd": 0,
+      "elapsedMs": 366500,
+      "executionErrors": 0,
+      "timeLimits": {
+        "3600": 63
+      }
+    },
+    {
+      "id": "claude-bridge/claude-opus-5-5/high",
+      "provider": "claude-bridge",
+      "model": "claude-opus-5-5",
+      "effort": "high",
+      "effectiveEffort": "high",
+      "resumed": false,
+      "label": "high",
+      "source": {
+        "kind": "trial",
+        "path": "research/runs/2026-11-04T074632Z-effort-matrix-v3-claude-bridge-claude-opus-5-5-high-3600s",
+        "callsSha256": "0c9a9c37149e9b0c5d5fda3dba07e4be81741df736bf75612c17427a385ddaba",
+        "metadataSha256": "65c52d930412e0f2b154b93d608aedeea7a861e74692951a95594bfbc37c0f37",
+        "resultSha256": "d618ab7495fb5a4444825bd6c2babbb132d653099d7637e244db01234d7c8245",
+        "envelopeSha256": "908e56f8c9d91ba085e13f4e53544112740e77a95c28a5f480c872cf37a60537"
+      },
+      "timeoutMix": {
+        "3600": 63
+      },
+      "counts": {
+        "passed": 55,
+        "failed": 4,
+        "disallowed": 4,
+        "error": 0
+      },
+      "total": 63,
+      "passRatePercent": 87.3015873015873,
+      "tokens": {
+        "inputTokens": 126,
+        "outputTokens": 17800,
+        "cacheReadTokens": 114946,
+        "cacheWriteTokens": 21600,
+        "totalTokens": 154472
+      },
+      "reasoningReported": 13754,
+      "recordedAnswerCostUsd": 0,
+      "allAttemptOutputTokens": 17800,
+      "allAttemptRecordedCostUsd": 0,
+      "elapsedMs": 393042,
+      "executionErrors": 0,
+      "timeLimits": {
+        "3600": 63
+      }
+    },
+    {
+      "id": "claude-bridge/claude-opus-5-5/xhigh",
+      "provider": "claude-bridge",
+      "model": "claude-opus-5-5",
+      "effort": "xhigh",
+      "effectiveEffort": "xhigh",
+      "resumed": false,
+      "label": "xhigh",
+      "source": {
+        "kind": "trial",
+        "path": "research/runs/2026-11-04T075315Z-effort-matrix-v3-claude-bridge-claude-opus-5-5-xhigh-3600s",
+        "callsSha256": "6bfb78f4d5292a80d5e032a7d7c029a7b277a3a700ce2b0f456e15778212ea0a",
+        "metadataSha256": "45790052638ae4084dce82efb06e13307caf0b93c4e00acdea7757a1a6d3b8b2",
+        "resultSha256": "aeb779d04e721d1d2e07cf147750d2829b2e564f688cbae6131ab36705a02a8f",
+        "envelopeSha256": "3d62336b434713308cf4bad83a0c2179df15df1853404e7f94dba87b190ccb4d"
+      },
+      "timeoutMix": {
+        "3600": 63
+      },
+      "counts": {
+        "passed": 57,
+        "failed": 3,
+        "disallowed": 3,
+        "error": 0
+      },
+      "total": 63,
+      "passRatePercent": 90.47619047619048,
+      "tokens": {
+        "inputTokens": 126,
+        "outputTokens": 42755,
+        "cacheReadTokens": 114946,
+        "cacheWriteTokens": 21594,
+        "totalTokens": 179421
+      },
+      "reasoningReported": 38651,
+      "recordedAnswerCostUsd": 0,
+      "allAttemptOutputTokens": 42755,
+      "allAttemptRecordedCostUsd": 0,
+      "elapsedMs": 612953,
+      "executionErrors": 0,
+      "timeLimits": {
+        "3600": 63
+      }
+    },
+    {
+      "id": "claude-bridge/claude-opus-5-5/max",
+      "provider": "claude-bridge",
+      "model": "claude-opus-5-5",
+      "effort": "max",
+      "effectiveEffort": "max",
+      "resumed": false,
+      "label": "max",
+      "source": {
+        "kind": "trial",
+        "path": "research/runs/2026-11-04T080335Z-effort-matrix-v3-claude-bridge-claude-opus-5-5-max-3600s",
+        "callsSha256": "9d55bace42d87ac1815bff787853193a271f2b6955e66038b97aaad9ce46311b",
+        "metadataSha256": "af02f556d93ab147802b8aed92d6042c5d47321e1f2a7531c487ae3a049dd103",
+        "resultSha256": "56a32db4c781782a9e487347cc599f33dbe88ea2a986f7639b26738f3bc55b51",
+        "envelopeSha256": "9b27ac372fc919aaff7a6285e5105e5adc21e5601336faefed4014a3959f2fcf"
+      },
+      "timeoutMix": {
+        "3600": 63
+      },
+      "counts": {
+        "passed": 56,
+        "failed": 3,
+        "disallowed": 4,
+        "error": 0
+      },
+      "total": 63,
+      "passRatePercent": 88.88888888888889,
+      "tokens": {
+        "inputTokens": 126,
+        "outputTokens": 216205,
+        "cacheReadTokens": 114946,
+        "cacheWriteTokens": 21608,
+        "totalTokens": 352885
+      },
+      "reasoningReported": 212131,
+      "recordedAnswerCostUsd": 0,
+      "allAttemptOutputTokens": 216205,
+      "allAttemptRecordedCostUsd": 0,
+      "elapsedMs": 2189678,
+      "executionErrors": 0,
+      "timeLimits": {
+        "3600": 63
+      }
+    }
+  ],
+  "fontSha256": [
+    {
+      "name": "DejaVuSans.ttf",
+      "sha256": "3fdf69cabf06049ea70a00b5919340e2ce1e6d02b0cc3c4b44fb6801bd1e0d22"
+    },
+    {
+      "name": "DejaVuSans-Bold.ttf",
+      "sha256": "b184b89e3c1075f22f6b71575b6fc20d4972b3cfd3b23322ca6fd596dcaef167"
+    }
+  ]
+}

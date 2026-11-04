@@ -1,0 +1,1 @@
+{"operations":[{"gate":"SWAP","targets":[0,2]},{"gate":"H","targets":[2]},{"gate":"ControlledPhase","controls":[1],"targets":[2],"angle":"-pi/2"},{"gate":"H","targets":[1]},{"gate":"ControlledPhase","controls":[0],"targets":[2],"angle":"-pi/4"},{"gate":"ControlledPhase","controls":[0],"targets":[1],"angle":"-pi/2"},{"gate":"H","targets":[0]}]}

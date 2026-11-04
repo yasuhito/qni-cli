@@ -1,0 +1,61 @@
+{
+  "operations": [
+    {
+      "gate": "H",
+      "targets": [
+        0
+      ]
+    },
+    {
+      "gate": "CNOT",
+      "controls": [
+        0
+      ],
+      "targets": [
+        2
+      ]
+    },
+    {
+      "gate": "X",
+      "targets": [
+        2
+      ]
+    },
+    {
+      "gate": "CH",
+      "controls": [
+        0
+      ],
+      "targets": [
+        1
+      ]
+    },
+    {
+      "gate": "CNOT",
+      "controls": [
+        1
+      ],
+      "targets": [
+        0
+      ]
+    },
+    {
+      "gate": "CH",
+      "controls": [
+        2
+      ],
+      "targets": [
+        3
+      ]
+    },
+    {
+      "gate": "CNOT",
+      "controls": [
+        3
+      ],
+      "targets": [
+        2
+      ]
+    }
+  ]
+}

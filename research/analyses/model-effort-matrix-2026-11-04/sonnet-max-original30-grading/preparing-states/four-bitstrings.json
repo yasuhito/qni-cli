@@ -1,0 +1,13 @@
+{
+  "taskId": "preparing-states/four-bitstrings",
+  "title": "FourBitstrings",
+  "submission": "/tmp/qni-research-solve-PIFogg/submissions/preparing-states/four-bitstrings.qni",
+  "status": "passed",
+  "exitCode": 0,
+  "checks": [
+    {
+      "type": "run",
+      "status": "passed"
+    }
+  ]
+}

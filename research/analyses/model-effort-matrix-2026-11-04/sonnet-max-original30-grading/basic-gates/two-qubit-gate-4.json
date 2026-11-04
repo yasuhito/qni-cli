@@ -1,0 +1,67 @@
+{
+  "taskId": "basic-gates/two-qubit-gate-4",
+  "title": "TwoQubitGate4",
+  "submission": "/tmp/qni-research-solve-PIFogg/submissions/basic-gates/two-qubit-gate-4.qni",
+  "status": "failed",
+  "exitCode": 1,
+  "gradingCases": [
+    {
+      "caseId": "zero-zero-input",
+      "status": "failed",
+      "checks": [
+        {
+          "type": "run",
+          "status": "failed"
+        }
+      ]
+    },
+    {
+      "caseId": "zero-one-input",
+      "status": "failed",
+      "checks": [
+        {
+          "type": "run",
+          "status": "failed"
+        }
+      ]
+    },
+    {
+      "caseId": "one-zero-input",
+      "status": "failed",
+      "checks": [
+        {
+          "type": "run",
+          "status": "failed"
+        }
+      ]
+    },
+    {
+      "caseId": "superposition-input",
+      "status": "failed",
+      "checks": [
+        {
+          "type": "run",
+          "status": "failed"
+        }
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "type": "run",
+      "status": "failed"
+    },
+    {
+      "type": "run",
+      "status": "failed"
+    },
+    {
+      "type": "run",
+      "status": "failed"
+    },
+    {
+      "type": "run",
+      "status": "failed"
+    }
+  ]
+}

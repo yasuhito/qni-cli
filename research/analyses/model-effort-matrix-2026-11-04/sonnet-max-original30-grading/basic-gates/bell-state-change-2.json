@@ -1,0 +1,25 @@
+{
+  "taskId": "basic-gates/bell-state-change-2",
+  "title": "BellStateChange2",
+  "submission": "/tmp/qni-research-solve-PIFogg/submissions/basic-gates/bell-state-change-2.qni",
+  "status": "passed",
+  "exitCode": 0,
+  "gradingCases": [
+    {
+      "caseId": "phi-plus-input",
+      "status": "passed",
+      "checks": [
+        {
+          "type": "run",
+          "status": "passed"
+        }
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "type": "run",
+      "status": "passed"
+    }
+  ]
+}

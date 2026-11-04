@@ -1,0 +1,42 @@
+{
+  "condition": 20,
+  "trial": "research/runs/2026-11-04T075315Z-effort-matrix-v3-claude-bridge-claude-opus-5-5-xhigh-3600s",
+  "provider": "claude-bridge",
+  "model": "claude-opus-5-5",
+  "thinking": "xhigh",
+  "effectiveEffort": "xhigh",
+  "taskCount": 63,
+  "partialContinuation": false,
+  "maximumPerTaskSeconds": 3600,
+  "elapsedMs": 612953,
+  "result": {
+    "total": 63,
+    "passed": 57,
+    "failed": 3,
+    "disallowed": 3,
+    "error": 0
+  },
+  "executionErrors": 0,
+  "knownEmptyOperationsGraderErrors": [],
+  "passRatePercent": 90.47619047619048,
+  "tokens": {
+    "inputTokens": 126,
+    "outputTokens": 42755,
+    "cacheReadTokens": 114946,
+    "cacheWriteTokens": 21594,
+    "totalTokens": 179421,
+    "costTotalUsd": 0
+  },
+  "reasoning": {
+    "reportedTotal": 38651,
+    "reportedCallCount": 63,
+    "totalCalls": 63,
+    "missingIsZero": false,
+    "codexProviderOmissionIndistinguishable": false
+  },
+  "sha256": {
+    "calls": "6bfb78f4d5292a80d5e032a7d7c029a7b277a3a700ce2b0f456e15778212ea0a",
+    "metadata": "45790052638ae4084dce82efb06e13307caf0b93c4e00acdea7757a1a6d3b8b2",
+    "result": "aeb779d04e721d1d2e07cf147750d2829b2e564f688cbae6131ab36705a02a8f"
+  }
+}

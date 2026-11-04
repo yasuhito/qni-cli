@@ -1,0 +1,13 @@
+{
+  "taskId": "preparing-states/all-bell-states-1",
+  "title": "AllBellStates1",
+  "submission": "/tmp/qni-research-solve-PIFogg/submissions/preparing-states/all-bell-states-1.qni",
+  "status": "passed",
+  "exitCode": 0,
+  "checks": [
+    {
+      "type": "run",
+      "status": "passed"
+    }
+  ]
+}
