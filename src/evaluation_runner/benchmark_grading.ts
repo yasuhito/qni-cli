@@ -404,6 +404,20 @@ function evaluateGradingCase(options: {
   const workDir = mkdtempSync(path.join(tmpdir(), "qni-benchmark-"));
 
   try {
+    if (options.submissionCommands.length === 0) {
+      // An empty operation list is identity on the width required by the checks.
+      // Case setup runs afterwards so its input state is not replaced.
+      const widths = options.gradingCase.checks.items.flatMap((check) => {
+        if (check.type === "unitary") return [check.referenceCircuit.qubits];
+        if (check.type === "expect")
+          return check.expected.map((expected) => expected.pauli.length);
+        return check.expected.map((expected) =>
+          Math.log2(basisMetadata(expected.basis).vectorLength)
+        );
+      });
+      const qubits = Math.max(...widths);
+      currentCircuitFile(workDir).setInitialState(`|${"0".repeat(qubits)}>`);
+    }
     runSetupCommands(options.gradingCase, workDir, options.context);
     runSubmission(options.submissionCommands, workDir, options.context);
 
