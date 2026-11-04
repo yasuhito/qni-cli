@@ -14,13 +14,13 @@ qni-cli の利用者として
 - When "qni research solve --model fake-qni --thinking max --benchmark benchmarks/smoke --task smoke/state-flip --slug safety" を実行
 - Then 偽 Pi の課題呼び出しは安全な実行設定だけを承認する
 
-## Scenario: 課題ごとの10分上限を実行条件として保存する
+## Scenario: 課題ごとの1時間上限を実行条件として保存する
 
 - When "qni research solve --model fake-qni --thinking max --benchmark benchmarks/smoke --task smoke/state-flip --slug safety" を実行
 - Then 研究試行 JSON ファイル "metadata.json" は次の部分 JSON を含む:
 
   ```json
-  { "harness": { "piTaskTimeoutMs": 600000 } }
+  { "harness": { "piTaskTimeoutMs": 3600000 } }
   ```
 
 ## Scenario: 明示しない場合も事前確認したプロバイダーを呼び出しに指定する

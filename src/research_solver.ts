@@ -156,7 +156,7 @@ const SUBMISSION_PROTOCOL = BLIND_NEUTRAL_CIRCUIT_JSON_SUBMISSION_PROTOCOL;
 const INVALID_NEUTRAL_CIRCUIT_JSON_SUBMISSION =
   "qni __invalid-neutral-circuit-json-submission__";
 const PI_EXECUTION_ERROR_SUBMISSION = "qni __pi-execution-error__";
-const PI_TIMEOUT_MS = 10 * 60 * 1000;
+const PI_TIMEOUT_MS = 60 * 60 * 1000;
 const PI_TASK_SETTINGS = {
   retry: { enabled: false, provider: { maxRetries: 0 } },
   transport: "sse",
