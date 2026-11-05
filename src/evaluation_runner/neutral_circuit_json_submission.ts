@@ -538,21 +538,21 @@ function normalizedAngle(angle: unknown, index: number): string {
   }
 
   try {
-    const expression = new AngleExpression(angle);
+    const expression = new AngleExpression(angle).parse();
 
-    if (!expression.concrete() || !/(?:pi|π)/u.test(compactAngle)) {
+    if (!expression.concrete || !expression.usesPiOrInverseTrig) {
       throw new NeutralCircuitJsonSubmissionError(
-        `angle at operations[${index}] must use a symbolic pi expression`
+        `angle at operations[${index}] must use a symbolic pi expression or inverse-trig function`
       );
     }
 
-    if (!Number.isFinite(expression.radians())) {
+    if (!Number.isFinite(expression.radians({}))) {
       throw new NeutralCircuitJsonSubmissionError(
         `angle at operations[${index}] must be finite`
       );
     }
 
-    return expression.toString();
+    return expression.text;
   } catch (error) {
     if (error instanceof AngleExpressionError) {
       throw new NeutralCircuitJsonSubmissionError(

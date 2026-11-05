@@ -152,6 +152,53 @@ describe("neutral circuit JSON submission converter", () => {
     });
   }
 
+  it("accepts concrete inverse-trig expressions without a pi substring", () => {
+    for (const angle of ["2*asin(1/sqrt(2))", "acos(-1)", "atan(1)"]) {
+      assert.equal(
+        convertNeutralCircuitJsonToQniSubmission({
+          availableGates: ["Ry(angle, target)"],
+          submissionText: JSON.stringify({
+            operations: [{ gate: "Ry", angle, targets: [0] }],
+          }),
+        }),
+        `qni add Ry --angle ${angle} --qubit 0 --step 0\n`
+      );
+    }
+  });
+
+  it("does not turn variables or plain computed radians into neutral angle submissions", () => {
+    for (const angle of [
+      "asin(theta)",
+      "theta+pi",
+      "sqrt(4)",
+      "1/2",
+      "2*1.5",
+      "asinValue",
+    ]) {
+      assertInvalidSubmission(
+        JSON.stringify({ operations: [{ gate: "Ry", angle, targets: [0] }] }),
+        /must use a symbolic pi expression/,
+        "Ry"
+      );
+    }
+  });
+
+  it("rejects inverse-trig domain errors before generating executable commands", () => {
+    for (const [angle, pattern] of [
+      ["asin(2)", /asin domain/],
+      ["acos(-2)", /acos domain/],
+      ["atan(1/0)", /division by zero/],
+      ["asin(sqrt(-1))", /sqrt domain/],
+      ["Math.asin(1)", /invalid angle/],
+    ] as const) {
+      assertInvalidSubmission(
+        JSON.stringify({ operations: [{ gate: "Ry", angle, targets: [0] }] }),
+        pattern,
+        "Ry"
+      );
+    }
+  });
+
   it("accepts decimal pi coefficients and zero rotations", () => {
     for (const [angle, normalized] of [
       ["0.608*pi", "0.608π"],

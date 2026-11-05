@@ -1,12 +1,13 @@
-import * as childProcess from 'node:child_process';
-import { tmpdir } from 'node:os';
-import path from 'node:path';
+import * as childProcess from "node:child_process";
+import { AngleExpression, AngleExpressionError } from "./angle_expression";
+import { tmpdir } from "node:os";
+import path from "node:path";
 
-import type { CircuitData } from './circuit_file';
+import type { CircuitData } from "./circuit_file";
 
 export class SymbolicStateRendererError extends Error {}
 
-export type SymbolicOutputFormat = 'latex' | 'latex-exact' | 'text';
+export type SymbolicOutputFormat = "latex" | "latex-exact" | "text";
 
 export interface SymbolicStateRenderOptions {
   readonly basis?: string;
@@ -25,104 +26,137 @@ interface ResolvedSymbolicStateRenderOptions extends SymbolicStateRenderOptions 
   readonly format: SymbolicOutputFormat;
 }
 
-const SETUP_MESSAGE = 'symbolic run requires SymPy runtime; run scripts/setup_symbolic_python.sh';
+const SETUP_MESSAGE =
+  "symbolic run requires SymPy runtime; run scripts/setup_symbolic_python.sh";
 const HELPER_MAX_BUFFER_BYTES = 8 * 1024 * 1024 + 1024;
 
-export function renderSymbolicStateVector(options: SymbolicStateRenderOptions): string {
-  validateSymbolicBasis({ basis: options.basis, qubits: options.circuit.qubits });
+export function renderSymbolicStateVector(
+  options: SymbolicStateRenderOptions
+): string {
+  validateSymbolicBasis({
+    basis: options.basis,
+    qubits: options.circuit.qubits,
+  });
 
   return renderWithHelpers({
     ...options,
-    format: options.format ?? 'text'
+    format: options.format ?? "text",
   });
 }
 
 export function isSymbolicLatexResourceLimitError(error: unknown): boolean {
-  return error instanceof SymbolicStateRendererError && (
-    error.message.startsWith('symbolic state exceeds ') ||
-    error.message.startsWith('symbolic output exceeds ')
+  return (
+    error instanceof SymbolicStateRendererError &&
+    (error.message.startsWith("symbolic state exceeds ") ||
+      error.message.startsWith("symbolic output exceeds "))
   );
 }
 
 export function isSymbolicLatexFallbackError(error: unknown): boolean {
-  return error instanceof SymbolicStateRendererError && (
-    error.message === SETUP_MESSAGE ||
-    error.message.startsWith('unsupported gate for symbolic run:') ||
-    error.message.startsWith('unsupported symbolic gate column:') ||
-    error.message.startsWith('unsupported initial state basis:')
+  return (
+    error instanceof SymbolicStateRendererError &&
+    (error.message === SETUP_MESSAGE ||
+      error.message.startsWith("unsupported gate for symbolic run:") ||
+      error.message.startsWith("unsupported angle for symbolic run:") ||
+      error.message.startsWith("unsupported symbolic gate column:") ||
+      error.message.startsWith("unsupported initial state basis:"))
   );
 }
 
-function validateSymbolicBasis(options: { basis?: string; qubits: number }): void {
-  if ((options.basis === 'x' || options.basis === 'y') && options.qubits !== 1) {
+function validateSymbolicBasis(options: {
+  basis?: string;
+  qubits: number;
+}): void {
+  if (
+    (options.basis === "x" || options.basis === "y") &&
+    options.qubits !== 1
+  ) {
     throw new SymbolicStateRendererError(
       `symbolic ${options.basis}-basis run currently supports only 1-qubit circuits`
     );
   }
 
-  if (options.basis === 'bell' && options.qubits !== 2) {
-    throw new SymbolicStateRendererError('symbolic bell-basis run currently supports only 2-qubit circuits');
+  if (options.basis === "bell" && options.qubits !== 2) {
+    throw new SymbolicStateRendererError(
+      "symbolic bell-basis run currently supports only 2-qubit circuits"
+    );
   }
 }
 
-function renderWithHelpers(options: ResolvedSymbolicStateRenderOptions): string {
+function renderWithHelpers(
+  options: ResolvedSymbolicStateRenderOptions
+): string {
   for (const command of helperCommands(options)) {
     const output = renderWithHelper(command, options);
 
     if (output !== undefined) {
-      return options.format === 'text' ? output : normalizeKetLatex(output);
+      return options.format === "text" ? output : normalizeKetLatex(output);
     }
   }
 
   throw new SymbolicStateRendererError(SETUP_MESSAGE);
 }
 
-function helperCommands(options: ResolvedSymbolicStateRenderOptions): HelperCommand[] {
-  const helperPath = path.join(options.projectRoot, 'libexec', 'qni_symbolic_run.py');
-  const args = [helperPath, '--format', options.format];
+function helperCommands(
+  options: ResolvedSymbolicStateRenderOptions
+): HelperCommand[] {
+  const helperPath = path.join(
+    options.projectRoot,
+    "libexec",
+    "qni_symbolic_run.py"
+  );
+  const args = [helperPath, "--format", options.format];
 
   if (options.basis !== undefined) {
-    args.push('--basis', options.basis);
+    args.push("--basis", options.basis);
   }
 
   return [
     {
       args,
-      command: path.join(options.projectRoot, '.python-symbolic', 'bin', 'python')
+      command: path.join(
+        options.projectRoot,
+        ".python-symbolic",
+        "bin",
+        "python"
+      ),
     },
     {
       args,
-      command: 'python3'
+      command: "python3",
     },
     {
-      args: ['run', '--quiet', '--with', 'sympy', 'python3', ...args],
-      command: 'uv'
-    }
+      args: ["run", "--quiet", "--with", "sympy", "python3", ...args],
+      command: "uv",
+    },
   ];
 }
 
-function renderWithHelper(command: HelperCommand, options: ResolvedSymbolicStateRenderOptions): string | undefined {
+function renderWithHelper(
+  command: HelperCommand,
+  options: ResolvedSymbolicStateRenderOptions
+): string | undefined {
   const result = childProcess.spawnSync(command.command, [...command.args], {
-    encoding: 'utf8',
+    encoding: "utf8",
     env: {
       ...process.env,
       ...options.env,
-      UV_CACHE_DIR: path.join(tmpdir(), 'qni-cli-uv-cache')
+      UV_CACHE_DIR: path.join(tmpdir(), "qni-cli-uv-cache"),
     },
     input: JSON.stringify(options.circuit),
     maxBuffer: HELPER_MAX_BUFFER_BYTES,
-    stdio: ['pipe', 'pipe', 'pipe']
+    stdio: ["pipe", "pipe", "pipe"],
   });
 
   if (result.error) {
     const error = result.error as NodeJS.ErrnoException;
-    if (error.code === 'ENOENT') {
+    if (error.code === "ENOENT") {
       return undefined;
     }
 
-    if (error.code === 'EPIPE') {
-      const stdout = result.stdout ?? '';
-      const stderr = result.stderr ?? '';
+    if (error.code === "EPIPE") {
+      const stdout = result.stdout ?? "";
+      const stderr = result.stderr ?? "";
 
       if (result.status === 0) {
         return stdout.trim();
@@ -132,12 +166,16 @@ function renderWithHelper(command: HelperCommand, options: ResolvedSymbolicState
         return undefined;
       }
 
-      if (result.status !== null || stderr.trim() !== '') {
-        throw new SymbolicStateRendererError(renderErrorMessage(stderr, result.status));
+      if (result.status !== null || stderr.trim() !== "") {
+        throw new SymbolicStateRendererError(
+          renderErrorMessage(stderr, result.status)
+        );
       }
 
       if (result.signal !== null) {
-        throw new SymbolicStateRendererError(`${error.message} (signal: ${result.signal})`);
+        throw new SymbolicStateRendererError(
+          `${error.message} (signal: ${result.signal})`
+        );
       }
     }
 
@@ -152,23 +190,41 @@ function renderWithHelper(command: HelperCommand, options: ResolvedSymbolicState
     return undefined;
   }
 
-  throw new SymbolicStateRendererError(renderErrorMessage(result.stderr, result.status));
+  throw new SymbolicStateRendererError(
+    renderErrorMessage(result.stderr, result.status)
+  );
 }
 
 function normalizeKetLatex(output: string): string {
   return output
-    .replace(/\\lvert\s*([^}]*?)\s*\\rangle/gu, (_match, basis: string) => `\\ket{${basis.trim()}}`)
-    .replace(/\s+(?=\\ket\{)/gu, '');
+    .replace(
+      /\\lvert\s*([^}]*?)\s*\\rangle/gu,
+      (_match, basis: string) => `\\ket{${basis.trim()}}`
+    )
+    .replace(/\s+(?=\\ket\{)/gu, "");
 }
 
 function retryableWithNextCommand(command: string, stderr: string): boolean {
   return (
-    (command === 'uv' && stderr.includes('Failed to fetch:')) ||
-    (command !== 'uv' && stderr.includes("No module named 'sympy'"))
+    (command === "uv" && stderr.includes("Failed to fetch:")) ||
+    (command !== "uv" && stderr.includes("No module named 'sympy'"))
   );
 }
 
 function renderErrorMessage(stderr: string, status: number | null): string {
   const message = stderr.trim();
-  return message === '' ? `symbolic renderer failed with exit status ${status ?? ''}` : message;
+  const rejectedAngle = /^invalid angle: (.+)$/u.exec(message)?.[1];
+  if (rejectedAngle !== undefined) {
+    try {
+      // Numeric grammar support does not imply the separate exact helper supports it.
+      new AngleExpression(rejectedAngle).parse();
+      return `unsupported angle for symbolic run: ${rejectedAngle}`;
+    } catch (error) {
+      // Keep genuine syntax/domain errors distinct from unsupported exact rendering.
+      if (error instanceof AngleExpressionError) return error.message;
+    }
+  }
+  return message === ""
+    ? `symbolic renderer failed with exit status ${status ?? ""}`
+    : message;
 }
