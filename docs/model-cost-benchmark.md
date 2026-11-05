@@ -143,7 +143,7 @@ qni research plot \
 
 [Quantum Katas の4モデル・思考量別比較](reports/model-effort-matrix-2026-11-04.md) に、21条件の結果と再生成できる図を保存しています。保存済み記録の検証と描画にはモデル呼び出しは不要です。途中の時間上限変更と、人間が個別に承認した2条件の継続についても記載しています。
 
-[ログ保全・公開前監査と採点器修正](reports/model-effort-followup-2026-11-04.md) は、その後の別作業です。元の結果を変更せず、空提出の修正と角度式の別診断を記録しています。その後、[逆三角関数の対応と全1,323回答の一貫した別診断](reports/model-effort-inverse-trig-diagnostic-2026-11-04.md)まで進めました。元の図や正式結果を更新したものではありません。[qni-cli の道具あり・なしの対比較案](plans/qni-assistance-paired-comparison-2026-11-04.md) は計画段階であり、ログ公開や追加測定の承認ではありません。
+[ログ保全・公開前監査と採点器修正](reports/model-effort-followup-2026-11-04.md) は、その後の別作業です。元の結果を変更せず、空提出の修正と角度式の別診断を記録しています。その後、[逆三角関数の対応と全1,323回答の一貫した別診断](reports/model-effort-inverse-trig-diagnostic-2026-11-04.md)まで進めました。元の図や正式結果を更新したものではありません。[旧角度式の互換性回帰を修正したコードでの全件再診断](reports/model-effort-legacy-angle-repair-2026-11-05.md)も同じ結果でした。公開候補の独立レビューでは3ファイルに表示名・GitHub ハンドルの残存が見つかり、その扱いを含む人間の公開判断を待っています。[qni-cli の道具あり・なしの対比較案](plans/qni-assistance-paired-comparison-2026-11-04.md) は計画段階であり、ログ公開や追加測定の承認ではありません。
 
 ## 初期範囲外
 
