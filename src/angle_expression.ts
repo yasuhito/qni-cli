@@ -125,20 +125,19 @@ class AngleParser {
 
   private product(depth: number): Node {
     let left = this.unary(depth);
+    let implicitPiAllowed = signedNumber(left);
     while (
       this.is("*") ||
       this.is("/") ||
-      (signedNumber(left) && this.token.kind === "pi")
+      (implicitPiAllowed && this.token.kind === "pi")
     ) {
       const implicit = this.token.kind === "pi";
       const operator = this.token.text === "/" ? "/" : "*";
       if (!implicit) this.advance();
-      left = this.node({
-        kind: "binary",
-        operator,
-        left,
-        right: this.unary(depth),
-      });
+      const right = this.unary(depth);
+      left = this.node({ kind: "binary", operator, left, right });
+      // A numeric factor can precede π after multiplication, never division.
+      implicitPiAllowed = operator === "*" && signedNumber(right);
     }
     return left;
   }

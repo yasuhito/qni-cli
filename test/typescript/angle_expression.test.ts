@@ -55,6 +55,39 @@ describe("AngleExpression", () => {
     });
   }
 
+  for (const [source, expected, stored] of [
+    ["2*2pi", 4 * Math.PI, "2*2π"],
+    ["2*3π/4", (3 * Math.PI) / 2, "2*3π/4"],
+    ["-2*3pi_4", (-3 * Math.PI) / 2, "-2*3π/4"],
+    ["0.5*2pi", Math.PI, "0.5*2π"],
+    ["1.5*-2pi", -3 * Math.PI, "1.5*-2π"],
+    ["2*2π", 4 * Math.PI, "2*2π"],
+    ["2*2*pi_3", (4 * Math.PI) / 3, "2*2π/3"],
+  ] as const) {
+    it(`preserves legacy product ${source} and reloads its stored expression`, () => {
+      const angle = new AngleExpression(source);
+      assert.equal(angle.toString(), stored);
+      assert.ok(Math.abs(angle.radians() - expected) < 1e-13);
+      assert.ok(
+        Math.abs(new AngleExpression(angle.toString()).radians() - expected) <
+          1e-13
+      );
+    });
+  }
+
+  for (const source of ["1/2pi", "2/3π", "2*1/2pi", "1/-2pi"]) {
+    it(`does not absorb an implicit pi into division for ${source}`, () => {
+      assert.throws(
+        () => new AngleExpression(source).parse(),
+        AngleExpressionError
+      );
+    });
+  }
+
+  it("permits implicit pi again after a following explicit multiplication", () => {
+    assert.equal(new AngleExpression("1/2*2pi").radians(), Math.PI);
+  });
+
   it("still requires a value for an unresolved variable", () => {
     assert.throws(
       () => new AngleExpression("theta").radians(),
